@@ -11,7 +11,10 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   const tagElementArray = React.useMemo(() => {
     return promiseData.data.list.map((data) => {
       return (
-        <div key={data.mid} className="whitespace-nowrap bg-blue-50  p-1  text-sm">
+        <div
+          key={data.mid}
+          className="whitespace-nowrap bg-blue-50 dark:bg-slate-600  p-1  text-sm"
+        >
           {data.title}
         </div>
       )
@@ -19,9 +22,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   }, [])
 
   return (
-    <div className="dark:text-white flex gap-1 flex-wrap cursor-pointer pt-2">
-      {tagElementArray}
-    </div>
+    <div className="dark:text-white flex gap-1 flex-wrap cursor-pointer">{tagElementArray}</div>
   )
 }
 
