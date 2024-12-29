@@ -27,7 +27,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
             },
           )}
         >
-          {data.title}
+          # {data.title}
         </div>
       )
     })
