@@ -3,26 +3,32 @@ import './Popup.css'
 import FavoriteTag from './components/favorite-tag'
 import { getAllFavoriteFlag } from './utils/api'
 import Keyword from './components/keyword'
+import { DataContext, DataContextType } from './utils/data-context'
 
 export const Popup = () => {
+  const [favoriteTagData, setFavoriteTagData] = React.useState<Omit<DataContextType, 'dispatch'>>({
+    favoriteData: [],
+    activeKey: undefined,
+  })
   const favoriteFlagFetchPromise = getAllFavoriteFlag()
 
   return (
-    <main className="dark:bg-black w-96 min-h-96 p-3">
-      <h3 className="text-lg dark:text-cyan-50 font-bold mb-2">收藏夹</h3>
+    <DataContext.Provider
+      value={React.useMemo(() => {
+        return { ...favoriteTagData, dispatch: setFavoriteTagData }
+      }, [])}
+    >
+      <main className="dark:bg-black w-96 min-h-96 p-3">
+        <h3 className="text-lg dark:text-cyan-50 font-bold mb-2">收藏夹</h3>
 
-      <div>
         <React.Suspense fallback={null}>
           <FavoriteTag fetchPromise={favoriteFlagFetchPromise} />
         </React.Suspense>
-      </div>
 
-      <h3 className="text-lg dark:text-cyan-50 font-bold mt-2 mb-2">关键字</h3>
-
-      <div>
+        <h3 className="text-lg dark:text-cyan-50 font-bold mt-2 mb-2">关键字</h3>
         <Keyword />
-      </div>
-    </main>
+      </main>
+    </DataContext.Provider>
   )
 }
 

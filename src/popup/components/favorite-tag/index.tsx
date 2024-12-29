@@ -1,5 +1,6 @@
 import React from 'react'
 import { getFavoriteList } from '../../utils/api'
+import { DataContext } from '../../utils/data-context'
 
 type FavoriteTagProps = {
   fetchPromise: ReturnType<typeof getFavoriteList>
@@ -7,6 +8,8 @@ type FavoriteTagProps = {
 
 const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   const { fetchPromise } = props
+  const dataContext = React.use(DataContext)
+  debugger
   const promiseData = React.use(fetchPromise)
 
   const tagElementArray = React.useMemo(() => {
@@ -19,6 +22,15 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
           {data.title}
         </div>
       )
+    })
+  }, [])
+
+  React.useEffect(() => {
+    dataContext.dispatch?.((oldData) => {
+      return {
+        ...oldData,
+        favoriteData: promiseData,
+      }
     })
   }, [])
 

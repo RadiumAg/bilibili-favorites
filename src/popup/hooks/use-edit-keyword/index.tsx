@@ -1,17 +1,35 @@
 import React from 'react'
+import { DataContext } from '../../utils/data-context'
+import classNames from 'classnames'
 
 const useEditKeyword = () => {
   const [keyData, setKeyData] = React.useState<string[]>([])
+  const dataContext = React.use(DataContext)
 
   const tagElementArray = React.useMemo(() => {
     return keyData.map((keyValue) => {
       return (
-        <span contentEditable={false} key={keyValue} className="text-white bg-slate-400 p-1">
+        <span
+          onClick={() => {
+            handleClick(keyValue)
+          }}
+          contentEditable={false}
+          key={keyValue}
+          className={classNames('text-white bg-slate-400 p-1', {
+            ' bg-slate-600': dataContext.activeKey === keyValue,
+          })}
+        >
           {keyValue}
         </span>
       )
     })
   }, [keyData])
+
+  const handleClick = (key: string) => {
+    dataContext.dispatch?.((oldValue) => {
+      return { ...oldValue, activeKey: key }
+    })
+  }
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
     const target = event.target as HTMLInputElement
