@@ -22,8 +22,6 @@ const useEditKeyword = () => {
 
       setKeyData((oldValue) => {
         const newValue = [...oldValue, inputValue]
-
-        console.log(newValue)
         return newValue
       })
 

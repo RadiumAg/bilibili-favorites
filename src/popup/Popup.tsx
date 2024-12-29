@@ -8,8 +8,8 @@ export const Popup = () => {
   const favoriteFlagFetchPromise = getAllFavoriteFlag()
 
   return (
-    <main className="dark:bg-black w-96 min-h-96 p-3 mb-2">
-      <h3 className="text-lg dark:text-cyan-50 font-bold">收藏夹</h3>
+    <main className="dark:bg-black w-96 min-h-96 p-3">
+      <h3 className="text-lg dark:text-cyan-50 font-bold mb-2">收藏夹</h3>
 
       <div>
         <React.Suspense fallback={null}>
