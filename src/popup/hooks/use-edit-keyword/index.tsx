@@ -10,26 +10,15 @@ const useEditKeyword = () => {
     return keyData.map((keyValue) => {
       return (
         <span
-          onClick={() => {
-            handleClick(keyValue)
-          }}
           contentEditable={false}
           key={keyValue}
-          className={classNames('text-white bg-slate-400 p-1', {
-            ' bg-slate-600': dataContext.activeKey === keyValue,
-          })}
+          className={classNames('text-white bg-slate-400 p-1')}
         >
           {keyValue}
         </span>
       )
     })
-  }, [keyData])
-
-  const handleClick = (key: string) => {
-    dataContext.dispatch?.((oldValue) => {
-      return { ...oldValue, activeKey: key }
-    })
-  }
+  }, [keyData, dataContext.activeKey])
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
     const target = event.target as HTMLInputElement
@@ -46,6 +35,8 @@ const useEditKeyword = () => {
       target.value = ''
     }
   }
+
+  console.log(dataContext.activeKey)
 
   return { keyData, tagElementArray, handleKeyDown }
 }

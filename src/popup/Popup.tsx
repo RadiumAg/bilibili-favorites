@@ -10,14 +10,10 @@ export const Popup = () => {
     favoriteData: [],
     activeKey: undefined,
   })
-  const favoriteFlagFetchPromise = getAllFavoriteFlag()
+  const favoriteFlagFetchPromise = React.useMemo(() => getAllFavoriteFlag(), [])
 
   return (
-    <DataContext.Provider
-      value={React.useMemo(() => {
-        return { ...favoriteTagData, dispatch: setFavoriteTagData }
-      }, [])}
-    >
+    <DataContext.Provider value={{ ...favoriteTagData, dispatch: setFavoriteTagData }}>
       <main className="dark:bg-black w-96 min-h-96 p-3">
         <h3 className="text-lg dark:text-cyan-50 font-bold mb-2">收藏夹</h3>
 

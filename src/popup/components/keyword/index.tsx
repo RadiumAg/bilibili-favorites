@@ -1,6 +1,5 @@
 import React from 'react'
 import { useEditKeyword } from '../../hooks'
-import { DataContext } from '../../utils/data-context'
 
 const Keyword: React.FC = () => {
   const { tagElementArray, handleKeyDown } = useEditKeyword()
