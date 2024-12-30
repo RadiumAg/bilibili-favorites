@@ -10,8 +10,15 @@ type FavoriteTagProps = {
 
 const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   const { fetchPromise } = props
-  const { domRef, clickTagId, pendingElement, isLongPress, handleMouseDown, handlleMouseUp } =
-    useSetDefaultFav()
+  const {
+    domRef,
+    clickTagId,
+    pendingElement,
+    isLongPress,
+    starElement,
+    handleMouseDown,
+    handleMouseUp,
+  } = useSetDefaultFav()
   const dataContext = React.use(DataContext)
   const promiseData = React.use(fetchPromise)
 
@@ -24,7 +31,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
           onMouseDown={() => {
             handleMouseDown(data.id)
           }}
-          onMouseUp={handlleMouseUp}
+          onMouseUp={handleMouseUp}
           className={classNames(
             'whitespace-nowrap rounded p-1 text-sm flex items-center gap-x-1 relative overflow-hidden',
             {
@@ -36,18 +43,12 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
             },
           )}
         >
-          #{data.title} {clickTagId === data.id && pendingElement}
-          {dataContext.defaultFavoriteId === data.id && '|'}
+          # {data.title} {clickTagId === data.id && pendingElement}
+          {dataContext.defaultFavoriteId === data.id && starElement}
         </div>
       )
     })
-  }, [
-    dataContext.activeKey,
-    dataContext.defaultFavoriteId,
-    pendingElement,
-    clickTagId,
-    isLongPress,
-  ])
+  }, [dataContext.activeKey, dataContext.defaultFavoriteId, clickTagId, isLongPress])
 
   console.log('defaultFavoriteId', dataContext.defaultFavoriteId)
 

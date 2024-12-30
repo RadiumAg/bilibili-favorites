@@ -1,4 +1,5 @@
 import React from 'react'
+import lottie from 'lottie-web'
 import { useLongPress } from 'ahooks'
 import { DataContext } from '@/popup/utils/data-context'
 
@@ -8,9 +9,10 @@ const useSetDefaultFav = () => {
   const [isLongPress, setLongPress] = React.useState(false)
   const maskDomRef = React.useRef<HTMLDivElement>(null)
   const domRef = React.useRef<HTMLDivElement>(null)
-
+  const [starDomRef, setStarDomRef] = React.useState<HTMLDivElement>(null)
   const [clickTagId, setClickTagId] = React.useState<number | undefined>()
   const clickTagIdRef = React.useRef<number | undefined>(undefined)
+  const starJson = new URL('@/assets/lottile/star.json', import.meta.url).href
 
   const pendingElement = React.useMemo(
     () => (
@@ -18,6 +20,19 @@ const useSetDefaultFav = () => {
         className="absolute w-full h-full bg-slate-500 opacity-10 left-0"
         ref={maskDomRef}
         style={{ width: 0 }}
+      ></div>
+    ),
+    [],
+  )
+  const starElement = React.useMemo(
+    () => (
+      <div
+        className="w-[20px] h-[20px]"
+        ref={(domRef) => {
+          if (domRef == null) return
+
+          setStarDomRef(domRef)
+        }}
       ></div>
     ),
     [],
@@ -34,7 +49,7 @@ const useSetDefaultFav = () => {
     clickTagIdRef.current = id
   }
 
-  const handlleMouseUp = () => {
+  const handleMouseUp = () => {
     setClickTagId(undefined)
     clickTagIdRef.current = undefined
   }
@@ -66,7 +81,7 @@ const useSetDefaultFav = () => {
 
     let process = 0
 
-    const runProceess = () => {
+    const runProcess = () => {
       requestAnimationFrame(() => {
         if (clickTagIdRef.current == null) {
           return
@@ -81,14 +96,35 @@ const useSetDefaultFav = () => {
         }
 
         maskDomRef.current!.style.width = `${(process += 5)}%`
-        runProceess()
+        runProcess()
       })
     }
 
-    runProceess()
+    runProcess()
   }, [clickTagId, isLongPress])
 
-  return { domRef, isLongPress, clickTagId, pendingElement, handleMouseDown, handlleMouseUp }
+  React.useEffect(() => {
+    if (starDomRef == null) return
+
+    lottie.loadAnimation({
+      renderer: 'svg',
+      loop: false,
+      autoplay: true,
+      path: starJson,
+      container: starDomRef,
+    })
+  }, [starDomRef])
+
+  return {
+    domRef,
+    isLongPress,
+    clickTagId,
+    pendingElement,
+    starElement,
+
+    handleMouseDown,
+    handleMouseUp,
+  }
 }
 
 export { useSetDefaultFav }
