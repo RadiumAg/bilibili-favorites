@@ -6,6 +6,7 @@ const useDataContext = () => {
     keyword: [],
     favoriteData: [],
     activeKey: undefined,
+    defaultFavoriteId: undefined,
   })
   const isFirstMount = React.useRef<boolean>(true)
   const provideData = React.useMemo<DataContextType>(() => {
@@ -14,8 +15,6 @@ const useDataContext = () => {
 
   const getData = async () => {
     const { keyword, activeKey } = await chrome.storage.sync.get(['keyword', 'activeKey'])
-    console.log(keyword)
-
     setDataContext((oldValue) => {
       return { ...oldValue, keyword: JSON.parse(keyword), activeKey }
     })

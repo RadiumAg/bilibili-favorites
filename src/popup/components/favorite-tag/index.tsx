@@ -21,13 +21,14 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
             handleClick(data.id)
           }}
           className={classNames(
-            'whitespace-nowrap bg-blue-50 dark:bg-slate-600 rounded  p-1 text-sm',
+            'whitespace-nowrap bg-blue-50 dark:bg-slate-600 rounded p-1 text-sm flex items-center gap-x-1',
             {
-              ['dark:bg-slate-700']: dataContext.activeKey === data.fid,
+              ['bg-blue-300']: dataContext.activeKey === data.id,
+              ['dark:bg-slate-700']: dataContext.activeKey === data.id,
             },
           )}
         >
-          # {data.title}
+          #{data.title}
         </div>
       )
     })
@@ -38,8 +39,6 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
       return { ...oldValue, activeKey: key }
     })
   }
-
-  console.log(dataContext.activeKey)
 
   React.useEffect(() => {
     dataContext.dispatch?.((oldData) => {
