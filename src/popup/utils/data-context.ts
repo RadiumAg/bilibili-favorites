@@ -10,12 +10,14 @@ type DataContextType = {
     mid: number
     title: string
   }[]
-  activeKey: string | undefined
+  activeKey: number | undefined
+  keyword: { value: string[]; favoriteDataId: number }[]
   dispatch: React.Dispatch<React.SetStateAction<Omit<DataContextType, 'dispatch'>>> | null
 }
 
 const DataContext = React.createContext<DataContextType>({
   favoriteData: [],
+  keyword: [],
   activeKey: undefined,
   dispatch: null,
 })

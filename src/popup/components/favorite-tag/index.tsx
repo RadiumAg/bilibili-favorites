@@ -16,9 +16,9 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     return promiseData.data.list.map((data) => {
       return (
         <div
-          key={data.mid}
+          key={data.id}
           onClick={() => {
-            handleClick(data.fid)
+            handleClick(data.id)
           }}
           className={classNames(
             'whitespace-nowrap bg-blue-50 dark:bg-slate-600 rounded  p-1 text-sm',
@@ -33,7 +33,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     })
   }, [dataContext.activeKey])
 
-  const handleClick = (key: string) => {
+  const handleClick = (key: number) => {
     dataContext.dispatch?.((oldValue) => {
       return { ...oldValue, activeKey: key }
     })
@@ -45,7 +45,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     dataContext.dispatch?.((oldData) => {
       return {
         ...oldData,
-        favoriteData: promiseData,
+        favoriteData: promiseData.data.list,
       }
     })
   }, [])

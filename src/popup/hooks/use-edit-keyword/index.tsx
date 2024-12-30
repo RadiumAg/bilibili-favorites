@@ -3,42 +3,60 @@ import { DataContext } from '../../utils/data-context'
 import classNames from 'classnames'
 
 const useEditKeyword = () => {
-  const [keyData, setKeyData] = React.useState<string[]>([])
   const dataContext = React.use(DataContext)
+  const currentFavoriteTag = dataContext['keyword'].find(
+    (key) => key.favoriteDataId === dataContext.activeKey,
+  )
 
   const tagElementArray = React.useMemo(() => {
-    return keyData.map((keyValue) => {
+    return currentFavoriteTag?.value.map((keyValue, index) => {
       return (
         <span
+          key={index}
           contentEditable={false}
-          key={keyValue}
-          className={classNames('text-white bg-slate-400 p-1')}
+          className={classNames('dark:text-white bg-slate-400 p-1')}
         >
           {keyValue}
         </span>
       )
     })
-  }, [keyData, dataContext.activeKey])
+  }, [dataContext.keyword, dataContext.activeKey])
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
     const target = event.target as HTMLInputElement
+    const inputValue = target.value
 
     if (event.key === 'Enter') {
-      const inputValue = target.value
-      if (inputValue === '') return
+      dataContext.dispatch?.((oldValue) => {
+        if (inputValue === '') return oldValue
 
-      setKeyData((oldValue) => {
-        const newValue = [...oldValue, inputValue]
-        return newValue
+        console.log('inputValue', inputValue)
+
+        let targetkeyword = oldValue.keyword.find(
+          (key) => key.favoriteDataId === dataContext.activeKey,
+        )
+        if (dataContext.activeKey == null) return oldValue
+        if (targetkeyword == null) {
+          targetkeyword = {
+            value: [],
+            favoriteDataId: dataContext.activeKey,
+          }
+          dataContext.keyword.push(targetkeyword)
+        }
+
+        targetkeyword.value = [...targetkeyword?.value, inputValue]
+
+        return {
+          ...oldValue,
+          keyword: [...dataContext.keyword],
+        }
       })
 
       target.value = ''
     }
   }
 
-  console.log(dataContext.activeKey)
-
-  return { keyData, tagElementArray, handleKeyDown }
+  return { keyData: dataContext.keyword, tagElementArray, handleKeyDown }
 }
 
 export { useEditKeyword }

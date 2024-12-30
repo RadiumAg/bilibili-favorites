@@ -5,16 +5,14 @@ import { getAllFavoriteFlag } from './utils/api'
 import Keyword from './components/keyword'
 import { DataContext, DataContextType } from './utils/data-context'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useDataContext } from './hooks'
 
 export const Popup = () => {
-  const [favoriteTagData, setFavoriteTagData] = React.useState<Omit<DataContextType, 'dispatch'>>({
-    favoriteData: [],
-    activeKey: undefined,
-  })
   const favoriteFlagFetchPromise = React.useMemo(() => getAllFavoriteFlag(), [])
+  const dataProvideData = useDataContext()
 
   return (
-    <DataContext.Provider value={{ ...favoriteTagData, dispatch: setFavoriteTagData }}>
+    <DataContext.Provider value={dataProvideData}>
       <main className="dark:bg-black w-96 min-h-96 p-3">
         <h3 className="text-lg dark:text-cyan-50 font-bold mb-2">收藏夹</h3>
 
