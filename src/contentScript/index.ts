@@ -1,7 +1,7 @@
 import { MessageEnum } from '@/utils/message'
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  debugger
+  console.log(message)
   if (message === MessageEnum.getCookie) {
     sendResponse(document.cookie)
   }

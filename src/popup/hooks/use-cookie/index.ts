@@ -7,7 +7,6 @@ const useCookie = () => {
 
   React.useEffect(() => {
     chrome.runtime.sendMessage(MessageEnum.getCookie, (cookieValue) => {
-      debugger
       dataConext.dispatch?.((oldValue) => {
         return {
           ...oldValue,
