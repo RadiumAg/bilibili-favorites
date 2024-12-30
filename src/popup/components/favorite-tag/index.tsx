@@ -26,7 +26,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
           }}
           onMouseUp={handlleMouseUp}
           className={classNames(
-            'whitespace-nowrap bg-blue-50 dark:bg-slate-600 rounded p-1 text-sm flex items-center gap-x-1 relative overflow-hidden',
+            'whitespace-nowrap dark:bg-slate-600 bg-blue-50 rounded p-1 text-sm flex items-center gap-x-1 relative overflow-hidden',
             {
               ['bg-blue-300']: dataContext.activeKey === data.id,
               ['dark:bg-slate-700']: dataContext.activeKey === data.id,
