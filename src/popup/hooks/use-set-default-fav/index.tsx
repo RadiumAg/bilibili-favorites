@@ -1,11 +1,14 @@
 import React from 'react'
 import { useLongPress } from 'ahooks'
+import { DataContext } from '@/popup/utils/data-context'
 
 const useSetDefaultFav = () => {
   const delayNumber = 300
+  const dataContext = React.use(DataContext)
   const [isLongPress, setLongPress] = React.useState(false)
   const maskDomRef = React.useRef<HTMLDivElement>(null)
   const domRef = React.useRef<HTMLDivElement>(null)
+
   const [clickTagId, setClickTagId] = React.useState<number | undefined>()
   const clickTagIdRef = React.useRef<number | undefined>(undefined)
 
@@ -19,6 +22,12 @@ const useSetDefaultFav = () => {
     ),
     [],
   )
+
+  const handleClick = (key: number) => {
+    dataContext.dispatch?.((oldValue) => {
+      return { ...oldValue, activeKey: key }
+    })
+  }
 
   const handleMouseDown = (id: number) => {
     setClickTagId(id)
@@ -42,6 +51,12 @@ const useSetDefaultFav = () => {
         setClickTagId(undefined)
         clickTagIdRef.current = undefined
       },
+      onClick(event) {
+        const target = event.target as HTMLDivElement
+        if (target.dataset.id == null) return
+
+        handleClick(+target.dataset.id)
+      },
     },
   )
 
@@ -51,22 +66,29 @@ const useSetDefaultFav = () => {
 
     let process = 0
 
-    const runProceess = (handleValue?: number) => {
-      if (handleValue && process === 100) {
-        cancelAnimationFrame(handleValue)
-        return
-      }
+    const runProceess = () => {
+      requestAnimationFrame(() => {
+        if (clickTagIdRef.current == null) {
+          return
+        }
 
-      const handle = requestAnimationFrame(() => {
-        maskDomRef.current!.style.width = `${(process += 1)}%`
-        runProceess(handle)
+        if (process >= 100) {
+          dataContext.dispatch?.((oldData) => {
+            return { ...oldData, defaultFavoriteId: clickTagId }
+          })
+          maskDomRef.current!.style.width = `${0}%`
+          return
+        }
+
+        maskDomRef.current!.style.width = `${(process += 5)}%`
+        runProceess()
       })
     }
 
     runProceess()
   }, [clickTagId, isLongPress])
 
-  return { domRef, clickTagId, pendingElement, handleMouseDown, handlleMouseUp }
+  return { domRef, isLongPress, clickTagId, pendingElement, handleMouseDown, handlleMouseUp }
 }
 
 export { useSetDefaultFav }

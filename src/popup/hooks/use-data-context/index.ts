@@ -11,7 +11,7 @@ const useDataContext = () => {
   const isFirstMount = React.useRef<boolean>(true)
   const provideData = React.useMemo<DataContextType>(() => {
     return { ...dataContext, dispatch: setDataContext }
-  }, [dataContext.activeKey, dataContext.keyword])
+  }, [dataContext.activeKey, dataContext.keyword, dataContext.defaultFavoriteId])
 
   const getData = async () => {
     const { keyword, activeKey } = await chrome.storage.sync.get(['keyword', 'activeKey'])
@@ -34,7 +34,7 @@ const useDataContext = () => {
       keyword: JSON.stringify(dataContext.keyword),
       activeKey: dataContext.activeKey,
     })
-  }, [dataContext.keyword, dataContext.activeKey])
+  }, [dataContext.keyword, dataContext.activeKey, dataContext.defaultFavoriteId])
 
   return provideData
 }

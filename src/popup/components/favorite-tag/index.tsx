@@ -10,7 +10,8 @@ type FavoriteTagProps = {
 
 const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   const { fetchPromise } = props
-  const { domRef, clickTagId, pendingElement, handleMouseDown, handlleMouseUp } = useSetDefaultFav()
+  const { domRef, clickTagId, pendingElement, isLongPress, handleMouseDown, handlleMouseUp } =
+    useSetDefaultFav()
   const dataContext = React.use(DataContext)
   const promiseData = React.use(fetchPromise)
 
@@ -19,10 +20,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
       return (
         <div
           key={data.id}
-          data-key={data.id}
-          onClick={() => {
-            handleClick(data.id)
-          }}
+          data-id={data.id}
           onMouseDown={() => {
             handleMouseDown(data.id)
           }}
@@ -36,16 +34,19 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
           )}
         >
           #{data.title} {clickTagId === data.id && pendingElement}
+          {dataContext.defaultFavoriteId === data.id && '|'}
         </div>
       )
     })
-  }, [dataContext.activeKey, pendingElement, clickTagId])
+  }, [
+    dataContext.activeKey,
+    dataContext.defaultFavoriteId,
+    pendingElement,
+    clickTagId,
+    isLongPress,
+  ])
 
-  const handleClick = (key: number) => {
-    dataContext.dispatch?.((oldValue) => {
-      return { ...oldValue, activeKey: key }
-    })
-  }
+  console.log('defaultFavoriteId', dataContext.defaultFavoriteId)
 
   React.useEffect(() => {
     dataContext.dispatch?.((oldData) => {
