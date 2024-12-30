@@ -1,7 +1,7 @@
 import React from 'react'
+import classNames from 'classnames'
 import { getFavoriteList } from '../../utils/api'
 import { DataContext } from '../../utils/data-context'
-import classNames from 'classnames'
 import { useSetDefaultFav } from '@/popup/hooks/use-set-default-fav'
 
 type FavoriteTagProps = {
@@ -33,13 +33,10 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
           }}
           onMouseUp={handleMouseUp}
           className={classNames(
-            'whitespace-nowrap rounded p-1 text-sm flex items-center gap-x-1 relative overflow-hidden',
+            'whitespace-nowrap rounded p-1 text-sm flex items-center gap-x-1 relative overflow-hidden border-[1px] border-solid border-black',
             {
-              ['bg-blue-300']: dataContext.activeKey === data.id,
-              ['bg-blue-50']: dataContext.activeKey !== data.id,
-
-              ['dark:bg-slate-700']: dataContext.activeKey === data.id,
-              ['dark:bg-slate-600']: dataContext.activeKey !== data.id,
+              ['bg-b-primary text-white']: dataContext.activeKey === data.id,
+              ['text-black bg-white']: dataContext.activeKey !== data.id,
             },
           )}
         >
@@ -62,7 +59,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   }, [])
 
   return (
-    <div ref={domRef} className="dark:text-white flex gap-1 flex-wrap cursor-pointer">
+    <div ref={domRef} className="flex gap-1 flex-wrap cursor-pointer">
       {tagElementArray}
     </div>
   )

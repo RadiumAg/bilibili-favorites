@@ -14,7 +14,9 @@ const useEditKeyword = () => {
         <span
           key={index}
           contentEditable={false}
-          className={'dark:text-white bg-slate-400 p-1 cursor-pointer flex items-center relative'}
+          className={
+            'text-white p-1 cursor-pointer flex items-center relative bg-b-primary rounded-sm'
+          }
         >
           {keyValue.value}
 
@@ -30,7 +32,7 @@ const useEditKeyword = () => {
           >
             <path
               d="M942.8 73.4c-22-21.6-57.4-21.3-79 0.7L512 432.2 160.3 74.1c-21.6-22-57-22.3-79-0.7s-22.3 57-0.7 79L433.7 512 80.5 871.6c-21.6 22-21.3 57.4 0.7 79s57.4 21.3 79-0.7L512 591.8 863.7 950c21.6 22 57 22.3 79 0.7s22.3-57 0.7-79L590.3 512l353.2-359.6c21.6-22 21.3-57.4-0.7-79z"
-              fill="#181818"
+              fill="#fff"
               p-id="4258"
             ></path>
           </svg>

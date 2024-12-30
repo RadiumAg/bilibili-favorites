@@ -9,7 +9,7 @@ const useSetDefaultFav = () => {
   const [isLongPress, setLongPress] = React.useState(false)
   const maskDomRef = React.useRef<HTMLDivElement>(null)
   const domRef = React.useRef<HTMLDivElement>(null)
-  const [starDomRef, setStarDomRef] = React.useState<HTMLDivElement>(null)
+  const [starDomRef, setStarDomRef] = React.useState<HTMLDivElement | null>(null)
   const [clickTagId, setClickTagId] = React.useState<number | undefined>()
   const clickTagIdRef = React.useRef<number | undefined>(undefined)
   const starJson = new URL('@/assets/lottile/star.json', import.meta.url).href

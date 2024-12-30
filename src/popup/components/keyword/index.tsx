@@ -6,10 +6,13 @@ const Keyword: React.FC = () => {
 
   return (
     <>
-      <div className="border-solid border-cyan-200 border-2 h-44 dark:text-white flex flex-wrap p-1 items-start content-start gap-1 overflow-auto ">
+      <div className="border-solid border-cyan-200 border-2 h-44  flex flex-wrap p-1 items-start content-start gap-1 overflow-auto ">
         {tagElementArray}
 
-        <input className="outline-none bg-transparent p-1" onKeyDown={handleKeyDown} />
+        <input
+          className="outline-none bg-transparent p-1  text-b-text-primary"
+          onKeyDown={handleKeyDown}
+        />
       </div>
     </>
   )
