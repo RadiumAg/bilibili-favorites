@@ -9,8 +9,13 @@ import { useDataContext } from './hooks'
 import Move from './components/move'
 
 export const Popup = () => {
-  const favoriteFlagFetchPromise = React.useMemo(() => getAllFavoriteFlag(), [])
   const dataProvideData = useDataContext()
+
+  console.log(dataProvideData.cookie)
+  const favoriteFlagFetchPromise = React.useMemo(
+    () => getAllFavoriteFlag(dataProvideData.cookie),
+    [dataProvideData.cookie],
+  )
 
   return (
     <DataContext.Provider value={dataProvideData}>

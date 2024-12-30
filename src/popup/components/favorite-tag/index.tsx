@@ -23,7 +23,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   const promiseData = React.use(fetchPromise)
 
   const tagElementArray = React.useMemo(() => {
-    return promiseData.data.list.map((data) => {
+    return promiseData.data?.list?.map((data) => {
       return (
         <div
           key={data.id}
@@ -50,10 +50,13 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   console.log('defaultFavoriteId', dataContext.defaultFavoriteId)
 
   React.useEffect(() => {
+    const list = promiseData.data?.list
+    if (list == null) return
+
     dataContext.dispatch?.((oldData) => {
       return {
         ...oldData,
-        favoriteData: promiseData.data.list,
+        favoriteData: list,
       }
     })
   }, [])

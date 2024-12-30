@@ -10,6 +10,7 @@ type DataContextType = {
     mid: number
     title: string
   }[]
+  cookie: string | undefined
   activeKey: number | undefined
   defaultFavoriteId: number | undefined
   keyword: { value: { id: string; value: string }[]; favoriteDataId: number }[]
@@ -19,6 +20,7 @@ type DataContextType = {
 const DataContext = React.createContext<DataContextType>({
   favoriteData: [],
   keyword: [],
+  cookie: undefined,
   activeKey: undefined,
   dispatch: null,
   defaultFavoriteId: undefined,

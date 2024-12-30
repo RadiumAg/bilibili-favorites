@@ -1,13 +1,16 @@
-import { DataContextType } from '@/popup/utils/data-context'
 import React from 'react'
+import { DataContextType } from '@/popup/utils/data-context'
+import { useCookie } from '../use-cookie'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
     keyword: [],
     favoriteData: [],
+    cookie: undefined,
     activeKey: undefined,
     defaultFavoriteId: undefined,
   })
+  const cookie = useCookie()
   const isFirstMount = React.useRef<boolean>(true)
   const provideData = React.useMemo<DataContextType>(() => {
     return { ...dataContext, dispatch: setDataContext }
@@ -33,6 +36,7 @@ const useDataContext = () => {
     chrome.storage.sync.set({
       keyword: JSON.stringify(dataContext.keyword),
       activeKey: dataContext.activeKey,
+      cookie,
     })
   }, [dataContext.keyword, dataContext.activeKey, dataContext.defaultFavoriteId])
 
