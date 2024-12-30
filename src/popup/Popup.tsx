@@ -3,7 +3,7 @@ import './Popup.css'
 import FavoriteTag from './components/favorite-tag'
 import { getAllFavoriteFlag } from './utils/api'
 import Keyword from './components/keyword'
-import { DataContext, DataContextType } from './utils/data-context'
+import { DataContext } from './utils/data-context'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDataContext } from './hooks'
 

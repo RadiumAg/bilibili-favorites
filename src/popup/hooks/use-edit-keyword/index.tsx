@@ -1,6 +1,5 @@
 import React from 'react'
 import { DataContext } from '../../utils/data-context'
-import classNames from 'classnames'
 import { v4 as uuid } from 'uuid'
 
 const useEditKeyword = () => {
@@ -15,9 +14,7 @@ const useEditKeyword = () => {
         <span
           key={index}
           contentEditable={false}
-          className={classNames(
-            'dark:text-white bg-slate-400 p-1 cursor-pointer flex items-center',
-          )}
+          className={'dark:text-white bg-slate-400 p-1 cursor-pointer flex items-center relative'}
         >
           {keyValue.value}
 
