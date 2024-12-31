@@ -27,7 +27,7 @@ const getFavoriteList = (
  *
  * @return {*}
  */
-const getAllFavoriteFlag = (cookies: stirng) => {
+const getAllFavoriteFlag = (cookies?: string) => {
   if (cookies == null) return Promise.resolve({}) as ReturnType<typeof getFavoriteList>
 
   const dedeUserID = getCookieValue('DedeUserID', cookies)

@@ -11,7 +11,6 @@ import Move from './components/move'
 export const Popup = () => {
   const dataProvideData = useDataContext()
 
-  console.log(dataProvideData.cookie)
   const favoriteFlagFetchPromise = React.useMemo(
     () => getAllFavoriteFlag(dataProvideData.cookie),
     [dataProvideData.cookie],
@@ -19,16 +18,19 @@ export const Popup = () => {
 
   return (
     <DataContext.Provider value={dataProvideData}>
-      <main className="w-96 min-h-96 p-3 bg-b-primary bg-opacity-15">
-        <h3 className="text-lg font-bold mb-2 text-b-text-primary flex justify-between">收藏夹</h3>
+      <main className="w-96 min-h-96 p-3 bg-b-primary bg-opacity-15 flex flex-col">
+        <div className="flex-grow">
+          <h3 className="text-lg font-bold mb-2 text-b-text-primary flex justify-between">
+            收藏夹
+          </h3>
 
-        <React.Suspense fallback={<Skeleton className="w-full h-[200px]" />}>
-          <FavoriteTag fetchPromise={favoriteFlagFetchPromise} />
-        </React.Suspense>
+          <React.Suspense fallback={<Skeleton className="w-full h-[200px]" />}>
+            <FavoriteTag fetchPromise={favoriteFlagFetchPromise} />
+          </React.Suspense>
 
-        <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
-        <Keyword />
-
+          <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
+          <Keyword />
+        </div>
         <Move />
       </main>
     </DataContext.Provider>

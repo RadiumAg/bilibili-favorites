@@ -3,6 +3,7 @@ import classNames from 'classnames'
 import { getFavoriteList } from '../../utils/api'
 import { DataContext } from '../../utils/data-context'
 import { useSetDefaultFav } from '@/popup/hooks/use-set-default-fav'
+import { useCookie } from '@/popup/hooks/use-cookie'
 
 type FavoriteTagProps = {
   fetchPromise: ReturnType<typeof getFavoriteList>
@@ -19,6 +20,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     handleMouseDown,
     handleMouseUp,
   } = useSetDefaultFav()
+  useCookie()
   const dataContext = React.use(DataContext)
   const promiseData = React.use(fetchPromise)
 
@@ -45,9 +47,13 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
         </div>
       )
     })
-  }, [dataContext.activeKey, dataContext.defaultFavoriteId, clickTagId, isLongPress])
-
-  console.log('defaultFavoriteId', dataContext.defaultFavoriteId)
+  }, [
+    clickTagId,
+    isLongPress,
+    promiseData.data,
+    dataContext.activeKey,
+    dataContext.defaultFavoriteId,
+  ])
 
   React.useEffect(() => {
     const list = promiseData.data?.list

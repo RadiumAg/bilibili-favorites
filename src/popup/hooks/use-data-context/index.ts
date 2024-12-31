@@ -1,6 +1,5 @@
 import React from 'react'
 import { DataContextType } from '@/popup/utils/data-context'
-import { useCookie } from '../use-cookie'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
@@ -10,11 +9,15 @@ const useDataContext = () => {
     activeKey: undefined,
     defaultFavoriteId: undefined,
   })
-  const cookie = useCookie()
   const isFirstMount = React.useRef<boolean>(true)
   const provideData = React.useMemo<DataContextType>(() => {
-    return { ...dataContext, dispatch: setDataContext }
-  }, [dataContext.activeKey, dataContext.keyword, dataContext.defaultFavoriteId])
+    return { ...dataContext, dispatch: setDataContext, cookie: dataContext.cookie }
+  }, [
+    dataContext.activeKey,
+    dataContext.keyword,
+    dataContext.cookie,
+    dataContext.defaultFavoriteId,
+  ])
 
   const getData = async () => {
     const { keyword, activeKey } = await chrome.storage.sync.get(['keyword', 'activeKey'])
@@ -36,9 +39,10 @@ const useDataContext = () => {
     chrome.storage.sync.set({
       keyword: JSON.stringify(dataContext.keyword),
       activeKey: dataContext.activeKey,
-      cookie,
     })
   }, [dataContext.keyword, dataContext.activeKey, dataContext.defaultFavoriteId])
+
+  console.log('provideData', provideData)
 
   return provideData
 }
