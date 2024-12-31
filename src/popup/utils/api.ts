@@ -15,7 +15,7 @@ type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | 
  * @param pn
  * @param ps
  * @param keyword
- * @returns
+ * @returns Promise<GetFavoriteListRes>
  */
 const getFavoriteList = (
   mediaId: string,
