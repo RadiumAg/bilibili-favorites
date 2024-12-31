@@ -39,7 +39,6 @@ const useMove = () => {
               },
             },
             (message) => {
-              debugger
               resolve(message)
             },
           )
