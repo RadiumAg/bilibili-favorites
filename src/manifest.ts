@@ -36,4 +36,9 @@ export default defineManifest({
     },
   ],
   permissions: ['sidePanel', 'storage'],
+  options_ui: {
+    page: 'options.html',
+    open_in_tab: true,
+    chrome_style: false,
+  },
 })
