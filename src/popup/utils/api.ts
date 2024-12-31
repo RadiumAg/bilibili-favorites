@@ -36,7 +36,6 @@ const getFavoriteList = (
  */
 const getAllFavoriteFlag = (cookies?: string): Promise<GetAllFavoriteFlagRes> => {
   if (cookies == null) return Promise.resolve({}) as Promise<GetAllFavoriteFlagRes>
-
   const dedeUserID = getCookieValue('DedeUserID', cookies)
 
   return fetch(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${dedeUserID}`, {
@@ -60,11 +59,14 @@ const moveFavorite = (
 ) => {
   if (cookies == null) return
 
+  const midString = getCookieValue('DedeUserID', cookies)
+  if (midString == null) return
+
   return fetch('https://api.bilibili.com/x/v3/fav/resource/move', {
     method: 'post',
     body: JSON.stringify({
       resources: `${videoId}:2`,
-      mid: getCookieValue('DedeUserID', cookies),
+      mid: +midString,
       platform: 'web',
       tar_media_id: tarMediaId,
       src_media_id: srcMediaId,
