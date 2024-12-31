@@ -1,5 +1,4 @@
 import React from 'react'
-
 import { Button } from '@/components/ui/button'
 import loadingGif from '@/assets/loading.gif'
 import { useMove } from '@/hooks/use-move'
@@ -18,7 +17,7 @@ const Move: React.FC = () => {
       </Button>
 
       {isLoading && (
-        <div className="fixed flex w-full h-full bg-b-primary top-0 left-0  bg-opacity-70 items-center justify-center">
+        <div className="fixed flex w-full h-full bg-white top-0 left-0 bg-opacity-70 items-center justify-center">
           <img src={loadingGif} />
         </div>
       )}
