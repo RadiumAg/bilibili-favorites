@@ -15,13 +15,7 @@ const useDataContext = () => {
       ...dataContext,
       dispatch: setDataContext,
     }
-  }, [
-    dataContext.activeKey,
-    dataContext.keyword,
-    dataContext.cookie,
-    dataContext.favoriteData,
-    dataContext.defaultFavoriteId,
-  ])
+  }, [...Object.values(dataContext)])
 
   const getData = async () => {
     const { keyword, activeKey, defaultFavoriteId } = await chrome.storage.sync.get([
@@ -49,7 +43,7 @@ const useDataContext = () => {
       activeKey: dataContext.activeKey,
       defaultFavoriteId: dataContext.defaultFavoriteId,
     })
-  }, [dataContext.keyword, dataContext.activeKey, dataContext.defaultFavoriteId])
+  }, [...Object.values(dataContext)])
 
   console.log('provideData', provideData)
 
