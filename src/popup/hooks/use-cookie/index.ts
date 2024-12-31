@@ -10,7 +10,7 @@ const useCookie = () => {
       const tabId = tabs[0].id
       if (tabId == null) return
 
-      chrome.tabs.sendMessage(tabId, MessageEnum.getCookie, (cookieValue) => {
+      chrome.tabs.sendMessage(tabId, { type: MessageEnum.getCookie }, (cookieValue) => {
         dataConext.dispatch?.((oldValue) => {
           return {
             ...oldValue,

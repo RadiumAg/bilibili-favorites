@@ -2,6 +2,7 @@ import React from 'react'
 import { DataContext } from '@/popup/utils/data-context'
 import { getFavoriteList, moveFavorite } from '@/popup/utils/api'
 import { sleep } from '@/popup/utils/promise'
+import { MessageEnum } from '@/utils/message'
 
 const useMove = () => {
   const dataContext = React.use(DataContext)
@@ -17,12 +18,23 @@ const useMove = () => {
     if (dataContext.defaultFavoriteId == null) return
 
     try {
-      await moveFavorite(
-        dataContext.defaultFavoriteId,
-        targetFavoriteId,
-        videoId,
-        dataContext.cookie,
-      )
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tabId = tabs[0].id
+        if (tabId == null) return
+
+        chrome.tabs.sendMessage(
+          tabId,
+          {
+            type: MessageEnum.moveVideo,
+            data: {
+              srcMediaId: dataContext.defaultFavoriteId,
+              tarMediaId: targetFavoriteId,
+              videoId,
+            },
+          },
+          () => {},
+        )
+      })
     } catch (e) {
       if (e instanceof Error) {
         console.error('move video error', e.message)
@@ -46,7 +58,6 @@ const useMove = () => {
       for (const keywordInfo of dataContext.keyword) {
         for (const keyValue of keywordInfo.value) {
           for (const videoInfo of allDefaultFavoriteVideo) {
-            await sleep(50)
             console.log('videoInfo', videoInfo)
             console.log('keyValue', keyValue)
 

@@ -64,14 +64,11 @@ const moveFavorite = (
 
   return fetch('https://api.bilibili.com/x/v3/fav/resource/move', {
     method: 'post',
-    body: JSON.stringify({
-      resources: `${videoId}:2`,
-      mid: +midString,
-      platform: 'web',
-      tar_media_id: tarMediaId,
-      src_media_id: srcMediaId,
-      csrf: getCookieValue('bili_jct', cookies),
-    }),
+    credentials: 'include',
+    body: `resources=${videoId}:2&mid=${midString}&platform=web&tar_media_id=${tarMediaId}&src_media_id=${srcMediaId}&csrf=${getCookieValue('bili_jct', cookies) || ''}`,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
   }).then((res) => res.json())
 }
 

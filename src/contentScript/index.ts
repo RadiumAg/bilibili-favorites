@@ -1,8 +1,20 @@
-import { MessageEnum } from '@/utils/message'
+import { moveFavorite } from '@/popup/utils/api'
+import { Message, MessageEnum } from '@/utils/message'
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log(message)
-  if (message === MessageEnum.getCookie) {
-    sendResponse(document.cookie)
+chrome.runtime.onMessage.addListener(async (message: Message, sender, sendResponse) => {
+  switch (message.type) {
+    case MessageEnum.getCookie:
+      {
+        sendResponse(document.cookie)
+      }
+      break
+awa
+    case MessageEnum.moveVideo:
+      {
+        const { srcMediaId, tarMediaId, videoId } = message.data
+        await moveFavorite(srcMediaId, tarMediaId, videoId, document.cookie)
+        sendResponse()
+      }
+      break
   }
 })
