@@ -16,6 +16,8 @@ const useMove = () => {
     if (Date.now() - startTime < 1000) {
       await sleep(1000)
       setIsLoading(false)
+    } else {
+      setIsLoading(false)
     }
   }
 
@@ -53,15 +55,12 @@ const useMove = () => {
   }
 
   const startMove = async () => {
-    let pageIndex = 0
-
     const run = async () => {
-      if (pageIndex >= 10) return
       if (dataContext.defaultFavoriteId == null) return
 
       const {
         data: { medias: allDefaultFavoriteVideo },
-      } = await getFavoriteList(dataContext.defaultFavoriteId?.toString(), pageIndex, 20)
+      } = await getFavoriteList(dataContext.defaultFavoriteId?.toString(), 1, 36)
 
       if (allDefaultFavoriteVideo == null) return
 
@@ -101,8 +100,7 @@ const useMove = () => {
         }
       }
 
-      pageIndex += 1
-      run()
+      await run()
     }
 
     await run()
