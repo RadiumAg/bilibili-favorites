@@ -1,6 +1,13 @@
 import { getCookieValue } from '@/utils'
 import { DataContextType } from './data-context'
 
+type BResponse<T> = {
+  data: T
+}
+
+type GetAllFavoriteFlagRes = BResponse<{ data: { list: DataContextType['favoriteData'] } }>
+type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | null }>
+
 /**
  * get favorite list
  *
@@ -15,7 +22,7 @@ const getFavoriteList = (
   pn: number,
   ps: number,
   keyword = '',
-): Promise<{ data: { list: DataContextType['favoriteData'] } }> => {
+): Promise<GetFavoriteListRes> => {
   return fetch(
     `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${mediaId}&pn=${pn}&ps=${ps}&keyword=${keyword}&order=mtime&tid=0&platform=web&web_location=333.1387`,
     { method: 'get' },
@@ -27,8 +34,8 @@ const getFavoriteList = (
  *
  * @return {*}
  */
-const getAllFavoriteFlag = (cookies?: string) => {
-  if (cookies == null) return Promise.resolve({}) as ReturnType<typeof getFavoriteList>
+const getAllFavoriteFlag = (cookies?: string): Promise<GetAllFavoriteFlagRes> => {
+  if (cookies == null) return Promise.resolve({}) as Promise<GetAllFavoriteFlagRes>
 
   const dedeUserID = getCookieValue('DedeUserID', cookies)
 
@@ -40,21 +47,28 @@ const getAllFavoriteFlag = (cookies?: string) => {
 /**
  *  move target video to source favorite tag
  *
- * @param {string} srcMediaId
- * @param {string} tarMediaId
- * @param {string} videoId
+ * @param {number} srcMediaId
+ * @param {number} tarMediaId
+ * @param {number} videoId
  * @return {*}
  */
-const moveFavorite = (srcMediaId: string, tarMediaId: string, videoId: string) => {
+const moveFavorite = (
+  srcMediaId: number,
+  tarMediaId: number,
+  videoId: number,
+  cookies?: string,
+) => {
+  if (cookies == null) return
+
   return fetch('https://api.bilibili.com/x/v3/fav/resource/move', {
     method: 'post',
     body: JSON.stringify({
       resources: `${videoId}:2`,
-      mid: getCookieValue('DedeUserID'),
+      mid: getCookieValue('DedeUserID', cookies),
       platform: 'web',
       tar_media_id: tarMediaId,
       src_media_id: srcMediaId,
-      csrf: getCookieValue('bili_jct'),
+      csrf: getCookieValue('bili_jct', cookies),
     }),
   }).then((res) => res.json())
 }
