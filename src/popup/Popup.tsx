@@ -7,6 +7,7 @@ import { DataContext } from './utils/data-context'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDataContext } from './hooks'
 import Move from './components/move'
+import LoginCheck from './components/login-check'
 
 export const Popup = () => {
   const dataProvideData = useDataContext()
@@ -31,6 +32,7 @@ export const Popup = () => {
           <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
           <Keyword />
         </div>
+        <LoginCheck />
         <Move />
       </main>
     </DataContext.Provider>
