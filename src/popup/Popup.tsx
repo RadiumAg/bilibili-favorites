@@ -1,14 +1,13 @@
 import React from 'react'
-import './Popup.css'
 import FavoriteTag from './components/favorite-tag'
 import { getAllFavoriteFlag } from './utils/api'
 import Keyword from './components/keyword'
 import { DataContext } from './utils/data-context'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDataContext } from './hooks'
 import Move from './components/move'
 import LoginCheck from './components/login-check'
 import AutoCreateKeyword from './components/auto-create-keyword'
+import { useDataContext } from '@/hooks'
 
 export const Popup = () => {
   const dataProvideData = useDataContext()

@@ -39,6 +39,5 @@ export default defineManifest({
   options_ui: {
     page: 'options.html',
     open_in_tab: true,
-    chrome_style: false,
   },
 })

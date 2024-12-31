@@ -1,6 +1,6 @@
 import React from 'react'
-import { useCookie } from '@/popup/hooks'
 import noDataImg from '@/assets/no-data.png'
+import { useCookie } from '@/hooks'
 
 const LoginCheck: React.FC = () => {
   const { isLogin } = useCookie()

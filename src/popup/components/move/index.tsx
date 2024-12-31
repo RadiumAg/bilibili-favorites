@@ -1,8 +1,8 @@
 import React from 'react'
 
 import { Button } from '@/components/ui/button'
-import { useMove } from '@/popup/hooks/use-move'
 import loadingGif from '@/assets/loading.gif'
+import { useMove } from '@/hooks/use-move'
 
 const Move: React.FC = () => {
   const { handleMove, isLoading } = useMove()

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useEditKeyword } from '../../hooks'
+import { useEditKeyword } from '@/hooks'
 
 const Keyword: React.FC = () => {
   const { tagElementArray, handleKeyDown } = useEditKeyword()

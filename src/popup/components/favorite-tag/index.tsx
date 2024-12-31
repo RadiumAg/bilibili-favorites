@@ -2,8 +2,8 @@ import React from 'react'
 import classNames from 'classnames'
 import { getAllFavoriteFlag } from '../../utils/api'
 import { DataContext } from '../../utils/data-context'
-import { useSetDefaultFav } from '@/popup/hooks/use-set-default-fav'
-import { useCookie } from '@/popup/hooks/use-cookie'
+import { useCookie } from '@/hooks/use-cookie'
+import { useSetDefaultFav } from '@/hooks'
 
 type FavoriteTagProps = {
   fetchPromise: ReturnType<typeof getAllFavoriteFlag>
