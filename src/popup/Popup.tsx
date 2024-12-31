@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useDataContext } from './hooks'
 import Move from './components/move'
 import LoginCheck from './components/login-check'
+import AutoCreateKeyword from './components/auto-create-keyword'
 
 export const Popup = () => {
   const dataProvideData = useDataContext()
@@ -33,7 +34,11 @@ export const Popup = () => {
           <Keyword />
         </div>
         <LoginCheck />
-        <Move />
+
+        <div className="flex items-center mt-2 gap-x-1">
+          <Move />
+          <AutoCreateKeyword />
+        </div>
       </main>
     </DataContext.Provider>
   )
