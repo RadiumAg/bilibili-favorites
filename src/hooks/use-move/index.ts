@@ -22,29 +22,35 @@ const useMove = () => {
   const fetchMove = async (targetFavoriteId: number, videoId: number) => {
     if (dataContext.defaultFavoriteId == null) return
 
-    try {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tabId = tabs[0].id
-        if (tabId == null) return
+    await new Promise((resolve, reject) => {
+      try {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const tabId = tabs[0].id
+          if (tabId == null) return
 
-        chrome.tabs.sendMessage(
-          tabId,
-          {
-            type: MessageEnum.moveVideo,
-            data: {
-              srcMediaId: dataContext.defaultFavoriteId,
-              tarMediaId: targetFavoriteId,
-              videoId,
+          chrome.tabs.sendMessage(
+            tabId,
+            {
+              type: MessageEnum.moveVideo,
+              data: {
+                srcMediaId: dataContext.defaultFavoriteId,
+                tarMediaId: targetFavoriteId,
+                videoId,
+              },
             },
-          },
-          () => {},
-        )
-      })
-    } catch (e) {
-      if (e instanceof Error) {
-        console.error('move video error', e.message)
+            (message) => {
+              debugger
+              resolve(message)
+            },
+          )
+        })
+      } catch (e) {
+        reject(e)
+        if (e instanceof Error) {
+          console.error('move video error', e.message)
+        }
       }
-    }
+    })
   }
 
   const startMove = async () => {

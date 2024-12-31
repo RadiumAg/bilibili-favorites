@@ -13,7 +13,9 @@ chrome.runtime.onMessage.addListener(async (message: Message, sender, sendRespon
       {
         const { srcMediaId, tarMediaId, videoId } = message.data
         await moveFavorite(srcMediaId, tarMediaId, videoId, document.cookie)
-        sendResponse()
+        console.log('run end')
+
+        sendResponse(MessageEnum.moveVideo)
       }
       break
   }
