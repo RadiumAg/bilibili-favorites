@@ -1,16 +1,14 @@
 {
   "name": "bilibili-favorite",
-  "displayName": "my-crx-app",
+  "displayName": "bilibili-favorite",
   "version": "0.0.0",
-  "author": "**",
+  "author": "Radium",
   "description": "",
   "type": "module",
   "license": "MIT",
   "keywords": [
-    "chrome-extension",
-    "react",
-    "vite",
-    "create-chrome-ext"
+    "bilibili",
+    "tool"
   ],
   "engines": {
     "node": ">=14.18.0"
