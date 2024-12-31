@@ -33,12 +33,13 @@ export const Popup = () => {
           <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
           <Keyword />
         </div>
-        <LoginCheck />
 
         <div className="flex items-center mt-2 gap-x-1">
           <Move />
           <AutoCreateKeyword />
         </div>
+
+        <LoginCheck />
       </main>
     </DataContext.Provider>
   )
