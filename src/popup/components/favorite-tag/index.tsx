@@ -1,12 +1,12 @@
 import React from 'react'
 import classNames from 'classnames'
-import { getFavoriteList } from '../../utils/api'
+import { getAllFavoriteFlag } from '../../utils/api'
 import { DataContext } from '../../utils/data-context'
 import { useSetDefaultFav } from '@/popup/hooks/use-set-default-fav'
 import { useCookie } from '@/popup/hooks/use-cookie'
 
 type FavoriteTagProps = {
-  fetchPromise: ReturnType<typeof getFavoriteList>
+  fetchPromise: ReturnType<typeof getAllFavoriteFlag>
 }
 
 const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
@@ -57,6 +57,8 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
 
   React.useEffect(() => {
     const list = promiseData.data?.list
+
+    console.log(list)
     if (list == null) return
 
     dataContext.dispatch?.((oldData) => {

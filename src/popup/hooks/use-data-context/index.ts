@@ -14,13 +14,12 @@ const useDataContext = () => {
     return {
       ...dataContext,
       dispatch: setDataContext,
-      cookie: dataContext.cookie,
-      defaultFavoriteId: dataContext.defaultFavoriteId,
     }
   }, [
     dataContext.activeKey,
     dataContext.keyword,
     dataContext.cookie,
+    dataContext.favoriteData,
     dataContext.defaultFavoriteId,
   ])
 

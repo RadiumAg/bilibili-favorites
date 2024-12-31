@@ -5,3 +5,5 @@ const sleep = (time: number) => {
     }, time)
   })
 }
+
+export { sleep }

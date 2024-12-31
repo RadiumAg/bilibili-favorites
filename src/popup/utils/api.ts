@@ -5,7 +5,7 @@ type BResponse<T> = {
   data: T
 }
 
-type GetAllFavoriteFlagRes = BResponse<{ data: { list: DataContextType['favoriteData'] } }>
+type GetAllFavoriteFlagRes = BResponse<{ list: DataContextType['favoriteData'] }>
 type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | null }>
 
 /**

@@ -3,6 +3,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { DataContext } from '@/popup/utils/data-context'
 import { getFavoriteList, moveFavorite } from '@/popup/utils/api'
+import { sleep } from '@/popup/utils/promise'
 
 const Move: React.FC = () => {
   const dataContext = React.use(DataContext)
@@ -16,6 +17,7 @@ const Move: React.FC = () => {
 
   const fetchMove = async (targetFavoriteId: number, videoId: number) => {
     if (dataContext.defaultFavoriteId == null) return
+
     try {
       await moveFavorite(
         dataContext.defaultFavoriteId,
@@ -46,6 +48,10 @@ const Move: React.FC = () => {
       for (const keywordInfo of dataContext.keyword) {
         for (const keyValue of keywordInfo.value) {
           for (const videoInfo of allDefaultFavoriteVideo) {
+            await sleep(50)
+            console.log('videoInfo', videoInfo)
+            console.log('keyValue', keyValue)
+
             let regex: string | RegExp | null = null
 
             try {
@@ -58,24 +64,25 @@ const Move: React.FC = () => {
               const targetFavoriteTag = dataContext.favoriteData.find(
                 (fav) => fav.id === keywordInfo.favoriteDataId,
               )
-              if (targetFavoriteTag == null) return
+              if (targetFavoriteTag == null) continue
 
-              fetchMove(targetFavoriteTag.id, videoInfo.id)
+              await fetchMove(targetFavoriteTag.id, videoInfo.id)
+              continue
             } else if (videoInfo.title.includes(keyValue.value)) {
               const targetFavoriteTag = dataContext.favoriteData.find(
                 (fav) => fav.id === keywordInfo.favoriteDataId,
               )
 
-              if (targetFavoriteTag == null) return
-              fetchMove(targetFavoriteTag.id, videoInfo.id)
+              if (targetFavoriteTag == null) continue
+
+              await fetchMove(targetFavoriteTag.id, videoInfo.id)
+              continue
             }
           }
         }
       }
 
       pageIndex += 1
-
-      await sleep(1000)
       run()
     }
 
