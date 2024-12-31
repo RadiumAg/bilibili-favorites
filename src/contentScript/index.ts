@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener(async (message: Message, sender, sendRespon
         sendResponse(document.cookie)
       }
       break
-awa
+
     case MessageEnum.moveVideo:
       {
         const { srcMediaId, tarMediaId, videoId } = message.data

@@ -9,9 +9,14 @@ const useMove = () => {
   const [isLoading, setIsLoading] = React.useState(false)
 
   const handleMove = async () => {
+    const startTime = Date.now()
     setIsLoading(true)
     await startMove()
-    setIsLoading(false)
+
+    if (Date.now() - startTime < 1000) {
+      await sleep(1000)
+      setIsLoading(false)
+    }
   }
 
   const fetchMove = async (targetFavoriteId: number, videoId: number) => {
@@ -95,7 +100,7 @@ const useMove = () => {
       run()
     }
 
-    run()
+    await run()
   }
 
   return {
