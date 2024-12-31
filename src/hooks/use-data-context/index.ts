@@ -1,5 +1,5 @@
 import React from 'react'
-import { DataContextType } from '@/popup/utils/data-context'
+import { DataContextType } from '@/utils/data-context'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
@@ -39,8 +39,8 @@ const useDataContext = () => {
     }
 
     chrome.storage.sync.set({
-      keyword: JSON.stringify(dataContext.keyword),
       activeKey: dataContext.activeKey,
+      keyword: JSON.stringify(dataContext.keyword),
       defaultFavoriteId: dataContext.defaultFavoriteId,
     })
   }, [...Object.values(dataContext)])

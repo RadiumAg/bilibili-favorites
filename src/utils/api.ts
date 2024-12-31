@@ -1,4 +1,4 @@
-import { getCookieValue } from '@/utils'
+import { getCookieValue } from './cookie'
 import { DataContextType } from './data-context'
 
 type BResponse<T> = {

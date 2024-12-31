@@ -1,4 +1,4 @@
-import { moveFavorite } from '@/popup/utils/api'
+import { moveFavorite } from '@/utils/api'
 import { Message, MessageEnum } from '@/utils/message'
 
 chrome.runtime.onMessage.addListener(async (message: Message, sender, sendResponse) => {

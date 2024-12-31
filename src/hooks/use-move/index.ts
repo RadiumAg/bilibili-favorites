@@ -1,7 +1,7 @@
 import React from 'react'
-import { DataContext } from '@/popup/utils/data-context'
-import { getFavoriteList, moveFavorite } from '@/popup/utils/api'
-import { sleep } from '@/popup/utils/promise'
+import { DataContext } from '@/utils/data-context'
+import { getFavoriteList, moveFavorite } from '@/utils/api'
+import { sleep } from '@/utils/promise'
 import { MessageEnum } from '@/utils/message'
 
 const useMove = () => {

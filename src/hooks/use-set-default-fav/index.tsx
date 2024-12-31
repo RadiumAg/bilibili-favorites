@@ -1,7 +1,7 @@
 import React from 'react'
 import lottie from 'lottie-web'
 import { useLongPress } from 'ahooks'
-import { DataContext } from '@/popup/utils/data-context'
+import { DataContext } from '@/utils/data-context'
 
 const useSetDefaultFav = () => {
   const delayNumber = 300

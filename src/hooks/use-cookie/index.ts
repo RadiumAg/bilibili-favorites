@@ -1,7 +1,7 @@
 import React from 'react'
-import { DataContext } from '@/popup/utils/data-context'
+import { DataContext } from '@/utils/data-context'
 import { MessageEnum } from '@/utils/message'
-import { getCookieValue } from '@/utils'
+import { getCookieValue } from '@/utils/cookie'
 
 const useCookie = () => {
   const dataConext = React.use(DataContext)
