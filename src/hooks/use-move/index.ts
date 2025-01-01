@@ -82,8 +82,6 @@ const useMove = () => {
         })
       })
 
-      console.log('allDefaultFavoriteVideo', allDefaultFavoriteVideo)
-
       if (allDefaultFavoriteVideo == null) return
 
       for (const keywordInfo of dataContext.keyword) {
@@ -122,6 +120,7 @@ const useMove = () => {
         }
       }
 
+      await sleep(20)
       await run()
     }
 
