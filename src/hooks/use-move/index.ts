@@ -1,6 +1,6 @@
 import React from 'react'
 import { DataContext } from '@/utils/data-context'
-import { getFavoriteList, moveFavorite } from '@/utils/api'
+import { getFavoriteList } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import { MessageEnum } from '@/utils/message'
 
