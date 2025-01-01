@@ -2,10 +2,10 @@ import React from 'react'
 import { TabProvide } from './provide'
 import classNames from 'classnames'
 
-type TabProps = {
+type TabProps = React.PropsWithChildren<{
   title: string
   keyValue: string
-}
+}>
 
 const Tab: React.FC<TabProps> = (props) => {
   const { title, keyValue } = props

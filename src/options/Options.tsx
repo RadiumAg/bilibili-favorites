@@ -22,7 +22,11 @@ const Options: React.FC = () => {
           'max-w-screen-2xl',
         )}
       >
-        <Tabs />
+        <Tabs>
+          <Tabs.Tab title="关键字管理" keyValue="keyword-manager">
+            <Tabs.Content />
+          </Tabs.Tab>
+        </Tabs>
       </div>
     </DataContext.Provider>
   )
