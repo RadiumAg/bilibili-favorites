@@ -60,7 +60,29 @@ const useMove = () => {
 
       const {
         data: { medias: allDefaultFavoriteVideo },
-      } = await getFavoriteList(dataContext.defaultFavoriteId?.toString(), 1, 36)
+      } = await new Promise<ReturnType<typeof getFavoriteList>>((resolve) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const tabId = tabs[0].id
+          if (tabId == null) return
+
+          chrome.tabs.sendMessage(
+            tabId,
+            {
+              type: MessageEnum.getFavoriteList,
+              data: {
+                mediaId: dataContext.defaultFavoriteId?.toString(),
+                pn: 1,
+                ps: 36,
+              },
+            },
+            (value) => {
+              resolve(value)
+            },
+          )
+        })
+      })
+
+      console.log('allDefaultFavoriteVideo', allDefaultFavoriteVideo)
 
       if (allDefaultFavoriteVideo == null) return
 

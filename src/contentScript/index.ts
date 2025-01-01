@@ -1,4 +1,4 @@
-import { moveFavorite } from '@/utils/api'
+import { getFavoriteList, moveFavorite } from '@/utils/api'
 import { Message, MessageEnum } from '@/utils/message'
 
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
@@ -19,7 +19,23 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
           sendResponse(MessageEnum.moveVideo)
         })
 
-      return true
+      break
+    }
+
+    case MessageEnum.getFavoriteList: {
+      const { mediaId, pn, ps } = message.data
+
+      getFavoriteList(mediaId, pn, ps)
+        .then((data) => {
+          sendResponse(data)
+        })
+        .catch(() => {
+          sendResponse(MessageEnum.getFavoriteList)
+        })
+
+      break
     }
   }
+
+  return true
 })
