@@ -5,10 +5,11 @@ import classNames from 'classnames'
 type TabProps = React.PropsWithChildren<{
   title: string
   keyValue: string
+  defaultTab: boolean
 }>
 
 const Tab: React.FC<TabProps> = (props) => {
-  const { title, keyValue } = props
+  const { title, keyValue, defaultTab } = props
   const tabProvideData = React.use(TabProvide)
 
   const handleClick = () => {
@@ -29,12 +30,23 @@ const Tab: React.FC<TabProps> = (props) => {
     }
   }
 
+  React.useEffect(() => {
+    if (defaultTab) {
+      tabProvideData.dispatch?.((oldValue) => {
+        return {
+          ...oldValue,
+          activeKey: keyValue,
+        }
+      })
+    }
+  }, [])
+
   return (
     <div
       onClick={handleClick}
       className={classNames(
         'text-lg',
-        'px-1',
+        'px-2',
         'py-1',
         'text-center',
         'font-bold',
@@ -53,3 +65,4 @@ const Tab: React.FC<TabProps> = (props) => {
 }
 
 export default Tab
+export type { TabProps }

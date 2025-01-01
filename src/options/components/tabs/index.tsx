@@ -1,5 +1,5 @@
-import React, { Children } from 'react'
-import Tab from './tab'
+import React from 'react'
+import Tab, { TabProps } from './tab'
 import { TabProvide, TabProvideType } from './provide'
 import Content from './content'
 
@@ -18,14 +18,17 @@ const Tabs: React.FC<TabsProps> & { Content: typeof Content; Tab: typeof Tab } =
     }
   }, [...Object.values(provideState)])
 
-  const contentElementList = React.Children.map(children, (child) => {
-    const tabChild = (child as React.ReactElement<TabsProps>).props.children
+  const contentElementList = React.Children.map(children, (child, index) => {
+    const tab = child as React.ReactElement<TabProps>
+    const tabChild = tab.props.children
 
-    if (tabChild == null || Array.isArray(tabChild) || typeof tabChild !== 'object' || tabChild)
-      return null
+    if (Array.isArray(tabChild)) return
+    if (typeof tabChild !== 'object') return
+    if (tabChild == null) return
 
-    React.cloneElement(tabChild, {
-      activeKey: provideData.activeKey,
+    return React.cloneElement(tabChild as any, {
+      key: index,
+      keyValue: tab.props.keyValue,
     })
   })
 
@@ -36,7 +39,7 @@ const Tabs: React.FC<TabsProps> & { Content: typeof Content; Tab: typeof Tab } =
           {children}
         </div>
 
-        <div className="p-4">{contentElementList}</div>
+        <div className="p-6 grow">{contentElementList}</div>
       </div>
     </TabProvide.Provider>
   )

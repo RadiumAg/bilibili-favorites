@@ -23,8 +23,8 @@ const Options: React.FC = () => {
         )}
       >
         <Tabs>
-          <Tabs.Tab title="关键字管理" keyValue="keyword-manager">
-            <Tabs.Content />
+          <Tabs.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
+            <Tabs.Content>234234234</Tabs.Content>
           </Tabs.Tab>
         </Tabs>
       </div>
