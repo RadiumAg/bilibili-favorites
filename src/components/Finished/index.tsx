@@ -5,27 +5,36 @@ import img3 from '@/assets/finish-img/3.png'
 import img4 from '@/assets/finish-img/4.png'
 import img5 from '@/assets/finish-img/5.png'
 import { sleep } from '@/utils/promise'
+import classNames from 'classnames'
 
 type FinishedProps = {
   width?: number
   height?: number
   duration?: number
+  start: boolean
   onFinished?: () => Promise<void> | void
 }
 
 const Finished: React.FC<FinishedProps> = (props) => {
-  const { width = 200, height = 200, duration = 3000, onFinished } = props
+  const { width = 200, height = 200, duration = 4000, start, onFinished } = props
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  const startRef = React.useRef(start)
+  startRef.current = start
+
+  console.log(startRef.current)
 
   const createImageElement = (src: string) => {
-    const img = document.createElement('img')
+    return new Promise<HTMLImageElement>((resolve) => {
+      const img = document.createElement('img')
 
-    img.src = src
-    img.style.objectFit = 'contain'
-    img.width = width
-    img.height = height
-
-    return img
+      img.src = src
+      img.style.objectFit = 'contain'
+      img.width = width
+      img.height = height
+      img.onload = () => {
+        resolve(img)
+      }
+    })
   }
 
   React.useEffect(() => {
@@ -33,13 +42,15 @@ const Finished: React.FC<FinishedProps> = (props) => {
     let destory = false
 
     const play = async (src?: string, index = 0) => {
-      if (destory) true
+      if (destory) return
+      if (!startRef.current) return
+
       if (index > 0) {
         context?.clearRect(0, 0, width, height)
       }
 
       if (src) {
-        const img = createImageElement(src)
+        const img = await createImageElement(src)
         context?.drawImage(img, 0, 0, width, height)
       }
 
@@ -82,9 +93,16 @@ const Finished: React.FC<FinishedProps> = (props) => {
       context?.clearRect(0, 0, width, height)
       console.log('finished destory')
     }
-  }, [])
+  }, [start])
 
-  return <canvas width={width} height={height} ref={canvasRef}></canvas>
+  return (
+    <canvas
+      width={width}
+      height={height}
+      ref={canvasRef}
+      className={classNames({ ['hidden']: start === false })}
+    ></canvas>
+  )
 }
 
 export default Finished

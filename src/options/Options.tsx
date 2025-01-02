@@ -25,9 +25,7 @@ const Options: React.FC = () => {
       >
         <Tabs>
           <Tabs.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
-            <Tabs.Content>
-              <Finished width={100} height={100} />
-            </Tabs.Content>
+            <Tabs.Content></Tabs.Content>
           </Tabs.Tab>
         </Tabs>
       </div>
