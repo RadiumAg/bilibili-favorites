@@ -85,14 +85,14 @@ const Finished: React.FC<FinishedProps> = (props) => {
       })
     }
 
-    Promise.all([
+    Promise.allSettled([
       createImageElement(img1),
       createImageElement(img2),
       createImageElement(img3),
       createImageElement(img4),
       createImageElement(img5),
     ]).then(() => {
-      Promise.all([play(), sleep(duration)]).then(() => {
+      Promise.allSettled([play(), sleep(duration)]).then(() => {
         console.log('finished')
         onFinished?.()
       })
