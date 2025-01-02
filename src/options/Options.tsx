@@ -3,6 +3,7 @@ import { useDataContext } from '@/hooks'
 import { DataContext } from '@/utils/data-context'
 import classNames from 'classnames'
 import Tabs from './components/tabs'
+import Finished from '@/components/Finished'
 
 const Options: React.FC = () => {
   const dataProvideData = useDataContext()
@@ -24,7 +25,9 @@ const Options: React.FC = () => {
       >
         <Tabs>
           <Tabs.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
-            <Tabs.Content>234234234</Tabs.Content>
+            <Tabs.Content>
+              <Finished width={100} height={100} />
+            </Tabs.Content>
           </Tabs.Tab>
         </Tabs>
       </div>
