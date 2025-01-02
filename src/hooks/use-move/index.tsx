@@ -4,7 +4,7 @@ import { getFavoriteList } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import { MessageEnum } from '@/utils/message'
 import loadingGif from '@/assets/loading.gif'
-import Finished from '@/components/Finished'
+import Finished from '@/components/finished-animate'
 import classNames from 'classnames'
 import { log } from '@/utils/log'
 

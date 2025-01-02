@@ -3,7 +3,7 @@ import { useDataContext } from '@/hooks'
 import { DataContext } from '@/utils/data-context'
 import classNames from 'classnames'
 import Tabs from './components/tabs'
-import Finished from '@/components/Finished'
+import Finished from '@/components/finished-animate'
 
 const Options: React.FC = () => {
   const dataProvideData = useDataContext()
