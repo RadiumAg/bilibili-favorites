@@ -22,8 +22,6 @@ const Finished: React.FC<FinishedProps> = (props) => {
   const startRef = React.useRef(start)
   startRef.current = start
 
-  console.log(startRef.current)
-
   const createImageElement = (src: string) => {
     return new Promise<HTMLImageElement>((resolve) => {
       const img = document.createElement('img')
