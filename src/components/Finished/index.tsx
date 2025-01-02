@@ -10,18 +10,18 @@ type FinishedProps = {
   width?: number
   height?: number
   duration?: number
-  start: boolean
   onFinished?: () => Promise<void> | void
 }
 
 const Finished: React.FC<FinishedProps> = (props) => {
-  const { width = 200, height = 200, duration = 3000, start = false, onFinished } = props
+  const { width = 200, height = 200, duration = 3000, onFinished } = props
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
 
   const createImageElement = (src: string) => {
     const img = document.createElement('img')
 
     img.src = src
+    img.style.objectFit = 'contain'
     img.width = width
     img.height = height
 
@@ -30,10 +30,10 @@ const Finished: React.FC<FinishedProps> = (props) => {
 
   React.useEffect(() => {
     const context = canvasRef.current?.getContext('2d')
-
-    if (!start) return
+    let destory = false
 
     const play = async (src?: string, index = 0) => {
+      if (destory) true
       if (index > 0) {
         context?.clearRect(0, 0, width, height)
       }
@@ -44,17 +44,17 @@ const Finished: React.FC<FinishedProps> = (props) => {
       }
 
       requestAnimationFrame(async () => {
-        if (index > 2) {
-          await sleep(300)
-        } else if (index > 0) {
-          await sleep(1000)
+        if (index > 0) {
+          await sleep(200)
         }
+
         switch (index) {
           case 0:
             play(img1, ++index)
             break
 
           case 1:
+            await sleep(1000)
             play(img2, ++index)
             break
 
@@ -76,7 +76,13 @@ const Finished: React.FC<FinishedProps> = (props) => {
     Promise.all([play(), sleep(duration)]).then(() => {
       onFinished?.()
     })
-  }, [start])
+
+    return () => {
+      destory = true
+      context?.clearRect(0, 0, width, height)
+      console.log('finished destory')
+    }
+  }, [])
 
   return <canvas width={width} height={height} ref={canvasRef}></canvas>
 }

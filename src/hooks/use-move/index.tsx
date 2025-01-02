@@ -131,14 +131,16 @@ const useMove = () => {
         { hidden: !isLoading },
       )}
     >
-      <div className={classNames({ ['hidden']: !isFinished })}>
+      {isFinished && (
         <Finished
-          start={isFinished}
+          height={150}
+          width={150}
           onFinished={() => {
+            setIsFinished(false)
             setIsLoading(false)
           }}
         />
-      </div>
+      )}
 
       <img src={loadingGif} className={classNames({ ['hidden']: isFinished })} />
     </div>
