@@ -21,7 +21,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const startRef = React.useRef(start)
   startRef.current = start
-  const sleep = useSleep()
+  const { sleep } = useSleep()
 
   const createImageElement = (src: string) => {
     return new Promise<HTMLImageElement>((resolve) => {
@@ -38,8 +38,9 @@ const Finished: React.FC<FinishedProps> = (props) => {
   }
 
   React.useEffect(() => {
-    const context = canvasRef.current?.getContext('2d')
     let destory = false
+    const context = canvasRef.current?.getContext('2d')
+    if (!startRef.current) return
 
     const play = async (src?: string, index = 0) => {
       if (destory) return
@@ -105,7 +106,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
   }, [start])
 
   return (
-    <div className={classNames({ ['hidden']: start === false })}>
+    <div className={classNames('mt-[-10px]', { ['hidden']: start === false })}>
       <canvas width={width} height={height} ref={canvasRef}></canvas>
       {title && <div className="text-b-primary text-sm text-center mt-1">{title}</div>}
     </div>
