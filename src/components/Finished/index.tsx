@@ -4,8 +4,8 @@ import img2 from '@/assets/finish-img/2.png'
 import img3 from '@/assets/finish-img/3.png'
 import img4 from '@/assets/finish-img/4.png'
 import img5 from '@/assets/finish-img/5.png'
-import { sleep } from '@/utils/promise'
 import classNames from 'classnames'
+import { useSleep } from '@/hooks'
 
 type FinishedProps = {
   width?: number
@@ -21,6 +21,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const startRef = React.useRef(start)
   startRef.current = start
+  const sleep = useSleep()
 
   const createImageElement = (src: string) => {
     return new Promise<HTMLImageElement>((resolve) => {
