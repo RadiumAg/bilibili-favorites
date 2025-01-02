@@ -1,5 +1,6 @@
 import React from 'react'
 import { DataContextType } from '@/utils/data-context'
+import { log } from '@/utils/log'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
@@ -45,8 +46,7 @@ const useDataContext = () => {
     })
   }, [...Object.values(dataContext)])
 
-  console.log('provideData', provideData)
-
+  log('provideData', provideData)
   return provideData
 }
 

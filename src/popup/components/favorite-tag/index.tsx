@@ -4,6 +4,7 @@ import { getAllFavoriteFlag } from '../../../utils/api'
 import { DataContext } from '../../../utils/data-context'
 import { useCookie } from '@/hooks/use-cookie'
 import { useSetDefaultFav } from '@/hooks'
+import { log } from '@/utils/log'
 
 type FavoriteTagProps = {
   fetchPromise: ReturnType<typeof getAllFavoriteFlag>
@@ -58,7 +59,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   React.useEffect(() => {
     const list = promiseData.data?.list
 
-    console.log(list)
+    log(list)
     if (list == null) return
 
     dataContext.dispatch?.((oldData) => {

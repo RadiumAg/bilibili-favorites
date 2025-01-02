@@ -6,6 +6,7 @@ import { MessageEnum } from '@/utils/message'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/Finished'
 import classNames from 'classnames'
+import { log } from '@/utils/log'
 
 const useMove = () => {
   const dataContext = React.use(DataContext)
@@ -83,8 +84,8 @@ const useMove = () => {
       for (const keywordInfo of dataContext.keyword) {
         for (const keyValue of keywordInfo.value) {
           for (const videoInfo of allDefaultFavoriteVideo) {
-            console.log('videoInfo', videoInfo)
-            console.log('keyValue', keyValue)
+            log('videoInfo', videoInfo)
+            log('keyValue', keyValue)
 
             let regex: string | RegExp | null = null
 
@@ -124,6 +125,8 @@ const useMove = () => {
 
     if (Date.now() - start < 1000) {
       await sleep(1000)
+      setIsFinished(true)
+    } else {
       setIsFinished(true)
     }
   }

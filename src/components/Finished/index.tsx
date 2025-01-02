@@ -6,6 +6,7 @@ import img4 from '@/assets/finish-img/4.png'
 import img5 from '@/assets/finish-img/5.png'
 import classNames from 'classnames'
 import { useSleep } from '@/hooks'
+import { log } from '@/utils/log'
 
 type FinishedProps = {
   width?: number
@@ -93,7 +94,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
       createImageElement(img5),
     ]).then(() => {
       Promise.allSettled([play(), sleep(duration)]).then(() => {
-        console.log('finished')
+        log('finished')
         onFinished?.()
       })
     })
@@ -101,7 +102,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
     return () => {
       destory = true
       context?.clearRect(0, 0, width, height)
-      console.log('finished destory')
+      log('finished destory')
     }
   }, [start])
 
