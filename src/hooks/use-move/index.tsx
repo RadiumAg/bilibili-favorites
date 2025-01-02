@@ -119,9 +119,13 @@ const useMove = () => {
       await sleep(20)
       await run()
     }
-
+    const start = Date.now()
     await run()
-    setIsFinished(true)
+
+    if (Date.now() - start < 1000) {
+      await sleep(1000)
+      setIsFinished(true)
+    }
   }
 
   const isLoadingElement = (
@@ -135,6 +139,7 @@ const useMove = () => {
         start={isFinished}
         height={150}
         width={150}
+        title="ok喽~~~"
         onFinished={() => {
           setIsFinished(false)
           setIsLoading(false)

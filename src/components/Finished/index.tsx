@@ -12,11 +12,12 @@ type FinishedProps = {
   height?: number
   duration?: number
   start: boolean
+  title?: string
   onFinished?: () => Promise<void> | void
 }
 
 const Finished: React.FC<FinishedProps> = (props) => {
-  const { width = 200, height = 200, duration = 4000, start, onFinished } = props
+  const { width = 200, height = 200, duration = 4000, start, title, onFinished } = props
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const startRef = React.useRef(start)
   startRef.current = start
@@ -84,9 +85,17 @@ const Finished: React.FC<FinishedProps> = (props) => {
       })
     }
 
-    Promise.all([play(), sleep(duration)]).then(() => {
-      console.log('finished')
-      onFinished?.()
+    Promise.all([
+      createImageElement(img1),
+      createImageElement(img2),
+      createImageElement(img3),
+      createImageElement(img4),
+      createImageElement(img5),
+    ]).then(() => {
+      Promise.all([play(), sleep(duration)]).then(() => {
+        console.log('finished')
+        onFinished?.()
+      })
     })
 
     return () => {
@@ -97,12 +106,10 @@ const Finished: React.FC<FinishedProps> = (props) => {
   }, [start])
 
   return (
-    <canvas
-      width={width}
-      height={height}
-      ref={canvasRef}
-      className={classNames({ ['hidden']: start === false })}
-    ></canvas>
+    <div className={classNames({ ['hidden']: start === false })}>
+      <canvas width={width} height={height} ref={canvasRef}></canvas>
+      {title && <div className="text-b-primary text-sm text-center mt-1">{title}</div>}
+    </div>
   )
 }
 
