@@ -3,12 +3,18 @@ import React from 'react'
 const useSleep = () => {
   const sleepRef = React.useRef<NodeJS.Timeout[]>([])
 
+  const clearAll = () => {
+    sleepRef.current.forEach((timer) => {
+      clearTimeout(timer)
+    })
+  }
+
+  React.useEffect(() => {
+    return clearAll
+  }, [])
+
   return {
-    clearAll: () => {
-      sleepRef.current.forEach((timer) => {
-        clearTimeout(timer)
-      })
-    },
+    clearAll: clearAll,
     sleep: (time: number) => {
       return new Promise((resolve) => {
         const timer = setTimeout(() => {
