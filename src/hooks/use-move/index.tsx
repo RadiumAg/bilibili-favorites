@@ -3,22 +3,18 @@ import { DataContext } from '@/utils/data-context'
 import { getFavoriteList } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import { MessageEnum } from '@/utils/message'
+import loadingGif from '@/assets/loading.gif'
+import Finished from '@/components/Finished'
+import classNames from 'classnames'
 
 const useMove = () => {
   const dataContext = React.use(DataContext)
+  const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 
   const handleMove = async () => {
-    const startTime = Date.now()
     setIsLoading(true)
     await startMove()
-
-    if (Date.now() - startTime < 1000) {
-      await sleep(1000)
-      setIsLoading(false)
-    } else {
-      setIsLoading(false)
-    }
   }
 
   const fetchMove = async (targetFavoriteId: number, videoId: number) => {
@@ -124,12 +120,36 @@ const useMove = () => {
       await run()
     }
 
+    setIsFinished(true)
     await run()
   }
 
+  const isLoadingElement = (
+    <>
+      {isLoading && (
+        <div
+          className={classNames(
+            'fixed flex w-full h-full bg-white top-0 left-0 bg-opacity-70 items-center justify-center',
+          )}
+        >
+          {isFinished ? (
+            <Finished
+              onFinished={() => {
+                setIsLoading(false)
+                setIsFinished(true)
+              }}
+            />
+          ) : (
+            <img src={loadingGif} />
+          )}
+        </div>
+      )}
+    </>
+  )
+
   return {
     handleMove,
-    isLoading,
+    isLoadingElement,
   }
 }
 

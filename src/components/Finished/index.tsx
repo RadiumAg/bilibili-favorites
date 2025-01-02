@@ -9,10 +9,12 @@ import { sleep } from '@/utils/promise'
 type FinishedProps = {
   width?: number
   height?: number
+  duration?: number
+  onFinished?: () => Promise<void> | void
 }
 
 const Finished: React.FC<FinishedProps> = (props) => {
-  const { width = 200, height = 200 } = props
+  const { width = 200, height = 200, duration = 3000, onFinished } = props
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
 
   const createImageElement = (src: string) => {
@@ -30,6 +32,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
 
     const play = async (src?: string, index = 0) => {
       if (index > 0) {
+        await sleep(500)
         context?.clearRect(0, 0, width, height)
       }
 
@@ -39,7 +42,6 @@ const Finished: React.FC<FinishedProps> = (props) => {
       }
 
       requestAnimationFrame(async () => {
-        await sleep(300)
         switch (index) {
           case 0:
             play(img1, ++index)
@@ -54,6 +56,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
             break
 
           default: {
+            await sleep(300)
             if (index % 3 === 0) {
               play(img4, ++index)
             } else {
@@ -64,7 +67,9 @@ const Finished: React.FC<FinishedProps> = (props) => {
       })
     }
 
-    play()
+    Promise.all([play(), sleep(duration)]).then(() => {
+      onFinished?.()
+    })
   }, [])
 
   return <canvas width={width} height={height} ref={canvasRef}></canvas>
