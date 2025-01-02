@@ -1,7 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { useMove } from '@/hooks/use-move'
-import Finished from '@/components/Finished'
 
 const Move: React.FC = () => {
   const { handleMove, isLoadingElement } = useMove()

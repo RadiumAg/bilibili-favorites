@@ -10,11 +10,12 @@ type FinishedProps = {
   width?: number
   height?: number
   duration?: number
+  start: boolean
   onFinished?: () => Promise<void> | void
 }
 
 const Finished: React.FC<FinishedProps> = (props) => {
-  const { width = 200, height = 200, duration = 3000, onFinished } = props
+  const { width = 200, height = 200, duration = 3000, start = false, onFinished } = props
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
 
   const createImageElement = (src: string) => {
@@ -30,6 +31,8 @@ const Finished: React.FC<FinishedProps> = (props) => {
   React.useEffect(() => {
     const context = canvasRef.current?.getContext('2d')
 
+    if (!start) return
+
     const play = async (src?: string, index = 0) => {
       if (index > 0) {
         context?.clearRect(0, 0, width, height)
@@ -44,7 +47,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
         if (index > 2) {
           await sleep(300)
         } else if (index > 0) {
-          await sleep(300)
+          await sleep(1000)
         }
         switch (index) {
           case 0:
@@ -73,7 +76,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
     Promise.all([play(), sleep(duration)]).then(() => {
       onFinished?.()
     })
-  }, [])
+  }, [start])
 
   return <canvas width={width} height={height} ref={canvasRef}></canvas>
 }

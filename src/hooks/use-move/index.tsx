@@ -11,9 +11,9 @@ const useMove = () => {
   const dataContext = React.use(DataContext)
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
-
   const handleMove = async () => {
     setIsLoading(true)
+    setIsFinished(false)
     await startMove()
   }
 
@@ -120,32 +120,28 @@ const useMove = () => {
       await run()
     }
 
-    setIsFinished(false)
     await run()
     setIsFinished(true)
   }
 
   const isLoadingElement = (
-    <>
-      {isLoading && (
-        <div
-          className={classNames(
-            'fixed flex w-full h-full bg-white top-0 left-0 bg-opacity-70 items-center justify-center',
-          )}
-        >
-          {isFinished ? (
-            <Finished
-              onFinished={() => {
-                setIsLoading(false)
-                setIsFinished(false)
-              }}
-            />
-          ) : (
-            <img src={loadingGif} />
-          )}
-        </div>
+    <div
+      className={classNames(
+        'fixed flex w-full h-full bg-white top-0 left-0 bg-opacity-70 items-center justify-center',
+        { hidden: !isLoading },
       )}
-    </>
+    >
+      <div className={classNames({ ['hidden']: !isFinished })}>
+        <Finished
+          start={isFinished}
+          onFinished={() => {
+            setIsLoading(false)
+          }}
+        />
+      </div>
+
+      <img src={loadingGif} className={classNames({ ['hidden']: isFinished })} />
+    </div>
   )
 
   return {
