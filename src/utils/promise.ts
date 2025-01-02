@@ -1,6 +1,7 @@
 const sleep = (time: number) => {
   return new Promise((resolve) => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
+      clearTimeout(timer)
       resolve(undefined)
     }, time)
   })

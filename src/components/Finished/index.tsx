@@ -85,6 +85,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
     }
 
     Promise.all([play(), sleep(duration)]).then(() => {
+      console.log('finished')
       onFinished?.()
     })
 
