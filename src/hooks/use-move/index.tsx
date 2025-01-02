@@ -120,8 +120,9 @@ const useMove = () => {
       await run()
     }
 
-    setIsFinished(true)
+    setIsFinished(false)
     await run()
+    setIsFinished(true)
   }
 
   const isLoadingElement = (
@@ -136,7 +137,7 @@ const useMove = () => {
             <Finished
               onFinished={() => {
                 setIsLoading(false)
-                setIsFinished(true)
+                setIsFinished(false)
               }}
             />
           ) : (

@@ -32,7 +32,6 @@ const Finished: React.FC<FinishedProps> = (props) => {
 
     const play = async (src?: string, index = 0) => {
       if (index > 0) {
-        await sleep(500)
         context?.clearRect(0, 0, width, height)
       }
 
@@ -42,6 +41,11 @@ const Finished: React.FC<FinishedProps> = (props) => {
       }
 
       requestAnimationFrame(async () => {
+        if (index > 2) {
+          await sleep(300)
+        } else if (index > 0) {
+          await sleep(300)
+        }
         switch (index) {
           case 0:
             play(img1, ++index)
@@ -56,7 +60,6 @@ const Finished: React.FC<FinishedProps> = (props) => {
             break
 
           default: {
-            await sleep(300)
             if (index % 3 === 0) {
               play(img4, ++index)
             } else {
