@@ -1,10 +1,12 @@
 import React, { Suspense } from 'react'
 import { useDataContext } from '@/hooks'
-import { DataContext } from '@/utils/data-context'
 import classNames from 'classnames'
 import TabWrapper from './components/tabs'
+import { DataContext } from '@/utils/data-context'
 import { FavoriteTag, Keyword } from '@/components'
 import { getAllFavoriteFlag } from '@/utils/api'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const Options: React.FC = () => {
   const dataProvideData = useDataContext()
@@ -28,6 +30,11 @@ const Options: React.FC = () => {
           'max-w-screen-2xl',
         )}
       >
+        <div className="mb-2">
+          <Input placeholder="请填入关键字" />
+          <Button>go!</Button>
+        </div>
+
         <TabWrapper>
           <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
             <TabWrapper.Content>
