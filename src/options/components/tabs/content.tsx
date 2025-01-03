@@ -11,7 +11,9 @@ const Content: React.FC<ContentProps> = (props) => {
   const provideData = React.use(TabProvide)
 
   return (
-    <div className={classNames('flex-grow', { ['hidden']: keyValue !== provideData.activeKey })}>
+    <div
+      className={classNames('flex-grow h-full', { ['hidden']: keyValue !== provideData.activeKey })}
+    >
       {children}
     </div>
   )

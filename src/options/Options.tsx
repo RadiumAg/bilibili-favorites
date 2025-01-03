@@ -2,8 +2,8 @@ import React, { Suspense } from 'react'
 import { useDataContext } from '@/hooks'
 import { DataContext } from '@/utils/data-context'
 import classNames from 'classnames'
-import Tabs from './components/tabs'
-import { FavoriteTag } from '@/popup/components'
+import TabWrapper from './components/tabs'
+import { FavoriteTag, Keyword } from '@/components'
 import { getAllFavoriteFlag } from '@/utils/api'
 
 const Options: React.FC = () => {
@@ -28,15 +28,23 @@ const Options: React.FC = () => {
           'max-w-screen-2xl',
         )}
       >
-        <Tabs>
-          <Tabs.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
-            <Tabs.Content>
-              <Suspense fallback={11}>
-                <FavoriteTag fetchPromise={favoriteFlagFetchPromise}></FavoriteTag>
-              </Suspense>
-            </Tabs.Content>
-          </Tabs.Tab>
-        </Tabs>
+        <TabWrapper>
+          <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
+            <TabWrapper.Content>
+              <div className="flex gap-x-2 h-full">
+                <div className="w-1/2 h-full">
+                  <Suspense fallback={<></>}>
+                    <FavoriteTag fetchPromise={favoriteFlagFetchPromise} />
+                  </Suspense>
+                </div>
+
+                <div className="w-1/2 h-full">
+                  <Keyword className="h-full" />
+                </div>
+              </div>
+            </TabWrapper.Content>
+          </TabWrapper.Tab>
+        </TabWrapper>
       </div>
     </DataContext.Provider>
   )
