@@ -24,21 +24,21 @@ const Options: React.FC = () => {
           'h-[700px]',
           'shadow-xl',
           'mx-auto',
+          'flex-col',
           'rounded-sm',
           'bg-white',
           'min-w-[786px]',
           'max-w-screen-2xl',
         )}
       >
-        <div className="mb-2">
-          <Input placeholder="请填入关键字" />
-          <Button>go!</Button>
-        </div>
-
         <TabWrapper>
           <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
             <TabWrapper.Content>
-              <div className="flex gap-x-2 h-full">
+              <div className="mb-2 flex items-center">
+                <Button>go!</Button>
+              </div>
+
+              <div className="flex gap-x-2 h-[90%]">
                 <div className="w-1/2 h-full">
                   <Suspense fallback={<></>}>
                     <FavoriteTag fetchPromise={favoriteFlagFetchPromise} />
