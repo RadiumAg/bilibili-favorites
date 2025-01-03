@@ -19,13 +19,15 @@ const useDataContext = () => {
   }, [...Object.values(dataContext)])
 
   const getData = async () => {
-    const { keyword, activeKey, defaultFavoriteId } = await chrome.storage.sync.get([
+    const { keyword, activeKey, cookie, defaultFavoriteId } = await chrome.storage.sync.get([
       'keyword',
       'activeKey',
+      'cookie',
       'defaultFavoriteId',
     ])
+
     setDataContext((oldValue) => {
-      return { ...oldValue, keyword: JSON.parse(keyword), activeKey, defaultFavoriteId }
+      return { ...oldValue, keyword: JSON.parse(keyword), activeKey, cookie, defaultFavoriteId }
     })
   }
 
@@ -40,6 +42,7 @@ const useDataContext = () => {
     }
 
     chrome.storage.sync.set({
+      cookie: dataContext.cookie,
       activeKey: dataContext.activeKey,
       keyword: JSON.stringify(dataContext.keyword),
       defaultFavoriteId: dataContext.defaultFavoriteId,

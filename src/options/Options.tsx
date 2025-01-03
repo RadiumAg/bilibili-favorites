@@ -10,7 +10,7 @@ const Options: React.FC = () => {
   const dataProvideData = useDataContext()
 
   const favoriteFlagFetchPromise = React.useMemo(() => {
-    return Promise.resolve({ data: { list: dataProvideData.favoriteData } })
+    return getAllFavoriteFlag(dataProvideData.cookie)
   }, [dataProvideData.cookie])
 
   return (
