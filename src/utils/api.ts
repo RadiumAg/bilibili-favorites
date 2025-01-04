@@ -75,4 +75,19 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
-export { getAllFavoriteFlag, getFavoriteList, moveFavorite }
+const fetchChatGpt = async () => {
+  const apiKey = 'your-api-key-here' // 使用你自己的 API 密钥
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4',
+      messages: [{ role: 'user', content: 'What is the meaning of life?' }],
+    }),
+  })
+}
+
+export { getAllFavoriteFlag, getFavoriteList, moveFavorite, fetchChatGpt }

@@ -31,8 +31,8 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
         <div
           key={data.id}
           data-id={data.id}
-          onMouseDown={() => {
-            handleMouseDown(data.id)
+          onMouseDown={(event) => {
+            if (event.button === 0) handleMouseDown(data.id)
           }}
           onMouseUp={handleMouseUp}
           className={classNames(

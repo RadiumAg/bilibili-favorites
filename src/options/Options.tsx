@@ -6,7 +6,6 @@ import { DataContext } from '@/utils/data-context'
 import { FavoriteTag, Keyword } from '@/components'
 import { getAllFavoriteFlag } from '@/utils/api'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
 const Options: React.FC = () => {
   const dataProvideData = useDataContext()
@@ -35,12 +34,12 @@ const Options: React.FC = () => {
           <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
             <TabWrapper.Content>
               <div className="mb-2 flex items-center">
-                <Button>go!</Button>
+                <Button size="sm">go!</Button>
               </div>
 
               <div className="flex gap-x-2 h-[90%]">
                 <div className="w-1/2 h-full">
-                  <Suspense fallback={<></>}>
+                  <Suspense fallback={<img src="" />}>
                     <FavoriteTag fetchPromise={favoriteFlagFetchPromise} />
                   </Suspense>
                 </div>
