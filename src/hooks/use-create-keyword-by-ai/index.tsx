@@ -1,6 +1,5 @@
 import React from 'react'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
-import { MessageEnum } from '@/utils/message'
 import { useDataContext } from '../use-data-context'
 
 const useCreateKeywordByAi = () => {
