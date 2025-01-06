@@ -25,10 +25,12 @@ const useCreateKeywordByAi = () => {
 
         try {
           let result = ''
+
           while (true) {
             let resultCopy = ''
             const decoder = new TextDecoder('utf-8')
             const { value, done } = await render.read()
+
             if (done) break
 
             const data = JSON.parse(decoder.decode(value)).choices[0]?.delta?.content || ''
