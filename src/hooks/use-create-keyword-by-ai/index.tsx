@@ -26,9 +26,11 @@ const useCreateKeywordByAi = () => {
         try {
           let result = ''
           while (true) {
+            let resultCopy = ''
             const decoder = new TextDecoder('utf-8')
             const { value, done } = await render.read()
             if (done) break
+
             const data = JSON.parse(decoder.decode(value)).choices[0]?.delta?.content || ''
             console.log(data)
 
@@ -41,15 +43,17 @@ const useCreateKeywordByAi = () => {
               continue
             }
 
+            resultCopy = result
+            result = ''
+
             dataProvideData.dispatch?.((oldValue) => {
-              if (result === '') return oldValue
               let targetKeyword = oldValue.keyword.find(
                 (item) => item.favoriteDataId === dataProvideData.activeKey,
               )
               if (targetKeyword == null) {
                 targetKeyword = {
                   favoriteDataId: dataProvideData.activeKey!,
-                  value: [{ id: uuid(), value: result }],
+                  value: [{ id: uuid(), value: resultCopy }],
                 }
 
                 return {
@@ -57,10 +61,9 @@ const useCreateKeywordByAi = () => {
                   keyword: [targetKeyword],
                 }
               } else {
-                targetKeyword.value.push({ id: uuid(), value: result })
+                targetKeyword.value.push({ id: uuid(), value: resultCopy })
               }
 
-              result = ''
               return {
                 ...oldValue,
                 keyword: [...oldValue.keyword],
