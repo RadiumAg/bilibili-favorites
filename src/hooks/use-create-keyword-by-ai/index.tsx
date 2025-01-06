@@ -32,7 +32,6 @@ const useCreateKeywordByAi = () => {
             if (done) break
 
             const data = JSON.parse(decoder.decode(value)).choices[0]?.delta?.content || ''
-            console.log(data)
 
             if (data.includes('[')) continue
             if (data.includes(']')) continue

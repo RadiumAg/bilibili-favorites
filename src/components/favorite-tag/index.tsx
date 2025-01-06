@@ -2,7 +2,6 @@ import React from 'react'
 import classNames from 'classnames'
 import { getAllFavoriteFlag } from '@/utils/api'
 import { DataContext } from '@/utils/data-context'
-import { useCookie } from '@/hooks/use-cookie'
 import { useSetDefaultFav } from '@/hooks'
 import { log } from '@/utils/log'
 

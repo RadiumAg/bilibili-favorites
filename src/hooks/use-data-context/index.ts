@@ -15,7 +15,9 @@ const useDataContext = () => {
   const provideData = React.useMemo<DataContextType>(() => {
     return {
       ...dataContext,
-      dispatch: setDataContext,
+      dispatch(data) {
+        setDataContext(data)
+      },
     }
   }, [...Object.values(dataContext)])
 

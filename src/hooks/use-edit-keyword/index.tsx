@@ -9,8 +9,6 @@ const useEditKeyword = () => {
     (key) => key.favoriteDataId === dataContext.activeKey,
   )
 
-  log('currentFavoriteTag', dataContext['keyword'])
-
   const tagElementArray = React.useMemo(() => {
     return currentFavoriteTag?.value.map((keyValue, index) => {
       return (
