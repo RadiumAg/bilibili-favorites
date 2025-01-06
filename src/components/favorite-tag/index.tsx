@@ -57,7 +57,6 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   React.useEffect(() => {
     const list = promiseData.data?.list
 
-    log(list)
     if (list == null) return
 
     dataContext.dispatch?.((oldData) => {
