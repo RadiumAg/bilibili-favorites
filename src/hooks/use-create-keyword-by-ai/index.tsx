@@ -82,8 +82,6 @@ const useCreateKeywordByAi = () => {
     }
   }
 
-  console.log(dataProvideData)
-
   return { handleCreate }
 }
 
