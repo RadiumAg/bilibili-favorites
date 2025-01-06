@@ -29,7 +29,7 @@ const useCreateKeywordByAi = () => {
             const { value, done } = await render.read()
             if (done) break
 
-            console.log(decoder.decode(value))
+            console.log(decoder.decode(value.choices[0]?.delta?.content || ''))
           }
         } catch (error) {
           console.error(error)

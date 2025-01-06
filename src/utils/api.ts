@@ -78,11 +78,11 @@ const moveFavorite = (
 
 const fetchChatGpt = async (titleArray: string[]) => {
   const openai = await new OpenAI({
-    baseURL: 'https://api.chatanywhere.tech/v1',
+    baseURL: import.meta.env.VITE_OPENAI_URL,
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true,
   }).chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt',
     messages: [
       {
         role: 'system',
