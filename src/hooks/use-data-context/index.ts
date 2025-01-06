@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { log } from '@/utils/log'
 import { DataContextType } from '@/utils/data-context'
-import { useUnmount } from 'ahooks'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
