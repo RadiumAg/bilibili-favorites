@@ -15,9 +15,7 @@ const useDataContext = () => {
   const provideData = React.useMemo<DataContextType>(() => {
     return {
       ...dataContext,
-      dispatch(data) {
-        setDataContext(data)
-      },
+      dispatch: setDataContext,
     }
   }, [...Object.values(dataContext)])
 
@@ -38,7 +36,7 @@ const useDataContext = () => {
         cookie,
         defaultFavoriteId,
         aiConfig: aiConfig,
-        keyword: keyword,
+        keyword,
       }
     })
   }
