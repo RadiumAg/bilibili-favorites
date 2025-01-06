@@ -46,6 +46,8 @@ const useCreateKeywordByAi = () => {
             result = ''
 
             dataProvideData.dispatch?.((oldValue) => {
+              if (resultCopy === '') return
+
               let targetKeyword = oldValue.keyword.find(
                 (item) => item.favoriteDataId === dataProvideData.activeKey,
               )
@@ -63,6 +65,7 @@ const useCreateKeywordByAi = () => {
                 targetKeyword.value.push({ id: uuid(), value: resultCopy })
               }
 
+              resultCopy = ''
               return {
                 ...oldValue,
                 keyword: [...oldValue.keyword],

@@ -68,6 +68,7 @@ const useDataContext = () => {
       isFirstMount.current = true
     }
   }, [])
+
   log('provideData', provideData)
   return provideData
 }
