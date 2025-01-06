@@ -1,7 +1,6 @@
 import React from 'react'
 import { v4 as uuid } from 'uuid'
 import { DataContext } from '@/utils/data-context'
-import { log } from '@/utils/log'
 
 const useEditKeyword = () => {
   const dataContext = React.use(DataContext)
