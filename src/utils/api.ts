@@ -82,7 +82,7 @@ const fetchChatGpt = async (titleArray: string[]) => {
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true,
   }).chat.completions.create({
-    model: 'gpt',
+    model: 'gpt-3.5-turbo',
     messages: [
       {
         role: 'system',

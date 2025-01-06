@@ -1,6 +1,7 @@
 import React from 'react'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
 import { useDataContext } from '../use-data-context'
+import { log } from '@/utils/log'
 
 const useCreateKeywordByAi = () => {
   const dataProvideData = useDataContext()
@@ -27,8 +28,32 @@ const useCreateKeywordByAi = () => {
             const decoder = new TextDecoder('utf-8')
             const { value, done } = await render.read()
             if (done) break
+            const data = JSON.parse(decoder.decode(value)).choices[0]?.delta?.content || ''
 
-            console.log(decoder.decode(value.choices[0]?.delta?.content || ''))
+            if (data === '[' || data === ']') continue
+
+            dataProvideData.dispatch?.((oldValue) => {
+              let targetKeyword = dataProvideData.keyword.find(
+                (item) => item.favoriteDataId === dataProvideData.activeKey,
+              )
+              if (targetKeyword == null) {
+                targetKeyword = {
+                  favoriteDataId: dataProvideData.activeKey!,
+                  value: [],
+                }
+
+                return {
+                  ...oldValue,
+                  keyword: [targetKeyword],
+                }
+              }
+
+              targetKeyword.value = [...targetKeyword?.value, data]
+
+              return {
+                ...oldValue,
+              }
+            })
           }
         } catch (error) {
           console.error(error)

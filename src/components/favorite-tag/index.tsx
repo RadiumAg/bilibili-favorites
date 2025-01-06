@@ -21,7 +21,6 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     handleMouseDown,
     handleMouseUp,
   } = useSetDefaultFav()
-  useCookie()
   const dataContext = React.use(DataContext)
   const promiseData = React.use(fetchPromise)
 
