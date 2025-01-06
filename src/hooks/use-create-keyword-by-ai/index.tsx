@@ -1,7 +1,7 @@
 import React from 'react'
+import { v4 as uuid } from 'uuid'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
 import { useDataContext } from '../use-data-context'
-import { log } from '@/utils/log'
 
 const useCreateKeywordByAi = () => {
   const dataProvideData = useDataContext()
@@ -24,34 +24,46 @@ const useCreateKeywordByAi = () => {
         const render = result.toReadableStream().getReader()
 
         try {
+          let result = ''
           while (true) {
             const decoder = new TextDecoder('utf-8')
             const { value, done } = await render.read()
             if (done) break
             const data = JSON.parse(decoder.decode(value)).choices[0]?.delta?.content || ''
+            console.log(data)
 
-            if (data === '[' || data === ']') continue
+            if (data.includes('[')) continue
+            if (data.includes(']')) continue
+            if (data === '') continue
+
+            if (!data.includes(',')) {
+              result += data
+              continue
+            }
 
             dataProvideData.dispatch?.((oldValue) => {
-              let targetKeyword = dataProvideData.keyword.find(
+              if (result === '') return oldValue
+              let targetKeyword = oldValue.keyword.find(
                 (item) => item.favoriteDataId === dataProvideData.activeKey,
               )
               if (targetKeyword == null) {
                 targetKeyword = {
                   favoriteDataId: dataProvideData.activeKey!,
-                  value: [],
+                  value: [{ id: uuid(), value: result }],
                 }
 
                 return {
                   ...oldValue,
                   keyword: [targetKeyword],
                 }
+              } else {
+                targetKeyword.value.push({ id: uuid(), value: result })
               }
 
-              targetKeyword.value = [...targetKeyword?.value, data]
-
+              result = ''
               return {
                 ...oldValue,
+                keyword: [...oldValue.keyword],
               }
             })
           }
@@ -66,6 +78,8 @@ const useCreateKeywordByAi = () => {
         break
     }
   }
+
+  console.log(dataProvideData)
 
   return { handleCreate }
 }

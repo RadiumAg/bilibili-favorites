@@ -1,12 +1,15 @@
 import React from 'react'
 import { v4 as uuid } from 'uuid'
 import { DataContext } from '@/utils/data-context'
+import { log } from '@/utils/log'
 
 const useEditKeyword = () => {
   const dataContext = React.use(DataContext)
   const currentFavoriteTag = dataContext['keyword'].find(
     (key) => key.favoriteDataId === dataContext.activeKey,
   )
+
+  log('currentFavoriteTag', dataContext['keyword'])
 
   const tagElementArray = React.useMemo(() => {
     return currentFavoriteTag?.value.map((keyValue, index) => {

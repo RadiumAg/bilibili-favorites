@@ -36,7 +36,7 @@ const useDataContext = () => {
         cookie,
         defaultFavoriteId,
         aiConfig: aiConfig,
-        keyword: JSON.parse(keyword),
+        keyword: keyword,
       }
     })
   }
@@ -58,7 +58,7 @@ const useDataContext = () => {
       },
       cookie: dataContext.cookie,
       activeKey: dataContext.activeKey,
-      keyword: JSON.stringify(dataContext.keyword),
+      keyword: dataContext.keyword,
       defaultFavoriteId: dataContext.defaultFavoriteId,
     })
   }, [...Object.values(dataContext)])
