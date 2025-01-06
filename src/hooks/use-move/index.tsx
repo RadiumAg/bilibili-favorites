@@ -81,7 +81,9 @@ const useMove = () => {
 
       if (allDefaultFavoriteVideo == null) return
 
-      for (const keywordInfo of dataContext.keyword) {
+      for (const keywordInfo of dataContext.keyword.filter(
+        (key) => key.favoriteDataId !== dataContext.defaultFavoriteId,
+      )) {
         for (const keyValue of keywordInfo.value) {
           for (const videoInfo of allDefaultFavoriteVideo) {
             log('videoInfo', videoInfo)
