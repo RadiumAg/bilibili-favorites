@@ -1,5 +1,6 @@
 import { getCookieValue } from './cookie'
 import { DataContextType } from './data-context'
+import OpenAI from 'openai'
 
 type BResponse<T> = {
   data: T
@@ -76,17 +77,17 @@ const moveFavorite = (
 }
 
 const fetchChatGpt = async () => {
-  const apiKey = 'your-api-key-here' // 使用你自己的 API 密钥
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4',
-      messages: [{ role: 'user', content: 'What is the meaning of life?' }],
-    }),
+  const openai = new OpenAI({
+    baseURL: 'https://api.chatanywhere.tech/v1',
+    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  }).chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      {
+        role: 'user',
+        content: '',
+      },
+    ],
   })
 }
 
