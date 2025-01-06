@@ -21,7 +21,7 @@ const Options: React.FC = () => {
       <div
         className={classNames(
           'flex',
-          'mt-52',
+          'mt-[5%]',
           'h-[700px]',
           'shadow-xl',
           'mx-auto',
@@ -36,7 +36,7 @@ const Options: React.FC = () => {
           <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
             <TabWrapper.Content>
               <div className="mb-2 flex items-center">
-                <Button onClick={handleCreate.bind(null, 'all')} size="sm">
+                <Button className="mr-2" onClick={handleCreate.bind(null, 'all')} size="sm">
                   为所有创建
                 </Button>
 

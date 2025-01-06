@@ -65,6 +65,10 @@
   }
 }
 
+:root {
+  --primary: 196, 100%, 46%;
+}
+
 body {
   font-family: 'PingFang SC,HarmonyOS_Medium,Helvetica Neue,Microsoft YaHei,sans-serif';
 }

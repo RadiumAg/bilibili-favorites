@@ -65,6 +65,10 @@
   }
 }
 
+:root {
+  --primary: 196, 100%, 46%;
+}
+
 body {
   width: 100vw;
   height: 100vh;
