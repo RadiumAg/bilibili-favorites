@@ -21,7 +21,7 @@ const useDataContext = () => {
 
   const getData = async () => {
     const { keyword, activeKey, cookie, aiConfig, defaultFavoriteId } =
-      await chrome.storage.sync.get([
+      await chrome.storage.local.get([
         'keyword',
         'activeKey',
         'cookie',
@@ -51,7 +51,7 @@ const useDataContext = () => {
       return
     }
 
-    chrome.storage.sync.set({
+    chrome.storage.local.set({
       aiConfig: {
         key: dataContext.aiConfig?.key,
         baseUrl: dataContext.aiConfig?.baseUrl,
@@ -62,12 +62,6 @@ const useDataContext = () => {
       defaultFavoriteId: dataContext.defaultFavoriteId,
     })
   }, [...Object.values(dataContext)])
-
-  useEffect(() => {
-    return () => {
-      isFirstMount.current = true
-    }
-  }, [])
 
   log('provideData', provideData)
   return provideData
