@@ -1,10 +1,10 @@
 import React from 'react'
 import { v4 as uuid } from 'uuid'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
-import { useDataContext } from '../use-data-context'
+import { DataContext } from '@/utils/data-context'
 
 const useCreateKeywordByAi = () => {
-  const dataProvideData = useDataContext()
+  const dataProvideData = React.use(DataContext)
 
   const handleCreate = async (type: 'select' | 'all') => {
     switch (type) {
@@ -49,9 +49,11 @@ const useCreateKeywordByAi = () => {
 
             dataProvideData.dispatch?.((oldValue) => {
               if (resultCopy === '') {
+                console.log('oldValue', [...oldValue.keyword])
                 return { ...oldValue, keyword: [...oldValue.keyword] }
               }
 
+              resultCopy = resultCopy.replace(/^"|"$/, '')
               let targetKeyword = oldValue.keyword.find(
                 (item) => item.favoriteDataId === dataProvideData.activeKey,
               )
@@ -63,7 +65,7 @@ const useCreateKeywordByAi = () => {
 
                 return {
                   ...oldValue,
-                  keyword: [targetKeyword],
+                  keyword: [...oldValue.keyword, targetKeyword],
                 }
               } else {
                 targetKeyword.value.push({ id: uuid(), value: resultCopy })
