@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { log } from '@/utils/log'
 import { DataContextType } from '@/utils/data-context'
 import { useUnmount } from 'ahooks'
@@ -64,11 +64,11 @@ const useDataContext = () => {
     })
   }, [...Object.values(dataContext)])
 
-  useUnmount(() => {
+  useEffect(() => {
     return () => {
       isFirstMount.current = true
     }
-  })
+  }, [])
   log('provideData', provideData)
   return provideData
 }
