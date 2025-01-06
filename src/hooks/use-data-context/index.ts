@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { log } from '@/utils/log'
 import { DataContextType } from '@/utils/data-context'
 
@@ -19,32 +19,6 @@ const useDataContext = () => {
     }
   }, [...Object.values(dataContext)])
 
-  const getData = async () => {
-    const { keyword, activeKey, cookie, aiConfig, defaultFavoriteId } =
-      await chrome.storage.local.get([
-        'keyword',
-        'activeKey',
-        'cookie',
-        'aiConfig',
-        'defaultFavoriteId',
-      ])
-
-    setDataContext((oldValue) => {
-      return {
-        ...oldValue,
-        activeKey,
-        cookie,
-        defaultFavoriteId,
-        aiConfig: aiConfig,
-        keyword,
-      }
-    })
-  }
-
-  React.useEffect(() => {
-    getData()
-  }, [])
-
   React.useEffect(() => {
     if (isFirstMount.current) {
       isFirstMount.current = false
@@ -62,6 +36,40 @@ const useDataContext = () => {
       defaultFavoriteId: dataContext.defaultFavoriteId,
     })
   }, [...Object.values(dataContext)])
+
+  React.useEffect(() => {
+    let isMount = false
+
+    const getData = async () => {
+      const { keyword, activeKey, cookie, aiConfig, defaultFavoriteId } =
+        await chrome.storage.local.get([
+          'keyword',
+          'activeKey',
+          'cookie',
+          'aiConfig',
+          'defaultFavoriteId',
+        ])
+
+      if (isMount === false) return
+
+      setDataContext((oldValue) => {
+        return {
+          ...oldValue,
+          activeKey,
+          cookie,
+          defaultFavoriteId,
+          aiConfig: aiConfig,
+          keyword,
+        }
+      })
+    }
+
+    getData()
+
+    return () => {
+      isMount = true
+    }
+  }, [])
 
   log('provideData', provideData)
   return provideData
