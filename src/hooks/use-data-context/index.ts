@@ -1,6 +1,6 @@
 import React from 'react'
-import { DataContextType } from '@/utils/data-context'
 import { log } from '@/utils/log'
+import { DataContextType } from '@/utils/data-context'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
@@ -8,6 +8,7 @@ const useDataContext = () => {
     favoriteData: [],
     cookie: undefined,
     activeKey: undefined,
+    aiConfig: {},
     defaultFavoriteId: undefined,
   })
   const isFirstMount = React.useRef<boolean>(true)
@@ -19,15 +20,24 @@ const useDataContext = () => {
   }, [...Object.values(dataContext)])
 
   const getData = async () => {
-    const { keyword, activeKey, cookie, defaultFavoriteId } = await chrome.storage.sync.get([
-      'keyword',
-      'activeKey',
-      'cookie',
-      'defaultFavoriteId',
-    ])
+    const { keyword, activeKey, cookie, aiConfig, defaultFavoriteId } =
+      await chrome.storage.sync.get([
+        'keyword',
+        'activeKey',
+        'cookie',
+        'aiConfig',
+        'defaultFavoriteId',
+      ])
 
     setDataContext((oldValue) => {
-      return { ...oldValue, keyword: JSON.parse(keyword), activeKey, cookie, defaultFavoriteId }
+      return {
+        ...oldValue,
+        activeKey,
+        cookie,
+        defaultFavoriteId,
+        aiConfig: aiConfig,
+        keyword: JSON.parse(keyword),
+      }
     })
   }
 
@@ -42,6 +52,10 @@ const useDataContext = () => {
     }
 
     chrome.storage.sync.set({
+      aiConfig: {
+        key: dataContext.aiConfig?.key,
+        baseUrl: dataContext.aiConfig?.baseUrl,
+      },
       cookie: dataContext.cookie,
       activeKey: dataContext.activeKey,
       keyword: JSON.stringify(dataContext.keyword),

@@ -76,19 +76,36 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
-const fetchChatGpt = async () => {
-  const openai = new OpenAI({
+const fetchChatGpt = async (titleArray: string[]) => {
+  const openai = await new OpenAI({
     baseURL: 'https://api.chatanywhere.tech/v1',
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+    dangerouslyAllowBrowser: true,
   }).chat.completions.create({
     model: 'gpt-4o',
     messages: [
       {
+        role: 'system',
+        content:
+          '你是一名文案，现在开始，你要根据我提供的视频标题，生成一个关键字数组，例如：["ts学习","大学英语四级"] ，对应关键字：["ts","typescript","大学英语", "四级"]，你只需要返回数组，不可以有其他回答',
+      },
+      {
         role: 'user',
-        content: '',
+        content: '["ts学习","大学英语四级"]',
+      },
+      {
+        role: 'assistant',
+        content: '["ts","typescript","大学英语", "四级"]',
+      },
+      {
+        role: 'user',
+        content: `${JSON.stringify(titleArray)}`,
       },
     ],
+    stream: true,
   })
+
+  return openai
 }
 
 export { getAllFavoriteFlag, getFavoriteList, moveFavorite, fetchChatGpt }

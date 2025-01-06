@@ -10,6 +10,10 @@ type DataContextType = {
     mid: number
     title: string
   }[]
+  aiConfig: {
+    key?: string
+    baseUrl?: string
+  }
   cookie: string | undefined
   activeKey: number | undefined
   defaultFavoriteId: number | undefined
@@ -23,6 +27,7 @@ const DataContext = React.createContext<DataContextType>({
   cookie: undefined,
   activeKey: undefined,
   dispatch: null,
+  aiConfig: {},
   defaultFavoriteId: undefined,
 })
 
