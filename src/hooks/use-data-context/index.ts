@@ -1,6 +1,7 @@
 import React from 'react'
 import { log } from '@/utils/log'
 import { DataContextType } from '@/utils/data-context'
+import { useUnmount } from 'ahooks'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
@@ -63,6 +64,11 @@ const useDataContext = () => {
     })
   }, [...Object.values(dataContext)])
 
+  useUnmount(() => {
+    return () => {
+      isFirstMount.current = true
+    }
+  })
   log('provideData', provideData)
   return provideData
 }
