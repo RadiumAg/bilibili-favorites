@@ -2,11 +2,15 @@ import React from 'react'
 import { v4 as uuid } from 'uuid'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
 import { DataContext } from '@/utils/data-context'
+import loadingImg from '@/assets/loading.gif'
 
 const useCreateKeywordByAi = () => {
   const dataProvideData = React.use(DataContext)
+  const [isLoading, setIsLoading] = React.useState(false)
 
   const handleCreate = async (type: 'select' | 'all') => {
+    setIsLoading(true)
+
     switch (type) {
       case 'select': {
         if (dataProvideData.activeKey == null) return
@@ -88,9 +92,20 @@ const useCreateKeywordByAi = () => {
       default:
         break
     }
+
+    setIsLoading(false)
   }
 
-  return { handleCreate }
+  const loadingElement = isLoading && (
+    <div className="absolute w-full h-full top-0 left-0 bg-white bg-opacity-55 z-[999]">
+      <img
+        className="left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%]  absolute mt-[-51px]"
+        src={loadingImg}
+      ></img>
+    </div>
+  )
+
+  return { loadingElement, handleCreate }
 }
 
 export { useCreateKeywordByAi }

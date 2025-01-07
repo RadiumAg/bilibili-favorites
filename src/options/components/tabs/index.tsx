@@ -39,7 +39,7 @@ const Tabs: React.FC<TabsProps> & { Content: typeof Content; Tab: typeof Tab } =
           {children}
         </div>
 
-        <div className="p-4 grow h-full">{contentElementList}</div>
+        <div className="p-4 grow h-full relative">{contentElementList}</div>
       </div>
     </TabProvide.Provider>
   )

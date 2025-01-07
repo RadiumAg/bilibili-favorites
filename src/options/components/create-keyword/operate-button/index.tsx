@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { useCreateKeywordByAi } from '@/hooks'
 
 const OperateButton: React.FC = () => {
-  const { handleCreate } = useCreateKeywordByAi()
+  const { handleCreate, loadingElement } = useCreateKeywordByAi()
 
   return (
     <>
@@ -14,6 +14,7 @@ const OperateButton: React.FC = () => {
       <Button onClick={handleCreate.bind(null, 'select')} size="sm">
         为选中创建
       </Button>
+      {loadingElement}
     </>
   )
 }

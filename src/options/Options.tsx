@@ -7,6 +7,9 @@ import { FavoriteTag, Keyword } from '@/components'
 import { getAllFavoriteFlag } from '@/utils/api'
 import OperateButton from './components/create-keyword/operate-button'
 
+import loadingImg from '@/assets/loading.gif'
+import { Skeleton } from '@/components/ui/skeleton'
+
 const Options: React.FC = () => {
   const dataProvideData = useDataContext()
 
@@ -39,7 +42,7 @@ const Options: React.FC = () => {
 
               <div className="flex gap-x-2 h-[90%]">
                 <div className="w-1/2 h-full">
-                  <Suspense fallback={<img src="" />}>
+                  <Suspense fallback={<Skeleton className="w-full h-full" />}>
                     <FavoriteTag fetchPromise={favoriteFlagFetchPromise} />
                   </Suspense>
                 </div>
