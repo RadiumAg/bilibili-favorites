@@ -21,6 +21,7 @@
     "zip": "npm run build && node src/zip.js"
   },
   "dependencies": {
+    "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.2",
     "ahooks": "^3.8.4",
