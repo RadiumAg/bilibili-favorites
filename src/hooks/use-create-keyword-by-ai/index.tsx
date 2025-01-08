@@ -59,11 +59,10 @@ const useCreateKeywordByAi = () => {
 
             dataProvideData.dispatch?.((oldValue) => {
               if (resultCopy === '') {
-                console.log('oldValue', [...oldValue.keyword])
                 return { ...oldValue, keyword: [...oldValue.keyword] }
               }
 
-              resultCopy = resultCopy.replace(/^"|"$/, '')
+              resultCopy = resultCopy.replace(/^"|"$/, '').trim()
               let targetKeyword = oldValue.keyword.find(
                 (item) => item.favoriteDataId === dataProvideData.activeKey,
               )
