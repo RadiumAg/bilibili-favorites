@@ -9,6 +9,7 @@ import OperateButton from './components/create-keyword/operate-button'
 
 import loadingImg from '@/assets/loading.gif'
 import { Skeleton } from '@/components/ui/skeleton'
+import Setting from './components/setting'
 
 const Options: React.FC = () => {
   const dataProvideData = useDataContext()
@@ -34,6 +35,12 @@ const Options: React.FC = () => {
         )}
       >
         <TabWrapper>
+          <TabWrapper.Tab title="配置" keyValue="setting" defaultTab>
+            <TabWrapper.Content>
+              <Setting></Setting>
+            </TabWrapper.Content>
+          </TabWrapper.Tab>
+
           <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
             <TabWrapper.Content>
               <div className="mb-2 flex items-center">

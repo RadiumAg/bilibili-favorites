@@ -76,10 +76,10 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
-const fetchChatGpt = async (titleArray: string[]) => {
+const fetchChatGpt = async (titleArray: string[], baseURL: string, apiKey: string) => {
   const openai = await new OpenAI({
-    baseURL: import.meta.env.VITE_OPENAI_URL,
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+    baseURL,
+    apiKey,
     dangerouslyAllowBrowser: true,
   }).chat.completions.create({
     model: 'gpt-3.5-turbo',

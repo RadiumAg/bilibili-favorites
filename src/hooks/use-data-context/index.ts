@@ -58,7 +58,7 @@ const useDataContext = () => {
           activeKey,
           cookie,
           defaultFavoriteId,
-          aiConfig: aiConfig,
+          aiConfig: Object.assign({ baseUrl: 'https://api.chatanywhere.tech/v1' }, aiConfig),
           keyword,
         }
       })

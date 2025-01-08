@@ -13,7 +13,9 @@ const useCreateKeywordByAi = () => {
 
     switch (type) {
       case 'select': {
-        if (dataProvideData.activeKey == null) return
+        if (dataProvideData.activeKey == null) break
+        if (dataProvideData.aiConfig.baseUrl == null) return
+        if (dataProvideData.aiConfig.key == null) return
 
         const allDefaultFavoriteVideo = await getFavoriteList(
           dataProvideData.activeKey?.toString(),
@@ -22,9 +24,13 @@ const useCreateKeywordByAi = () => {
         )
         const titleArray = allDefaultFavoriteVideo.data.medias?.map((item) => item.title)
 
-        if (titleArray == null) return
+        if (titleArray == null) break
 
-        const result = await fetchChatGpt(titleArray)
+        const result = await fetchChatGpt(
+          titleArray,
+          dataProvideData.aiConfig.baseUrl,
+          dataProvideData.aiConfig.key,
+        )
         const render = result.toReadableStream().getReader()
 
         try {
