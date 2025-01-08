@@ -23,7 +23,7 @@ export const Popup = () => {
           </h3>
 
           <React.Suspense fallback={<Skeleton className="w-full h-[200px]" />}>
-            <FavoriteTag fetchPromise={favoriteFlagFetchPromise} />
+            <FavoriteTag fetchPromise={favoriteFlagFetchPromise} className="h-[200px]" />
           </React.Suspense>
 
           <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>

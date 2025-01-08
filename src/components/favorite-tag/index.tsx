@@ -3,14 +3,15 @@ import classNames from 'classnames'
 import { getAllFavoriteFlag } from '@/utils/api'
 import { DataContext } from '@/utils/data-context'
 import { useSetDefaultFav } from '@/hooks'
-import { log } from '@/utils/log'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 type FavoriteTagProps = {
+  className?: string
   fetchPromise: ReturnType<typeof getAllFavoriteFlag>
 }
 
 const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
-  const { fetchPromise } = props
+  const { className, fetchPromise } = props
   const {
     domRef,
     clickTagId,
@@ -68,9 +69,11 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   }, [])
 
   return (
-    <div ref={domRef} className="flex gap-1 flex-wrap cursor-pointer">
-      {tagElementArray}
-    </div>
+    <ScrollArea className={classNames(className)}>
+      <div ref={domRef} className="flex gap-1 flex-wrap cursor-pointer">
+        {tagElementArray}
+      </div>
+    </ScrollArea>
   )
 }
 
