@@ -52,10 +52,10 @@ const useMove = () => {
   }
 
   const startMove = async () => {
+    let pn = 1
+
     const run = async () => {
       if (dataContext.defaultFavoriteId == null) return
-
-      debugger
 
       const {
         data: { medias: allDefaultFavoriteVideo },
@@ -70,7 +70,7 @@ const useMove = () => {
               type: MessageEnum.getFavoriteList,
               data: {
                 mediaId: dataContext.defaultFavoriteId?.toString(),
-                pn: 1,
+                pn,
                 ps: 36,
               },
             },
@@ -119,6 +119,7 @@ const useMove = () => {
       }
 
       await sleep(20)
+      pn++
       await run()
     }
     const start = Date.now()
