@@ -6,12 +6,12 @@ import { MessageEnum } from '@/utils/message'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import classNames from 'classnames'
-import { log } from '@/utils/log'
 
 const useMove = () => {
   const dataContext = React.use(DataContext)
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
+
   const handleMove = async () => {
     setIsLoading(true)
     setIsFinished(false)
@@ -55,6 +55,8 @@ const useMove = () => {
     const run = async () => {
       if (dataContext.defaultFavoriteId == null) return
 
+      debugger
+
       const {
         data: { medias: allDefaultFavoriteVideo },
       } = await new Promise<ReturnType<typeof getFavoriteList>>((resolve) => {
@@ -86,9 +88,6 @@ const useMove = () => {
       )) {
         for (const keyValue of keywordInfo.value) {
           for (const videoInfo of allDefaultFavoriteVideo) {
-            log('videoInfo', videoInfo)
-            log('keyValue', keyValue)
-
             let regex: string | RegExp | null = null
 
             try {
