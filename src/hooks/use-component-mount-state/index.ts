@@ -1,16 +1,13 @@
 import React from 'react'
 
 const useComponentMountState = () => {
-  const mountState = React.useRef(true)
-  console.log('mountState', mountState.current)
-
-  mountState.current = false
+  const [mountState, setMountState] = React.useState(() => true)
 
   React.useEffect(() => {
-    mountState.current = true
+    setMountState(false)
 
     return () => {
-      mountState.current = false
+      setMountState(true)
     }
   }, [])
 

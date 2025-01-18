@@ -1,6 +1,7 @@
 import React from 'react'
 import { log } from '@/utils/log'
 import { DataContextType } from '@/utils/data-context'
+import { useComponentMountState } from '../use-component-mount-state'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
@@ -11,7 +12,6 @@ const useDataContext = () => {
     aiConfig: {},
     defaultFavoriteId: undefined,
   })
-  const isFirstMount = React.useRef<boolean>(true)
   const provideData = React.useMemo<DataContextType>(() => {
     return {
       ...dataContext,
@@ -20,11 +20,6 @@ const useDataContext = () => {
   }, [...Object.values(dataContext)])
 
   React.useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false
-      return
-    }
-
     chrome.storage.local.set({
       aiConfig: {
         model: dataContext.aiConfig?.model,
@@ -36,7 +31,14 @@ const useDataContext = () => {
       keyword: dataContext.keyword,
       defaultFavoriteId: dataContext.defaultFavoriteId,
     })
-  }, [...Object.values(dataContext)])
+  }, [
+    dataContext.activeKey,
+    dataContext.cookie,
+    dataContext.activeKey,
+    dataContext.keyword,
+    dataContext.defaultFavoriteId,
+    dataContext.aiConfig,
+  ])
 
   React.useEffect(() => {
     let isMount = true
@@ -50,6 +52,7 @@ const useDataContext = () => {
           'aiConfig',
           'defaultFavoriteId',
         ])
+      console.log('aiConfig', aiConfig)
 
       if (isMount === false) return
 
@@ -72,7 +75,6 @@ const useDataContext = () => {
     }
   }, [])
 
-  log('provideData', provideData)
   return provideData
 }
 

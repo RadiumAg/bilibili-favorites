@@ -95,7 +95,7 @@ const Setting: React.FC = () => {
             <FormItem>
               <FormLabel>model</FormLabel>
               <FormControl>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="please select a model" />
                   </SelectTrigger>
@@ -104,7 +104,7 @@ const Setting: React.FC = () => {
                     <SelectItem value="gpt-3.5-turbo" defaultChecked>
                       gpt-3.5-turbo
                     </SelectItem>
-                    <SelectItem value="o1">gpt-4</SelectItem>
+                    <SelectItem value="gpt-4">gpt-4</SelectItem>
                   </SelectContent>
                 </Select>
               </FormControl>
