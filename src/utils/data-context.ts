@@ -13,6 +13,7 @@ type DataContextType = {
   aiConfig: {
     key?: string
     baseUrl?: string
+    model?: string
   }
   cookie: string | undefined
   activeKey: number | undefined

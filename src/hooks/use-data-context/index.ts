@@ -27,6 +27,7 @@ const useDataContext = () => {
 
     chrome.storage.local.set({
       aiConfig: {
+        model: dataContext.aiConfig?.model,
         key: dataContext.aiConfig?.key,
         baseUrl: dataContext.aiConfig?.baseUrl,
       },
@@ -38,7 +39,7 @@ const useDataContext = () => {
   }, [...Object.values(dataContext)])
 
   React.useEffect(() => {
-    let isMount = false
+    let isMount = true
 
     const getData = async () => {
       const { keyword, activeKey, cookie, aiConfig, defaultFavoriteId } =
@@ -58,8 +59,8 @@ const useDataContext = () => {
           activeKey,
           cookie,
           defaultFavoriteId,
-          aiConfig: Object.assign({ baseUrl: 'https://api.chatanywhere.tech/v1' }, aiConfig),
           keyword,
+          aiConfig: Object.assign({ baseUrl: 'https://api.chatanywhere.tech/v1' }, aiConfig),
         }
       })
     }
@@ -67,7 +68,7 @@ const useDataContext = () => {
     getData()
 
     return () => {
-      isMount = true
+      isMount = false
     }
   }, [])
 
