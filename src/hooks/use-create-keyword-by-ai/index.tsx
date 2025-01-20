@@ -11,6 +11,8 @@ const useCreateKeywordByAi = () => {
   const { toast } = useToast()
 
   const handleCreate = async (type: 'select' | 'all') => {
+    setIsLoading(true)
+
     try {
       let aiConfig = dataProvideData.aiConfig || {}
       for (const [key, value] of Object.entries(aiConfig)) {
@@ -23,8 +25,6 @@ const useCreateKeywordByAi = () => {
           return
         }
       }
-
-      setIsLoading(true)
 
       switch (type) {
         case 'select': {
@@ -113,7 +113,9 @@ const useCreateKeywordByAi = () => {
         default:
           break
       }
-    } catch {
+    } catch (e) {
+      console.error(e)
+    } finally {
       setIsLoading(false)
     }
   }
