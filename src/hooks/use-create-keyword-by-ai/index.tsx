@@ -29,9 +29,14 @@ const useCreateKeywordByAi = () => {
       switch (type) {
         case 'select': {
           try {
-            if (dataProvideData.activeKey == null) break
-            if (dataProvideData.aiConfig.baseUrl == null) return
-            if (dataProvideData.aiConfig.key == null) return
+            if (dataProvideData.activeKey == null) {
+              toast({
+                variant: 'destructive',
+                title: `哪里不对哦`,
+                description: `这个模式必须需要选中一个滴`,
+              })
+              return
+            }
 
             const allDefaultFavoriteVideo = await getFavoriteList(
               dataProvideData.activeKey?.toString(),
