@@ -4,7 +4,7 @@ import { DataContext } from '@/utils/data-context'
 
 const useEditKeyword = () => {
   const dataContext = React.use(DataContext)
-  const currentFavoriteTag = dataContext['keyword'].find(
+  const currentFavoriteTag = dataContext['keyword']?.find(
     (key) => key.favoriteDataId === dataContext.activeKey,
   )
 

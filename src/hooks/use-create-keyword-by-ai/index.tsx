@@ -9,125 +9,130 @@ const useCreateKeywordByAi = () => {
   const dataProvideData = React.use(DataContext)
   const [isLoading, setIsLoading] = React.useState(false)
   const { toast } = useToast()
-
   const handleCreate = async (type: 'select' | 'all') => {
     setIsLoading(true)
+    let aiConfig = dataProvideData.aiConfig || {}
 
-    try {
-      let aiConfig = dataProvideData.aiConfig || {}
-      for (const [key, value] of Object.entries(aiConfig)) {
-        if (!value) {
-          toast({
-            variant: 'destructive',
-            title: `哪里不对哦`,
-            description: `缺少${key},请到配置页配置`,
-          })
-          return
+    const fetchSingle = async (favKey: string) => {
+      const allDefaultFavoriteVideo = await getFavoriteList(favKey, 1, 36)
+      const titleArray = allDefaultFavoriteVideo.data.medias?.map((item) => item.title)
+
+      if (titleArray == null) return
+
+      const gptResult = await fetchChatGpt(
+        titleArray,
+        dataProvideData.aiConfig.baseUrl!,
+        dataProvideData.aiConfig.key!,
+        dataProvideData.aiConfig.model!,
+      )
+      const render = gptResult.toReadableStream().getReader()
+
+      let result = ''
+
+      while (true) {
+        let resultCopy = ''
+        const decoder = new TextDecoder('utf-8')
+        const { value, done } = await render.read()
+
+        if (done) break
+
+        const data = JSON.parse(decoder.decode(value)).choices[0]?.delta?.content || ''
+
+        if (data.includes('[')) continue
+        if (data.includes(']')) continue
+        if (data === '') continue
+
+        if (!data.includes(',')) {
+          result += data
+          continue
         }
-      }
 
-      switch (type) {
-        case 'select': {
-          try {
-            if (dataProvideData.activeKey == null) {
-              toast({
-                variant: 'destructive',
-                title: `哪里不对哦`,
-                description: `这个模式必须需要选中一个滴`,
-              })
-              return
-            }
+        resultCopy = result
+        result = ''
 
-            const allDefaultFavoriteVideo = await getFavoriteList(
-              dataProvideData.activeKey?.toString(),
-              1,
-              36,
-            )
-            const titleArray = allDefaultFavoriteVideo.data.medias?.map((item) => item.title)
-
-            if (titleArray == null) break
-
-            const gptResult = await fetchChatGpt(
-              titleArray,
-              dataProvideData.aiConfig.baseUrl!,
-              dataProvideData.aiConfig.key!,
-              dataProvideData.aiConfig.model!,
-            )
-            const render = gptResult.toReadableStream().getReader()
-
-            let result = ''
-
-            while (true) {
-              let resultCopy = ''
-              const decoder = new TextDecoder('utf-8')
-              const { value, done } = await render.read()
-
-              if (done) break
-
-              const data = JSON.parse(decoder.decode(value)).choices[0]?.delta?.content || ''
-
-              if (data.includes('[')) continue
-              if (data.includes(']')) continue
-              if (data === '') continue
-
-              if (!data.includes(',')) {
-                result += data
-                continue
-              }
-
-              resultCopy = result
-              result = ''
-
-              dataProvideData.dispatch?.((oldValue) => {
-                if (resultCopy === '') {
-                  return { ...oldValue, keyword: [...oldValue.keyword] }
-                }
-
-                resultCopy = resultCopy.replace(/^"|"$/, '').trim()
-                let targetKeyword = oldValue.keyword.find(
-                  (item) => item.favoriteDataId === dataProvideData.activeKey,
-                )
-                if (targetKeyword == null) {
-                  targetKeyword = {
-                    favoriteDataId: dataProvideData.activeKey!,
-                    value: [{ id: uuid(), value: resultCopy }],
-                  }
-
-                  return {
-                    ...oldValue,
-                    keyword: [...oldValue.keyword, targetKeyword],
-                  }
-                } else {
-                  targetKeyword.value.push({ id: uuid(), value: resultCopy })
-                }
-
-                resultCopy = ''
-                return {
-                  ...oldValue,
-                  keyword: [...oldValue.keyword],
-                }
-              })
-            }
-          } catch (error) {
-            if (error instanceof Error)
-              toast({
-                variant: 'destructive',
-                title: `哪里不对哦`,
-                description: error.message,
-              })
+        dataProvideData.dispatch?.((oldValue) => {
+          if (resultCopy === '') {
+            return { ...oldValue, keyword: [...oldValue.keyword] }
           }
 
+          resultCopy = resultCopy.replace(/^"|"$/, '').trim()
+          let targetKeyword = oldValue.keyword.find((item) => item.favoriteDataId === +favKey)
+          if (targetKeyword == null) {
+            targetKeyword = {
+              favoriteDataId: +favKey,
+              value: [{ id: uuid(), value: resultCopy }],
+            }
+
+            return {
+              ...oldValue,
+              keyword: [...oldValue.keyword, targetKeyword],
+            }
+          } else {
+            targetKeyword.value.push({ id: uuid(), value: resultCopy })
+          }
+
+          resultCopy = ''
+          return {
+            ...oldValue,
+            keyword: [...oldValue.keyword],
+          }
+        })
+      }
+    }
+
+    for (const [key, value] of Object.entries(aiConfig)) {
+      if (!value) {
+        toast({
+          variant: 'destructive',
+          title: `哪里不对哦`,
+          description: `缺少${key},请到配置页配置`,
+        })
+        setIsLoading(false)
+        return
+      }
+    }
+
+    try {
+      switch (type) {
+        case 'select': {
+          if (dataProvideData.activeKey == null) {
+            toast({
+              variant: 'destructive',
+              title: `哪里不对哦`,
+              description: `这个模式必须需要选中一个滴`,
+            })
+            return
+          }
+
+          await fetchSingle(dataProvideData.activeKey?.toString())
           break
         }
 
         case 'all': {
+          for (const fav of dataProvideData.favoriteData) {
+            if (dataProvideData.favoriteData == null || dataProvideData.favoriteData.length === 0) {
+              toast({
+                variant: 'destructive',
+                title: `哪里不对哦`,
+                description: `sorry bor, 你还没有任何收藏夹`,
+              })
+              return
+            }
+
+            await fetchSingle(fav.id.toString())
+          }
           break
         }
         default:
           break
       }
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      if (error instanceof Error)
+        toast({
+          variant: 'destructive',
+          title: `哪里不对哦`,
+          description: error.message,
+        })
     } finally {
       setIsLoading(false)
     }
