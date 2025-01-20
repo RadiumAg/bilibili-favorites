@@ -3,23 +3,26 @@ import { v4 as uuid } from 'uuid'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
 import { DataContext } from '@/utils/data-context'
 import loadingImg from '@/assets/loading.gif'
+import { useToast } from '../use-toast'
 
 const useCreateKeywordByAi = () => {
   const dataProvideData = React.use(DataContext)
   const [isLoading, setIsLoading] = React.useState(false)
+  const { toast } = useToast()
 
   const handleCreate = async (type: 'select' | 'all') => {
-    if (!dataProvideData.aiConfig.key) {
-      return
+    let aiConfig = dataProvideData.aiConfig || {}
+    for (const [key, value] of Object.entries(aiConfig)) {
+      if (!value) {
+        toast({
+          variant: 'destructive',
+          title: `哪里不对哦`,
+          description: `缺少${key},请到配置页配置`,
+        })
+        return
+      }
     }
 
-    if (!dataProvideData.aiConfig.baseUrl) {
-      return
-    }
-
-    if (!dataProvideData.aiConfig.model) {
-      return
-    }
     setIsLoading(true)
 
     switch (type) {
