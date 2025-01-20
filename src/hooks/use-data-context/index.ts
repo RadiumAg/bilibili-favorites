@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import { DataContextType } from '@/utils/data-context'
 import { useIsFirstRun } from '../use-first-run'
 
