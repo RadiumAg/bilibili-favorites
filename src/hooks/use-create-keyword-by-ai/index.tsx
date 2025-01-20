@@ -28,28 +28,28 @@ const useCreateKeywordByAi = () => {
 
       switch (type) {
         case 'select': {
-          if (dataProvideData.activeKey == null) break
-          if (dataProvideData.aiConfig.baseUrl == null) return
-          if (dataProvideData.aiConfig.key == null) return
-
-          const allDefaultFavoriteVideo = await getFavoriteList(
-            dataProvideData.activeKey?.toString(),
-            1,
-            36,
-          )
-          const titleArray = allDefaultFavoriteVideo.data.medias?.map((item) => item.title)
-
-          if (titleArray == null) break
-
-          const result = await fetchChatGpt(
-            titleArray,
-            dataProvideData.aiConfig.baseUrl!,
-            dataProvideData.aiConfig.key!,
-            dataProvideData.aiConfig.model!,
-          )
-          const render = result.toReadableStream().getReader()
-
           try {
+            if (dataProvideData.activeKey == null) break
+            if (dataProvideData.aiConfig.baseUrl == null) return
+            if (dataProvideData.aiConfig.key == null) return
+
+            const allDefaultFavoriteVideo = await getFavoriteList(
+              dataProvideData.activeKey?.toString(),
+              1,
+              36,
+            )
+            const titleArray = allDefaultFavoriteVideo.data.medias?.map((item) => item.title)
+
+            if (titleArray == null) break
+
+            const gptResult = await fetchChatGpt(
+              titleArray,
+              dataProvideData.aiConfig.baseUrl!,
+              dataProvideData.aiConfig.key!,
+              dataProvideData.aiConfig.model!,
+            )
+            const render = gptResult.toReadableStream().getReader()
+
             let result = ''
 
             while (true) {
@@ -104,7 +104,12 @@ const useCreateKeywordByAi = () => {
               })
             }
           } catch (error) {
-            console.error(error)
+            if (error instanceof Error)
+              toast({
+                variant: 'destructive',
+                title: `哪里不对哦`,
+                description: error.message,
+              })
           }
 
           break
