@@ -1,7 +1,6 @@
-import React from 'react'
-import { log } from '@/utils/log'
+import React, { useRef } from 'react'
 import { DataContextType } from '@/utils/data-context'
-import { useComponentMountState } from '../use-component-mount-state'
+import { useIsFirstRun } from '../use-first-run'
 
 const useDataContext = () => {
   const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
@@ -12,6 +11,8 @@ const useDataContext = () => {
     aiConfig: {},
     defaultFavoriteId: undefined,
   })
+  const isFirstRun = useIsFirstRun()
+  const effectByGetData = React.useRef(false)
   const provideData = React.useMemo<DataContextType>(() => {
     return {
       ...dataContext,
@@ -20,6 +21,15 @@ const useDataContext = () => {
   }, [...Object.values(dataContext)])
 
   React.useEffect(() => {
+    if (effectByGetData.current) {
+      effectByGetData.current = false
+      return
+    }
+
+    if (isFirstRun.current) {
+      return
+    }
+
     chrome.storage.local.set({
       aiConfig: {
         model: dataContext.aiConfig?.model,
@@ -52,11 +62,12 @@ const useDataContext = () => {
           'aiConfig',
           'defaultFavoriteId',
         ])
-      console.log('aiConfig', aiConfig)
 
       if (isMount === false) return
 
       setDataContext((oldValue) => {
+        effectByGetData.current = true
+
         return {
           ...oldValue,
           activeKey,

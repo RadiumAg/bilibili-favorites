@@ -19,6 +19,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select'
+import { useIsFirstRun } from '@/hooks'
 
 type FormData = {
   key: string
@@ -33,6 +34,7 @@ const formSchema = z.object({
 
 const Setting: React.FC = () => {
   const dataProvider = React.use(DataContext)
+  const isFirstRun = useIsFirstRun()
   const form = useForm<z.infer<typeof formSchema>>({})
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
