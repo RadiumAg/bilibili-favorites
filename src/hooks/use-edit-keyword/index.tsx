@@ -64,7 +64,7 @@ const useEditKeyword = () => {
           return { ...oldValue, keyword: [...oldValue.keyword] }
         }
 
-        let targetkeyword = oldValue.keyword.find(
+        let targetkeyword = oldValue.keyword?.find(
           (key) => key.favoriteDataId === dataContext.activeKey,
         )
         if (dataContext.activeKey == null) return oldValue
