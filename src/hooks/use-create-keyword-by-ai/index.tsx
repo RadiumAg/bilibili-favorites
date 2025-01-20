@@ -9,6 +9,17 @@ const useCreateKeywordByAi = () => {
   const [isLoading, setIsLoading] = React.useState(false)
 
   const handleCreate = async (type: 'select' | 'all') => {
+    if (!dataProvideData.aiConfig.key) {
+      return
+    }
+
+    if (!dataProvideData.aiConfig.baseUrl) {
+      return
+    }
+
+    if (!dataProvideData.aiConfig.model) {
+      return
+    }
     setIsLoading(true)
 
     switch (type) {
@@ -30,6 +41,7 @@ const useCreateKeywordByAi = () => {
           titleArray,
           dataProvideData.aiConfig.baseUrl,
           dataProvideData.aiConfig.key,
+          dataProvideData.aiConfig.model,
         )
         const render = result.toReadableStream().getReader()
 

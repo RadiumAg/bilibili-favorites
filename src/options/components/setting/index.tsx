@@ -19,7 +19,6 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select'
-import { useIsFirstRun } from '@/hooks'
 import { gptArray } from '@/utils/gpt'
 
 type FormData = {
@@ -36,11 +35,24 @@ const formSchema = z.object({
 const Setting: React.FC = () => {
   const dataProvider = React.use(DataContext)
   const form = useForm<z.infer<typeof formSchema>>({})
-  const gptElementArray = gptArray.map((gpt) => (
-    <SelectItem value={gpt} key={gpt}>
-      {gpt}
-    </SelectItem>
-  ))
+  const gptElementArray = gptArray.map((gpt) => {
+    if (Array.isArray(gpt)) {
+      const value = gpt[0]
+      const defaultCheck = gpt[1]
+
+      return (
+        <SelectItem value={value} key={value} defaultChecked={defaultCheck}>
+          {gpt}
+        </SelectItem>
+      )
+    } else {
+      return (
+        <SelectItem value={gpt} key={gpt}>
+          {gpt}
+        </SelectItem>
+      )
+    }
+  })
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
     dataProvider.dispatch?.((oldValue) => {
