@@ -115,6 +115,9 @@ const useCreateKeywordByAi = () => {
           break
         }
 
+        case 'all': {
+          break
+        }
         default:
           break
       }
