@@ -20,6 +20,7 @@ import {
   SelectItem,
 } from '@/components/ui/select'
 import { useIsFirstRun } from '@/hooks'
+import { gptArray } from '@/utils/gpt'
 
 type FormData = {
   key: string
@@ -34,8 +35,12 @@ const formSchema = z.object({
 
 const Setting: React.FC = () => {
   const dataProvider = React.use(DataContext)
-  const isFirstRun = useIsFirstRun()
   const form = useForm<z.infer<typeof formSchema>>({})
+  const gptElementArray = gptArray.map((gpt) => (
+    <SelectItem value={gpt} key={gpt}>
+      {gpt}
+    </SelectItem>
+  ))
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
     dataProvider.dispatch?.((oldValue) => {
@@ -103,10 +108,7 @@ const Setting: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">none</SelectItem>
-                    <SelectItem value="gpt-3.5-turbo" defaultChecked>
-                      gpt-3.5-turbo
-                    </SelectItem>
-                    <SelectItem value="gpt-4">gpt-4</SelectItem>
+                    {gptElementArray}
                   </SelectContent>
                 </Select>
               </FormControl>
