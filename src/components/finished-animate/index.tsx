@@ -94,7 +94,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
       createImageElement(img5),
     ]).then(() => {
       Promise.allSettled([play(), sleep(duration)]).then(() => {
-        log('finished')
+        console.log('finished')
         onFinished?.()
       })
     })
