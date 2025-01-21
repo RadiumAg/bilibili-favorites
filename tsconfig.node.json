@@ -3,7 +3,7 @@
     "composite": true,
     "module": "ESNext",
     "allowSyntheticDefaultImports":true,
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
   },
   "include": ["vite.config.ts"]
 }

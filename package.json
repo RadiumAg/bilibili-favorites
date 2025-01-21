@@ -18,7 +18,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "fmt": "prettier --write '**/*.{tsx,ts,json,css,scss,md}'",
-    "zip": "npm run build && node src/zip.js"
+    "zip": "npm run build && node src/zip.js",
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -50,10 +52,12 @@
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/browser": "^3.0.2",
     "autoprefixer": "^10.4.20",
     "gulp": "^5.0.0",
     "gulp-zip": "^6.0.0",
     "jest": "^29.7.0",
+    "playwright": "^1.49.1",
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "react-test-renderer": "^19.0.0",
@@ -61,6 +65,8 @@
     "tailwindcss": "^3.4.17",
     "terser": "^5.37.0",
     "typescript": "^5.7.2",
-    "vite": "^6.0.6"
+    "vite": "^6.0.6",
+    "vitest": "^3.0.2",
+    "vitest-browser-react": "^0.0.4"
   }
 }

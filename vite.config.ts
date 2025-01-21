@@ -1,3 +1,5 @@
+/// <reference types="vitest/config" />
+
 import path from 'path'
 import { defineConfig } from 'vite'
 import { crx } from '@crxjs/vite-plugin'
@@ -30,5 +32,13 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [crx({ manifest }), react()],
+    test: {
+      workspace: ['./src/*'],
+      browser: {
+        enabled: true,
+        provider: 'playwright',
+        instances: [{ browser: 'chromium' }],
+      },
+    },
   }
 })
