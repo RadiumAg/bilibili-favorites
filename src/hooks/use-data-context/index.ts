@@ -12,7 +12,7 @@ const useDataContext = () => {
     defaultFavoriteId: undefined,
   })
   const isFirstRun = useIsFirstRun()
-  const effectByGetData = React.useRef(false)
+  const effectByGetData = React.useRef(false) // check is rerender by getData
   const provideData = React.useMemo<DataContextType>(() => {
     return {
       ...dataContext,
