@@ -1,7 +1,8 @@
 import React from 'react'
 
 /**
- * this hook to check is strict mode second run
+ * this hook to check is strict mode first run
+ *
  * @returns
  */
 const useIsFirstRun = () => {
@@ -18,6 +19,7 @@ const useIsFirstRun = () => {
 
   React.useEffect(() => {
     return () => {
+      // strict mode will run twice, when the second run, we need restore the value
       currentStateRef.current = true
     }
   }, [])
