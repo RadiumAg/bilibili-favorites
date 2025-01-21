@@ -86,6 +86,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
       })
     }
 
+    // pre load img
     Promise.allSettled([
       createImageElement(img1),
       createImageElement(img2),
