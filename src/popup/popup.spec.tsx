@@ -1,6 +1,7 @@
 import Popup from './Popup'
 import { expect, test } from 'vitest'
 import { render } from 'vitest-browser-react'
+
 test('renders name', async () => {
   const { getByText, getByRole } = render(<Popup />)
 

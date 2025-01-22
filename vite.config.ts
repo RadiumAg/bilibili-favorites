@@ -34,11 +34,6 @@ export default defineConfig(({ mode }) => {
     plugins: [crx({ manifest }), react()],
     test: {
       workspace: ['./src/*'],
-      browser: {
-        enabled: true,
-        provider: 'playwright',
-        instances: [{ browser: 'chromium' }],
-      },
     },
   }
 })
