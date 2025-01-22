@@ -19,7 +19,7 @@
     "preview": "vite preview",
     "fmt": "prettier --write '**/*.{tsx,ts,json,css,scss,md}'",
     "zip": "npm run build && node src/zip.js",
-    "test": "vitest",
+    "test": "vitest --browser=chrome",
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
