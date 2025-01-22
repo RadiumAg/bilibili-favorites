@@ -32,8 +32,5 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [crx({ manifest }), react()],
-    test: {
-      workspace: ['./src/*'],
-    },
   }
 })
