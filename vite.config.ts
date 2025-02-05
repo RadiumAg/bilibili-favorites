@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+
 import path from 'path'
 import { defineConfig } from 'vite'
 import { crx } from '@crxjs/vite-plugin'

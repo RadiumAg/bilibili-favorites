@@ -6,15 +6,9 @@ export default defineWorkspace([
   {
     extends: 'vite.config.ts',
     test: {
-      include: ['./src/*'],
-      browser: {
-        enabled: true,
-        provider: 'playwright',
-        // at least one instance is required
-        instances: [{ browser: 'chromium' }],
-      },
+      include: ['./tests/**/*.tsx'],
+      globals: true,
+      environment: 'jsdom',
     },
   },
 ])
-
-import 'vitest-browser-react'
