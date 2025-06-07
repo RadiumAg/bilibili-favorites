@@ -16,7 +16,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
-    "types": ["@vitest/browser/providers/playwright"],
+    "types": ["@vitest/browser/providers/playwright","react","react-dom","chrome"],
     "paths": {
       "@/*": ["./src/*"]
     }
