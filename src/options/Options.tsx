@@ -58,6 +58,10 @@ const Options: React.FC = () => {
               </div>
             </TabWrapper.Content>
           </TabWrapper.Tab>
+
+          <TabWrapper.Tab title="收藏夹数据分析" keyValue="" defaultTab>
+            <TabWrapper.Content></TabWrapper.Content>
+          </TabWrapper.Tab>
         </TabWrapper>
       </div>
     </DataContext.Provider>
