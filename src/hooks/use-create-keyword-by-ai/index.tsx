@@ -26,7 +26,6 @@ const useCreateKeywordByAi = () => {
         dataProvideData.aiConfig.model!,
       )
       const render = gptResult.toReadableStream().getReader()
-     EventSource
       let result = ''
 
       while (true) {
