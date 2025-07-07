@@ -1,24 +1,12 @@
 import React from 'react'
 import { DataContextType } from '@/utils/data-context'
 import { useIsFirstRun } from '../use-first-run'
+import { useGlobalDateStore } from '@/store/global-data'
 
 const useDataContext = () => {
-  const [dataContext, setDataContext] = React.useState<Omit<DataContextType, 'dispatch'>>({
-    keyword: [],
-    favoriteData: [],
-    cookie: undefined,
-    activeKey: undefined,
-    aiConfig: {},
-    defaultFavoriteId: undefined,
-  })
+  const dataContext = useGlobalDateStore((state) => state)
   const isFirstRun = useIsFirstRun()
   const effectByGetData = React.useRef(false) // check is rerender by getData
-  const provideData = React.useMemo<DataContextType>(() => {
-    return {
-      ...dataContext,
-      dispatch: setDataContext,
-    }
-  }, [...Object.values(dataContext)])
 
   React.useEffect(() => {
     if (effectByGetData.current) {
@@ -50,43 +38,7 @@ const useDataContext = () => {
     dataContext.aiConfig,
   ])
 
-  React.useEffect(() => {
-    let isMount = true
-
-    const getData = async () => {
-      const { keyword, activeKey, cookie, aiConfig, defaultFavoriteId } =
-        await chrome.storage.local.get([
-          'keyword',
-          'activeKey',
-          'cookie',
-          'aiConfig',
-          'defaultFavoriteId',
-        ])
-
-      if (isMount === false) return
-
-      setDataContext((oldValue) => {
-        effectByGetData.current = true
-
-        return {
-          ...oldValue,
-          activeKey,
-          cookie,
-          defaultFavoriteId,
-          keyword,
-          aiConfig: Object.assign({ baseUrl: 'https://api.chatanywhere.tech/v1' }, aiConfig),
-        }
-      })
-    }
-
-    getData()
-
-    return () => {
-      isMount = false
-    }
-  }, [])
-
-  return provideData
+  return dataContext
 }
 
 export { useDataContext }

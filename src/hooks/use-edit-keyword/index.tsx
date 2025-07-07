@@ -1,9 +1,10 @@
+import { useGlobalDateStore } from '@/store/global-data'
 import React from 'react'
 import { v4 as uuid } from 'uuid'
-import { DataContext } from '@/utils/data-context'
 
 const useEditKeyword = () => {
-  const dataContext = React.use(DataContext)
+  const dataContext = useGlobalDateStore((state) => state)
+
   const currentFavoriteTag = dataContext['keyword']?.find(
     (key) => key.favoriteDataId === dataContext.activeKey,
   )

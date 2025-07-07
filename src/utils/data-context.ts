@@ -19,18 +19,7 @@ type DataContextType = {
   activeKey: number | undefined
   defaultFavoriteId: number | undefined
   keyword: { value: { id: string; value: string }[]; favoriteDataId: number }[]
-  dispatch: React.Dispatch<React.SetStateAction<Omit<DataContextType, 'dispatch'>>> | null
+  setGlobalData: (data: Partial<DataContextType>) => void
 }
 
-const DataContext = React.createContext<DataContextType>({
-  favoriteData: [],
-  keyword: [],
-  cookie: undefined,
-  activeKey: undefined,
-  dispatch: null,
-  aiConfig: {},
-  defaultFavoriteId: undefined,
-})
-
-export { DataContext }
 export type { DataContextType }

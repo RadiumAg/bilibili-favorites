@@ -1,11 +1,11 @@
 import React from 'react'
 import lottie from 'lottie-web'
 import { useLongPress } from 'ahooks'
-import { DataContext } from '@/utils/data-context'
+import { useGlobalDateStore } from '@/store/global-data'
 
 const useSetDefaultFav = () => {
   const delayNumber = 300
-  const dataContext = React.use(DataContext)
+  const dataContext = useGlobalDateStore((state) => state)
   const [isLongPress, setLongPress] = React.useState(false)
   const maskDomRef = React.useRef<HTMLDivElement>(null)
   const domRef = React.useRef<HTMLDivElement>(null)
@@ -39,9 +39,7 @@ const useSetDefaultFav = () => {
   )
 
   const handleClick = (key: number) => {
-    dataContext.dispatch?.((oldValue) => {
-      return { ...oldValue, activeKey: key }
-    })
+    dataContext.setGlobalData?.({ activeKey: key })
   }
 
   const handleMouseDown = (id: number) => {

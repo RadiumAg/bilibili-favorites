@@ -1,9 +1,9 @@
 import React from 'react'
 import classNames from 'classnames'
 import { getAllFavoriteFlag } from '@/utils/api'
-import { DataContext } from '@/utils/data-context'
 import { useSetDefaultFav } from '@/hooks'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useGlobalDateStore } from '@/store/global-data'
 
 type FavoriteTagProps = {
   className?: string
@@ -21,7 +21,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     handleMouseDown,
     handleMouseUp,
   } = useSetDefaultFav()
-  const dataContext = React.use(DataContext)
+  const dataContext = useGlobalDateStore((state) => state)
   const promiseData = React.use(fetchPromise)
 
   const tagElementArray = React.useMemo(() => {

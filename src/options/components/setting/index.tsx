@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/form'
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
-import { DataContext } from '@/utils/data-context'
 import { z } from 'zod'
 import {
   Select,
@@ -20,6 +19,7 @@ import {
   SelectItem,
 } from '@/components/ui/select'
 import { gptArray } from '@/utils/gpt'
+import { useGlobalDateStore } from '@/store/global-data'
 
 type FormData = {
   key: string
@@ -33,7 +33,7 @@ const formSchema = z.object({
 })
 
 const Setting: React.FC = () => {
-  const dataProvider = React.use(DataContext)
+  const dataProvider = useGlobalDateStore((state) => state)
   const form = useForm<z.infer<typeof formSchema>>({})
   const gptElementArray = gptArray.map((gpt) => {
     if (Array.isArray(gpt)) {
@@ -55,16 +55,12 @@ const Setting: React.FC = () => {
   })
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    dataProvider.dispatch?.((oldValue) => {
-      console.log(data)
-      return {
-        ...oldValue,
-        aiConfig: {
-          key: data.key,
-          model: data.model,
-          baseUrl: data.baseUrl,
-        },
-      }
+    dataProvider.setGlobalData?.({
+      aiConfig: {
+        key: data.key,
+        model: data.model,
+        baseUrl: data.baseUrl,
+      },
     })
   }
 

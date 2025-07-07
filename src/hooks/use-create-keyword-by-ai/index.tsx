@@ -1,12 +1,12 @@
 import React from 'react'
 import { v4 as uuid } from 'uuid'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
-import { DataContext } from '@/utils/data-context'
 import loadingImg from '@/assets/loading.gif'
 import { useToast } from '../use-toast'
+import { useGlobalDateStore } from '@/store/global-data'
 
 const useCreateKeywordByAi = () => {
-  const dataProvideData = React.use(DataContext)
+  const dataProvideData = useGlobalDateStore((state) => state)
   const [isLoading, setIsLoading] = React.useState(false)
   const { toast } = useToast()
   const handleCreate = async (type: 'select' | 'all') => {

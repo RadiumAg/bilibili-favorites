@@ -1,11 +1,12 @@
 import React from 'react'
-import { DataContext } from '@/utils/data-context'
 import { MessageEnum } from '@/utils/message'
 import { getCookieValue } from '@/utils/cookie'
+import { useGlobalDateStore } from '@/store/global-data'
 
 const useCookie = () => {
-  const dataConext = React.use(DataContext)
+  const dataConext = useGlobalDateStore((state) => state)
   const [isLogin, setIsLogin] = React.useState(false)
+
 
   React.useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -21,11 +22,8 @@ const useCookie = () => {
           setIsLogin(true)
         }
 
-        dataConext.dispatch?.((oldValue) => {
-          return {
-            ...oldValue,
-            cookie: cookieValue,
-          }
+        dataConext.setGlobalData({
+          cookie: cookieValue,
         })
       })
     })
