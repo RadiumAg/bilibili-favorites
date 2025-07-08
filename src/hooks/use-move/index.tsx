@@ -1,14 +1,14 @@
 import React from 'react'
-import { DataContext } from '@/utils/data-context'
 import { getFavoriteList } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import { MessageEnum } from '@/utils/message'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import classNames from 'classnames'
+import { useGlobalConfig } from '@/store/global-data'
 
 const useMove = () => {
-  const dataContext = React.use(DataContext)
+  const dataContext = useGlobalConfig((state) => state)
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 

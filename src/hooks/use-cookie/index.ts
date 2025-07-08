@@ -1,10 +1,10 @@
 import React from 'react'
-import { DataContext } from '@/utils/data-context'
 import { MessageEnum } from '@/utils/message'
 import { getCookieValue } from '@/utils/cookie'
+import { useGlobalConfig } from '@/store/global-data'
 
 const useCookie = () => {
-  const dataConext = React.use(DataContext)
+  const setGlobalData = useGlobalConfig((state) => state.setGlobalData)
   const [isLogin, setIsLogin] = React.useState(false)
 
   React.useEffect(() => {
@@ -21,11 +21,8 @@ const useCookie = () => {
           setIsLogin(true)
         }
 
-        dataConext.dispatch?.((oldValue) => {
-          return {
-            ...oldValue,
-            cookie: cookieValue,
-          }
+        setGlobalData({
+          cookie: cookieValue,
         })
       })
     })
