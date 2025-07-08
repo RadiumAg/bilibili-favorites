@@ -37,7 +37,7 @@ const Options: React.FC = () => {
           </TabWrapper.Content>
         </TabWrapper.Tab>
 
-        <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
+        <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager">
           <TabWrapper.Content>
             <div className="mb-2 flex items-center">
               <OperateButton />
@@ -57,7 +57,7 @@ const Options: React.FC = () => {
           </TabWrapper.Content>
         </TabWrapper.Tab>
 
-        <TabWrapper.Tab title="收藏夹数据分析" keyValue="" defaultTab>
+        <TabWrapper.Tab title="收藏夹数据分析" keyValue="">
           <TabWrapper.Content></TabWrapper.Content>
         </TabWrapper.Tab>
       </TabWrapper>

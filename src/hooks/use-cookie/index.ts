@@ -4,7 +4,7 @@ import { getCookieValue } from '@/utils/cookie'
 import { useGlobalConfig } from '@/store/global-data'
 
 const useCookie = () => {
-  const globalConfig = useGlobalConfig((state) => state)
+  const setGlobalData = useGlobalConfig((state) => state.setGlobalData)
   const [isLogin, setIsLogin] = React.useState(false)
 
   React.useEffect(() => {
@@ -21,7 +21,7 @@ const useCookie = () => {
           setIsLogin(true)
         }
 
-        globalConfig.setGlobalData({
+        setGlobalData({
           cookie: cookieValue,
         })
       })

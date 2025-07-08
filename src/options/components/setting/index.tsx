@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/select'
 import { gptArray } from '@/utils/gpt'
 import { useGlobalConfig } from '@/store/global-data'
+import { useMount } from 'ahooks'
+import { useIsFirstRun } from '@/hooks'
 
 type FormData = {
   key: string
@@ -33,6 +35,7 @@ const formSchema = z.object({
 })
 
 const Setting: React.FC = () => {
+  const isFirstRun = useIsFirstRun()
   const globalData = useGlobalConfig((state) => state)
   const form = useForm<z.infer<typeof formSchema>>({})
   const gptElementArray = gptArray.map((gpt) => {
@@ -64,16 +67,11 @@ const Setting: React.FC = () => {
     })
   }
 
-  React.useEffect(() => {
-    form.setValue('key', globalData.aiConfig.key || '')
-    form.setValue('baseUrl', globalData.aiConfig.baseUrl || '')
-    form.setValue('model', globalData.aiConfig.model || '')
-  }, [globalData.aiConfig.baseUrl, globalData.aiConfig.key, globalData.aiConfig.model])
-
   return (
     <Form {...form}>
       <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[50%] ">
         <FormField
+          defaultValue={globalData.aiConfig.key}
           control={form.control}
           name="key"
           render={({ field }) => (
@@ -90,6 +88,7 @@ const Setting: React.FC = () => {
 
         <FormField
           control={form.control}
+          defaultValue={globalData.aiConfig.baseUrl}
           name="baseUrl"
           render={({ field }) => (
             <FormItem>
@@ -105,25 +104,35 @@ const Setting: React.FC = () => {
 
         <FormField
           control={form.control}
+          defaultValue={globalData.aiConfig.model}
           name="model"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>model</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="please select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">none</SelectItem>
-                    {gptElementArray}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormDescription>如果你要使用星火等其它大模型，请使用none即可</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            return (
+              <FormItem>
+                <FormLabel>model</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value)
+                    }}
+                    value={field.value}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger value="" className="w-[180px]">
+                      <SelectValue placeholder="please select a model" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="none">none</SelectItem>
+                      {gptElementArray}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription>如果你要使用星火等其它大模型，请使用none即可</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )
+          }}
         />
       </form>
     </Form>

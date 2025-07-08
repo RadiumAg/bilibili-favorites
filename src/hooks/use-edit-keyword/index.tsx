@@ -43,16 +43,15 @@ const useEditKeyword = () => {
   }, [dataContext.keyword, dataContext.activeKey])
 
   const handDelete = (id: string) => {
-    dataContext.dispatch?.((oldValue) => {
-      const targetKeyword = oldValue.keyword.find(
-        (key) => key.favoriteDataId === dataContext.activeKey,
-      )
+    const targetKeyword = dataContext.keyword.find(
+      (key) => key.favoriteDataId === dataContext.activeKey,
+    )
 
-      if (targetKeyword == null) return oldValue
+    if (targetKeyword == null) return
 
-      targetKeyword.value = targetKeyword?.value.filter((fav) => fav.id !== id)
-      return { ...oldValue, keyword: [...oldValue.keyword] }
-    })
+    targetKeyword.value = targetKeyword?.value.filter((fav) => fav.id !== id)
+
+    dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
   }
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
@@ -60,32 +59,28 @@ const useEditKeyword = () => {
     let inputValue = target.value
 
     if (event.key === 'Enter') {
-      dataContext.dispatch?.((oldValue) => {
-        if (inputValue === '') {
-          return { ...oldValue, keyword: [...oldValue.keyword] }
+      if (inputValue === '') {
+        return { ...dataContext, keyword: [...dataContext.keyword] }
+      }
+
+      let targetkeyword = dataContext.keyword?.find(
+        (key) => key.favoriteDataId === dataContext.activeKey,
+      )
+      if (dataContext.activeKey == null) return
+
+      if (targetkeyword == null) {
+        targetkeyword = {
+          value: [],
+          favoriteDataId: dataContext.activeKey,
         }
+        dataContext.keyword.push(targetkeyword)
+      }
 
-        let targetkeyword = oldValue.keyword?.find(
-          (key) => key.favoriteDataId === dataContext.activeKey,
-        )
-        if (dataContext.activeKey == null) return oldValue
-        if (targetkeyword == null) {
-          targetkeyword = {
-            value: [],
-            favoriteDataId: dataContext.activeKey,
-          }
-          dataContext.keyword.push(targetkeyword)
-        }
+      targetkeyword.value = [...targetkeyword?.value, { value: inputValue, id: uuid() }]
 
-        targetkeyword.value = [...targetkeyword?.value, { value: inputValue, id: uuid() }]
+      inputValue = ''
 
-        inputValue = ''
-
-        return {
-          ...oldValue,
-          keyword: [...oldValue.keyword],
-        }
-      })
+      dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
 
       target.value = ''
     }

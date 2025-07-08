@@ -60,12 +60,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
 
     if (list == null) return
 
-    globalConfig.dispatch?.((oldData) => {
-      return {
-        ...oldData,
-        favoriteData: list,
-      }
-    })
+    globalConfig.setGlobalData({ favoriteData: list })
   }, [])
 
   return (

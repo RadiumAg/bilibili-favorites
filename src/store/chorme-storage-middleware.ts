@@ -9,7 +9,8 @@ const chormeStorageMiddleware: ChormeStorageImpl = (config) => {
         .get(['keyword', 'activeKey', 'cookie', 'aiConfig', 'defaultFavoriteId'])
         .then((data) => {
           if (data) {
-            set(data)
+            set(data as any)
+            setItem()
           }
         })
     }
@@ -28,7 +29,9 @@ const chormeStorageMiddleware: ChormeStorageImpl = (config) => {
       api,
     )
 
-    api.getInitialState = () => configResult
+    api.getInitialState = () => {
+      return configResult
+    }
 
     api.setState = (state, replace) => {
       savedSetState(state, replace as any)
