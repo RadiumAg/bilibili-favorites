@@ -1,11 +1,11 @@
 import React from 'react'
 import lottie from 'lottie-web'
 import { useLongPress } from 'ahooks'
-import { useGlobalDateStore } from '@/store/global-data'
+import { useGlobalConfig } from '@/store/global-data'
 
 const useSetDefaultFav = () => {
   const delayNumber = 300
-  const dataContext = useGlobalDateStore((state) => state)
+  const dataContext = useGlobalConfig((state) => state)
   const [isLongPress, setLongPress] = React.useState(false)
   const maskDomRef = React.useRef<HTMLDivElement>(null)
   const domRef = React.useRef<HTMLDivElement>(null)

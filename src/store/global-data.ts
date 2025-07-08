@@ -2,7 +2,7 @@ import { DataContextType } from '@/utils/data-context'
 import { create } from 'zustand'
 import { chormeStorageMiddleware } from './chorme-storage-middleware'
 
-const useGlobalDateStore = create<DataContextType>()(
+const useGlobalConfig = create<DataContextType>()(
   chormeStorageMiddleware((set) => {
     return {
       keyword: [],
@@ -19,4 +19,4 @@ const useGlobalDateStore = create<DataContextType>()(
   }),
 )
 
-export { useGlobalDateStore }
+export { useGlobalConfig }

@@ -3,12 +3,13 @@ import { v4 as uuid } from 'uuid'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
 import loadingImg from '@/assets/loading.gif'
 import { useToast } from '../use-toast'
-import { useGlobalDateStore } from '@/store/global-data'
+import { useGlobalConfig } from '@/store/global-data'
 
 const useCreateKeywordByAi = () => {
-  const dataProvideData = useGlobalDateStore((state) => state)
+  const dataProvideData = useGlobalConfig((state) => state)
   const [isLoading, setIsLoading] = React.useState(false)
   const { toast } = useToast()
+
   const handleCreate = async (type: 'select' | 'all') => {
     setIsLoading(true)
     let aiConfig = dataProvideData.aiConfig || {}
@@ -49,33 +50,23 @@ const useCreateKeywordByAi = () => {
         resultCopy = result
         result = ''
 
-        dataProvideData.dispatch?.((oldValue) => {
-          if (resultCopy === '') {
-            return { ...oldValue, keyword: [...oldValue.keyword] }
+        if (resultCopy === '') return
+
+        resultCopy = resultCopy.replace(/^"|"$/, '').trim()
+        let targetKeyword = dataProvideData.keyword.find((item) => item.favoriteDataId === +favKey)
+
+        if (targetKeyword == null) {
+          targetKeyword = {
+            favoriteDataId: +favKey,
+            value: [{ id: uuid(), value: resultCopy }],
           }
 
-          resultCopy = resultCopy.replace(/^"|"$/, '').trim()
-          let targetKeyword = oldValue.keyword.find((item) => item.favoriteDataId === +favKey)
-          if (targetKeyword == null) {
-            targetKeyword = {
-              favoriteDataId: +favKey,
-              value: [{ id: uuid(), value: resultCopy }],
-            }
+          dataProvideData.setGlobalData({ keyword: [...dataProvideData.keyword, targetKeyword] })
+        } else {
+          targetKeyword.value.push({ id: uuid(), value: resultCopy })
+        }
 
-            return {
-              ...oldValue,
-              keyword: [...oldValue.keyword, targetKeyword],
-            }
-          } else {
-            targetKeyword.value.push({ id: uuid(), value: resultCopy })
-          }
-
-          resultCopy = ''
-          return {
-            ...oldValue,
-            keyword: [...oldValue.keyword],
-          }
-        })
+        dataProvideData.setGlobalData({ keyword: [...dataProvideData.keyword] })
       }
     }
 

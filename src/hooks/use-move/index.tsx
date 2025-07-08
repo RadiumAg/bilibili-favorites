@@ -5,10 +5,10 @@ import { MessageEnum } from '@/utils/message'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import classNames from 'classnames'
-import { useGlobalDateStore } from '@/store/global-data'
+import { useGlobalConfig } from '@/store/global-data'
 
 const useMove = () => {
-  const dataContext = useGlobalDateStore((state) => state)
+  const dataContext = useGlobalConfig((state) => state)
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 

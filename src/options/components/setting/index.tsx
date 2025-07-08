@@ -19,7 +19,7 @@ import {
   SelectItem,
 } from '@/components/ui/select'
 import { gptArray } from '@/utils/gpt'
-import { useGlobalDateStore } from '@/store/global-data'
+import { useGlobalConfig } from '@/store/global-data'
 
 type FormData = {
   key: string
@@ -33,7 +33,7 @@ const formSchema = z.object({
 })
 
 const Setting: React.FC = () => {
-  const dataProvider = useGlobalDateStore((state) => state)
+  const globalData = useGlobalConfig((state) => state)
   const form = useForm<z.infer<typeof formSchema>>({})
   const gptElementArray = gptArray.map((gpt) => {
     if (Array.isArray(gpt)) {
@@ -55,7 +55,7 @@ const Setting: React.FC = () => {
   })
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    dataProvider.setGlobalData?.({
+    globalData.setGlobalData({
       aiConfig: {
         key: data.key,
         model: data.model,
@@ -65,10 +65,10 @@ const Setting: React.FC = () => {
   }
 
   React.useEffect(() => {
-    form.setValue('key', dataProvider.aiConfig.key || '')
-    form.setValue('baseUrl', dataProvider.aiConfig.baseUrl || '')
-    form.setValue('model', dataProvider.aiConfig.model || '')
-  }, [dataProvider.aiConfig.baseUrl, dataProvider.aiConfig.key, dataProvider.aiConfig.model])
+    form.setValue('key', globalData.aiConfig.key || '')
+    form.setValue('baseUrl', globalData.aiConfig.baseUrl || '')
+    form.setValue('model', globalData.aiConfig.model || '')
+  }, [globalData.aiConfig.baseUrl, globalData.aiConfig.key, globalData.aiConfig.model])
 
   return (
     <Form {...form}>

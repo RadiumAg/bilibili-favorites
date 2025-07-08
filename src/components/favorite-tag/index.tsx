@@ -3,7 +3,7 @@ import classNames from 'classnames'
 import { getAllFavoriteFlag } from '@/utils/api'
 import { useSetDefaultFav } from '@/hooks'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useGlobalDateStore } from '@/store/global-data'
+import { useGlobalConfig } from '@/store/global-data'
 
 type FavoriteTagProps = {
   className?: string
@@ -21,7 +21,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     handleMouseDown,
     handleMouseUp,
   } = useSetDefaultFav()
-  const dataContext = useGlobalDateStore((state) => state)
+  const globalConfig = useGlobalConfig((state) => state)
   const promiseData = React.use(fetchPromise)
 
   const tagElementArray = React.useMemo(() => {
@@ -37,13 +37,13 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
           className={classNames(
             'whitespace-nowrap rounded p-1 text-sm flex items-center gap-x-1 relative overflow-hidden border-[1px] border-solid border-black',
             {
-              ['bg-b-primary text-white']: dataContext.activeKey === data.id,
-              ['text-black bg-white']: dataContext.activeKey !== data.id,
+              ['bg-b-primary text-white']: globalConfig.activeKey === data.id,
+              ['text-black bg-white']: globalConfig.activeKey !== data.id,
             },
           )}
         >
           # {data.title} {clickTagId === data.id && pendingElement}
-          {dataContext.defaultFavoriteId === data.id && starElement}
+          {globalConfig.defaultFavoriteId === data.id && starElement}
         </div>
       )
     })
@@ -51,8 +51,8 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     clickTagId,
     isLongPress,
     promiseData.data,
-    dataContext.activeKey,
-    dataContext.defaultFavoriteId,
+    globalConfig.activeKey,
+    globalConfig.defaultFavoriteId,
   ])
 
   React.useEffect(() => {
@@ -60,7 +60,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
 
     if (list == null) return
 
-    dataContext.dispatch?.((oldData) => {
+    globalConfig.dispatch?.((oldData) => {
       return {
         ...oldData,
         favoriteData: list,

@@ -3,10 +3,10 @@ import { FavoriteTag, Keyword } from '@/components'
 import { getAllFavoriteFlag } from '@/utils/api'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Move, LoginCheck, AutoCreateKeyword } from './components'
-import { useGlobalDateStore } from '@/store/global-data'
+import { useGlobalConfig } from '@/store/global-data'
 
 export const Popup = () => {
-  const globalData = useGlobalDateStore((state) => state)
+  const globalData = useGlobalConfig((state) => state)
 
   const favoriteFlagFetchPromise = React.useMemo(
     () => getAllFavoriteFlag(globalData.cookie),

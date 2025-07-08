@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react'
-import { useDataContext } from '@/hooks'
 import classNames from 'classnames'
 import TabWrapper from './components/tabs'
 import { FavoriteTag, Keyword } from '@/components'
@@ -7,9 +6,10 @@ import { getAllFavoriteFlag } from '@/utils/api'
 import OperateButton from './components/create-keyword/operate-button'
 import { Skeleton } from '@/components/ui/skeleton'
 import Setting from './components/setting'
+import { useGlobalConfig } from '@/store/global-data'
 
 const Options: React.FC = () => {
-  const dataProvideData = useDataContext()
+  const dataProvideData = useGlobalConfig()
 
   const favoriteFlagFetchPromise = React.useMemo(() => {
     return getAllFavoriteFlag(dataProvideData.cookie)
