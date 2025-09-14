@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand'
 
-const chormeStorageMiddleware: ChormeStorageImpl = (config) => {
+const chromeStorageMiddleware: ChromeStorageImpl = (config) => {
   return (set, get, api) => {
     const savedSetState = api.setState
 
@@ -44,6 +44,6 @@ const chormeStorageMiddleware: ChormeStorageImpl = (config) => {
   }
 }
 
-type ChormeStorageImpl = <T>(storeInitializer: StateCreator<T, [], []>) => StateCreator<T, [], []>
+type ChromeStorageImpl = <T>(storeInitializer: StateCreator<T, [], []>) => StateCreator<T, [], []>
 
-export { chormeStorageMiddleware }
+export { chromeStorageMiddleware }

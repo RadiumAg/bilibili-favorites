@@ -1,11 +1,11 @@
 import { DataContextType } from '@/utils/data-context'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import { chormeStorageMiddleware } from './chorme-storage-middleware'
+import { chromeStorageMiddleware } from './chorme-storage-middleware'
 
 const useGlobalConfig = create<DataContextType>()(
   immer(
-    chormeStorageMiddleware((set) => {
+    chromeStorageMiddleware((set) => {
       return {
         keyword: [],
         favoriteData: [],
