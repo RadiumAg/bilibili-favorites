@@ -1,0 +1,530 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2025-11-20T14:39:18.288Z
+provider: 
+---
+
+# API集成规范
+
+## API架构概述
+
+### API类型
+- **Bilibili API**: 获取收藏夹数据、视频信息等
+- **OpenAI API**: 智能分析、关键词提取等AI功能
+- **Chrome Storage API**: 本地数据持久化
+
+### API工具文件结构
+```
+utils/
+├── api.ts              # API客户端配置和通用方法
+├── cookie.ts           # Cookie管理
+├── gpt.ts              # OpenAI API集成
+├── message.ts          # 消息通信
+└── promise.ts          # Promise工具函数
+```
+
+## Bilibili API规范
+
+### API客户端配置
+```typescript
+// utils/api.ts
+export const API_BASE_URL = 'https://api.bilibili.com'
+
+export const apiClient = {
+  get: async <T>(url: string, params?: Record<string, any>): Promise<T> => {
+    const queryString = params ? new URLSearchParams(params).toString() : ''
+    const fullUrl = `${API_BASE_URL}${url}${queryString ? `?${queryString}` : ''}`
+    
+    const response = await fetch(fullUrl, {
+      headers: {
+        'Cookie': getBilibiliCookie(),
+        'User-Agent': navigator.userAgent,
+        'Referer': 'https://www.bilibili.com/'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new APIError(response.status, response.statusText)
+    }
+    
+    return response.json()
+  }
+}
+```
+
+### API端点定义
+```typescript
+// API端点常量
+export const API_ENDPOINTS = {
+  // 收藏夹相关
+  FAVORITE_LIST: '/x/v3/fav/folder/list',
+  FAVORITE_RESOURCE: '/x/v3/fav/resource/list',
+  
+  // 视频信息
+  VIDEO_INFO: '/x/web-interface/view',
+  
+  // 用户信息
+  USER_INFO: '/x/space/acc/info'
+} as const
+
+// API参数类型定义
+export interface FavoriteListParams {
+  vmid: string
+  ps?: number
+  pn?: number
+}
+
+export interface FavoriteResourceParams {
+  media_id: string
+  ps?: number
+  pn?: number
+  keyword?: string
+}
+```
+
+### API调用示例
+```typescript
+// 获取收藏夹列表
+export const getFavoriteList = async (vmid: string): Promise<FavoriteListResponse> => {
+  try {
+    const response = await apiClient.get<FavoriteListResponse>(
+      API_ENDPOINTS.FAVORITE_LIST,
+      { vmid }
+    )
+    
+    if (response.code !== 0) {
+      throw new APIError(response.code, response.message || '获取收藏夹列表失败')
+    }
+    
+    return response
+  } catch (error) {
+    console.error('获取收藏夹列表失败:', error)
+    throw error
+  }
+}
+
+// 获取收藏夹资源
+export const getFavoriteResources = async (
+  mediaId: string,
+  page = 1,
+  pageSize = 20
+): Promise<FavoriteResourceResponse> => {
+  try {
+    const response = await apiClient.get<FavoriteResourceResponse>(
+      API_ENDPOINTS.FAVORITE_RESOURCE,
+      {
+        media_id: mediaId,
+        pn: page,
+        ps: pageSize
+      }
+    )
+    
+    if (response.code !== 0) {
+      throw new APIError(response.code, response.message || '获取收藏夹资源失败')
+    }
+    
+    return response
+  } catch (error) {
+    console.error('获取收藏夹资源失败:', error)
+    throw error
+  }
+}
+```
+
+## OpenAI API规范
+
+### API配置
+```typescript
+// utils/gpt.ts
+import OpenAI from 'openai'
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  dangerouslyAllowBrowser: false // 生产环境不允许浏览器端调用
+})
+
+// 服务器端调用（通过Background Script）
+export const callOpenAI = async (prompt: string): Promise<string> => {
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一个专业的B站内容分析助手，请根据用户需求提供准确的分析结果。'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    })
+    
+    return response.choices[0]?.message?.content || '分析失败'
+  } catch (error) {
+    console.error('OpenAI API调用失败:', error)
+    throw new Error('AI分析服务暂时不可用')
+  }
+}
+```
+
+### 消息通信规范
+```typescript
+// utils/message.ts
+export enum MessageType {
+  GET_FAVORITE_LIST = 'GET_FAVORITE_LIST',
+  GET_FAVORITE_RESOURCES = 'GET_FAVORITE_RESOURCES',
+  CALL_OPENAI = 'CALL_OPENAI',
+  API_RESPONSE = 'API_RESPONSE',
+  API_ERROR = 'API_ERROR'
+}
+
+export interface Message<T = any> {
+  type: MessageType
+  payload?: T
+  requestId?: string
+}
+
+// 发送消息到Background Script
+export const sendMessageToBackground = <T>(message: Message<T>): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const requestId = generateRequestId()
+    
+    chrome.runtime.sendMessage({
+      ...message,
+      requestId
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message))
+      } else if (response?.error) {
+        reject(new Error(response.error))
+      } else {
+        resolve(response?.data)
+      }
+    })
+  })
+}
+
+// Background Script消息处理
+export const setupMessageListener = () => {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    const { type, payload, requestId } = message
+    
+    switch (type) {
+      case MessageType.GET_FAVORITE_LIST:
+        handleGetFavoriteList(payload)
+          .then(data => sendResponse({ data, requestId }))
+          .catch(error => sendResponse({ error: error.message, requestId }))
+        return true // 保持消息通道开放
+        
+      case MessageType.CALL_OPENAI:
+        handleOpenAICall(payload)
+          .then(data => sendResponse({ data, requestId }))
+          .catch(error => sendResponse({ error: error.message, requestId }))
+        return true
+        
+      default:
+        sendResponse({ error: 'Unknown message type', requestId })
+    }
+  })
+}
+```
+
+## 错误处理规范
+
+### 自定义错误类
+```typescript
+export class APIError extends Error {
+  constructor(
+    public code: number | string,
+    message: string,
+    public details?: any
+  ) {
+    super(message)
+    this.name = 'APIError'
+  }
+}
+
+export class NetworkError extends APIError {
+  constructor(message: string = '网络连接失败') {
+    super('NETWORK_ERROR', message)
+  }
+}
+
+export class AuthenticationError extends APIError {
+  constructor(message: string = '身份验证失败') {
+    super('AUTH_ERROR', message)
+  }
+}
+```
+
+### 错误处理中间件
+```typescript
+export const withErrorHandling = async <T>(
+  apiCall: () => Promise<T>,
+  fallback?: T
+): Promise<T> => {
+  try {
+    return await apiCall()
+  } catch (error) {
+    console.error('API调用失败:', error)
+    
+    if (error instanceof APIError) {
+      // 根据错误类型进行不同处理
+      switch (error.code) {
+        case 'NETWORK_ERROR':
+          showToast('网络连接失败，请检查网络设置')
+          break
+        case 'AUTH_ERROR':
+          showToast('登录已过期，请重新登录')
+          break
+        default:
+          showToast(error.message || '操作失败')
+      }
+    }
+    
+    if (fallback !== undefined) {
+      return fallback
+    }
+    
+    throw error
+  }
+}
+```
+
+## 数据缓存规范
+
+### 缓存策略
+```typescript
+interface CacheItem<T> {
+  data: T
+  timestamp: number
+  ttl: number // 生存时间（毫秒）
+}
+
+class APICache {
+  private cache = new Map<string, CacheItem<any>>()
+  
+  set<T>(key: string, data: T, ttl: number = 5 * 60 * 1000): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    })
+  }
+  
+  get<T>(key: string): T | null {
+    const item = this.cache.get(key)
+    if (!item) return null
+    
+    if (Date.now() - item.timestamp > item.ttl) {
+      this.cache.delete(key)
+      return null
+    }
+    
+    return item.data
+  }
+  
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+export const apiCache = new APICache()
+```
+
+### 缓存装饰器
+```typescript
+export const withCache = <T>(
+  key: string,
+  ttl: number = 5 * 60 * 1000
+) => {
+  return (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
+    const method = descriptor.value
+    
+    descriptor.value = async function (...args: any[]) {
+      const cacheKey = `${key}:${JSON.stringify(args)}`
+      
+      // 尝试从缓存获取
+      const cached = apiCache.get<T>(cacheKey)
+      if (cached) {
+        return cached
+      }
+      
+      // 调用原方法
+      const result = await method.apply(this, args)
+      
+      // 存入缓存
+      apiCache.set(cacheKey, result, ttl)
+      
+      return result
+    }
+  }
+}
+
+// 使用示例
+export class FavoriteService {
+  @withCache('favorite-list', 10 * 60 * 1000) // 10分钟缓存
+  async getFavoriteList(vmid: string): Promise<FavoriteListResponse> {
+    return getFavoriteList(vmid)
+  }
+}
+```
+
+## 请求限制和重试
+
+### 请求限制
+```typescript
+class RateLimiter {
+  private requests: number[] = []
+  private readonly maxRequests: number
+  private readonly windowMs: number
+  
+  constructor(maxRequests: number = 30, windowMs: number = 60000) {
+    this.maxRequests = maxRequests
+    this.windowMs = windowMs
+  }
+  
+  async waitForSlot(): Promise<void> {
+    const now = Date.now()
+    this.requests = this.requests.filter(time => now - time < this.windowMs)
+    
+    if (this.requests.length >= this.maxRequests) {
+      const oldestRequest = this.requests[0]
+      const waitTime = this.windowMs - (now - oldestRequest)
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+    }
+    
+    this.requests.push(now)
+  }
+}
+
+export const rateLimiter = new RateLimiter()
+```
+
+### 重试机制
+```typescript
+export const withRetry = async <T>(
+  apiCall: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> => {
+  let lastError: Error
+  
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await apiCall()
+    } catch (error) {
+      lastError = error as Error
+      
+      if (i === maxRetries) {
+        break
+      }
+      
+      // 指数退避
+      const waitTime = delay * Math.pow(2, i)
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+    }
+  }
+  
+  throw lastError!
+}
+```
+
+## 类型定义规范
+
+### API响应类型
+```typescript
+// 通用响应结构
+export interface APIResponse<T = any> {
+  code: number
+  message: string
+  data: T
+}
+
+// 收藏夹相关类型
+export interface FavoriteFolder {
+  id: number
+  fid: number
+  mid: number
+  attr: number
+  name: string
+  cover: string
+  description: string
+  media_count: number
+  ctime: number
+  fav_state: number
+  like_state: number
+}
+
+export interface FavoriteResource {
+  id: number
+  bvid: string
+  title: string
+  cover: string
+  intro: string
+  duration: number
+  owner: {
+    mid: number
+    name: string
+    face: string
+  }
+  ctime: number
+  pubdate: number
+}
+
+// OpenAI响应类型
+export interface OpenAIResponse {
+  id: string
+  object: string
+  created: number
+  model: string
+  choices: Array<{
+    index: number
+    message: {
+      role: string
+      content: string
+    }
+    finish_reason: string
+  }>
+}
+```
+
+## 测试规范
+
+### API Mock
+```typescript
+// __tests__/mocks/api.ts
+export const mockFavoriteList: FavoriteListResponse = {
+  code: 0,
+  message: 'success',
+  data: {
+    list: [
+      {
+        id: 1,
+        fid: 123456,
+        name: '默认收藏夹',
+        media_count: 50,
+        // ...其他属性
+      }
+    ]
+  }
+}
+
+// 测试中使用
+import { mockFavoriteList } from '../mocks/api'
+
+describe('FavoriteService', () => {
+  beforeEach(() => {
+    jest.spyOn(apiClient, 'get').mockResolvedValue(mockFavoriteList)
+  })
+  
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+})
+```

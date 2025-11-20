@@ -1,0 +1,169 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2025-11-20T14:38:10.145Z
+provider: 
+---
+
+# Bilibili收藏夹管理助手 - 项目规则
+
+## 技术栈规范
+
+### 核心技术
+- **React 19**: 使用最新的React版本，充分利用其新特性
+- **TypeScript**: 严格类型检查，确保代码质量
+- **Vite**: 构建工具，支持快速开发和热重载
+- **Tailwind CSS**: 样式框架，遵循原子化CSS设计理念
+- **Chrome Extension Manifest V3**: 扩展开发规范
+
+### 状态管理
+- **Zustand**: 轻量级状态管理，配合Chrome存储中间件使用
+- **Chrome Storage API**: 持久化存储用户数据和配置
+
+### UI组件
+- **Radix UI**: 无样式组件库，提供可访问性良好的基础组件
+- **Lucide React**: 图标库，保持界面风格统一
+- **ECharts**: 数据可视化图表库，用于收藏夹数据分析
+
+## 项目结构规范
+
+```
+src/
+├── background/         # 后台脚本
+├── contentScript/      # 内容脚本
+├── popup/             # 弹出窗口组件
+├── options/           # 选项页面
+├── components/        # 共享组件
+│   ├── ui/           # 基础UI组件
+│   ├── favorite-tag/ # 收藏夹标签组件
+│   └── ...           # 其他业务组件
+├── hooks/            # 自定义Hooks
+├── store/            # 状态管理
+├── utils/            # 工具函数
+└── assets/           # 静态资源
+```
+
+## 代码规范
+
+### TypeScript规范
+- 使用严格模式：`"strict": true`
+- 接口命名使用PascalCase，类型别名使用PascalCase
+- 避免使用`any`类型，优先使用具体类型或`unknown`
+- 使用类型断言时要谨慎，优先使用类型守卫
+
+### React组件规范
+- 使用函数式组件和Hooks
+- 组件文件使用PascalCase命名
+- Props接口定义以`Props`结尾
+- 使用React.memo优化性能，避免不必要的重渲染
+
+### 样式规范
+- 优先使用Tailwind CSS类名
+- 自定义样式使用CSS Modules或styled-components
+- 保持响应式设计，适配不同屏幕尺寸
+- 遵循设计系统，保持视觉一致性
+
+## Chrome扩展开发规范
+
+### 权限管理
+- 最小权限原则：只申请必要的权限
+- 在[manifest.ts](mdc:src/manifest.ts)中明确声明所需权限
+- 用户隐私保护：不收集不必要的用户数据
+
+### 消息通信
+- Background Script和Content Script间使用Chrome消息API通信
+- 消息类型使用枚举或常量定义，避免硬编码
+- 错误处理和超时机制要完善
+
+### 存储规范
+- 使用Chrome Storage API而非localStorage
+- 敏感数据加密存储
+- 定期清理过期数据
+
+## API集成规范
+
+### Bilibili API
+- 遵循B站API调用频率限制
+- 错误处理和重试机制
+- Cookie管理使用[utils/cookie.ts](mdc:utils/cookie.ts)
+
+### OpenAI API
+- API密钥安全存储，不暴露在客户端代码
+- 请求参数验证和错误处理
+- 响应数据缓存策略
+
+## 测试规范
+
+### 单元测试
+- 使用Vitest进行单元测试
+- 组件测试使用@testing-library/react
+- 工具函数测试覆盖率要求80%以上
+
+### 集成测试
+- Chrome扩展功能测试
+- API集成测试
+- 用户交互流程测试
+
+## 构建和部署规范
+
+### 开发环境
+```bash
+pnpm install    # 安装依赖
+pnpm dev       # 开发模式
+pnpm build     # 生产构建
+```
+
+### 代码质量
+- 使用Prettier进行代码格式化
+- ESLint检查代码规范
+- TypeScript严格模式编译
+
+### 打包发布
+```bash
+pnpm zip       # 打包扩展
+```
+- 构建产物进行代码压缩和优化
+- 版本号管理遵循语义化版本规范
+- 更新日志维护[CHANGELOG.md](mdc:CHANGELOG.md)
+
+## 性能优化规范
+
+### 代码分割
+- 使用动态导入减少初始包大小
+- 路由级别的代码分割
+- 第三方库按需引入
+
+### 内存管理
+- 及时清理事件监听器
+- 避免内存泄漏
+- 合理使用React.useMemo和React.useCallback
+
+### 网络优化
+- API请求合并和缓存
+- 图片资源优化
+- 使用CDN加速静态资源
+
+## 安全规范
+
+### 数据安全
+- 用户数据本地加密存储
+- API密钥安全管理
+- XSS和CSRF防护
+
+### 扩展安全
+- Content Security Policy配置
+- 防止恶意网站注入
+- 安全的跨域通信
+
+## 维护规范
+
+### 版本控制
+- Git提交信息规范
+- 分支管理策略
+- 代码审查流程
+
+### 文档维护
+- README文档及时更新
+- API文档保持同步
+- 组件使用文档完善
