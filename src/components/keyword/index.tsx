@@ -12,7 +12,9 @@ const Keyword: React.FC<KeywordProps> = (props) => {
   const { tagElementArray, handleKeyDown } = useEditKeyword()
 
   return (
-    <ScrollArea className={classNames('h-44 border-solid border-cyan-200 border-2', className)}>
+    <ScrollArea
+      className={classNames('h-44 border-solid border-cyan-200 border-2 rounded-sm', className)}
+    >
       <div className="flex flex-wrap p-1 items-start content-start gap-1 overflow-auto rounded-sm">
         {tagElementArray}
 
