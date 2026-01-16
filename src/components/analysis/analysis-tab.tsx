@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatsCards } from './StatsCards'
 import { DistributionChart } from './DistributionChart'
@@ -59,35 +65,43 @@ export const AnalysisTab: React.FC = () => {
 
     const totalFolders = favoriteData.length
     const totalVideos = favoriteData.reduce((sum, folder) => sum + folder.media_count, 0)
-    
+
     // 计算最近7天的收藏数量（这里用模拟数据，实际需要从API获取）
     const recentCount = Math.floor(totalVideos * 0.1) // 假设10%是最近7天的
-    
-    const mostActiveFolder = favoriteData.reduce((max, folder) => 
-      folder.media_count > (max?.media_count || 0) ? folder : max, 
-      favoriteData[0]
+
+    const mostActiveFolder = favoriteData.reduce(
+      (max, folder) => (folder.media_count > (max?.media_count || 0) ? folder : max),
+      favoriteData[0],
     )
 
     setStatsData({
       totalFolders,
       totalVideos,
       recentCount,
-      mostActiveFolder: mostActiveFolder ? {
-        name: mostActiveFolder.title,
-        count: mostActiveFolder.media_count
-      } : undefined,
+      mostActiveFolder: mostActiveFolder
+        ? {
+            name: mostActiveFolder.title,
+            count: mostActiveFolder.media_count,
+          }
+        : undefined,
       folderGrowth: 5.2, // 模拟增长数据
-      videoGrowth: 8.7
+      videoGrowth: 8.7,
     })
   }
 
   // 计算分布数据
   const calculateDistribution = () => {
-    const data = favoriteData.map(folder => ({
-      name: folder.title,
-      value: folder.media_count,
-      percentage: (folder.media_count / favoriteData.reduce((sum, f) => sum + f.media_count, 0) * 100).toFixed(1)
-    })).sort((a, b) => b.value - a.value).slice(0, 10) // 只显示前10个
+    const data = favoriteData
+      .map((folder) => ({
+        name: folder.title,
+        value: folder.media_count,
+        percentage: (
+          (folder.media_count / favoriteData.reduce((sum, f) => sum + f.media_count, 0)) *
+          100
+        ).toFixed(1),
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10) // 只显示前10个
 
     setDistributionData(data)
   }
@@ -97,23 +111,23 @@ export const AnalysisTab: React.FC = () => {
     const days = parseInt(dateRange.replace('d', ''))
     const data: Array<{ date: string; count: number; cumulative: number }> = []
     const now = new Date()
-    
+
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now)
       date.setDate(date.getDate() - i)
       const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
-      
+
       // 模拟收藏数据
       const count = Math.floor(Math.random() * 10) + 2
       const cumulative = i === days - 1 ? count : (data[0]?.cumulative || 0) + count
-      
+
       data.unshift({
         date: dateStr,
         count,
-        cumulative
+        cumulative,
       })
     }
-    
+
     setTrendData(data)
   }
 
@@ -121,16 +135,12 @@ export const AnalysisTab: React.FC = () => {
   const loadData = async () => {
     setLoading(true)
     try {
-      await Promise.all([
-        calculateStats(),
-        calculateDistribution(),
-        generateTrendData()
-      ])
+      await Promise.all([calculateStats(), calculateDistribution(), generateTrendData()])
     } catch (error) {
       toast({
-        title: "数据加载失败",
-        description: "无法加载分析数据，请稍后重试",
-        variant: "destructive"
+        title: '数据加载失败',
+        description: '无法加载分析数据，请稍后重试',
+        variant: 'destructive',
       })
     } finally {
       setLoading(false)
@@ -147,7 +157,7 @@ export const AnalysisTab: React.FC = () => {
       stats: statsData,
       distribution: distributionData,
       trend: trendData,
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
     }
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
@@ -159,8 +169,8 @@ export const AnalysisTab: React.FC = () => {
     URL.revokeObjectURL(url)
 
     toast({
-      title: "导出成功",
-      description: "分析数据已导出"
+      title: '导出成功',
+      description: '分析数据已导出',
     })
   }
 
@@ -213,11 +223,7 @@ export const AnalysisTab: React.FC = () => {
                   <CardTitle>收藏夹视频数量分布</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <DistributionChart 
-                    data={distributionData} 
-                    title="收藏夹分布" 
-                    type="pie"
-                  />
+                  <DistributionChart data={distributionData} title="收藏夹分布" type="pie" />
                 </CardContent>
               </Card>
               <Card>
@@ -225,11 +231,7 @@ export const AnalysisTab: React.FC = () => {
                   <CardTitle>收藏夹视频数量排行</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BarChart 
-                    data={distributionData} 
-                    title="TOP 10 收藏夹" 
-                    horizontal={true}
-                  />
+                  <BarChart data={distributionData} title="TOP 10 收藏夹" horizontal={true} />
                 </CardContent>
               </Card>
             </div>
@@ -241,11 +243,7 @@ export const AnalysisTab: React.FC = () => {
                 <CardTitle>收藏趋势分析</CardTitle>
               </CardHeader>
               <CardContent>
-                <TrendChart 
-                  data={trendData} 
-                  title="每日收藏趋势" 
-                  showCumulative={true}
-                />
+                <TrendChart data={trendData} title="每日收藏趋势" showCumulative={true} />
               </CardContent>
             </Card>
           </TabsContent>
