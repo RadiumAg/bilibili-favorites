@@ -9,10 +9,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { StatsCards } from './StatsCards'
-import { DistributionChart } from './DistributionChart'
-import { BarChart } from './BarChart'
-import { TrendChart } from './TrendChart'
+import { StatsCards } from './stats-cards'
+import { DistributionChart } from './distribution-chart'
+import { BarChart } from './bar-chart'
+import { TrendChart } from './trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
 import { getFavoriteList } from '@/utils/api'
 import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
@@ -50,7 +50,7 @@ interface StatsData {
 }
 
 export const AnalysisTab: React.FC = () => {
-  const { favoriteData, cookie } = useGlobalConfig()
+  const { favoriteData } = useGlobalConfig()
   const [loading, setLoading] = useState(false)
   const [statsData, setStatsData] = useState<StatsData>()
   const [distributionData, setDistributionData] = useState<any[]>([])
