@@ -1,3 +1,5 @@
+import { AIProvider } from './gpt'
+
 type DataContextType = {
   favoriteData: {
     attr: number
@@ -12,6 +14,8 @@ type DataContextType = {
     key?: string
     baseUrl?: string
     model?: string
+    provider?: AIProvider
+    extraParams: Record<string, any>
   }
   cookie: string | undefined
   activeKey: number | undefined

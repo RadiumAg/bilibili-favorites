@@ -20,13 +20,15 @@ const useCreateKeywordByAi = () => {
 
       if (titleArray == null) return
 
-      const gptResult = await fetchChatGpt(
-        titleArray,
-        dataProvideData.aiConfig.baseUrl!,
-        dataProvideData.aiConfig.key!,
-        dataProvideData.aiConfig.model!,
-      )
-      const render = gptResult.toReadableStream().getReader()
+      const gptResult = await fetchChatGpt(titleArray, {
+        baseURL: dataProvideData.aiConfig.baseUrl,
+        apiKey: dataProvideData.aiConfig.key!,
+        model: dataProvideData.aiConfig.model!,
+        provider: dataProvideData.aiConfig.provider!,
+        extraParams: dataProvideData.aiConfig.extraParams,
+      })
+      // 确保返回的是 Stream 类型
+      const render = (gptResult as any).toReadableStream().getReader()
       let result = ''
 
       while (true) {
@@ -36,7 +38,15 @@ const useCreateKeywordByAi = () => {
 
         if (done) break
 
-        const data = JSON.parse(decoder.decode(value)).choices[0]?.delta?.content || ''
+        // 安全解析 JSON，容错处理
+        let data = ''
+        try {
+          const decoded = decoder.decode(value)
+          const parsed = JSON.parse(decoded)
+          data = parsed.choices?.[0]?.delta?.content || ''
+        } catch {
+          continue
+        }
 
         if (data.includes('[')) continue
         if (data.includes(']')) continue
@@ -63,19 +73,25 @@ const useCreateKeywordByAi = () => {
 
           dataProvideData.setGlobalData({ keyword: [...dataProvideData.keyword, targetKeyword] })
         } else {
-          targetKeyword.value.push({ id: uuid(), value: resultCopy })
+          // 检查关键词是否已存在，避免重复
+          const exists = targetKeyword.value.some((k) => k.value === resultCopy)
+          if (!exists) {
+            targetKeyword.value.push({ id: uuid(), value: resultCopy })
+          }
         }
 
         dataProvideData.setGlobalData({ keyword: [...dataProvideData.keyword] })
       }
     }
 
-    for (const [key, value] of Object.entries(aiConfig)) {
-      if (!value) {
+    // 验证必填配置
+    const requiredFields: Array<keyof typeof aiConfig> = ['provider', 'key', 'model']
+    for (const field of requiredFields) {
+      if (!aiConfig[field]) {
         toast({
           variant: 'destructive',
-          title: `哪里不对哦`,
-          description: `缺少${key},请到配置页配置`,
+          title: `配置不完整`,
+          description: `缺少${field}，请到配置页配置`,
         })
         setIsLoading(false)
         return
@@ -99,17 +115,35 @@ const useCreateKeywordByAi = () => {
         }
 
         case 'all': {
-          for (const fav of dataProvideData.favoriteData) {
-            if (dataProvideData.favoriteData == null || dataProvideData.favoriteData.length === 0) {
-              toast({
-                variant: 'destructive',
-                title: `哪里不对哦`,
-                description: `sorry bor, 你还没有任何收藏夹`,
-              })
-              return
-            }
+          if (dataProvideData.favoriteData == null || dataProvideData.favoriteData.length === 0) {
+            toast({
+              variant: 'destructive',
+              title: `配置不完整`,
+              description: `还没有任何收藏夹`,
+            })
+            setIsLoading(false)
+            return
+          }
 
-            await fetchSingle(fav.id.toString())
+          // 批量处理时记录成功和失败
+          let successCount = 0
+          let failCount = 0
+
+          for (const fav of dataProvideData.favoriteData) {
+            try {
+              await fetchSingle(fav.id.toString())
+              successCount++
+            } catch {
+              failCount++
+            }
+          }
+
+          if (failCount > 0) {
+            toast({
+              variant: 'destructive',
+              title: `部分完成`,
+              description: `成功 ${successCount} 个，失败 ${failCount} 个`,
+            })
           }
           break
         }
