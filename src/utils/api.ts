@@ -109,8 +109,17 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   const { provider, apiKey, extraParams } = config
   const { baseURL, model } = getAIConfig(config)
 
-  const systemPrompt =
-    '你是一名文案，现在开始，你要根据我提供的视频标题，生成一个关键字数组，例如：["ts学习","大学英语四级"] ，对应关键字：["ts","typescript","大学英语", "四级"]，你只需要返回数组，不可以有其他回答'
+  const systemPrompt = `你是一个关键词提取专家。任务：从视频标题中提取搜索关键词。
+
+规则：
+1. 提取标题中的核心词汇和常见别称
+2. 包含缩写、全称、中英文等多种表达
+3. 去除无意义的修饰词（如"学习"、"教程"等）
+4. 只返回 JSON 数组格式，不要任何解释
+
+示例：
+输入：["TypeScript入门教程","大学英语四级备考"]
+输出：["typescript","ts","type script","大学英语","四级","cet4","英语四级"]`
 
   const messages = [
     {
@@ -119,11 +128,11 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
     },
     {
       role: 'user' as const,
-      content: '["ts学习","大学英语四级"]',
+      content: '["React Hooks详解","Python数据分析"]',
     },
     {
       role: 'assistant' as const,
-      content: '["ts","typescript","大学英语", "四级"]',
+      content: '["react","hooks","react hooks","python","数据分析","data analysis"]',
     },
     {
       role: 'user' as const,
