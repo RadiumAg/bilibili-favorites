@@ -11,23 +11,12 @@ import {
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { z } from 'zod'
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-} from '@/components/ui/select'
-import { aiProviders, type AIProvider } from '@/utils/gpt'
 import { useGlobalConfig } from '@/store/global-data'
 import { useIsFirstRun } from '@/hooks'
 
 type FormData = {
   key: string
   baseUrl: string
-  provider: AIProvider
   model: string
 }
 
@@ -35,18 +24,15 @@ const formSchema = z.object({
   key: z.string(),
   baseUrl: z.string(),
   model: z.string(),
-  provider: z.string(),
 })
 
 const Setting: React.FC = () => {
-  const isFirstRun = useIsFirstRun()
   const globalData = useGlobalConfig((state) => state)
   const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {
       key: globalData.aiConfig.key || '',
       baseUrl: globalData.aiConfig.baseUrl || '',
       model: globalData.aiConfig.model || '',
-      provider: (globalData.aiConfig as any)?.provider || 'openai',
     },
   })
 
@@ -56,44 +42,14 @@ const Setting: React.FC = () => {
         key: data.key,
         model: data.model,
         baseUrl: data.baseUrl,
-        provider: data.provider as AIProvider,
         extraParams: {},
       },
     })
   }
 
-  const selectedProvider = form.watch('provider')
-  const selectedProviderConfig = aiProviders.find((p) => p.provider === selectedProvider)
-
   return (
     <Form {...form}>
       <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[60%]">
-        <FormField
-          control={form.control}
-          name="provider"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>AI 服务商</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="选择 AI 服务商" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {aiProviders.map((provider) => (
-                      <SelectItem key={provider.provider} value={provider.provider}>
-                        {provider.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormDescription>选择您使用的 AI 服务商</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="model"
@@ -103,25 +59,6 @@ const Setting: React.FC = () => {
               <FormControl>
                 <Input placeholder="输入模型名称，如：deepseek-chat" {...field} />
               </FormControl>
-              <FormDescription>
-                {selectedProviderConfig && (
-                  <span className="text-xs">
-                    常用模型：
-                    {selectedProviderConfig.models.map((m, i) => (
-                      <span key={m.value}>
-                        {i > 0 && '、'}
-                        <button
-                          type="button"
-                          className="text-primary hover:underline"
-                          onClick={() => field.onChange(m.value)}
-                        >
-                          {m.value}
-                        </button>
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
