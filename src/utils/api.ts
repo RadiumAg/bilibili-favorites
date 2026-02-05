@@ -1,6 +1,7 @@
 import { getCookieValue } from './cookie'
 import { DataContextType } from './data-context'
 import OpenAI from 'openai'
+import { useQuota } from './quota'
 
 type BResponse<T> = {
   data: T
@@ -106,6 +107,12 @@ const getAIConfig = (config: AIConfig) => {
 }
 
 const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
+  // 检查并使用配额
+  const hasQuota = await useQuota()
+  if (!hasQuota) {
+    throw new Error('今日 AI 调用配额已用完，请明天再试或调整配额设置')
+  }
+
   const { provider, apiKey, extraParams } = config
   const { baseURL, model } = getAIConfig(config)
 
