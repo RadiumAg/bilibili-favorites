@@ -15,7 +15,7 @@ type DataContextType = {
     baseUrl?: string
     model?: string
     provider?: AIProvider
-    extraParams: Record<string, any>
+    extraParams?: Record<string, any>
   }
   cookie: string | undefined
   activeKey: number | undefined

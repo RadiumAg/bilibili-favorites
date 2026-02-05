@@ -56,15 +56,14 @@ const Setting: React.FC = () => {
         key: data.key,
         model: data.model,
         baseUrl: data.baseUrl,
-        provider: data.provider,
+        provider: data.provider as AIProvider,
+        extraParams: {},
       },
     })
   }
 
   const selectedProvider = form.watch('provider')
   const selectedProviderConfig = aiProviders.find((p) => p.provider === selectedProvider)
-  const models = selectedProviderConfig?.models || []
-  console.log(globalData)
 
   return (
     <Form {...form}>
@@ -102,32 +101,27 @@ const Setting: React.FC = () => {
             <FormItem>
               <FormLabel>模型</FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(value)
-                  }}
-                  value={field.value}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="选择模型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {models.map((model) => (
-                      <SelectItem key={model.value} value={model.value}>
-                        <div className="flex flex-col">
-                          <span>{model.label}</span>
-                          {model.description && (
-                            <span className="text-xs text-muted-foreground">
-                              {model.description}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input placeholder="输入模型名称，如：deepseek-chat" {...field} />
               </FormControl>
-              <FormDescription>选择具体模型版本</FormDescription>
+              <FormDescription>
+                {selectedProviderConfig && (
+                  <span className="text-xs">
+                    常用模型：
+                    {selectedProviderConfig.models.map((m, i) => (
+                      <span key={m.value}>
+                        {i > 0 && '、'}
+                        <button
+                          type="button"
+                          className="text-primary hover:underline"
+                          onClick={() => field.onChange(m.value)}
+                        >
+                          {m.value}
+                        </button>
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
