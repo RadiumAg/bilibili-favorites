@@ -77,10 +77,7 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
-type AIProvider = 'deepseek' | 'qwen' | 'zhipu' | 'doubao' | 'xinghuo'
-
 interface AIConfig {
-  provider: AIProvider
   apiKey: string
   baseURL?: string
   model?: string
@@ -108,12 +105,12 @@ const getAIConfig = (config: AIConfig) => {
 
 const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   // 检查并使用配额
-  const hasQuota = await useQuota()
-  if (!hasQuota) {
-    throw new Error('今日 AI 调用配额已用完，请明天再试或调整配额设置')
-  }
+  // const hasQuota = await useQuota()
+  // if (!hasQuota) {
+  //   throw new Error('今日 AI 调用配额已用完，请明天再试或调整配额设置')
+  // }
 
-  const { provider, apiKey, extraParams } = config
+  const { apiKey, extraParams } = config
   const { baseURL, model } = getAIConfig(config)
 
   const systemPrompt = `你是一个关键词提取专家。任务：从视频标题中提取搜索关键词。
@@ -147,35 +144,11 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
     },
   ]
 
-  // 各服务商跳过思考过程的参数配置
-  const getCompletionConfig = () => {
-    switch (provider) {
-      case 'deepseek':
-        // DeepSeek-R1 会返回 reasoning_content，OpenAI SDK 会自动过滤
-        return {}
-      case 'qwen':
-        // 通义千问使用 max_tokens 限制
-        return { max_tokens: 1000 }
-      case 'zhipu':
-        // 智谱清言使用 max_tokens 限制
-        return { max_tokens: 1000 }
-      case 'doubao':
-        // 豆包使用 max_tokens 限制
-        return { max_tokens: 1000 }
-      case 'xinghuo':
-        // 星火使用 max_tokens 限制
-        return { max_tokens: 1000 }
-      default:
-        return { max_tokens: 1000 }
-    }
-  }
-
   // 合并所有配置参数
   const requestParams = {
     model,
     messages,
     stream: true,
-    ...getCompletionConfig(),
     ...(extraParams || {}), // 塞入额外参数
   }
 

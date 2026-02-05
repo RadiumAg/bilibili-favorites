@@ -24,7 +24,6 @@ const useCreateKeywordByAi = () => {
         baseURL: dataProvideData.aiConfig.baseUrl,
         apiKey: dataProvideData.aiConfig.key!,
         model: dataProvideData.aiConfig.model!,
-        provider: dataProvideData.aiConfig.provider!,
         extraParams: dataProvideData.aiConfig.extraParams,
       })
       // 确保返回的是 Stream 类型
@@ -36,14 +35,19 @@ const useCreateKeywordByAi = () => {
         const decoder = new TextDecoder('utf-8')
         const { value, done } = await render.read()
 
-        if (done) break
-
+        if (done) {
+          break
+        }
         // 安全解析 JSON，容错处理
         let data = ''
         try {
           const decoded = decoder.decode(value)
           const parsed = JSON.parse(decoded)
-          data = parsed.choices?.[0]?.delta?.content || ''
+
+          data =
+            parsed.choices?.[0]?.delta?.content ||
+            parsed.choices?.[0]?.delta?.reasoning_content ||
+            ''
         } catch {
           continue
         }
@@ -60,7 +64,7 @@ const useCreateKeywordByAi = () => {
         resultCopy = result
         result = ''
 
-        if (resultCopy === '') return
+        if (resultCopy === '') continue
 
         resultCopy = resultCopy.replace(/^"|"$/, '').trim()
         let targetKeyword = dataProvideData.keyword.find((item) => item.favoriteDataId === +favKey)
@@ -79,13 +83,12 @@ const useCreateKeywordByAi = () => {
             targetKeyword.value.push({ id: uuid(), value: resultCopy })
           }
         }
-
         dataProvideData.setGlobalData({ keyword: [...dataProvideData.keyword] })
       }
     }
 
     // 验证必填配置
-    const requiredFields: Array<keyof typeof aiConfig> = ['provider', 'key', 'model']
+    const requiredFields: Array<keyof typeof aiConfig> = ['key', 'model']
     for (const field of requiredFields) {
       if (!aiConfig[field]) {
         toast({

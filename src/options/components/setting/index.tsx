@@ -13,17 +13,21 @@ import { Input } from '@/components/ui/input'
 import { z } from 'zod'
 import { useGlobalConfig } from '@/store/global-data'
 import { useIsFirstRun } from '@/hooks'
+import { Textarea } from '@/components/ui/textarea'
+import { toast } from '@/hooks/use-toast'
 
 type FormData = {
   key: string
   baseUrl: string
   model: string
+  extraParams: string
 }
 
 const formSchema = z.object({
   key: z.string(),
   baseUrl: z.string(),
   model: z.string(),
+  extraParams: z.string().optional(),
 })
 
 const Setting: React.FC = () => {
@@ -33,18 +37,34 @@ const Setting: React.FC = () => {
       key: globalData.aiConfig.key || '',
       baseUrl: globalData.aiConfig.baseUrl || '',
       model: globalData.aiConfig.model || '',
+      extraParams: globalData.aiConfig.extraParams
+        ? JSON.stringify(globalData.aiConfig.extraParams)
+        : '',
     },
   })
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    globalData.setGlobalData({
-      aiConfig: {
-        key: data.key,
-        model: data.model,
-        baseUrl: data.baseUrl,
-        extraParams: {},
-      },
-    })
+    console.log('[DEBUG] submit data', data)
+    try {
+      globalData.setGlobalData({
+        aiConfig: {
+          key: data.key,
+          model: data.model,
+          baseUrl: data.baseUrl,
+          extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
+        },
+      })
+    } catch (e) {
+      if (e instanceof Error) {
+        toast({
+          variant: 'destructive',
+          title: `哪里不对哦`,
+          description: e.message,
+        })
+      }
+    }
+
+    toast({ variant: 'default', title: 'ok没问题' })
   }
 
   return (
@@ -89,6 +109,21 @@ const Setting: React.FC = () => {
                 <Input placeholder="自定义 Base URL" {...field} />
               </FormControl>
               <FormDescription>默认使用官方地址，如有自定义代理可填写</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="extraParams"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Extra Params</FormLabel>
+              <FormControl>
+                <Textarea placeholder="输入其它参数，例如调整跳过思考过程" {...field} />
+              </FormControl>
+              <FormDescription>其它参数</FormDescription>
               <FormMessage />
             </FormItem>
           )}
