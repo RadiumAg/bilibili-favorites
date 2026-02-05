@@ -76,36 +76,25 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
-type AIProvider =
-  | 'openai'
-  | 'claude'
-  | 'deepseek'
-  | 'qwen'
-  | 'zhipu'
-  | 'doubao'
-  | 'coze'
-  | 'xinghuo'
+type AIProvider = 'deepseek' | 'qwen' | 'zhipu' | 'doubao' | 'xinghuo'
 
 interface AIConfig {
   provider: AIProvider
   apiKey: string
   baseURL?: string
   model?: string
-  extraParams?: Record<string, any>  // 额外参数，会被塞入请求 body
+  extraParams?: Record<string, any> // 额外参数，会被塞入请求 body
 }
 
 const getAIConfig = (config: AIConfig) => {
   const { provider, apiKey, baseURL, model } = config
 
-  // 默认配置映射
+  // 默认配置映射（仅保留提供免费额度的服务商）
   const defaultConfigs: Record<AIProvider, { baseURL: string; model: string }> = {
-    openai: { baseURL: 'https://api.openai.com/v1', model: 'gpt-3.5-turbo' },
-    claude: { baseURL: 'https://api.anthropic.com/v1', model: 'claude-3-haiku-20240307' },
     deepseek: { baseURL: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
     qwen: { baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-turbo' },
     zhipu: { baseURL: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash' },
     doubao: { baseURL: 'https://ark.cn-beijing.volces.com/api/v3', model: 'doubao-pro-32k' },
-    coze: { baseURL: 'https://api.coze.com/v3', model: 'coze-chat' },
     xinghuo: { baseURL: 'https://spark-api-open.xf-yun.com/v1', model: 'generalv3.5' },
   }
 
@@ -148,9 +137,6 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
       case 'deepseek':
         // DeepSeek-R1 会返回 reasoning_content，OpenAI SDK 会自动过滤
         return {}
-      case 'claude':
-        // Claude 3.7 通过 max_tokens 控制输出
-        return { max_tokens: 1000 }
       case 'qwen':
         // 通义千问使用 max_tokens 限制
         return { max_tokens: 1000 }
@@ -160,15 +146,10 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
       case 'doubao':
         // 豆包使用 max_tokens 限制
         return { max_tokens: 1000 }
-      case 'coze':
-        // Coze 使用 max_tokens 限制
-        return { max_tokens: 1000 }
       case 'xinghuo':
         // 星火使用 max_tokens 限制
         return { max_tokens: 1000 }
-      case 'openai':
       default:
-        // OpenAI 默认不返回思考过程
         return { max_tokens: 1000 }
     }
   }
@@ -179,7 +160,7 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
     messages,
     stream: true,
     ...getCompletionConfig(),
-    ...(extraParams || {}),  // 塞入额外参数
+    ...(extraParams || {}), // 塞入额外参数
   }
 
   // 使用 OpenAI SDK 的兼容模式（支持所有 OpenAI 兼容的 API）
@@ -187,13 +168,6 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
     baseURL,
     apiKey,
     dangerouslyAllowBrowser: true,
-    // 某些服务商需要自定义 headers
-    defaultHeaders:
-      provider === 'claude'
-        ? {
-            'anthropic-version': '2023-06-01',
-          }
-        : undefined,
   }).chat.completions.create(requestParams)
 
   return openai
