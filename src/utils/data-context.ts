@@ -1,5 +1,3 @@
-import { AIProvider } from './gpt'
-
 type DataContextType = {
   favoriteData: {
     attr: number
@@ -14,7 +12,6 @@ type DataContextType = {
     key?: string
     baseUrl?: string
     model?: string
-    provider?: AIProvider
     extraParams?: Record<string, any>
   }
   cookie: string | undefined
@@ -22,6 +19,7 @@ type DataContextType = {
   defaultFavoriteId: number | undefined
   keyword: { value: { id: string; value: string }[]; favoriteDataId: number }[]
   setGlobalData: (data: Partial<DataContextType>) => void
+  getGlobalData: () => DataContextType
 }
 
 export type { DataContextType }

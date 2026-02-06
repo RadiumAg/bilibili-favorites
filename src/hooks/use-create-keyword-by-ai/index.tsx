@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { v4 as uuid } from 'uuid'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
 import loadingImg from '@/assets/loading.gif'
@@ -11,33 +11,41 @@ const useCreateKeywordByAi = () => {
   const { toast } = useToast()
 
   const handleCreate = async (type: 'select' | 'all') => {
-    setIsLoading(true)
     let aiConfig = dataProvideData.aiConfig || {}
 
+    setIsLoading(true)
+
+    /**
+     *
+     * 请求设置单个收藏夹
+     *
+     * @param {string} favKey
+     */
     const fetchSingle = async (favKey: string) => {
       const allDefaultFavoriteVideo = await getFavoriteList(favKey, 1, 36)
-      const titleArray = allDefaultFavoriteVideo.data.medias?.map((item) => item.title)
+      const titleArray = allDefaultFavoriteVideo.data?.medias?.map((item) => item.title)
+
+      console.log('[DEBUG] lastDataProvideData', aiConfig)
 
       if (titleArray == null) return
 
       const gptResult = await fetchChatGpt(titleArray, {
-        baseURL: dataProvideData.aiConfig.baseUrl,
-        apiKey: dataProvideData.aiConfig.key!,
-        model: dataProvideData.aiConfig.model!,
-        extraParams: dataProvideData.aiConfig.extraParams,
+        baseURL: aiConfig.baseUrl,
+        apiKey: aiConfig.key!,
+        model: aiConfig.model!,
+        extraParams: aiConfig?.extraParams,
       })
       // 确保返回的是 Stream 类型
       const render = (gptResult as any).toReadableStream().getReader()
-      let result = ''
+      let buffer = ''
 
       while (true) {
-        let resultCopy = ''
+        const lastDataProvideData = dataProvideData.getGlobalData()
         const decoder = new TextDecoder('utf-8')
         const { value, done } = await render.read()
 
-        if (done) {
-          break
-        }
+        if (done) break
+
         // 安全解析 JSON，容错处理
         let data = ''
         try {
@@ -52,38 +60,55 @@ const useCreateKeywordByAi = () => {
           continue
         }
 
-        if (data.includes('[')) continue
-        if (data.includes(']')) continue
+        console.log('[DEBUG] data', data)
+
+        // 跳过数组标记
+        if (data === '[' || data === ']') continue
         if (data === '') continue
 
-        if (!data.includes(',')) {
-          result += data
-          continue
-        }
+        // 累积到缓冲区
+        buffer += data
 
-        resultCopy = result
-        result = ''
+        // 尝试提取完整的关键词（被引号包围的字符串）
+        // 匹配模式："keyword" 后面跟着逗号或数组结束
+        const keywordMatch = buffer.match(/"([^"]*)"(?=\s*,|\s*\]|$)/)
 
-        if (resultCopy === '') continue
+        if (keywordMatch) {
+          const keyword = keywordMatch[1].trim()
 
-        resultCopy = resultCopy.replace(/^"|"$/, '').trim()
-        let targetKeyword = dataProvideData.keyword.find((item) => item.favoriteDataId === +favKey)
+          console.log('[DEBUG] extracted keyword', keyword, lastDataProvideData)
 
-        if (targetKeyword == null) {
-          targetKeyword = {
-            favoriteDataId: +favKey,
-            value: [{ id: uuid(), value: resultCopy }],
+          if (keyword) {
+            let targetKeyword = lastDataProvideData.keyword.find(
+              (item) => item.favoriteDataId === +favKey,
+            )
+            console.log('[DEBUG] targetKeyword', targetKeyword, lastDataProvideData)
+
+            if (targetKeyword == null) {
+              targetKeyword = {
+                favoriteDataId: +favKey,
+                value: [{ id: uuid(), value: keyword }],
+              }
+              lastDataProvideData.setGlobalData({
+                keyword: [...lastDataProvideData.keyword, targetKeyword],
+              })
+            } else {
+              // 检查关键词是否已存在，避免重复
+              const exists = targetKeyword.value.some((k) => k.value === keyword)
+              if (!exists) {
+                targetKeyword.value.push({ id: uuid(), value: keyword })
+                lastDataProvideData.setGlobalData({
+                  keyword: [...lastDataProvideData.keyword],
+                })
+              }
+            }
           }
 
-          dataProvideData.setGlobalData({ keyword: [...dataProvideData.keyword, targetKeyword] })
-        } else {
-          // 检查关键词是否已存在，避免重复
-          const exists = targetKeyword.value.some((k) => k.value === resultCopy)
-          if (!exists) {
-            targetKeyword.value.push({ id: uuid(), value: resultCopy })
-          }
+          // 从缓冲区中移除已处理的部分
+          buffer = buffer.slice(keywordMatch[0].length + keywordMatch.index!)
+          // 清理开头的逗号和空格
+          buffer = buffer.replace(/^[\s,]+/, '')
         }
-        dataProvideData.setGlobalData({ keyword: [...dataProvideData.keyword] })
       }
     }
 
@@ -134,7 +159,9 @@ const useCreateKeywordByAi = () => {
 
           for (const fav of dataProvideData.favoriteData) {
             try {
-              await fetchSingle(fav.id.toString())
+              const activeKey = fav.id
+              dataProvideData.setGlobalData({ activeKey })
+              await fetchSingle(activeKey.toString())
               successCount++
             } catch {
               failCount++
@@ -168,6 +195,7 @@ const useCreateKeywordByAi = () => {
   const loadingElement = isLoading && (
     <div className="absolute w-full h-full top-0 left-0 bg-white bg-opacity-55 z-[999]">
       <img
+        alt="loading-img"
         className="left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%]  absolute mt-[-51px]"
         src={loadingImg}
       ></img>
