@@ -20,7 +20,7 @@ const Keyword: React.FC<KeywordProps> = (props) => {
 
         <input
           placeholder="请输入关键字并回车"
-          className="outline-none bg-transparent p-1  text-b-text-primary"
+          className="outline-none bg-transparent p-1  text-b-text-primary min-w-3 flex-1"
           onKeyDown={handleKeyDown}
         />
       </div>

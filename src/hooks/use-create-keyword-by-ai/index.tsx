@@ -1,9 +1,9 @@
-import React, { useRef } from 'react'
-import { v4 as uuid } from 'uuid'
+import React from 'react'
 import { fetchChatGpt, getFavoriteList } from '@/utils/api'
 import loadingImg from '@/assets/loading.gif'
 import { useToast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
+import { createAIStreamParser } from './ai-stream-parser'
 
 const useCreateKeywordByAi = () => {
   const dataProvideData = useGlobalConfig((state) => state)
@@ -35,80 +35,29 @@ const useCreateKeywordByAi = () => {
         model: aiConfig.model!,
         extraParams: aiConfig?.extraParams,
       })
+
       // 确保返回的是 Stream 类型
       const render = (gptResult as any).toReadableStream().getReader()
-      let buffer = ''
+
+      // 创建 AI Stream 解析器
+      const parser = createAIStreamParser({
+        favKey,
+        getGlobalData: () => dataProvideData.getGlobalData(),
+        setGlobalData: (data) => dataProvideData.setGlobalData(data),
+        onKeywordExtracted: (keyword) => {
+          console.log('[DEBUG] extracted keyword', keyword)
+        },
+      })
 
       while (true) {
-        const lastDataProvideData = dataProvideData.getGlobalData()
-        const decoder = new TextDecoder('utf-8')
         const { value, done } = await render.read()
 
-        if (done) break
-
-        // 安全解析 JSON，容错处理
-        let data = ''
-        try {
-          const decoded = decoder.decode(value)
-          const parsed = JSON.parse(decoded)
-
-          data =
-            parsed.choices?.[0]?.delta?.content ||
-            parsed.choices?.[0]?.delta?.reasoning_content ||
-            ''
-        } catch {
-          continue
+        if (done) {
+          parser.flush()
+          break
         }
 
-        console.log('[DEBUG] data', data)
-
-        // 跳过数组标记
-        if (data === '[' || data === ']') continue
-        if (data === '') continue
-
-        // 累积到缓冲区
-        buffer += data
-
-        // 尝试提取完整的关键词（被引号包围的字符串）
-        // 匹配模式："keyword" 后面跟着逗号或数组结束
-        const keywordMatch = buffer.match(/"([^"]*)"(?=\s*,|\s*\]|$)/)
-
-        if (keywordMatch) {
-          const keyword = keywordMatch[1].trim()
-
-          console.log('[DEBUG] extracted keyword', keyword, lastDataProvideData)
-
-          if (keyword) {
-            let targetKeyword = lastDataProvideData.keyword.find(
-              (item) => item.favoriteDataId === +favKey,
-            )
-            console.log('[DEBUG] targetKeyword', targetKeyword, lastDataProvideData)
-
-            if (targetKeyword == null) {
-              targetKeyword = {
-                favoriteDataId: +favKey,
-                value: [{ id: uuid(), value: keyword }],
-              }
-              lastDataProvideData.setGlobalData({
-                keyword: [...lastDataProvideData.keyword, targetKeyword],
-              })
-            } else {
-              // 检查关键词是否已存在，避免重复
-              const exists = targetKeyword.value.some((k) => k.value === keyword)
-              if (!exists) {
-                targetKeyword.value.push({ id: uuid(), value: keyword })
-                lastDataProvideData.setGlobalData({
-                  keyword: [...lastDataProvideData.keyword],
-                })
-              }
-            }
-          }
-
-          // 从缓冲区中移除已处理的部分
-          buffer = buffer.slice(keywordMatch[0].length + keywordMatch.index!)
-          // 清理开头的逗号和空格
-          buffer = buffer.replace(/^[\s,]+/, '')
-        }
+        parser.processChunk(value)
       }
     }
 
