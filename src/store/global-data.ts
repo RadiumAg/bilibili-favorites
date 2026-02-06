@@ -5,7 +5,7 @@ import { chromeStorageMiddleware } from './chorme-storage-middleware'
 
 const useGlobalConfig = create<DataContextType>()(
   immer(
-    chromeStorageMiddleware((set) => {
+    chromeStorageMiddleware((set, get) => {
       return {
         keyword: [],
         favoriteData: [],
@@ -13,9 +13,11 @@ const useGlobalConfig = create<DataContextType>()(
         activeKey: undefined,
         aiConfig: {},
         defaultFavoriteId: undefined,
-
         setGlobalData: (data: Partial<DataContextType>) => {
           return set(data)
+        },
+        getGlobalData: () => {
+          return get()
         },
       }
     }),

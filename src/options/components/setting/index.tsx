@@ -11,76 +11,89 @@ import {
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { z } from 'zod'
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select'
-import { gptArray } from '@/utils/gpt'
 import { useGlobalConfig } from '@/store/global-data'
-import { useMount } from 'ahooks'
 import { useIsFirstRun } from '@/hooks'
+import { Textarea } from '@/components/ui/textarea'
+import { toast } from '@/hooks/use-toast'
 
 type FormData = {
   key: string
   baseUrl: string
+  model: string
+  extraParams: string
 }
 
 const formSchema = z.object({
   key: z.string(),
   baseUrl: z.string(),
   model: z.string(),
+  extraParams: z.string().optional(),
 })
 
 const Setting: React.FC = () => {
-  const isFirstRun = useIsFirstRun()
   const globalData = useGlobalConfig((state) => state)
-  const form = useForm<z.infer<typeof formSchema>>({})
-  const gptElementArray = gptArray.map((gpt) => {
-    if (Array.isArray(gpt)) {
-      const value = gpt[0]
-      const defaultCheck = gpt[1]
-
-      return (
-        <SelectItem value={value} key={value} defaultChecked={defaultCheck}>
-          {gpt}
-        </SelectItem>
-      )
-    } else {
-      return (
-        <SelectItem value={gpt} key={gpt}>
-          {gpt}
-        </SelectItem>
-      )
-    }
+  const form = useForm<z.infer<typeof formSchema>>({
+    defaultValues: {
+      key: globalData.aiConfig.key || '',
+      baseUrl: globalData.aiConfig.baseUrl || '',
+      model: globalData.aiConfig.model || '',
+      extraParams: globalData.aiConfig.extraParams
+        ? JSON.stringify(globalData.aiConfig.extraParams)
+        : '',
+    },
   })
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    globalData.setGlobalData({
-      aiConfig: {
-        key: data.key,
-        model: data.model,
-        baseUrl: data.baseUrl,
-      },
-    })
+    console.log('[DEBUG] submit data', data)
+    try {
+      globalData.setGlobalData({
+        aiConfig: {
+          key: data.key,
+          model: data.model,
+          baseUrl: data.baseUrl,
+          extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
+        },
+      })
+    } catch (e) {
+      if (e instanceof Error) {
+        toast({
+          variant: 'destructive',
+          title: `哪里不对哦`,
+          description: e.message,
+        })
+      }
+    }
+
+    toast({ variant: 'default', title: 'ok没问题' })
   }
 
   return (
     <Form {...form}>
-      <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[50%] ">
+      <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[60%]">
         <FormField
-          defaultValue={globalData.aiConfig.key}
+          control={form.control}
+          name="model"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>模型</FormLabel>
+              <FormControl>
+                <Input placeholder="输入模型名称，如：deepseek-chat" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
           control={form.control}
           name="key"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>key</FormLabel>
+              <FormLabel>API Key</FormLabel>
               <FormControl>
-                <Input placeholder="open ai key" {...field} />
+                <Input type="password" placeholder="输入 API Key" {...field} />
               </FormControl>
-              <FormDescription>ai key</FormDescription>
+              <FormDescription>从对应服务商获取 API Key</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -88,15 +101,14 @@ const Setting: React.FC = () => {
 
         <FormField
           control={form.control}
-          defaultValue={globalData.aiConfig.baseUrl}
           name="baseUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>baseUrl</FormLabel>
+              <FormLabel>Base URL (可选)</FormLabel>
               <FormControl>
-                <Input placeholder="baseUrl" {...field} />
+                <Input placeholder="自定义 Base URL" {...field} />
               </FormControl>
-              <FormDescription>ai baseurl</FormDescription>
+              <FormDescription>默认使用官方地址，如有自定义代理可填写</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -104,35 +116,17 @@ const Setting: React.FC = () => {
 
         <FormField
           control={form.control}
-          defaultValue={globalData.aiConfig.model}
-          name="model"
-          render={({ field }) => {
-            return (
-              <FormItem>
-                <FormLabel>model</FormLabel>
-                <FormControl>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value)
-                    }}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <SelectTrigger value="" className="w-[180px]">
-                      <SelectValue placeholder="please select a model" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      <SelectItem value="none">none</SelectItem>
-                      {gptElementArray}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormDescription>如果你要使用星火等其它大模型，请使用none即可</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )
-          }}
+          name="extraParams"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Extra Params</FormLabel>
+              <FormControl>
+                <Textarea placeholder="输入其它参数，例如调整跳过思考过程" {...field} />
+              </FormControl>
+              <FormDescription>其它参数</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
       </form>
     </Form>

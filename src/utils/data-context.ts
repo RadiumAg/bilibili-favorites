@@ -12,12 +12,14 @@ type DataContextType = {
     key?: string
     baseUrl?: string
     model?: string
+    extraParams?: Record<string, any>
   }
   cookie: string | undefined
   activeKey: number | undefined
   defaultFavoriteId: number | undefined
   keyword: { value: { id: string; value: string }[]; favoriteDataId: number }[]
   setGlobalData: (data: Partial<DataContextType>) => void
+  getGlobalData: () => DataContextType
 }
 
 export type { DataContextType }

@@ -1,6 +1,7 @@
 import { getCookieValue } from './cookie'
 import { DataContextType } from './data-context'
 import OpenAI from 'openai'
+import { useQuota } from './quota'
 
 type BResponse<T> = {
   data: T
@@ -76,39 +77,87 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
-const fetchChatGpt = async (
-  titleArray: string[],
-  baseURL: string,
-  apiKey: string,
-  model: string,
-) => {
+interface AIConfig {
+  apiKey: string
+  baseURL?: string
+  model?: string
+  extraParams?: Record<string, any> // 额外参数，会被塞入请求 body
+}
+
+const getAIConfig = (config: AIConfig) => {
+  const { provider, apiKey, baseURL, model } = config
+
+  // 默认配置映射（仅保留提供免费额度的服务商）
+  const defaultConfigs: Record<AIProvider, { baseURL: string; model: string }> = {
+    deepseek: { baseURL: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+    qwen: { baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-turbo' },
+    zhipu: { baseURL: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash' },
+    doubao: { baseURL: 'https://ark.cn-beijing.volces.com/api/v3', model: 'doubao-pro-32k' },
+    xinghuo: { baseURL: 'https://spark-api-open.xf-yun.com/v1', model: 'generalv3.5' },
+  }
+
+  const defaultConfig = defaultConfigs[provider]
+  return {
+    baseURL: baseURL || defaultConfig.baseURL,
+    model: model || defaultConfig.model,
+  }
+}
+
+const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
+  // 检查并使用配额
+  // const hasQuota = await useQuota()
+  // if (!hasQuota) {
+  //   throw new Error('今日 AI 调用配额已用完，请明天再试或调整配额设置')
+  // }
+
+  const { apiKey, extraParams } = config
+  const { baseURL, model } = getAIConfig(config)
+
+  const systemPrompt = `你是一个关键词提取专家。任务：从视频标题中提取搜索关键词。
+
+规则：
+1. 提取标题中的核心词汇和常见别称
+2. 包含缩写、全称、中英文等多种表达
+3. 去除无意义的修饰词（如"学习"、"教程"等）
+4. 只返回 JSON 数组格式，不要任何解释
+
+示例：
+输入：["TypeScript入门教程","大学英语四级备考"]
+输出：["typescript","ts","type script","大学英语","四级","cet4","英语四级"]`
+
+  const messages = [
+    {
+      role: 'system' as const,
+      content: systemPrompt,
+    },
+    {
+      role: 'user' as const,
+      content: '["React Hooks详解","Python数据分析"]',
+    },
+    {
+      role: 'assistant' as const,
+      content: '["react","hooks","react hooks","python","数据分析","data analysis"]',
+    },
+    {
+      role: 'user' as const,
+      content: JSON.stringify(titleArray),
+    },
+  ]
+
+  // 合并所有配置参数
+  const requestParams = {
+    model,
+    messages,
+    stream: true,
+    ...(extraParams || {}), // 塞入额外参数
+  }
+
+  // 使用 OpenAI SDK 的兼容模式（支持所有 OpenAI 兼容的 API）
   const openai = await new OpenAI({
     baseURL,
     apiKey,
     dangerouslyAllowBrowser: true,
-  }).chat.completions.create({
-    model,
-    messages: [
-      {
-        role: 'system',
-        content:
-          '你是一名文案，现在开始，你要根据我提供的视频标题，生成一个关键字数组，例如：["ts学习","大学英语四级"] ，对应关键字：["ts","typescript","大学英语", "四级"]，你只需要返回数组，不可以有其他回答',
-      },
-      {
-        role: 'user',
-        content: '["ts学习","大学英语四级"]',
-      },
-      {
-        role: 'assistant',
-        content: '["ts","typescript","大学英语", "四级"]',
-      },
-      {
-        role: 'user',
-        content: `${JSON.stringify(titleArray)}`,
-      },
-    ],
-    stream: true,
-  })
+  }).chat.completions.create(requestParams)
 
   return openai
 }

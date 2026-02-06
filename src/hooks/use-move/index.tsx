@@ -87,32 +87,21 @@ const useMove = () => {
         (key) => key.favoriteDataId !== dataContext.defaultFavoriteId,
       )) {
         for (const keyValue of keywordInfo.value) {
+          // 预先查找目标收藏夹，避免重复查找
+          const targetFavoriteTag = dataContext.favoriteData.find(
+            (fav) => fav.id === keywordInfo.favoriteDataId,
+          )
+          if (targetFavoriteTag == null) continue
+
+          // 将关键词转为小写，实现不区分大小写的模糊匹配
+          const keyword = keyValue.value.toLowerCase()
+
           for (const videoInfo of allDefaultFavoriteVideo) {
-            let regex: string | RegExp | null = null
+            const videoTitle = videoInfo.title.toLowerCase()
 
-            try {
-              regex = new RegExp(keyValue.value)
-            } catch {
-              regex = keyValue.value
-            }
-
-            if (regex instanceof RegExp && regex.test(videoInfo.title)) {
-              const targetFavoriteTag = dataContext.favoriteData.find(
-                (fav) => fav.id === keywordInfo.favoriteDataId,
-              )
-              if (targetFavoriteTag == null) continue
-
+            // 使用 includes 进行模糊匹配（类似 ES 的 match 查询）
+            if (videoTitle.includes(keyword)) {
               await fetchMove(targetFavoriteTag.id, videoInfo.id)
-              continue
-            } else if (videoInfo.title.includes(keyValue.value)) {
-              const targetFavoriteTag = dataContext.favoriteData.find(
-                (fav) => fav.id === keywordInfo.favoriteDataId,
-              )
-
-              if (targetFavoriteTag == null) continue
-
-              await fetchMove(targetFavoriteTag.id, videoInfo.id)
-              continue
             }
           }
         }
@@ -151,7 +140,7 @@ const useMove = () => {
         }}
       />
 
-      <img src={loadingGif} className={classNames({ ['hidden']: isFinished })} />
+      <img alt="loading-gif" src={loadingGif} className={classNames({ ['hidden']: isFinished })} />
     </div>
   )
 

@@ -34,7 +34,7 @@ const Tabs: React.FC<TabsProps> & { Content: typeof Content; Tab: typeof Tab } =
 
   return (
     <TabProvide.Provider value={provideData}>
-      <div className="h-full w-full flex">
+      <div className="h-full w-full flex flex-1">
         <div className="border-r border-border border-b-primary max-w-40 py-3 px-2 shrink-0">
           {children}
         </div>

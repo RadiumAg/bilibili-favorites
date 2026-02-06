@@ -6,6 +6,7 @@ import { getAllFavoriteFlag } from '@/utils/api'
 import OperateButton from './components/create-keyword/operate-button'
 import { Skeleton } from '@/components/ui/skeleton'
 import Setting from './components/setting'
+import { OptionsAnalysisTab } from '@/components/analysis'
 import { useGlobalConfig } from '@/store/global-data'
 
 const Options: React.FC = () => {
@@ -20,8 +21,8 @@ const Options: React.FC = () => {
       className={classNames(
         'flex',
         'mt-[5%]',
-        'h-[700px]',
         'shadow-xl',
+        'min-h-[700px]',
         'mx-auto',
         'flex-col',
         'rounded-sm',
@@ -43,7 +44,7 @@ const Options: React.FC = () => {
               <OperateButton />
             </div>
 
-            <div className="flex gap-x-2 h-[90%]">
+            <div className="flex gap-x-2 h-[700px]">
               <div className="w-1/2 h-full">
                 <Suspense fallback={<Skeleton className="w-full h-full" />}>
                   <FavoriteTag fetchPromise={favoriteFlagFetchPromise} className="h-full" />
@@ -57,8 +58,10 @@ const Options: React.FC = () => {
           </TabWrapper.Content>
         </TabWrapper.Tab>
 
-        <TabWrapper.Tab title="收藏夹数据分析" keyValue="">
-          <TabWrapper.Content></TabWrapper.Content>
+        <TabWrapper.Tab title="收藏夹数据分析" keyValue="analysis">
+          <TabWrapper.Content>
+            <OptionsAnalysisTab />
+          </TabWrapper.Content>
         </TabWrapper.Tab>
       </TabWrapper>
     </div>

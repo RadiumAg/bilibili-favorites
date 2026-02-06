@@ -5,7 +5,7 @@ import classNames from 'classnames'
 type TabProps = React.PropsWithChildren<{
   title: string
   keyValue: string
-  defaultTab: boolean
+  defaultTab?: boolean
 }>
 
 const Tab: React.FC<TabProps> = (props) => {

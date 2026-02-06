@@ -12,11 +12,14 @@ const Keyword: React.FC<KeywordProps> = (props) => {
   const { tagElementArray, handleKeyDown } = useEditKeyword()
 
   return (
-    <ScrollArea className={classNames('h-44 border-solid border-cyan-200 border-2', className)}>
+    <ScrollArea
+      className={classNames('h-44 border-solid border-cyan-200 border-2 rounded-sm', className)}
+    >
       <div className="flex flex-wrap p-1 items-start content-start gap-1 overflow-auto rounded-sm">
         {tagElementArray}
 
         <input
+          placeholder="请输入关键字并回车"
           className="outline-none bg-transparent p-1  text-b-text-primary"
           onKeyDown={handleKeyDown}
         />
