@@ -84,34 +84,13 @@ interface AIConfig {
   extraParams?: Record<string, any> // 额外参数，会被塞入请求 body
 }
 
-const getAIConfig = (config: AIConfig) => {
-  const { provider, apiKey, baseURL, model } = config
-
-  // 默认配置映射（仅保留提供免费额度的服务商）
-  const defaultConfigs: Record<AIProvider, { baseURL: string; model: string }> = {
-    deepseek: { baseURL: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
-    qwen: { baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-turbo' },
-    zhipu: { baseURL: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash' },
-    doubao: { baseURL: 'https://ark.cn-beijing.volces.com/api/v3', model: 'doubao-pro-32k' },
-    xinghuo: { baseURL: 'https://spark-api-open.xf-yun.com/v1', model: 'generalv3.5' },
-  }
-
-  const defaultConfig = defaultConfigs[provider]
-  return {
-    baseURL: baseURL || defaultConfig.baseURL,
-    model: model || defaultConfig.model,
-  }
-}
-
 const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   // 检查并使用配额
   // const hasQuota = await useQuota()
   // if (!hasQuota) {
   //   throw new Error('今日 AI 调用配额已用完，请明天再试或调整配额设置')
   // }
-
-  const { apiKey, extraParams } = config
-  const { baseURL, model } = getAIConfig(config)
+  const { apiKey, baseURL, model, extraParams } = config
 
   const systemPrompt = `你是一个关键词提取专家。任务：从视频标题中提取搜索关键词。
 
@@ -146,7 +125,7 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
 
   // 合并所有配置参数
   const requestParams = {
-    model,
+    model: model!,
     messages,
     stream: true,
     ...(extraParams || {}), // 塞入额外参数
