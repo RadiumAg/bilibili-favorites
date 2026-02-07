@@ -21,6 +21,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "tests/ai-stream-parser.test.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

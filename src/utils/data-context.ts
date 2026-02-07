@@ -1,3 +1,5 @@
+type Adapter = 'spark' | 'openai'
+
 type DataContextType = {
   favoriteData: {
     attr: number
@@ -12,6 +14,7 @@ type DataContextType = {
     key?: string
     baseUrl?: string
     model?: string
+    adapter?: Adapter
     extraParams?: Record<string, any>
   }
   cookie: string | undefined
@@ -22,4 +25,4 @@ type DataContextType = {
   getGlobalData: () => DataContextType
 }
 
-export type { DataContextType }
+export type { DataContextType, Adapter }

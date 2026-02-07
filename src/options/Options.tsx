@@ -34,7 +34,7 @@ const Options: React.FC = () => {
       <TabWrapper>
         <TabWrapper.Tab title="配置" keyValue="setting" defaultTab>
           <TabWrapper.Content>
-            <Setting></Setting>
+            <Setting />
           </TabWrapper.Content>
         </TabWrapper.Tab>
 

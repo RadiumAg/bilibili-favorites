@@ -19,8 +19,8 @@ const Keyword: React.FC<KeywordProps> = (props) => {
         {tagElementArray}
 
         <input
-          placeholder="请输入关键字并回车"
-          className="outline-none bg-transparent p-1  text-b-text-primary"
+          placeholder="关键字/回车输入/退格删除"
+          className="outline-none bg-transparent p-1 text-ellipsis overflow-hidden  text-b-text-primary min-w-3 flex-1"
           onKeyDown={handleKeyDown}
         />
       </div>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { TabProvide } from './provide'
 import classNames from 'classnames'
 
@@ -14,12 +14,7 @@ const Tab: React.FC<TabProps> = (props) => {
 
   const handleClick = () => {
     if (tabProvideData.activeKey === keyValue) {
-      tabProvideData.dispatch?.((oldData) => {
-        return {
-          ...oldData,
-          activeKey: undefined,
-        }
-      })
+      return
     } else {
       tabProvideData.dispatch?.((oldData) => {
         return {
