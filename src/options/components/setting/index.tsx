@@ -112,18 +112,15 @@ const Setting: React.FC = () => {
           name="adapter"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>AI 模型适配器</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormLabel>AI 模型</FormLabel>
+              <Select {...field} onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="选择 AI 模型适配器" />
+                    <SelectValue placeholder="选择 AI 模型" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>{adapterSelectItemEleArray}</SelectContent>
               </Select>
-              <FormDescription>
-                选择 AI 模型适配器，不同适配器对应不同的流式响应格式
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
