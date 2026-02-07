@@ -85,11 +85,10 @@ const useEditKeyword = () => {
       dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
 
       target.value = ''
-    } else if (event.key === 'Delete' || (event.key === 'Backspace' && inputValue === '')) {
+    } else if ((event.key === 'Delete' || event.key === 'Backspace') && inputValue === '') {
       let targetkeyword = dataContext.keyword?.find(
         (key) => key.favoriteDataId === dataContext.activeKey,
       )
-
       targetkeyword?.value.pop()
       dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
     }
