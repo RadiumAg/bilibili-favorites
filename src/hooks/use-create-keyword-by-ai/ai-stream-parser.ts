@@ -10,6 +10,8 @@ export interface StreamParserOptions {
   setGlobalData: (data: Partial<DataContextType>) => void
   /** 可选的回调函数，当解析到关键词时触发 */
   onKeywordExtracted?: (keyword: string) => void
+  /** 可选的 AI 流解析适配器 */
+  adapter?: AIStreamAdapter
 }
 
 export interface ParseResult {
@@ -22,23 +24,82 @@ export interface ParseResult {
 }
 
 /**
- * 从 SSE 流数据中解析出内容片段
+ * AI 流解析适配器接口
+ * 用于适配不同 AI 模型的流式响应格式
+ */
+export interface AIStreamAdapter {
+  /** 解析流数据块并返回内容字符串 */
+  parse(chunk: Uint8Array): string
+}
+
+/**
+ * 星火大模型流解析适配器
+ * 实现星火大模型 SSE 流数据的解析逻辑
+ */
+export class SparkStreamAdapter implements AIStreamAdapter {
+  parse(chunk: Uint8Array): string {
+    const decoder = new TextDecoder('utf-8')
+
+    try {
+      const decoded = decoder.decode(chunk)
+      const parsed = JSON.parse(decoded)
+
+      return (
+        parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.delta?.reasoning_content || ''
+      )
+    } catch {
+      return ''
+    }
+  }
+}
+
+/**
+ * OpenAI 流解析适配器
+ * 实现 OpenAI 兼容模型的 SSE 流数据解析逻辑
+ */
+export class OpenAIStreamAdapter implements AIStreamAdapter {
+  parse(chunk: Uint8Array): string {
+    const decoder = new TextDecoder('utf-8')
+
+    try {
+      const decoded = decoder.decode(chunk)
+      const parsed = JSON.parse(decoded)
+
+      return parsed.choices?.[0]?.delta?.content || ''
+    } catch {
+      return ''
+    }
+  }
+}
+
+/**
+ * 创建 AI 流解析适配器工厂函数
+ * 根据适配器类型创建对应的适配器实例
+ * @param adapterType - 适配器类型
+ * @returns AI 流解析适配器实例
+ */
+export function createStreamAdapter(adapterType: 'spark' | 'openai' | 'custom'): AIStreamAdapter {
+  switch (adapterType) {
+    case 'spark':
+      return new SparkStreamAdapter()
+    case 'openai':
+      return new OpenAIStreamAdapter()
+    case 'custom':
+      // 自定义适配器，可以扩展为从配置中读取自定义解析逻辑
+      return new OpenAIStreamAdapter()
+    default:
+      return new SparkStreamAdapter()
+  }
+}
+
+/**
+ * 从 SSE 流数据中解析出内容片段（使用星火大模型适配器）
  * @param value - 流数据块
  * @returns 解析出的内容字符串
  */
 export function parseStreamChunk(value: Uint8Array): string {
-  const decoder = new TextDecoder('utf-8')
-
-  try {
-    const decoded = decoder.decode(value)
-    const parsed = JSON.parse(decoded)
-
-    return (
-      parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.delta?.reasoning_content || ''
-    )
-  } catch {
-    return ''
-  }
+  const adapter = new SparkStreamAdapter()
+  return adapter.parse(value)
 }
 
 /**
@@ -129,7 +190,9 @@ export function processStreamChunk(
   buffer: string,
   value: Uint8Array,
 ): string {
-  const data = parseStreamChunk(value)
+  // 使用传入的适配器或默认的星火适配器
+  const adapter = options.adapter || new SparkStreamAdapter()
+  const data = adapter.parse(value)
 
   // 跳过不需要的内容
   if (shouldSkipContent(data)) {
@@ -157,6 +220,8 @@ export function processStreamChunk(
  */
 export function createAIStreamParser(options: StreamParserOptions) {
   let buffer = ''
+  // 使用传入的适配器或默认的星火适配器
+  const adapter = options.adapter || new SparkStreamAdapter()
 
   return {
     /**
@@ -164,7 +229,23 @@ export function createAIStreamParser(options: StreamParserOptions) {
      * @param value - 流数据块
      */
     processChunk(value: Uint8Array): void {
-      buffer = processStreamChunk(options, buffer, value)
+      const data = adapter.parse(value)
+
+      // 跳过不需要的内容
+      if (shouldSkipContent(data)) {
+        return
+      }
+
+      // 累积到缓冲区
+      buffer += data
+
+      // 尝试提取完整的关键词
+      const result = extractKeywordFromBuffer(buffer)
+
+      if (result.success && result.keyword) {
+        addKeywordToGlobalData(options, result.keyword)
+        buffer = result.newBuffer
+      }
     },
 
     /**

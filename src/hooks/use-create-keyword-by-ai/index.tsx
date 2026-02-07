@@ -3,7 +3,7 @@ import { fetchChatGpt, getFavoriteList } from '@/utils/api'
 import loadingImg from '@/assets/loading.gif'
 import { useToast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
-import { createAIStreamParser } from './ai-stream-parser'
+import { createAIStreamParser, createStreamAdapter } from './ai-stream-parser'
 
 const useCreateKeywordByAi = () => {
   const dataProvideData = useGlobalConfig((state) => state)
@@ -39,6 +39,9 @@ const useCreateKeywordByAi = () => {
       // 确保返回的是 Stream 类型
       const render = (gptResult as any).toReadableStream().getReader()
 
+      // 根据配置创建适配器
+      const adapter = createStreamAdapter(aiConfig.adapter || 'spark')
+
       // 创建 AI Stream 解析器
       const parser = createAIStreamParser({
         favKey,
@@ -47,6 +50,7 @@ const useCreateKeywordByAi = () => {
         onKeywordExtracted: (keyword) => {
           console.log('[DEBUG] extracted keyword', keyword)
         },
+        adapter,
       })
 
       while (true) {

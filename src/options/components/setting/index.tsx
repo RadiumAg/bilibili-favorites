@@ -15,12 +15,14 @@ import { useGlobalConfig } from '@/store/global-data'
 import { useIsFirstRun } from '@/hooks'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 type FormData = {
   key: string
   baseUrl: string
   model: string
   extraParams: string
+  adapter: 'spark' | 'openai' | 'custom'
 }
 
 const formSchema = z.object({
@@ -28,6 +30,7 @@ const formSchema = z.object({
   baseUrl: z.string(),
   model: z.string(),
   extraParams: z.string().optional(),
+  adapter: z.enum(['spark', 'openai', 'custom']),
 })
 
 const Setting: React.FC = () => {
@@ -40,6 +43,7 @@ const Setting: React.FC = () => {
       extraParams: globalData.aiConfig.extraParams
         ? JSON.stringify(globalData.aiConfig.extraParams)
         : '',
+      adapter: globalData.aiConfig.adapter || 'spark',
     },
   })
 
@@ -52,6 +56,7 @@ const Setting: React.FC = () => {
           model: data.model,
           baseUrl: data.baseUrl,
           extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
+          adapter: data.adapter,
         },
       })
     } catch (e) {
@@ -70,6 +75,30 @@ const Setting: React.FC = () => {
   return (
     <Form {...form}>
       <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[60%]">
+        <FormField
+          control={form.control}
+          name="adapter"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>AI 模型适配器</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择 AI 模型适配器" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="spark">星火大模型</SelectItem>
+                  <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="custom">自定义</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>选择 AI 模型适配器，不同适配器对应不同的流式响应格式</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="model"

@@ -57,15 +57,17 @@ const useEditKeyword = () => {
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
     const target = event.target as HTMLInputElement
     let inputValue = target.value
+    console.log('[DEBUG] Event Key', event.key)
 
     if (event.key === 'Enter') {
+      let targetkeyword = dataContext.keyword?.find(
+        (key) => key.favoriteDataId === dataContext.activeKey,
+      )
+
       if (inputValue === '') {
         return { ...dataContext, keyword: [...dataContext.keyword] }
       }
 
-      let targetkeyword = dataContext.keyword?.find(
-        (key) => key.favoriteDataId === dataContext.activeKey,
-      )
       if (dataContext.activeKey == null) return
 
       if (targetkeyword == null) {
@@ -83,6 +85,13 @@ const useEditKeyword = () => {
       dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
 
       target.value = ''
+    } else if (event.key === 'Delete' || event.key === 'Backspace') {
+      let targetkeyword = dataContext.keyword?.find(
+        (key) => key.favoriteDataId === dataContext.activeKey,
+      )
+
+      targetkeyword?.value.pop()
+      dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
     }
   }
 
