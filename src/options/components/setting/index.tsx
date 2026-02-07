@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useMemo } from 'react'
 import {
   Form,
   FormControl,
@@ -12,17 +12,24 @@ import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { z } from 'zod'
 import { useGlobalConfig } from '@/store/global-data'
-import { useIsFirstRun } from '@/hooks'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Adapter, adapterArray, defaultExtraParams, selectItemsArray } from './util'
+import { Badge } from '@/components/ui/badge'
 
 type FormData = {
   key: string
   baseUrl: string
   model: string
   extraParams: string
-  adapter: 'spark' | 'openai' | 'custom'
+  adapter: Adapter
 }
 
 const formSchema = z.object({
@@ -30,7 +37,7 @@ const formSchema = z.object({
   baseUrl: z.string(),
   model: z.string(),
   extraParams: z.string().optional(),
-  adapter: z.enum(['spark', 'openai', 'custom']),
+  adapter: z.enum(adapterArray),
 })
 
 const Setting: React.FC = () => {
@@ -46,6 +53,20 @@ const Setting: React.FC = () => {
       adapter: globalData.aiConfig.adapter || 'spark',
     },
   })
+  const adapterSelectItemEleArray = useMemo(() => {
+    return selectItemsArray.map((adapterName, index) => {
+      const { value, label, help } = adapterName
+
+      return (
+        <SelectItem value={value} key={index}>
+          <div className="flex items-center gap-2">
+            <span>{label}</span>
+            {help && <Badge>{help}</Badge>}
+          </div>
+        </SelectItem>
+      )
+    })
+  }, [selectItemsArray])
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
     console.log('[DEBUG] submit data', data)
@@ -72,6 +93,17 @@ const Setting: React.FC = () => {
     toast({ variant: 'default', title: 'ok没问题' })
   }
 
+  // 监听适配器变化，自动填充 Extra Params
+  useEffect(() => {
+    if (globalData.aiConfig.adapter == null) return
+    const currentExtraParams = form.getValues('extraParams')
+    const defaultParams = defaultExtraParams[globalData.aiConfig.adapter]
+    // 如果当前 Extra Params 为空，自动填充
+    if (!currentExtraParams || currentExtraParams.trim() === '') {
+      form.setValue('extraParams', JSON.stringify(defaultParams))
+    }
+  }, [globalData.aiConfig.adapter])
+
   return (
     <Form {...form}>
       <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[60%]">
@@ -87,13 +119,11 @@ const Setting: React.FC = () => {
                     <SelectValue placeholder="选择 AI 模型适配器" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="spark">星火大模型</SelectItem>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                  <SelectItem value="custom">自定义</SelectItem>
-                </SelectContent>
+                <SelectContent>{adapterSelectItemEleArray}</SelectContent>
               </Select>
-              <FormDescription>选择 AI 模型适配器，不同适配器对应不同的流式响应格式</FormDescription>
+              <FormDescription>
+                选择 AI 模型适配器，不同适配器对应不同的流式响应格式
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
