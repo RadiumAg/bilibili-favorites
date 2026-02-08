@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ import { TrendChart } from './trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
 import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
 
 interface FavoriteFolder {
   id: number
@@ -58,14 +59,44 @@ export const OptionsAnalysisTab: React.FC = () => {
       }
     }),
   )
-
-  console.log('[DEBUG] favoriteData', favoriteData)
   const [loading, setLoading] = useState(false)
   const [statsData, setStatsData] = useState<StatsData>()
   const [distributionData, setDistributionData] = useState<any[]>([])
   const [trendData, setTrendData] = useState<any[]>([])
   const [dateRange, setDateRange] = useState<string>('30d')
   const { toast } = useToast()
+  console.log('[DEBUG] favoriteData', favoriteData)
+  // Web Worker 引用
+  const workerRef = useRef<Worker | null>(null)
+  // 缓存所有收藏的媒体数据
+  const [allMedias, setAllMedias] = useState<FavoriteMedia[]>([])
+
+  // 获取所有收藏夹的媒体数据
+  const fetchAllMedias = async (): Promise<FavoriteMedia[]> => {
+    if (!favoriteData.length || !cookie) return []
+
+    try {
+      const allMedias: FavoriteMedia[] = []
+
+      // 遍历所有收藏夹,获取媒体数据
+      for (const folder of favoriteData) {
+        try {
+          // 只获取前20个,避免请求过多
+          const response = await getFavoriteDetail(folder.id.toString())
+          if (response.code === 0 && response.data.medias) {
+            allMedias.push(...response.data.medias)
+          }
+        } catch (error) {
+          console.error(`Failed to fetch medias for folder ${folder.id}:`, error)
+        }
+      }
+
+      return allMedias
+    } catch (error) {
+      console.error('Failed to fetch all medias:', error)
+      return []
+    }
+  }
 
   // 计算统计数据
   const calculateStats = async () => {
@@ -74,18 +105,16 @@ export const OptionsAnalysisTab: React.FC = () => {
     const totalFolders = favoriteData.length
     const totalVideos = favoriteData.reduce((sum, folder) => sum + folder.media_count, 0)
 
-    // 计算最近7天的收藏数量（这里用模拟数据，实际需要从API获取）
-    const recentCount = Math.floor(totalVideos * 0.1) // 假设10%是最近7天的
-
     const mostActiveFolder = favoriteData.reduce(
       (max, folder) => (folder.media_count > (max?.media_count || 0) ? folder : max),
       favoriteData[0],
     )
 
+    // 先设置基础统计数据
     setStatsData({
       totalFolders,
       totalVideos,
-      recentCount,
+      recentCount: 0, // 初始值,稍后通过 Worker 更新
       mostActiveFolder: mostActiveFolder
         ? {
             name: mostActiveFolder.title,
@@ -95,6 +124,18 @@ export const OptionsAnalysisTab: React.FC = () => {
       folderGrowth: 5.2, // 模拟增长数据
       videoGrowth: 8.7,
     })
+
+    // 获取所有媒体数据
+    const medias = await fetchAllMedias()
+    setAllMedias(medias)
+
+    // 使用 Web Worker 计算最近7天的收藏数量
+    if (workerRef.current) {
+      workerRef.current.postMessage({
+        type: 'calculateRecentFavorites',
+        data: { medias, days: 7 },
+      })
+    }
   }
 
   // 计算分布数据
@@ -114,29 +155,34 @@ export const OptionsAnalysisTab: React.FC = () => {
     setDistributionData(data)
   }
 
-  // 生成趋势数据（模拟数据）
+  // 生成趋势数据
   const generateTrendData = () => {
     const days = parseInt(dateRange.replace('d', ''))
-    const data: Array<{ date: string; count: number; cumulative: number }> = []
-    const now = new Date()
 
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now)
-      date.setDate(date.getDate() - i)
-      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
-
-      // 模拟收藏数据
-      const count = Math.floor(Math.random() * 10) + 2
-      const cumulative = i === days - 1 ? count : (data[0]?.cumulative || 0) + count
-
-      data.unshift({
-        date: dateStr,
-        count,
-        cumulative,
+    // 使用 Web Worker 计算趋势数据
+    if (workerRef.current && allMedias.length > 0) {
+      workerRef.current.postMessage({
+        type: 'calculateTrend',
+        data: { medias: allMedias, days },
       })
-    }
+    } else {
+      // 没有媒体数据时生成空数据
+      const now = new Date()
+      const data: Array<{ date: string; count: number; cumulative: number }> = []
 
-    setTrendData(data)
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(now)
+        date.setDate(date.getDate() - i)
+        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+        data.unshift({
+          date: dateStr,
+          count: 0,
+          cumulative: 0,
+        })
+      }
+
+      setTrendData(data)
+    }
   }
 
   // 加载数据
@@ -157,7 +203,14 @@ export const OptionsAnalysisTab: React.FC = () => {
 
   useEffect(() => {
     loadData()
-  }, [favoriteData, dateRange])
+  }, [favoriteData])
+
+  // 当 dateRange 改变时,重新生成趋势数据
+  useEffect(() => {
+    if (allMedias.length > 0) {
+      generateTrendData()
+    }
+  }, [dateRange, allMedias])
 
   // 导出功能
   const handleExport = () => {
@@ -181,6 +234,45 @@ export const OptionsAnalysisTab: React.FC = () => {
       description: '分析数据已导出',
     })
   }
+
+  // 初始化 Web Worker
+  useEffect(() => {
+    if (typeof Worker !== 'undefined') {
+      workerRef.current = new Worker(new URL('../../workers/analysis.worker.ts', import.meta.url), {
+        type: 'module',
+      })
+
+      workerRef.current.onmessage = (event: MessageEvent) => {
+        const { type, data } = event.data
+
+        if (data.error) {
+          console.error('Worker error:', data.error)
+          return
+        }
+
+        switch (type) {
+          case 'calculateRecentFavorites':
+            // 更新最近收藏数量
+            if (statsData) {
+              setStatsData((prev) => ({
+                ...prev!,
+                recentCount: data,
+              }))
+            }
+            break
+
+          case 'calculateDistribution':
+          case 'calculateTrend':
+            setTrendData(data)
+            break
+        }
+      }
+
+      return () => {
+        workerRef.current?.terminate()
+      }
+    }
+  }, [])
 
   return (
     <div className="w-full h-full bg-gray-50 p-6">

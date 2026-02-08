@@ -1,14 +1,110 @@
 import { getCookieValue } from './cookie'
 import { DataContextType } from './data-context'
 import OpenAI from 'openai'
-import { useQuota } from './quota'
 
 type BResponse<T> = {
+  code: number
+  message: string
+  ttl: number
   data: T
 }
 
 type GetAllFavoriteFlagRes = BResponse<{ list: DataContextType['favoriteData'] }>
 type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | null }>
+
+interface MediaCountInfo {
+  collect: number
+  play: number
+  thumb_up: number
+  share: number
+}
+
+interface FavoriteMediaUpper {
+  mid: number
+  name: string
+  face: string
+  jump_link: string
+}
+
+interface FavoriteMediaUGC {
+  first_cid: number
+}
+
+interface FavoriteMedia {
+  id: number
+  type: number // 2: 视频
+  title: string
+  cover: string
+  intro: string
+  page: number
+  duration: number
+  upper: FavoriteMediaUpper
+  attr: number
+  cnt_info: MediaCountInfo
+  link: string
+  ctime: number
+  pubtime: number
+  fav_time: number // 收藏时间
+  bv_id: string
+  bvid: string
+  season: null
+  ogv: null
+  ugc: FavoriteMediaUGC
+  media_list_link: string
+}
+
+interface FavoriteDetailInfoUpper {
+  mid: number
+  name: string
+  face: string
+  followed: boolean
+  vip_type: number
+  vip_statue: number
+}
+
+interface FavoriteDetailInfo {
+  id: number
+  fid: number
+  mid: number
+  attr: number
+  title: string
+  cover: string
+  upper: FavoriteDetailInfoUpper
+  cover_type: number
+  cnt_info: MediaCountInfo
+  type: number
+  intro: string
+  ctime: number
+  mtime: number
+  state: number
+  fav_state: number
+  like_state: number
+  media_count: number
+  is_top: boolean
+}
+
+type GetFavoriteDetailRes = BResponse<{
+  info: FavoriteDetailInfo
+  medias: FavoriteMedia[]
+  has_more: boolean
+  ttl: number
+}>
+
+/**
+ * get favorite detail (folder information)
+ *
+ * @param mediaId - Favorite folder ID
+ * @returns Promise<GetFavoriteDetailRes>
+ */
+const getFavoriteDetail = (mediaId: string): Promise<GetFavoriteDetailRes> => {
+  return fetch(
+    `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${mediaId}&pn=1&ps=40&keyword=&order=mtime&type=0&tid=0&platform=web&web_location=333.1387`,
+    {
+      method: 'get',
+      credentials: 'include',
+    },
+  ).then((res) => res.json())
+}
 
 /**
  * get favorite list
@@ -141,4 +237,13 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   return openai
 }
 
-export { getAllFavoriteFlag, getFavoriteList, moveFavorite, fetchChatGpt }
+export { getAllFavoriteFlag, getFavoriteList, moveFavorite, fetchChatGpt, getFavoriteDetail }
+export type {
+  FavoriteMedia,
+  FavoriteDetailInfo,
+  GetFavoriteDetailRes,
+  MediaCountInfo,
+  FavoriteMediaUpper,
+  FavoriteMediaUGC,
+  FavoriteDetailInfoUpper,
+}
