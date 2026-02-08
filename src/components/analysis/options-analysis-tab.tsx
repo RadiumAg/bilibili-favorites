@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,7 +15,6 @@ import { DistributionChart } from './distribution-chart'
 import { BarChart } from './bar-chart'
 import { TrendChart } from './trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
-import { getFavoriteList } from '@/utils/api'
 import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -50,12 +50,20 @@ interface StatsData {
 }
 
 export const OptionsAnalysisTab: React.FC = () => {
-  const { favoriteData, cookie } = useGlobalConfig()
+  const { favoriteData, cookie } = useGlobalConfig(
+    useShallow((state) => {
+      return {
+        favoriteData: state.favoriteData,
+        cookie: state.cookie,
+      }
+    }),
+  )
+
+  console.log('[DEBUG] favoriteData', favoriteData)
   const [loading, setLoading] = useState(false)
   const [statsData, setStatsData] = useState<StatsData>()
   const [distributionData, setDistributionData] = useState<any[]>([])
   const [trendData, setTrendData] = useState<any[]>([])
-  const [selectedFolder, setSelectedFolder] = useState<string>('all')
   const [dateRange, setDateRange] = useState<string>('30d')
   const { toast } = useToast()
 
