@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,9 +15,12 @@ import { DistributionChart } from './distribution-chart'
 import { BarChart } from './bar-chart'
 import { TrendChart } from './trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
-import { getFavoriteList } from '@/utils/api'
 import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
+import dbManager from '@/utils/indexed-db'
+import { flushSync } from 'react-dom'
+import { useMemoizedFn } from 'ahooks'
 
 interface FavoriteFolder {
   id: number
@@ -50,14 +54,81 @@ interface StatsData {
 }
 
 export const OptionsAnalysisTab: React.FC = () => {
-  const { favoriteData, cookie } = useGlobalConfig()
+  const { favoriteData, cookie } = useGlobalConfig(
+    useShallow((state) => {
+      return {
+        favoriteData: state.favoriteData,
+        cookie: state.cookie,
+      }
+    }),
+  )
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [statsData, setStatsData] = useState<StatsData>()
   const [distributionData, setDistributionData] = useState<any[]>([])
   const [trendData, setTrendData] = useState<any[]>([])
-  const [selectedFolder, setSelectedFolder] = useState<string>('all')
   const [dateRange, setDateRange] = useState<string>('30d')
+  const [forceRefresh, setForceRefresh] = useState(false)
   const { toast } = useToast()
+  console.log('[DEBUG] favoriteData', favoriteData)
+  // Web Worker 引用
+  const workerRef = useRef<Worker | null>(null)
+  // 缓存所有收藏的媒体数据
+  const [allMedias, setAllMedias] = useState<FavoriteMedia[]>([])
+
+  // 生成缓存键
+  const getCacheKey = (): string => {
+    // 基于收藏夹ID列表生成缓存键
+    const folderIds = favoriteData
+      .map((f) => f.fid)
+      .sort()
+      .join('-')
+    return `analysis-medias-${folderIds}`
+  }
+
+  // 获取所有收藏夹的媒体数据
+  const fetchAllMedias = async (): Promise<FavoriteMedia[]> => {
+    if (!favoriteData.length || !cookie) return []
+
+    const cacheKey = getCacheKey()
+
+    try {
+      // 如果不是强制刷新,先尝试从缓存获取
+      if (!forceRefresh) {
+        const isExpired = await dbManager.isExpired(cacheKey)
+        if (!isExpired) {
+          const cached = await dbManager.get(cacheKey)
+          if (cached && cached.data) {
+            console.log('[DEBUG] 使用缓存数据')
+            return cached.data
+          }
+        }
+      }
+
+      // 缓存过期或强制刷新,重新获取数据
+      console.log('[DEBUG] 从API获取数据')
+      const allMedias: FavoriteMedia[] = []
+
+      // 遍历所有收藏夹,获取媒体数据
+      for (const folder of favoriteData) {
+        try {
+          const response = await getFavoriteDetail(folder.id.toString())
+          if (response.code === 0 && response.data.medias) {
+            allMedias.push(...response.data.medias)
+          }
+        } catch (error) {
+          console.error(`Failed to fetch medias for folder ${folder.id}:`, error)
+        }
+      }
+
+      // 保存到缓存
+      await dbManager.set(cacheKey, allMedias)
+      return allMedias
+    } catch (error) {
+      console.error('Failed to fetch all medias:', error)
+      return []
+    }
+  }
 
   // 计算统计数据
   const calculateStats = async () => {
@@ -66,18 +137,16 @@ export const OptionsAnalysisTab: React.FC = () => {
     const totalFolders = favoriteData.length
     const totalVideos = favoriteData.reduce((sum, folder) => sum + folder.media_count, 0)
 
-    // 计算最近7天的收藏数量（这里用模拟数据，实际需要从API获取）
-    const recentCount = Math.floor(totalVideos * 0.1) // 假设10%是最近7天的
-
     const mostActiveFolder = favoriteData.reduce(
       (max, folder) => (folder.media_count > (max?.media_count || 0) ? folder : max),
       favoriteData[0],
     )
 
+    // 先设置基础统计数据
     setStatsData({
       totalFolders,
       totalVideos,
-      recentCount,
+      recentCount: 0, // 初始值,稍后通过 Worker 更新
       mostActiveFolder: mostActiveFolder
         ? {
             name: mostActiveFolder.title,
@@ -87,6 +156,30 @@ export const OptionsAnalysisTab: React.FC = () => {
       folderGrowth: 5.2, // 模拟增长数据
       videoGrowth: 8.7,
     })
+
+    // 检查趋势数据缓存
+    const trendCacheKey = `trend-data-${dateRange}`
+    const isTrendExpired = await dbManager.isExpired(trendCacheKey)
+
+    if (!isTrendExpired && !forceRefresh) {
+      const trendCached = await dbManager.get(trendCacheKey)
+      if (trendCached && trendCached.data) {
+        console.log('[DEBUG] 使用趋势数据缓存')
+        setTrendData(trendCached.data)
+      }
+    }
+
+    // 获取所有媒体数据
+    const medias = await fetchAllMedias()
+    setAllMedias(medias)
+
+    // 使用 Web Worker 计算最近7天的收藏数量
+    if (workerRef.current) {
+      workerRef.current.postMessage({
+        type: 'calculateRecentFavorites',
+        data: { medias, days: 7 },
+      })
+    }
   }
 
   // 计算分布数据
@@ -106,33 +199,52 @@ export const OptionsAnalysisTab: React.FC = () => {
     setDistributionData(data)
   }
 
-  // 生成趋势数据（模拟数据）
-  const generateTrendData = () => {
+  // 生成趋势数据
+  const generateTrendData = async () => {
     const days = parseInt(dateRange.replace('d', ''))
-    const data: Array<{ date: string; count: number; cumulative: number }> = []
-    const now = new Date()
+    const trendCacheKey = `trend-data-${dateRange}`
 
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now)
-      date.setDate(date.getDate() - i)
-      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
-
-      // 模拟收藏数据
-      const count = Math.floor(Math.random() * 10) + 2
-      const cumulative = i === days - 1 ? count : (data[0]?.cumulative || 0) + count
-
-      data.unshift({
-        date: dateStr,
-        count,
-        cumulative,
-      })
+    // 检查缓存
+    if (!forceRefresh) {
+      const isExpired = await dbManager.isExpired(trendCacheKey)
+      if (!isExpired) {
+        const cached = await dbManager.get(trendCacheKey)
+        if (cached && cached.data) {
+          console.log('[DEBUG] 使用趋势数据缓存')
+          setTrendData(cached.data)
+          return
+        }
+      }
     }
 
-    setTrendData(data)
+    // 使用 Web Worker 计算趋势数据
+    if (workerRef.current && allMedias.length > 0) {
+      workerRef.current.postMessage({
+        type: 'calculateTrend',
+        data: { medias: allMedias, days },
+      })
+    } else {
+      // 没有媒体数据时生成空数据
+      const now = new Date()
+      const data: Array<{ date: string; count: number; cumulative: number }> = []
+
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(now)
+        date.setDate(date.getDate() - i)
+        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+        data.unshift({
+          date: dateStr,
+          count: 0,
+          cumulative: 0,
+        })
+      }
+
+      setTrendData(data)
+    }
   }
 
   // 加载数据
-  const loadData = async () => {
+  const loadData = useMemoizedFn(async () => {
     setLoading(true)
     try {
       await Promise.all([calculateStats(), calculateDistribution(), generateTrendData()])
@@ -145,11 +257,7 @@ export const OptionsAnalysisTab: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadData()
-  }, [favoriteData, dateRange])
+  })
 
   // 导出功能
   const handleExport = () => {
@@ -174,6 +282,81 @@ export const OptionsAnalysisTab: React.FC = () => {
     })
   }
 
+  // 强制刷新
+  const handleForceRefresh = async () => {
+    flushSync(() => {
+      setForceRefresh(true)
+    })
+    setRefreshing(true)
+
+    try {
+      await loadData()
+
+      toast({
+        title: '刷新成功',
+        description: '已获取最新数据',
+      })
+    } catch (error) {
+      toast({
+        title: '刷新失败',
+        description: '无法获取最新数据，请稍后重试',
+        variant: 'destructive',
+      })
+    } finally {
+      setForceRefresh(false)
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [favoriteData])
+
+  // 初始化 Web Worker
+  useEffect(() => {
+    if (typeof Worker !== 'undefined') {
+      workerRef.current = new Worker(new URL('../../workers/analysis.worker.ts', import.meta.url), {
+        type: 'module',
+      })
+
+      workerRef.current.onmessage = (event: MessageEvent) => {
+        const { type, data } = event.data
+
+        if (data.error) {
+          console.error('Worker error:', data.error)
+          return
+        }
+
+        switch (type) {
+          case 'calculateRecentFavorites':
+            // 更新最近收藏数量
+            if (statsData) {
+              setStatsData((prev) => ({
+                ...prev!,
+                recentCount: data,
+              }))
+            }
+            break
+
+          case 'calculateDistribution':
+          case 'calculateTrend':
+            // 更新趋势数据并缓存
+            setTrendData(data)
+            const trendCacheKey = `trend-data-${dateRange}`
+            dbManager
+              .set(trendCacheKey, data)
+              .catch((err) => console.error('Failed to cache trend data:', err))
+            break
+        }
+      }
+
+      return () => {
+        workerRef.current?.terminate()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange])
+
   return (
     <div className="w-full h-full bg-gray-50 p-6">
       <div className="max-w-full">
@@ -191,9 +374,13 @@ export const OptionsAnalysisTab: React.FC = () => {
                 <SelectItem value="90d">最近90天</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={loadData} disabled={loading}>
+            <Button variant="outline" onClick={loadData} disabled={loading || refreshing}>
               <RefreshCwIcon className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              刷新
+              {refreshing ? '刷新中...' : '刷新'}
+            </Button>
+            <Button onClick={handleForceRefresh} disabled={loading || refreshing}>
+              <RefreshCwIcon className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              强制刷新
             </Button>
             <Button onClick={handleExport}>
               <DownloadIcon className="w-4 h-4 mr-2" />
