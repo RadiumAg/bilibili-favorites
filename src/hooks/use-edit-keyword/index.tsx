@@ -8,6 +8,7 @@ const useEditKeyword = () => {
     useShallow((state) => ({
       activeKey: state.activeKey,
       keyword: state.keyword,
+      setGlobalData: state.setGlobalData,
     })),
   )
 
