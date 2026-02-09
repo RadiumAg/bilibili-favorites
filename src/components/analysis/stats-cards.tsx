@@ -13,13 +13,13 @@ interface StatsCardProps {
   loading?: boolean
 }
 
-const StatsCard: React.FC<StatsCardProps> = ({ 
-  title, 
-  value, 
-  icon, 
-  trend, 
+const StatsCard: React.FC<StatsCardProps> = ({
+  title,
+  value,
+  icon,
+  trend,
   subtitle,
-  loading = false 
+  loading = false,
 }) => {
   if (loading) {
     return (
@@ -39,15 +39,16 @@ const StatsCard: React.FC<StatsCardProps> = ({
         <div className="text-blue-500">{icon}</div>
       </div>
       <div className="text-2xl font-bold text-gray-900 mb-1">{value}</div>
-      {subtitle && (
-        <div className="text-xs text-gray-500">{subtitle}</div>
-      )}
+      {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
       {trend && (
-        <div className={`flex items-center text-xs mt-2 ${
-          trend.isPositive ? 'text-green-600' : 'text-red-600'
-        }`}>
+        <div
+          className={`flex items-center text-xs mt-2 ${
+            trend.isPositive ? 'text-green-600' : 'text-red-600'
+          }`}
+        >
           <TrendingUpIcon className="w-3 h-3 mr-1" />
-          {trend.isPositive ? '+' : ''}{trend.value}%
+          {trend.isPositive ? '+' : ''}
+          {trend.value}%
         </div>
       )}
     </div>
@@ -78,20 +79,28 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ data, loading = false })
         title="总收藏夹数量"
         value={data?.totalFolders || 0}
         icon={<FolderIcon className="w-5 h-5" />}
-        trend={data?.folderGrowth !== undefined ? {
-          value: data.folderGrowth,
-          isPositive: data.folderGrowth >= 0
-        } : undefined}
+        trend={
+          data?.folderGrowth !== undefined
+            ? {
+                value: data.folderGrowth,
+                isPositive: data.folderGrowth >= 0,
+              }
+            : undefined
+        }
         loading={loading}
       />
       <StatsCard
         title="总视频数量"
         value={data?.totalVideos || 0}
         icon={<VideoIcon className="w-5 h-5" />}
-        trend={data?.videoGrowth !== undefined ? {
-          value: data.videoGrowth,
-          isPositive: data.videoGrowth >= 0
-        } : undefined}
+        trend={
+          data?.videoGrowth !== undefined
+            ? {
+                value: data.videoGrowth,
+                isPositive: data.videoGrowth >= 0,
+              }
+            : undefined
+        }
         loading={loading}
       />
       <StatsCard

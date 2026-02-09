@@ -4,6 +4,7 @@ import { getAllFavoriteFlag } from '@/utils/api'
 import { useSetDefaultFav } from '@/hooks'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useGlobalConfig } from '@/store/global-data'
+import { useShallow } from 'zustand/react/shallow'
 
 type FavoriteTagProps = {
   className?: string
@@ -21,7 +22,13 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     handleMouseDown,
     handleMouseUp,
   } = useSetDefaultFav()
-  const globalConfig = useGlobalConfig((state) => state)
+  const globalConfig = useGlobalConfig(
+    useShallow((state) => ({
+      activeKey: state.activeKey,
+      defaultFavoriteId: state.defaultFavoriteId,
+      setGlobalData: state.setGlobalData,
+    })),
+  )
   const promiseData = React.use(fetchPromise)
 
   const tagElementArray = React.useMemo(() => {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -17,250 +18,129 @@ import { TrendChart } from './trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
 import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
+import { useAnalysisData } from '@/hooks/use-analysis-data'
+import { useAnalysisWorker } from '@/hooks/use-analysis-worker'
+import { useAnalysisStats } from '@/hooks/use-analysis-stats'
 import dbManager from '@/utils/indexed-db'
-import { flushSync } from 'react-dom'
-import { useMemoizedFn } from 'ahooks'
-
-interface FavoriteFolder {
-  id: number
-  fid: number
-  title: string
-  media_count: number
-  ctime: number
-}
-
-interface FavoriteResource {
-  id: number
-  bvid: string
-  title: string
-  ctime: number
-  duration: number
-  owner: {
-    name: string
-  }
-}
-
-interface StatsData {
-  totalFolders: number
-  totalVideos: number
-  recentCount: number
-  mostActiveFolder?: {
-    name: string
-    count: number
-  }
-  folderGrowth?: number
-  videoGrowth?: number
-}
 
 export const OptionsAnalysisTab: React.FC = () => {
   const { favoriteData, cookie } = useGlobalConfig(
-    useShallow((state) => {
-      return {
-        favoriteData: state.favoriteData,
-        cookie: state.cookie,
-      }
-    }),
+    useShallow((state) => ({
+      favoriteData: state.favoriteData,
+      cookie: state.cookie,
+    })),
   )
-  const [loading, setLoading] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
-  const [statsData, setStatsData] = useState<StatsData>()
-  const [distributionData, setDistributionData] = useState<any[]>([])
-  const [trendData, setTrendData] = useState<any[]>([])
   const [dateRange, setDateRange] = useState<string>('30d')
-  const [forceRefresh, setForceRefresh] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
-  console.log('[DEBUG] favoriteData', favoriteData)
-  // Web Worker 引用
-  const workerRef = useRef<Worker | null>(null)
-  // 缓存所有收藏的媒体数据
-  const [allMedias, setAllMedias] = useState<FavoriteMedia[]>([])
 
-  // 生成缓存键
-  const getCacheKey = (): string => {
-    // 基于收藏夹ID列表生成缓存键
-    const folderIds = favoriteData
-      .map((f) => f.fid)
-      .sort()
-      .join('-')
-    return `analysis-medias-${folderIds}`
-  }
+  // 使用数据获取 hook
+  const {
+    allMedias,
+    loading: dataLoading,
+    fetchAllMedias,
+    forceRefresh,
+  } = useAnalysisData({
+    favoriteData,
+    cookie,
+  })
 
-  // 获取所有收藏夹的媒体数据
-  const fetchAllMedias = async (): Promise<FavoriteMedia[]> => {
-    if (!favoriteData.length || !cookie) return []
+  // 使用统计数据 hook
+  const {
+    statsData,
+    distributionData,
+    trendData,
+    calculateStats,
+    calculateDistribution,
+    setTrendData,
+    updateRecentCount,
+  } = useAnalysisStats({
+    favoriteData,
+    allMedias,
+    dateRange,
+  })
 
-    const cacheKey = getCacheKey()
+  // Worker 消息处理
+  const handleWorkerMessage = useMemoizedFn((type: string, data: any) => {
+    switch (type) {
+      case 'calculateRecentFavorites':
+        // 更新最近收藏数量
+        updateRecentCount(data)
+        break
 
-    try {
-      // 如果不是强制刷新,先尝试从缓存获取
-      if (!forceRefresh) {
-        const isExpired = await dbManager.isExpired(cacheKey)
-        if (!isExpired) {
-          const cached = await dbManager.get(cacheKey)
-          if (cached && cached.data) {
-            console.log('[DEBUG] 使用缓存数据')
-            return cached.data
-          }
-        }
-      }
+      case 'calculateTrend':
+        // 更新趋势数据
+        setTrendData(data)
+        break
 
-      // 缓存过期或强制刷新,重新获取数据
-      console.log('[DEBUG] 从API获取数据')
-      const allMedias: FavoriteMedia[] = []
-
-      // 遍历所有收藏夹,获取媒体数据
-      for (const folder of favoriteData) {
-        try {
-          const response = await getFavoriteDetail(folder.id.toString())
-          if (response.code === 0 && response.data.medias) {
-            allMedias.push(...response.data.medias)
-          }
-        } catch (error) {
-          console.error(`Failed to fetch medias for folder ${folder.id}:`, error)
-        }
-      }
-
-      // 保存到缓存
-      await dbManager.set(cacheKey, allMedias)
-      return allMedias
-    } catch (error) {
-      console.error('Failed to fetch all medias:', error)
-      return []
+      default:
+        console.warn('[OptionsAnalysisTab] Unknown worker message type:', type)
     }
-  }
+  })
 
-  // 计算统计数据
-  const calculateStats = async () => {
-    if (!favoriteData.length) return
+  // 使用 Worker hook
+  const { postMessage: postWorkerMessage } = useAnalysisWorker({
+    onMessage: handleWorkerMessage,
+  })
 
-    const totalFolders = favoriteData.length
-    const totalVideos = favoriteData.reduce((sum, folder) => sum + folder.media_count, 0)
-
-    const mostActiveFolder = favoriteData.reduce(
-      (max, folder) => (folder.media_count > (max?.media_count || 0) ? folder : max),
-      favoriteData[0],
-    )
-
-    // 先设置基础统计数据
-    setStatsData({
-      totalFolders,
-      totalVideos,
-      recentCount: 0, // 初始值,稍后通过 Worker 更新
-      mostActiveFolder: mostActiveFolder
-        ? {
-            name: mostActiveFolder.title,
-            count: mostActiveFolder.media_count,
-          }
-        : undefined,
-      folderGrowth: 5.2, // 模拟增长数据
-      videoGrowth: 8.7,
-    })
-
-    // 检查趋势数据缓存
-    const trendCacheKey = `trend-data-${dateRange}`
-    const isTrendExpired = await dbManager.isExpired(trendCacheKey)
-
-    if (!isTrendExpired && !forceRefresh) {
-      const trendCached = await dbManager.get(trendCacheKey)
-      if (trendCached && trendCached.data) {
-        console.log('[DEBUG] 使用趋势数据缓存')
-        setTrendData(trendCached.data)
-      }
-    }
-
-    // 获取所有媒体数据
-    const medias = await fetchAllMedias()
-    setAllMedias(medias)
-
-    // 使用 Web Worker 计算最近7天的收藏数量
-    if (workerRef.current) {
-      workerRef.current.postMessage({
-        type: 'calculateRecentFavorites',
-        data: { medias, days: 7 },
-      })
-    }
-  }
-
-  // 计算分布数据
-  const calculateDistribution = () => {
-    const data = favoriteData
-      .map((folder) => ({
-        name: folder.title,
-        value: folder.media_count,
-        percentage: (
-          (folder.media_count / favoriteData.reduce((sum, f) => sum + f.media_count, 0)) *
-          100
-        ).toFixed(1),
-      }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10) // 只显示前10个
-
-    setDistributionData(data)
-  }
+  const loading = dataLoading
 
   // 生成趋势数据
-  const generateTrendData = async () => {
+  const generateTrendData = useMemoizedFn(async () => {
     const days = parseInt(dateRange.replace('d', ''))
     const trendCacheKey = `trend-data-${dateRange}`
 
     // 检查缓存
-    if (!forceRefresh) {
-      const isExpired = await dbManager.isExpired(trendCacheKey)
-      if (!isExpired) {
-        const cached = await dbManager.get(trendCacheKey)
-        if (cached && cached.data) {
-          console.log('[DEBUG] 使用趋势数据缓存')
-          setTrendData(cached.data)
-          return
-        }
+    const isExpired = await dbManager.isExpired(trendCacheKey)
+    if (!isExpired) {
+      const cached = await dbManager.get(trendCacheKey)
+      if (cached && cached.data) {
+        console.log('[OptionsAnalysisTab] 使用趋势数据缓存')
+        setTrendData(cached.data)
+        return
       }
     }
 
     // 使用 Web Worker 计算趋势数据
-    if (workerRef.current && allMedias.length > 0) {
-      workerRef.current.postMessage({
+    if (allMedias.length > 0) {
+      postWorkerMessage({
         type: 'calculateTrend',
         data: { medias: allMedias, days },
       })
-    } else {
-      // 没有媒体数据时生成空数据
-      const now = new Date()
-      const data: Array<{ date: string; count: number; cumulative: number }> = []
-
-      for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(now)
-        date.setDate(date.getDate() - i)
-        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
-        data.unshift({
-          date: dateStr,
-          count: 0,
-          cumulative: 0,
-        })
-      }
-
-      setTrendData(data)
     }
-  }
+  })
 
   // 加载数据
   const loadData = useMemoizedFn(async () => {
-    setLoading(true)
     try {
-      await Promise.all([calculateStats(), calculateDistribution(), generateTrendData()])
+      // 获取媒体数据
+      const medias = await fetchAllMedias()
+
+      // 计算基础统计
+      calculateStats()
+      calculateDistribution()
+
+      // 使用 Worker 计算最近收藏数量
+      if (medias.length > 0) {
+        postWorkerMessage({
+          type: 'calculateRecentFavorites',
+          data: { medias, days: 7 },
+        })
+      }
+
+      // 生成趋势数据
+      await generateTrendData()
     } catch (error) {
       toast({
         title: '数据加载失败',
         description: '无法加载分析数据，请稍后重试',
         variant: 'destructive',
       })
-    } finally {
-      setLoading(false)
     }
   })
 
   // 导出功能
-  const handleExport = () => {
+  const handleExport = useMemoizedFn(() => {
     const exportData = {
       stats: statsData,
       distribution: distributionData,
@@ -280,13 +160,11 @@ export const OptionsAnalysisTab: React.FC = () => {
       title: '导出成功',
       description: '分析数据已导出',
     })
-  }
+  })
 
   // 强制刷新
-  const handleForceRefresh = async () => {
-    flushSync(() => {
-      setForceRefresh(true)
-    })
+  const handleForceRefresh = useMemoizedFn(async () => {
+    forceRefresh()
     setRefreshing(true)
 
     try {
@@ -303,59 +181,23 @@ export const OptionsAnalysisTab: React.FC = () => {
         variant: 'destructive',
       })
     } finally {
-      setForceRefresh(false)
       setRefreshing(false)
     }
-  }
+  })
 
+  // 初始加载
   useEffect(() => {
-    loadData()
-  }, [favoriteData])
-
-  // 初始化 Web Worker
-  useEffect(() => {
-    if (typeof Worker !== 'undefined') {
-      workerRef.current = new Worker(new URL('../../workers/analysis.worker.ts', import.meta.url), {
-        type: 'module',
-      })
-
-      workerRef.current.onmessage = (event: MessageEvent) => {
-        const { type, data } = event.data
-
-        if (data.error) {
-          console.error('Worker error:', data.error)
-          return
-        }
-
-        switch (type) {
-          case 'calculateRecentFavorites':
-            // 更新最近收藏数量
-            if (statsData) {
-              setStatsData((prev) => ({
-                ...prev!,
-                recentCount: data,
-              }))
-            }
-            break
-
-          case 'calculateDistribution':
-          case 'calculateTrend':
-            // 更新趋势数据并缓存
-            setTrendData(data)
-            const trendCacheKey = `trend-data-${dateRange}`
-            dbManager
-              .set(trendCacheKey, data)
-              .catch((err) => console.error('Failed to cache trend data:', err))
-            break
-        }
-      }
-
-      return () => {
-        workerRef.current?.terminate()
-      }
+    if (favoriteData.length > 0) {
+      loadData()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateRange])
+  }, [favoriteData, loadData])
+
+  // 日期范围变化时重新生成趋势数据
+  useEffect(() => {
+    if (allMedias.length > 0) {
+      generateTrendData()
+    }
+  }, [dateRange, allMedias, generateTrendData])
 
   return (
     <div className="w-full h-full bg-gray-50 p-6">

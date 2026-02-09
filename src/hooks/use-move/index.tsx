@@ -6,9 +6,16 @@ import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import classNames from 'classnames'
 import { useGlobalConfig } from '@/store/global-data'
+import { useShallow } from 'zustand/react/shallow'
 
 const useMove = () => {
-  const dataContext = useGlobalConfig((state) => state)
+  const dataContext = useGlobalConfig(
+    useShallow((state) => ({
+      keyword: state.keyword,
+      favoriteData: state.favoriteData,
+      defaultFavoriteId: state.defaultFavoriteId,
+    })),
+  )
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 

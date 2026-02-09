@@ -82,7 +82,9 @@ function calculateDailyFavorites(
 /**
  * 计算每小时收藏时间段分布
  */
-function calculateHourlyDistribution(medias: FavoriteMedia[]): Array<{ hour: number; count: number }> {
+function calculateHourlyDistribution(
+  medias: FavoriteMedia[],
+): Array<{ hour: number; count: number }> {
   if (!medias.length) return []
 
   const hourlyCount = new Array(24).fill(0)
