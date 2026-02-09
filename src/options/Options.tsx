@@ -32,13 +32,13 @@ const Options: React.FC = () => {
       )}
     >
       <TabWrapper>
-        <TabWrapper.Tab title="配置" keyValue="setting" defaultTab>
+        <TabWrapper.Tab title="配置" keyValue="setting">
           <TabWrapper.Content>
             <Setting />
           </TabWrapper.Content>
         </TabWrapper.Tab>
 
-        <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager">
+        <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
           <TabWrapper.Content>
             <div className="mb-2 flex items-center">
               <OperateButton />
