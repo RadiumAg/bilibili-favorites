@@ -20,9 +20,15 @@ type WorkerResponse = {
 function calculateRecentFavorites(medias: FavoriteMedia[], days: number): number {
   if (!medias.length) return 0
 
-  const now = Date.now()
-  const daysInMs = days * 24 * 60 * 60 * 1000
-  const threshold = now - daysInMs
+  // 获取今天的 00:00:00 作为起点
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // 计算 N 天前的 00:00:00
+  const startDate = new Date(today)
+  startDate.setDate(startDate.getDate() - days + 1) // +1 是为了包含今天
+
+  const threshold = startDate.getTime()
 
   return medias.filter((media) => {
     // fav_time 是秒级时间戳,需要转换为毫秒
@@ -51,6 +57,7 @@ function calculateDailyFavorites(
     dailyMap.set(dateStr, 0)
   }
 
+  console.log('[DEBUG] calculateDailyFavorites', medias)
   // 统计每天的收藏数量
   medias.forEach((media) => {
     const favDate = new Date(media.fav_time * 1000)
@@ -79,28 +86,6 @@ function calculateDailyFavorites(
   return data
 }
 
-/**
- * 计算每小时收藏时间段分布
- */
-function calculateHourlyDistribution(
-  medias: FavoriteMedia[],
-): Array<{ hour: number; count: number }> {
-  if (!medias.length) return []
-
-  const hourlyCount = new Array(24).fill(0)
-
-  medias.forEach((media) => {
-    const favDate = new Date(media.fav_time * 1000)
-    const hour = favDate.getHours()
-    hourlyCount[hour]++
-  })
-
-  return hourlyCount.map((count, hour) => ({
-    hour,
-    count,
-  }))
-}
-
 // 监听主线程消息
 self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
   const { type, data } = event.data
@@ -121,6 +106,7 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
         break
       }
 
+      // 计算收藏趋势
       case 'calculateTrend': {
         const { medias, days } = data
         result = calculateDailyFavorites(medias, days)

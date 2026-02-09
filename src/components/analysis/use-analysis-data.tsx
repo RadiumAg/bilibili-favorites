@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
+import { flushSync } from 'react-dom'
 
 type UseAnalysisDataProps = {
   favoriteData: Array<{
@@ -11,23 +12,29 @@ type UseAnalysisDataProps = {
     media_count: number
   }>
   cookie?: string
+  forceRefreshRef: React.RefObject<boolean>
 }
 
-type UseAnalysisDataReturn = {
-  allMedias: FavoriteMedia[]
-  loading: boolean
-  fetchAllMedias: () => Promise<FavoriteMedia[]>
-  forceRefresh: () => void
+/**
+ * 生成字符串的简单 hash
+ */
+const simpleHash = (str: string): string => {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36)
 }
 
 /**
  * 管理分析数据的获取和缓存
  */
-export const useAnalysisData = (props: UseAnalysisDataProps): UseAnalysisDataReturn => {
-  const { favoriteData, cookie } = props
-  const [allMedias, setAllMedias] = useState<FavoriteMedia[]>([])
-  const [loading, setLoading] = useState(false)
-  const forceRefreshRef = useRef(false)
+export const useAnalysisData = (props: UseAnalysisDataProps) => {
+  const { favoriteData, forceRefreshRef, cookie } = props
+  const [allMedias, setAllMedias] = React.useState<FavoriteMedia[]>([])
+  const [loading, setLoading] = React.useState(false)
 
   // 生成缓存键
   const getCacheKey = useMemoizedFn((): string => {
@@ -35,16 +42,15 @@ export const useAnalysisData = (props: UseAnalysisDataProps): UseAnalysisDataRet
       .map((f) => f.fid)
       .sort()
       .join('-')
-    return `analysis-medias-${folderIds}`
+    // 使用 hash 生成短键名
+    return `analysis-medias-${simpleHash(folderIds)}`
   })
 
   // 获取所有收藏夹的媒体数据
   const fetchAllMedias = useMemoizedFn(async (): Promise<FavoriteMedia[]> => {
     if (!favoriteData.length || !cookie) return []
-
     setLoading(true)
     const cacheKey = getCacheKey()
-
     try {
       // 如果不是强制刷新，先尝试从缓存获取
       if (!forceRefreshRef.current) {
@@ -78,27 +84,21 @@ export const useAnalysisData = (props: UseAnalysisDataProps): UseAnalysisDataRet
 
       // 保存到缓存
       await dbManager.set(cacheKey, allMedias)
-      setAllMedias(allMedias)
+      flushSync(() => {
+        setAllMedias(allMedias)
+      })
       setLoading(false)
       return allMedias
     } catch (error) {
       console.error('Failed to fetch all medias:', error)
       setLoading(false)
       return []
-    } finally {
-      forceRefreshRef.current = false
     }
-  })
-
-  // 强制刷新
-  const forceRefresh = useMemoizedFn(() => {
-    forceRefreshRef.current = true
   })
 
   return {
     allMedias,
     loading,
     fetchAllMedias,
-    forceRefresh,
   }
 }

@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import Setting from './components/setting'
 import { OptionsAnalysisTab } from '@/components/analysis'
 import { useGlobalConfig } from '@/store/global-data'
+import { LoginCheck } from '@/popup/components'
 
 const Options: React.FC = () => {
   const cookie = useGlobalConfig((state) => state.cookie)
@@ -28,17 +29,18 @@ const Options: React.FC = () => {
         'rounded-sm',
         'bg-white',
         'min-w-[786px]',
+        'relative',
         'max-w-screen-2xl',
       )}
     >
       <TabWrapper>
-        <TabWrapper.Tab title="配置" keyValue="setting" defaultTab>
+        <TabWrapper.Tab title="配置" keyValue="setting">
           <TabWrapper.Content>
             <Setting />
           </TabWrapper.Content>
         </TabWrapper.Tab>
 
-        <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager">
+        <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
           <TabWrapper.Content>
             <div className="mb-2 flex items-center">
               <OperateButton />
@@ -64,6 +66,8 @@ const Options: React.FC = () => {
           </TabWrapper.Content>
         </TabWrapper.Tab>
       </TabWrapper>
+
+      <LoginCheck popup={false} />
     </div>
   )
 }

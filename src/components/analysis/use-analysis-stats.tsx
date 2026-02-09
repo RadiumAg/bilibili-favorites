@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
+import { WorkerMessage } from './use-analysis-worker'
 
 type FavoriteFolder = {
   id: number
@@ -41,28 +42,56 @@ type TrendData = {
 type UseAnalysisStatsProps = {
   favoriteData: FavoriteFolder[]
   allMedias: FavoriteMedia[]
-  dateRange: string
-}
-
-type UseAnalysisStatsReturn = {
-  statsData: StatsData | undefined
-  distributionData: DistributionData[]
-  trendData: TrendData[]
-  calculateStats: (recentCount?: number) => void
-  calculateDistribution: () => void
-  setTrendData: (data: TrendData[]) => void
-  updateRecentCount: (count: number) => void
+  dateRange: React.RefObject<string>
+  forceRefreshRef: React.RefObject<boolean>
+  postWorkerMessage: (message: WorkerMessage) => void
 }
 
 /**
  * 计算和管理分析统计数据
  */
-export const useAnalysisStats = (props: UseAnalysisStatsProps): UseAnalysisStatsReturn => {
-  const { favoriteData, allMedias, dateRange } = props
+export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
+  const { favoriteData, dateRange, forceRefreshRef, allMedias, postWorkerMessage } = props
+  const [statsData, setStatsData] = React.useState<StatsData>() // 头部数据
+  const [distributionData, setDistributionData] = React.useState<DistributionData[]>([]) // 收藏夹视频数量分布
+  const [trendData, setTrendDataState] = React.useState<TrendData[]>([]) // 收藏趋势分析
 
-  const [statsData, setStatsData] = useState<StatsData>()
-  const [distributionData, setDistributionData] = useState<DistributionData[]>([])
-  const [trendData, setTrendDataState] = useState<TrendData[]>([])
+  // 设置趋势数据并缓存
+  const setTrendData = useMemoizedFn(async (data: TrendData[]) => {
+    setTrendDataState(data)
+
+    // 缓存趋势数据
+    const trendCacheKey = `trend-data-${dateRange.current}`
+    try {
+      await dbManager.set(trendCacheKey, data)
+    } catch (err) {
+      console.error('Failed to cache trend data:', err)
+    }
+  })
+  // 生成搜藏数据
+  const generateTrendData = useMemoizedFn(async () => {
+    const days = parseInt(dateRange.current.replace('d', ''))
+    const trendCacheKey = `trend-data-${dateRange.current}`
+
+    // 检查缓存
+    const isExpired = await dbManager.isExpired(trendCacheKey)
+    if (!isExpired && !forceRefreshRef.current) {
+      const cached = await dbManager.get(trendCacheKey)
+      if (cached && cached.data) {
+        console.log('[OptionsAnalysisTab] 使用趋势数据缓存')
+        setTrendData(cached.data)
+        return
+      }
+    }
+
+    // 使用 Web Worker 计算趋势数据
+    if (allMedias.length > 0) {
+      postWorkerMessage({
+        type: 'calculateTrend',
+        data: { medias: allMedias, days },
+      })
+    }
+  })
 
   // 计算基础统计数据
   const calculateStats = useMemoizedFn((recentCount: number = 0) => {
@@ -86,8 +115,6 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps): UseAnalysisStats
             count: mostActiveFolder.media_count,
           }
         : undefined,
-      folderGrowth: 5.2, // 模拟增长数据
-      videoGrowth: 8.7,
     })
   })
 
@@ -107,7 +134,8 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps): UseAnalysisStats
         ),
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 10) // 只显示前10个
+      .slice(0, 10)
+      .reverse() // 只显示前10个
 
     setDistributionData(data)
   })
@@ -123,42 +151,11 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps): UseAnalysisStats
     })
   })
 
-  // 生成趋势数据（空数据占位）
-  const generateEmptyTrendData = useMemoizedFn((days: number): TrendData[] => {
-    const now = new Date()
-    const data: TrendData[] = []
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now)
-      date.setDate(date.getDate() - i)
-      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
-      data.unshift({
-        date: dateStr,
-        count: 0,
-        cumulative: 0,
-      })
-    }
-
-    return data
-  })
-
-  // 设置趋势数据并缓存
-  const setTrendData = useMemoizedFn(async (data: TrendData[]) => {
-    setTrendDataState(data)
-
-    // 缓存趋势数据
-    const trendCacheKey = `trend-data-${dateRange}`
-    try {
-      await dbManager.set(trendCacheKey, data)
-    } catch (err) {
-      console.error('Failed to cache trend data:', err)
-    }
-  })
-
   return {
     statsData,
     distributionData,
     trendData,
+    generateTrendData,
     calculateStats,
     calculateDistribution,
     setTrendData,

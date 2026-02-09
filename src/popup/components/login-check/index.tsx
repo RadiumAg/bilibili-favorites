@@ -2,8 +2,13 @@ import React from 'react'
 import noDataImg from '@/assets/no-data.png'
 import { useCookie } from '@/hooks/use-cookie'
 
-const LoginCheck: React.FC = () => {
-  const { isLogin } = useCookie()
+type LoginCheckProps = {
+  popup?: boolean
+}
+
+const LoginCheck: React.FC<LoginCheckProps> = (props) => {
+  const { popup = true } = props
+  const { isLogin } = useCookie(popup)
 
   return !isLogin ? (
     <div className="left-0 top-0 fixed w-full h-full bg-white flex items-center justify-center">

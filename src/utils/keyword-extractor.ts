@@ -132,6 +132,7 @@ function calculateIDF(documents: string[][]): Map<string, number> {
 
 /**
  * 从标题列表中提取关键词（使用 TF-IDF 算法）
+ * 当文档数量过少时（≤2），回退到纯词频算法
  */
 export function extractKeywords(
   titles: string[],
@@ -149,22 +150,30 @@ export function extractKeywords(
 
   // 1. 分词
   const documents = titles.map((title) => simpleTokenize(title))
-
-  // 2. 计算 TF-IDF
   const allTokens = documents.flat()
-  const tf = calculateTF(allTokens)
-  const idf = calculateIDF(documents)
 
-  const tfidf = new Map<string, number>()
-  tf.forEach((tfValue, word) => {
-    const idfValue = idf.get(word) || 0
-    tfidf.set(word, tfValue * idfValue)
-  })
+  // 2. 计算分数
+  let scoreMap: Map<string, number>
+
+  if (titles.length <= 2) {
+    // 文档数量过少，使用纯词频（TF）算法
+    scoreMap = calculateTF(allTokens)
+  } else {
+    // 文档数量足够，使用 TF-IDF 算法
+    const tf = calculateTF(allTokens)
+    const idf = calculateIDF(documents)
+
+    scoreMap = new Map<string, number>()
+    tf.forEach((tfValue, word) => {
+      const idfValue = idf.get(word) || 0
+      scoreMap.set(word, tfValue * idfValue)
+    })
+  }
 
   // 3. 过滤和排序
   const keywords: KeywordResult[] = []
 
-  tfidf.forEach((score, keyword) => {
+  scoreMap.forEach((score, keyword) => {
     // 过滤条件
     if (keyword.length >= minLength && !STOP_WORDS.has(keyword) && score >= minScore) {
       keywords.push({ keyword, score })
