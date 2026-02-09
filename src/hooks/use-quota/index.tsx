@@ -104,12 +104,9 @@ export const useQuotaManagement = (): UseQuotaReturn => {
     chrome.storage.onChanged.addListener(handleStorageChange)
 
     // 每分钟检查一次是否需要重置（跨天）
-    const intervalId = setInterval(
-      () => {
-        refreshUsage()
-      },
-      60 * 1000,
-    ) // 每分钟检查一次
+    const intervalId = setInterval(() => {
+      refreshUsage()
+    }, 60 * 1000) // 每分钟检查一次
 
     return () => {
       chrome.storage.onChanged.removeListener(handleStorageChange)

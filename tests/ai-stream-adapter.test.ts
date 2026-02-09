@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { SparkStreamAdapter, OpenAIStreamAdapter, createStreamAdapter } from '../src/hooks/use-create-keyword-by-ai/ai-stream-parser'
+import {
+  SparkStreamAdapter,
+  OpenAIStreamAdapter,
+  createStreamAdapter,
+} from '../src/hooks/use-create-keyword-by-ai/ai-stream-parser'
 
 describe('AIStreamAdapter', () => {
   describe('SparkStreamAdapter', () => {
