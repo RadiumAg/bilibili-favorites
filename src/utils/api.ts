@@ -12,25 +12,25 @@ type BResponse<T> = {
 type GetAllFavoriteFlagRes = BResponse<{ list: DataContextType['favoriteData'] }>
 type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | null }>
 
-interface MediaCountInfo {
+type MediaCountInfo = {
   collect: number
   play: number
   thumb_up: number
   share: number
 }
 
-interface FavoriteMediaUpper {
+type FavoriteMediaUpper = {
   mid: number
   name: string
   face: string
   jump_link: string
 }
 
-interface FavoriteMediaUGC {
+type FavoriteMediaUGC = {
   first_cid: number
 }
 
-interface FavoriteMedia {
+type FavoriteMedia = {
   id: number
   type: number // 2: 视频
   title: string
@@ -53,7 +53,7 @@ interface FavoriteMedia {
   media_list_link: string
 }
 
-interface FavoriteDetailInfoUpper {
+type FavoriteDetailInfoUpper = {
   mid: number
   name: string
   face: string
@@ -62,7 +62,7 @@ interface FavoriteDetailInfoUpper {
   vip_statue: number
 }
 
-interface FavoriteDetailInfo {
+type FavoriteDetailInfo = {
   id: number
   fid: number
   mid: number
@@ -173,7 +173,7 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
-interface AIConfig {
+type AIConfig = {
   apiKey: string
   baseURL?: string
   model?: string

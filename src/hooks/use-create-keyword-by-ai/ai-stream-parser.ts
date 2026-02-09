@@ -1,7 +1,7 @@
 import { DataContextType } from '@/utils/data-context'
 import { v4 as uuid } from 'uuid'
 
-export interface StreamParserOptions {
+export type StreamParserOptions = {
   /** 收藏夹 ID */
   favKey: string
   /** 获取最新数据的函数 */
@@ -14,7 +14,7 @@ export interface StreamParserOptions {
   adapter?: AIStreamAdapter
 }
 
-export interface ParseResult {
+export type ParseResult = {
   /** 是否成功解析 */
   success: boolean
   /** 解析出的关键词 */
@@ -27,7 +27,7 @@ export interface ParseResult {
  * AI 流解析适配器接口
  * 用于适配不同 AI 模型的流式响应格式
  */
-export interface AIStreamAdapter {
+export type AIStreamAdapter = {
   /** 解析流数据块并返回内容字符串 */
   parse(chunk: Uint8Array): string
 }

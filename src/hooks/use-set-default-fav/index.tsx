@@ -16,7 +16,10 @@ const useSetDefaultFav = () => {
 
   const pendingElement = React.useMemo(
     () => (
-      <div className="absolute w-full h-full bg-slate-500 opacity-10 left-0" ref={maskDomRef}></div>
+      <div
+        className="absolute w-full h-full bg-slate-500 opacity-10 left-0 pointer-events-none"
+        ref={maskDomRef}
+      />
     ),
     [],
   )

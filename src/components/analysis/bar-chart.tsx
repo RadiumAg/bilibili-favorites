@@ -1,12 +1,12 @@
 import React from 'react'
 import * as echarts from 'echarts'
 
-interface ChartData {
+type ChartData = {
   name: string
   value: number
 }
 
-interface BarChartProps {
+type BarChartProps = {
   data: ChartData[]
   title: string
   horizontal?: boolean

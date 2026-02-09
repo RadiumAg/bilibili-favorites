@@ -2,7 +2,7 @@
  * IndexedDB 管理器 - 缓存分析数据
  */
 
-interface CacheData {
+type CacheData = {
   key: string
   data: any
   timestamp: number
