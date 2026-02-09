@@ -134,7 +134,8 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
         ),
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 10) // 只显示前10个
+      .slice(0, 10)
+      .reverse() // 只显示前10个
 
     setDistributionData(data)
   })
