@@ -68,7 +68,7 @@ export const OptionsAnalysisTab: React.FC = () => {
   const [distributionData, setDistributionData] = useState<any[]>([])
   const [trendData, setTrendData] = useState<any[]>([])
   const [dateRange, setDateRange] = useState<string>('30d')
-  const [forceRefresh, setForceRefresh] = useState(false)
+  const forceRefresh = useRef(false)
   const { toast } = useToast()
   console.log('[DEBUG] favoriteData', favoriteData)
   // Web Worker 引用
@@ -94,7 +94,7 @@ export const OptionsAnalysisTab: React.FC = () => {
 
     try {
       // 如果不是强制刷新,先尝试从缓存获取
-      if (!forceRefresh) {
+      if (!forceRefresh.current) {
         const isExpired = await dbManager.isExpired(cacheKey)
         if (!isExpired) {
           const cached = await dbManager.get(cacheKey)
@@ -161,7 +161,7 @@ export const OptionsAnalysisTab: React.FC = () => {
     const trendCacheKey = `trend-data-${dateRange}`
     const isTrendExpired = await dbManager.isExpired(trendCacheKey)
 
-    if (!isTrendExpired && !forceRefresh) {
+    if (!isTrendExpired && !forceRefresh.current) {
       const trendCached = await dbManager.get(trendCacheKey)
       if (trendCached && trendCached.data) {
         console.log('[DEBUG] 使用趋势数据缓存')
@@ -205,7 +205,7 @@ export const OptionsAnalysisTab: React.FC = () => {
     const trendCacheKey = `trend-data-${dateRange}`
 
     // 检查缓存
-    if (!forceRefresh) {
+    if (!forceRefresh.current) {
       const isExpired = await dbManager.isExpired(trendCacheKey)
       if (!isExpired) {
         const cached = await dbManager.get(trendCacheKey)
@@ -284,9 +284,7 @@ export const OptionsAnalysisTab: React.FC = () => {
 
   // 强制刷新
   const handleForceRefresh = async () => {
-    flushSync(() => {
-      setForceRefresh(true)
-    })
+    forceRefresh.current = true
     setRefreshing(true)
 
     try {
@@ -303,7 +301,7 @@ export const OptionsAnalysisTab: React.FC = () => {
         variant: 'destructive',
       })
     } finally {
-      setForceRefresh(false)
+      forceRefresh.current = false
       setRefreshing(false)
     }
   }
