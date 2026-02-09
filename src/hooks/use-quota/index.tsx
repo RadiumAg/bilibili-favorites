@@ -13,7 +13,7 @@ import {
   type QuotaConfig,
 } from '@/utils/quota'
 
-interface UseQuotaReturn {
+type UseQuotaReturn = {
   usage: QuotaUsage | null
   config: QuotaConfig | null
   remaining: number

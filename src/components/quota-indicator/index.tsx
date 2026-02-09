@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { AlertCircle, CheckCircle, XCircle } from 'lucide-react'
 import { useQuotaManagement } from '@/hooks/use-quota'
 
-interface QuotaIndicatorProps {
+type QuotaIndicatorProps = {
   showDetails?: boolean
   compact?: boolean
 }

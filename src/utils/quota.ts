@@ -2,12 +2,12 @@
  * AI API 每日配额管理工具
  */
 
-export interface QuotaConfig {
+export type QuotaConfig = {
   dailyLimit: number // 每日调用次数限制
   warningThreshold: number // 警告阈值（百分比，如 80 表示 80%）
 }
 
-export interface QuotaUsage {
+export type QuotaUsage = {
   date: string // 日期 YYYY-MM-DD
   used: number // 已使用次数
   limit: number // 配额限制

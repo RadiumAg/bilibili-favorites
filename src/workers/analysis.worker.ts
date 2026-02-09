@@ -4,12 +4,12 @@
 
 import type { FavoriteMedia } from '../utils/api'
 
-interface WorkerMessage {
-  type: 'calculateRecentFavorites' | 'calculateDistribution' | 'calculateTrend'
+type WorkerMessage = {
+  type: string
   data: any
 }
 
-interface WorkerResponse {
+type WorkerResponse = {
   type: string
   data: any
 }

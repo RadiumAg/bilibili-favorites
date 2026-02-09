@@ -3,7 +3,7 @@ import { useMemoizedFn } from 'ahooks'
 import { type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
 
-interface FavoriteFolder {
+type FavoriteFolder = {
   id: number
   fid: number
   title: string
@@ -14,7 +14,7 @@ interface FavoriteFolder {
   mid?: number
 }
 
-interface StatsData {
+type StatsData = {
   totalFolders: number
   totalVideos: number
   recentCount: number
@@ -26,25 +26,25 @@ interface StatsData {
   videoGrowth?: number
 }
 
-interface DistributionData {
+type DistributionData = {
   name: string
   value: number
   percentage: number
 }
 
-interface TrendData {
+type TrendData = {
   date: string
   count: number
   cumulative: number
 }
 
-interface UseAnalysisStatsProps {
+type UseAnalysisStatsProps = {
   favoriteData: FavoriteFolder[]
   allMedias: FavoriteMedia[]
   dateRange: string
 }
 
-interface UseAnalysisStatsReturn {
+type UseAnalysisStatsReturn = {
   statsData: StatsData | undefined
   distributionData: DistributionData[]
   trendData: TrendData[]

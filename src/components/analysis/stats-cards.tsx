@@ -1,7 +1,7 @@
 import React from 'react'
 import { FolderIcon, VideoIcon, ClockIcon, TrendingUpIcon } from 'lucide-react'
 
-interface StatsCardProps {
+type StatsCardProps = {
   title: string
   value: number | string
   icon: React.ReactNode
@@ -55,7 +55,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
   )
 }
 
-interface StatsData {
+type StatsData = {
   totalFolders: number
   totalVideos: number
   recentCount: number
@@ -67,7 +67,7 @@ interface StatsData {
   videoGrowth?: number
 }
 
-interface StatsCardsProps {
+type StatsCardsProps = {
   data?: StatsData
   loading?: boolean
 }

@@ -1,16 +1,16 @@
 import { useEffect, useRef } from 'react'
 import { useMemoizedFn } from 'ahooks'
 
-interface WorkerMessage {
+type WorkerMessage = {
   type: string
   data: any
 }
 
-interface UseAnalysisWorkerProps {
+type UseAnalysisWorkerProps = {
   onMessage: (type: string, data: any) => void
 }
 
-interface UseAnalysisWorkerReturn {
+type UseAnalysisWorkerReturn = {
   postMessage: (message: WorkerMessage) => void
   isReady: boolean
 }

@@ -1,13 +1,13 @@
 import React from 'react'
 import * as echarts from 'echarts'
 
-interface TrendData {
+type TrendData = {
   date: string
   count: number
   cumulative?: number
 }
 
-interface TrendChartProps {
+type TrendChartProps = {
   data: TrendData[]
   title: string
   showCumulative?: boolean

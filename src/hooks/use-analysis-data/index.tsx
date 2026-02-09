@@ -3,7 +3,7 @@ import { useMemoizedFn } from 'ahooks'
 import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
 
-interface UseAnalysisDataProps {
+type UseAnalysisDataProps = {
   favoriteData: Array<{
     id: number
     fid: number
@@ -13,7 +13,7 @@ interface UseAnalysisDataProps {
   cookie?: string
 }
 
-interface UseAnalysisDataReturn {
+type UseAnalysisDataReturn = {
   allMedias: FavoriteMedia[]
   loading: boolean
   fetchAllMedias: () => Promise<FavoriteMedia[]>

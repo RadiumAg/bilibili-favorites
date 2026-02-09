@@ -17,7 +17,7 @@ import { useGlobalConfig } from '@/store/global-data'
 import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
-interface FavoriteFolder {
+type FavoriteFolder = {
   id: number
   fid: number
   title: string
@@ -25,7 +25,7 @@ interface FavoriteFolder {
   ctime: number
 }
 
-interface FavoriteResource {
+type FavoriteResource = {
   id: number
   bvid: string
   title: string
@@ -36,7 +36,7 @@ interface FavoriteResource {
   }
 }
 
-interface StatsData {
+type StatsData = {
   totalFolders: number
   totalVideos: number
   recentCount: number
