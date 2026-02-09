@@ -6,12 +6,9 @@ import { Move, LoginCheck, AutoCreateKeyword } from './components'
 import { useGlobalConfig } from '@/store/global-data'
 
 export const Popup = () => {
-  const globalData = useGlobalConfig((state) => state)
+  const cookie = useGlobalConfig((state) => state.cookie)
 
-  const favoriteFlagFetchPromise = React.useMemo(
-    () => getAllFavoriteFlag(globalData.cookie),
-    [globalData.cookie],
-  )
+  const favoriteFlagFetchPromise = React.useMemo(() => getAllFavoriteFlag(cookie), [cookie])
 
   return (
     <main className="w-96 min-h-96 p-3 bg-b-primary bg-opacity-15 flex flex-col">

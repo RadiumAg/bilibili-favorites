@@ -1,9 +1,15 @@
 import { useGlobalConfig } from '@/store/global-data'
 import React from 'react'
 import { v4 as uuid } from 'uuid'
+import { useShallow } from 'zustand/react/shallow'
 
 const useEditKeyword = () => {
-  const dataContext = useGlobalConfig((state) => state)
+  const dataContext = useGlobalConfig(
+    useShallow((state) => ({
+      activeKey: state.activeKey,
+      keyword: state.keyword,
+    })),
+  )
 
   const currentFavoriteTag = dataContext['keyword']?.find(
     (key) => key.favoriteDataId === dataContext.activeKey,

@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select'
 import { Adapter, adapterArray, defaultExtraParams, selectItemsArray } from './util'
 import { Badge } from '@/components/ui/badge'
+import { useShallow } from 'zustand/react/shallow'
 
 type FormData = {
   key: string
@@ -41,7 +42,12 @@ const formSchema = z.object({
 })
 
 const Setting: React.FC = () => {
-  const globalData = useGlobalConfig((state) => state)
+  const globalData = useGlobalConfig(
+    useShallow((state) => ({
+      aiConfig: state.aiConfig,
+      setGlobalData: state.setGlobalData,
+    })),
+  )
   const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {
       key: globalData.aiConfig.key || '',

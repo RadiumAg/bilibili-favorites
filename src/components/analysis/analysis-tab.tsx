@@ -14,7 +14,6 @@ import { DistributionChart } from './distribution-chart'
 import { BarChart } from './bar-chart'
 import { TrendChart } from './trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
-import { getFavoriteList } from '@/utils/api'
 import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -50,12 +49,11 @@ interface StatsData {
 }
 
 export const AnalysisTab: React.FC = () => {
-  const { favoriteData } = useGlobalConfig()
+  const favoriteData = useGlobalConfig((state) => state.favoriteData)
   const [loading, setLoading] = useState(false)
   const [statsData, setStatsData] = useState<StatsData>()
   const [distributionData, setDistributionData] = useState<any[]>([])
   const [trendData, setTrendData] = useState<any[]>([])
-  const [selectedFolder, setSelectedFolder] = useState<string>('all')
   const [dateRange, setDateRange] = useState<string>('30d')
   const { toast } = useToast()
 

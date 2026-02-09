@@ -4,9 +4,18 @@ import loadingImg from '@/assets/loading.gif'
 import { useToast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { createAIStreamParser, createStreamAdapter } from './ai-stream-parser'
+import { useShallow } from 'zustand/react/shallow'
 
 const useCreateKeywordByAi = () => {
-  const dataProvideData = useGlobalConfig((state) => state)
+  const dataProvideData = useGlobalConfig(
+    useShallow((state) => ({
+      aiConfig: state.aiConfig,
+      activeKey: state.activeKey,
+      favoriteData: state.favoriteData,
+      setGlobalData: state.setGlobalData,
+      getGlobalData: state.getGlobalData,
+    })),
+  )
   const [isLoading, setIsLoading] = React.useState(false)
   const { toast } = useToast()
 

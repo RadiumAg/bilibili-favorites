@@ -10,11 +10,11 @@ import { OptionsAnalysisTab } from '@/components/analysis'
 import { useGlobalConfig } from '@/store/global-data'
 
 const Options: React.FC = () => {
-  const dataProvideData = useGlobalConfig()
+  const cookie = useGlobalConfig((state) => state.cookie)
 
   const favoriteFlagFetchPromise = React.useMemo(() => {
-    return getAllFavoriteFlag(dataProvideData.cookie)
-  }, [dataProvideData.cookie])
+    return getAllFavoriteFlag(cookie)
+  }, [cookie])
 
   return (
     <div
