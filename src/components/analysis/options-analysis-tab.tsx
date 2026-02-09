@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -12,16 +12,15 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatsCards } from './stats-cards'
-import { DistributionChart } from './distribution-chart'
-import { BarChart } from './bar-chart'
-import { TrendChart } from './trend-chart'
+import { DistributionChart } from './chart/distribution-chart'
+import { BarChart } from './chart/bar-chart'
+import { TrendChart } from './chart/trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
-import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
+import { RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { useAnalysisData } from '@/hooks/use-analysis-data'
-import { useAnalysisWorker } from '@/hooks/use-analysis-worker'
-import { useAnalysisStats } from '@/hooks/use-analysis-stats'
-import dbManager from '@/utils/indexed-db'
+import { useAnalysisData } from '@/components/analysis/use-analysis-data'
+import { useAnalysisWorker } from '@/components/analysis/use-analysis-worker'
+import { useAnalysisStats } from '@/components/analysis/use-analysis-stats'
 
 export const OptionsAnalysisTab: React.FC = () => {
   const { favoriteData, cookie } = useGlobalConfig(
@@ -30,19 +29,40 @@ export const OptionsAnalysisTab: React.FC = () => {
       cookie: state.cookie,
     })),
   )
-  const [dateRange, setDateRange] = useState<string>('30d')
-  const [refreshing, setRefreshing] = useState(false)
+  const forceRefreshRef = React.useRef(false)
+  const dateRange = React.useRef<string>('30d')
+  const [refreshing, setRefreshing] = React.useState(false)
   const { toast } = useToast()
+  // 使用 Worker hook
+  const { postMessage: postWorkerMessage } = useAnalysisWorker({
+    onMessage: useMemoizedFn((type: string, data: any) => {
+      console.log('[DEBUG] Message', type, data)
+      switch (type) {
+        case 'calculateRecentFavorites':
+          // 更新最近收藏数量
+          updateRecentCount(data)
+          break
+
+        case 'calculateTrend':
+          // 更新趋势数据
+          setTrendData(data)
+          break
+
+        default:
+          console.warn('[OptionsAnalysisTab] Unknown worker message type:', type)
+      }
+    }),
+  })
 
   // 使用数据获取 hook
   const {
     allMedias,
     loading: dataLoading,
     fetchAllMedias,
-    forceRefresh,
   } = useAnalysisData({
     favoriteData,
     cookie,
+    forceRefreshRef,
   })
 
   // 使用统计数据 hook
@@ -50,6 +70,7 @@ export const OptionsAnalysisTab: React.FC = () => {
     statsData,
     distributionData,
     trendData,
+    generateTrendData,
     calculateStats,
     calculateDistribution,
     setTrendData,
@@ -58,78 +79,23 @@ export const OptionsAnalysisTab: React.FC = () => {
     favoriteData,
     allMedias,
     dateRange,
-  })
-
-  // Worker 消息处理
-  const handleWorkerMessage = useMemoizedFn((type: string, data: any) => {
-    switch (type) {
-      case 'calculateRecentFavorites':
-        // 更新最近收藏数量
-        updateRecentCount(data)
-        break
-
-      case 'calculateTrend':
-        // 更新趋势数据
-        setTrendData(data)
-        break
-
-      default:
-        console.warn('[OptionsAnalysisTab] Unknown worker message type:', type)
-    }
-  })
-
-  // 使用 Worker hook
-  const { postMessage: postWorkerMessage } = useAnalysisWorker({
-    onMessage: handleWorkerMessage,
-  })
-
-  const loading = dataLoading
-
-  // 生成趋势数据
-  const generateTrendData = useMemoizedFn(async () => {
-    const days = parseInt(dateRange.replace('d', ''))
-    const trendCacheKey = `trend-data-${dateRange}`
-
-    // 检查缓存
-    const isExpired = await dbManager.isExpired(trendCacheKey)
-    if (!isExpired) {
-      const cached = await dbManager.get(trendCacheKey)
-      if (cached && cached.data) {
-        console.log('[OptionsAnalysisTab] 使用趋势数据缓存')
-        setTrendData(cached.data)
-        return
-      }
-    }
-
-    // 使用 Web Worker 计算趋势数据
-    if (allMedias.length > 0) {
-      postWorkerMessage({
-        type: 'calculateTrend',
-        data: { medias: allMedias, days },
-      })
-    }
+    forceRefreshRef,
+    postWorkerMessage,
   })
 
   // 加载数据
   const loadData = useMemoizedFn(async () => {
     try {
-      // 获取媒体数据
-      const medias = await fetchAllMedias()
-
       // 计算基础统计
       calculateStats()
       calculateDistribution()
-
-      // 使用 Worker 计算最近收藏数量
-      if (medias.length > 0) {
-        postWorkerMessage({
-          type: 'calculateRecentFavorites',
-          data: { medias, days: 7 },
-        })
-      }
-
       // 生成趋势数据
       await generateTrendData()
+      postWorkerMessage({
+        type: 'calculateRecentFavorites',
+        data: { medias: allMedias, days: '7' },
+      })
+      // 使用 Worker 计算最近收藏数量
     } catch (error) {
       toast({
         title: '数据加载失败',
@@ -141,10 +107,11 @@ export const OptionsAnalysisTab: React.FC = () => {
 
   // 强制刷新
   const handleForceRefresh = useMemoizedFn(async () => {
-    forceRefresh()
     setRefreshing(true)
+    forceRefreshRef.current = true
 
     try {
+      await fetchAllMedias()
       await loadData()
 
       toast({
@@ -158,23 +125,17 @@ export const OptionsAnalysisTab: React.FC = () => {
         variant: 'destructive',
       })
     } finally {
+      forceRefreshRef.current = false
       setRefreshing(false)
     }
   })
 
   // 初始加载
-  useEffect(() => {
+  React.useEffect(() => {
     if (favoriteData.length > 0) {
       loadData()
     }
-  }, [favoriteData, loadData])
-
-  // 日期范围变化时重新生成趋势数据
-  useEffect(() => {
-    if (allMedias.length > 0) {
-      generateTrendData()
-    }
-  }, [dateRange, allMedias, generateTrendData])
+  }, [])
 
   return (
     <div className="w-full h-full bg-gray-50 p-6">
@@ -183,7 +144,13 @@ export const OptionsAnalysisTab: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-gray-900">收藏夹数据分析</h2>
           <div className="flex gap-2">
-            <Select value={dateRange} onValueChange={setDateRange}>
+            <Select
+              defaultValue={dateRange.current}
+              onValueChange={(value) => {
+                dateRange.current = value
+                generateTrendData()
+              }}
+            >
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
@@ -193,11 +160,11 @@ export const OptionsAnalysisTab: React.FC = () => {
                 <SelectItem value="90d">最近90天</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={loadData} disabled={loading || refreshing}>
-              <RefreshCwIcon className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <Button variant="outline" onClick={loadData} disabled={dataLoading || refreshing}>
+              <RefreshCwIcon className={`w-4 h-4 mr-2 ${dataLoading ? 'animate-spin' : ''}`} />
               {refreshing ? '刷新中...' : '刷新'}
             </Button>
-            <Button onClick={handleForceRefresh} disabled={loading || refreshing}>
+            <Button onClick={handleForceRefresh} disabled={dataLoading || refreshing}>
               <RefreshCwIcon className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               强制刷新
             </Button>
@@ -206,7 +173,7 @@ export const OptionsAnalysisTab: React.FC = () => {
 
         {/* 统计卡片 */}
         <div className="mb-8">
-          <StatsCards data={statsData} loading={loading} />
+          <StatsCards data={statsData} loading={dataLoading} />
         </div>
 
         {/* 图表区域 */}

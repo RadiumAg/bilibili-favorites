@@ -57,6 +57,7 @@ function calculateDailyFavorites(
     dailyMap.set(dateStr, 0)
   }
 
+  console.log('[DEBUG] calculateDailyFavorites', medias)
   // 统计每天的收藏数量
   medias.forEach((media) => {
     const favDate = new Date(media.fav_time * 1000)
@@ -105,6 +106,7 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
         break
       }
 
+      // 计算收藏趋势
       case 'calculateTrend': {
         const { medias, days } = data
         result = calculateDailyFavorites(medias, days)

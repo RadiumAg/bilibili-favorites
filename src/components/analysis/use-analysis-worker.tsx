@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 
-type WorkerMessage = {
+export type WorkerMessage = {
   type: string
   data: any
 }
@@ -20,8 +20,8 @@ type UseAnalysisWorkerReturn = {
  */
 export const useAnalysisWorker = (props: UseAnalysisWorkerProps): UseAnalysisWorkerReturn => {
   const { onMessage } = props
-  const workerRef = useRef<Worker | null>(null)
-  const isReadyRef = useRef(false)
+  const workerRef = React.useRef<Worker | null>(null)
+  const isReadyRef = React.useRef(false)
 
   // 发送消息到 Worker
   const postMessage = useMemoizedFn((message: WorkerMessage) => {
@@ -32,7 +32,7 @@ export const useAnalysisWorker = (props: UseAnalysisWorkerProps): UseAnalysisWor
     }
   })
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (typeof Worker !== 'undefined') {
       // 初始化 Worker
       workerRef.current = new Worker(new URL('../../workers/analysis.worker.ts', import.meta.url), {
