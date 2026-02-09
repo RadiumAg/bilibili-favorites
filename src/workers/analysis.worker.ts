@@ -20,9 +20,15 @@ type WorkerResponse = {
 function calculateRecentFavorites(medias: FavoriteMedia[], days: number): number {
   if (!medias.length) return 0
 
-  const now = Date.now()
-  const daysInMs = days * 24 * 60 * 60 * 1000
-  const threshold = now - daysInMs
+  // 获取今天的 00:00:00 作为起点
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // 计算 N 天前的 00:00:00
+  const startDate = new Date(today)
+  startDate.setDate(startDate.getDate() - days + 1) // +1 是为了包含今天
+
+  const threshold = startDate.getTime()
 
   return medias.filter((media) => {
     // fav_time 是秒级时间戳,需要转换为毫秒

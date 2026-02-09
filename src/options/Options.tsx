@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import Setting from './components/setting'
 import { OptionsAnalysisTab } from '@/components/analysis'
 import { useGlobalConfig } from '@/store/global-data'
+import { LoginCheck } from '@/popup/components'
 
 const Options: React.FC = () => {
   const cookie = useGlobalConfig((state) => state.cookie)
@@ -28,6 +29,7 @@ const Options: React.FC = () => {
         'rounded-sm',
         'bg-white',
         'min-w-[786px]',
+        'relative',
         'max-w-screen-2xl',
       )}
     >
@@ -64,6 +66,8 @@ const Options: React.FC = () => {
           </TabWrapper.Content>
         </TabWrapper.Tab>
       </TabWrapper>
+
+      <LoginCheck popup={false} />
     </div>
   )
 }
