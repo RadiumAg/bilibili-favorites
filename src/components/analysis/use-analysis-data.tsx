@@ -2,6 +2,7 @@ import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
+import { flushSync } from 'react-dom'
 
 type UseAnalysisDataProps = {
   favoriteData: Array<{
@@ -12,6 +13,19 @@ type UseAnalysisDataProps = {
   }>
   cookie?: string
   forceRefreshRef: React.RefObject<boolean>
+}
+
+/**
+ * 生成字符串的简单 hash
+ */
+const simpleHash = (str: string): string => {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36)
 }
 
 /**
@@ -28,13 +42,13 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       .map((f) => f.fid)
       .sort()
       .join('-')
-    return `analysis-medias-${folderIds}`
+    // 使用 hash 生成短键名
+    return `analysis-medias-${simpleHash(folderIds)}`
   })
 
   // 获取所有收藏夹的媒体数据
   const fetchAllMedias = useMemoizedFn(async (): Promise<FavoriteMedia[]> => {
     if (!favoriteData.length || !cookie) return []
-
     setLoading(true)
     const cacheKey = getCacheKey()
     try {
@@ -70,7 +84,9 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
 
       // 保存到缓存
       await dbManager.set(cacheKey, allMedias)
-      setAllMedias(allMedias)
+      flushSync(() => {
+        setAllMedias(allMedias)
+      })
       setLoading(false)
       return allMedias
     } catch (error) {

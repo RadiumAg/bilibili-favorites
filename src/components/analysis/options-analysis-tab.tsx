@@ -1,5 +1,5 @@
 import React from 'react'
-import { useMemoizedFn } from 'ahooks'
+import { useMemoizedFn, useMount } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -131,11 +131,11 @@ export const OptionsAnalysisTab: React.FC = () => {
   })
 
   // 初始加载
-  React.useEffect(() => {
+  useMount(() => {
     if (favoriteData.length > 0) {
       loadData()
     }
-  }, [])
+  })
 
   return (
     <div className="w-full h-full bg-gray-50 p-6">
