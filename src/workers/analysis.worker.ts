@@ -85,28 +85,6 @@ function calculateDailyFavorites(
   return data
 }
 
-/**
- * 计算每小时收藏时间段分布
- */
-function calculateHourlyDistribution(
-  medias: FavoriteMedia[],
-): Array<{ hour: number; count: number }> {
-  if (!medias.length) return []
-
-  const hourlyCount = new Array(24).fill(0)
-
-  medias.forEach((media) => {
-    const favDate = new Date(media.fav_time * 1000)
-    const hour = favDate.getHours()
-    hourlyCount[hour]++
-  })
-
-  return hourlyCount.map((count, hour) => ({
-    hour,
-    count,
-  }))
-}
-
 // 监听主线程消息
 self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
   const { type, data } = event.data

@@ -123,25 +123,6 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps): UseAnalysisStats
     })
   })
 
-  // 生成趋势数据（空数据占位）
-  const generateEmptyTrendData = useMemoizedFn((days: number): TrendData[] => {
-    const now = new Date()
-    const data: TrendData[] = []
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now)
-      date.setDate(date.getDate() - i)
-      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
-      data.unshift({
-        date: dateStr,
-        count: 0,
-        cumulative: 0,
-      })
-    }
-
-    return data
-  })
-
   // 设置趋势数据并缓存
   const setTrendData = useMemoizedFn(async (data: TrendData[]) => {
     setTrendDataState(data)

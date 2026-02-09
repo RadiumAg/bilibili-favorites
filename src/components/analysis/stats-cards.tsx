@@ -40,17 +40,6 @@ const StatsCard: React.FC<StatsCardProps> = ({
       </div>
       <div className="text-2xl font-bold text-gray-900 mb-1">{value}</div>
       {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
-      {trend && (
-        <div
-          className={`flex items-center text-xs mt-2 ${
-            trend.isPositive ? 'text-green-600' : 'text-red-600'
-          }`}
-        >
-          <TrendingUpIcon className="w-3 h-3 mr-1" />
-          {trend.isPositive ? '+' : ''}
-          {trend.value}%
-        </div>
-      )}
     </div>
   )
 }
