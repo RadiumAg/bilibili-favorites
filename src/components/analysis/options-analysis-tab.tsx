@@ -139,29 +139,6 @@ export const OptionsAnalysisTab: React.FC = () => {
     }
   })
 
-  // 导出功能
-  const handleExport = useMemoizedFn(() => {
-    const exportData = {
-      stats: statsData,
-      distribution: distributionData,
-      trend: trendData,
-      generatedAt: new Date().toISOString(),
-    }
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `bilibili-analysis-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-
-    toast({
-      title: '导出成功',
-      description: '分析数据已导出',
-    })
-  })
-
   // 强制刷新
   const handleForceRefresh = useMemoizedFn(async () => {
     forceRefresh()
@@ -223,10 +200,6 @@ export const OptionsAnalysisTab: React.FC = () => {
             <Button onClick={handleForceRefresh} disabled={loading || refreshing}>
               <RefreshCwIcon className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               强制刷新
-            </Button>
-            <Button onClick={handleExport}>
-              <DownloadIcon className="w-4 h-4 mr-2" />
-              导出
             </Button>
           </div>
         </div>
