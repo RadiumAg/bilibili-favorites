@@ -1,10 +1,9 @@
 import React from 'react'
 import noDataImg from '@/assets/no-data.png'
-import { useGlobalConfig } from '@/store/global-data'
+import { useCookie } from '@/hooks/use-cookie'
 
 const LoginCheck: React.FC = () => {
-  const cookie = useGlobalConfig((state) => state.cookie)
-  const isLogin = React.useMemo(() => !!cookie && cookie.length > 0, [cookie])
+  const { isLogin } = useCookie()
 
   return !isLogin ? (
     <div className="left-0 top-0 fixed w-full h-full bg-white flex items-center justify-center">
