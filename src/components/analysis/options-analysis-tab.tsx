@@ -19,7 +19,6 @@ import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
-import { flushSync } from 'react-dom'
 import { useMemoizedFn } from 'ahooks'
 
 interface FavoriteFolder {
