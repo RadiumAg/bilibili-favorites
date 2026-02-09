@@ -69,11 +69,12 @@ export const OptionsAnalysisTab: React.FC = () => {
   const [dateRange, setDateRange] = useState<string>('30d')
   const forceRefresh = useRef(false)
   const { toast } = useToast()
-  console.log('[DEBUG] favoriteData', favoriteData)
   // Web Worker 引用
   const workerRef = useRef<Worker | null>(null)
   // 缓存所有收藏的媒体数据
   const [allMedias, setAllMedias] = useState<FavoriteMedia[]>([])
+
+  console.log('[DEBUG] favoriteData', favoriteData)
 
   // 生成缓存键
   const getCacheKey = (): string => {
