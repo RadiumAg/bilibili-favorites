@@ -36,12 +36,12 @@ const KeywordModeSelector: FC<KeywordModeSelectorProps> = (props) => {
             <span className="text-xs text-gray-500">准确、需配置</span>
           </div>
         </SelectItem>
-        <SelectItem value="manual">
+        {/* <SelectItem value="manual">
           <div className="flex flex-col">
             <span className="font-medium">手动输入</span>
             <span className="text-xs text-gray-500">完全自定义</span>
           </div>
-        </SelectItem>
+        </SelectItem> */}
       </SelectContent>
     </Select>
   )
