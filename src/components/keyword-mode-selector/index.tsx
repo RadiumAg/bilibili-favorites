@@ -1,5 +1,4 @@
 import React from 'react'
-import { FC } from 'react'
 import {
   Select,
   SelectContent,
@@ -15,7 +14,7 @@ type KeywordModeSelectorProps = {
   disabled?: boolean
 }
 
-const KeywordModeSelector: FC<KeywordModeSelectorProps> = (props) => {
+const KeywordModeSelector: React.FC<KeywordModeSelectorProps> = (props) => {
   const { value, onChange, disabled = false } = props
 
   return (
