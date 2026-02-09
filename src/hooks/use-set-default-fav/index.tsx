@@ -5,7 +5,7 @@ import { useGlobalConfig } from '@/store/global-data'
 
 const useSetDefaultFav = () => {
   const delayNumber = 300
-  const globalConfig = useGlobalConfig((state) => state)
+  const setGlobalData = useGlobalConfig((state) => state.setGlobalData)
   const [isLongPress, setLongPress] = React.useState(false)
   const maskDomRef = React.useRef<HTMLDivElement>(null)
   const domRef = React.useRef<HTMLDivElement>(null)
@@ -17,10 +17,9 @@ const useSetDefaultFav = () => {
   const pendingElement = React.useMemo(
     () => (
       <div
-        className="absolute w-full h-full bg-slate-500 opacity-10 left-0"
+        className="absolute w-full h-full bg-slate-500 opacity-10 left-0 pointer-events-none"
         ref={maskDomRef}
-        style={{ width: 0 }}
-      ></div>
+      />
     ),
     [],
   )
@@ -39,7 +38,7 @@ const useSetDefaultFav = () => {
   )
 
   const handleClick = (key: number) => {
-    globalConfig.setGlobalData?.({ activeKey: key })
+    setGlobalData?.({ activeKey: key })
   }
 
   const handleMouseDown = (id: number) => {
@@ -86,7 +85,7 @@ const useSetDefaultFav = () => {
         }
 
         if (process >= 100) {
-          globalConfig.setGlobalData({ defaultFavoriteId: clickTagId })
+          setGlobalData({ defaultFavoriteId: clickTagId })
           maskDomRef.current!.style.width = `${0}%`
           return
         }

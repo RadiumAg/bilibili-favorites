@@ -1,13 +1,13 @@
 import React from 'react'
 import * as echarts from 'echarts'
 
-interface ChartData {
+type ChartData = {
   name: string
   value: number
   percentage?: number
 }
 
-interface DistributionChartProps {
+type DistributionChartProps = {
   data: ChartData[]
   title: string
   type?: 'pie' | 'doughnut'

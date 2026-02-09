@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
+import { useMemoizedFn, useMount } from 'ahooks'
+import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,169 +12,130 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatsCards } from './stats-cards'
-import { DistributionChart } from './distribution-chart'
-import { BarChart } from './bar-chart'
-import { TrendChart } from './trend-chart'
+import { DistributionChart } from './chart/distribution-chart'
+import { BarChart } from './chart/bar-chart'
+import { TrendChart } from './chart/trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
-import { getFavoriteList } from '@/utils/api'
-import { DownloadIcon, RefreshCwIcon } from 'lucide-react'
+import { RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-
-interface FavoriteFolder {
-  id: number
-  fid: number
-  title: string
-  media_count: number
-  ctime: number
-}
-
-interface FavoriteResource {
-  id: number
-  bvid: string
-  title: string
-  ctime: number
-  duration: number
-  owner: {
-    name: string
-  }
-}
-
-interface StatsData {
-  totalFolders: number
-  totalVideos: number
-  recentCount: number
-  mostActiveFolder?: {
-    name: string
-    count: number
-  }
-  folderGrowth?: number
-  videoGrowth?: number
-}
+import { useAnalysisData } from '@/components/analysis/use-analysis-data'
+import { useAnalysisWorker } from '@/components/analysis/use-analysis-worker'
+import { useAnalysisStats } from '@/components/analysis/use-analysis-stats'
 
 export const OptionsAnalysisTab: React.FC = () => {
-  const { favoriteData, cookie } = useGlobalConfig()
-  const [loading, setLoading] = useState(false)
-  const [statsData, setStatsData] = useState<StatsData>()
-  const [distributionData, setDistributionData] = useState<any[]>([])
-  const [trendData, setTrendData] = useState<any[]>([])
-  const [selectedFolder, setSelectedFolder] = useState<string>('all')
-  const [dateRange, setDateRange] = useState<string>('30d')
+  const { favoriteData, cookie } = useGlobalConfig(
+    useShallow((state) => ({
+      favoriteData: state.favoriteData,
+      cookie: state.cookie,
+    })),
+  )
+  const forceRefreshRef = React.useRef(false)
+  const dateRange = React.useRef<string>('30d')
+  const [refreshing, setRefreshing] = React.useState(false)
   const { toast } = useToast()
+  // 使用 Worker hook
+  const { postMessage: postWorkerMessage } = useAnalysisWorker({
+    onMessage: useMemoizedFn((type: string, data: any) => {
+      console.log('[DEBUG] Message', type, data)
+      switch (type) {
+        case 'calculateRecentFavorites':
+          // 更新最近收藏数量
+          updateRecentCount(data)
+          break
 
-  // 计算统计数据
-  const calculateStats = async () => {
-    if (!favoriteData.length) return
+        case 'calculateTrend':
+          // 更新趋势数据
+          setTrendData(data)
+          break
 
-    const totalFolders = favoriteData.length
-    const totalVideos = favoriteData.reduce((sum, folder) => sum + folder.media_count, 0)
+        default:
+          console.warn('[OptionsAnalysisTab] Unknown worker message type:', type)
+      }
+    }),
+  })
 
-    // 计算最近7天的收藏数量（这里用模拟数据，实际需要从API获取）
-    const recentCount = Math.floor(totalVideos * 0.1) // 假设10%是最近7天的
+  // 使用数据获取 hook
+  const {
+    allMedias,
+    loading: dataLoading,
+    fetchAllMedias,
+  } = useAnalysisData({
+    favoriteData,
+    cookie,
+    forceRefreshRef,
+  })
 
-    const mostActiveFolder = favoriteData.reduce(
-      (max, folder) => (folder.media_count > (max?.media_count || 0) ? folder : max),
-      favoriteData[0],
-    )
-
-    setStatsData({
-      totalFolders,
-      totalVideos,
-      recentCount,
-      mostActiveFolder: mostActiveFolder
-        ? {
-            name: mostActiveFolder.title,
-            count: mostActiveFolder.media_count,
-          }
-        : undefined,
-      folderGrowth: 5.2, // 模拟增长数据
-      videoGrowth: 8.7,
-    })
-  }
-
-  // 计算分布数据
-  const calculateDistribution = () => {
-    const data = favoriteData
-      .map((folder) => ({
-        name: folder.title,
-        value: folder.media_count,
-        percentage: (
-          (folder.media_count / favoriteData.reduce((sum, f) => sum + f.media_count, 0)) *
-          100
-        ).toFixed(1),
-      }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10) // 只显示前10个
-
-    setDistributionData(data)
-  }
-
-  // 生成趋势数据（模拟数据）
-  const generateTrendData = () => {
-    const days = parseInt(dateRange.replace('d', ''))
-    const data: Array<{ date: string; count: number; cumulative: number }> = []
-    const now = new Date()
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now)
-      date.setDate(date.getDate() - i)
-      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
-
-      // 模拟收藏数据
-      const count = Math.floor(Math.random() * 10) + 2
-      const cumulative = i === days - 1 ? count : (data[0]?.cumulative || 0) + count
-
-      data.unshift({
-        date: dateStr,
-        count,
-        cumulative,
-      })
-    }
-
-    setTrendData(data)
-  }
+  // 使用统计数据 hook
+  const {
+    statsData,
+    distributionData,
+    trendData,
+    generateTrendData,
+    calculateStats,
+    calculateDistribution,
+    setTrendData,
+    updateRecentCount,
+  } = useAnalysisStats({
+    favoriteData,
+    allMedias,
+    dateRange,
+    forceRefreshRef,
+    postWorkerMessage,
+  })
 
   // 加载数据
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = useMemoizedFn(async () => {
     try {
-      await Promise.all([calculateStats(), calculateDistribution(), generateTrendData()])
+      // 计算基础统计
+      calculateStats()
+      calculateDistribution()
+      // 生成趋势数据
+      await generateTrendData()
+      postWorkerMessage({
+        type: 'calculateRecentFavorites',
+        data: { medias: allMedias, days: '7' },
+      })
+      // 使用 Worker 计算最近收藏数量
     } catch (error) {
       toast({
         title: '数据加载失败',
         description: '无法加载分析数据，请稍后重试',
         variant: 'destructive',
       })
+    }
+  })
+
+  // 强制刷新
+  const handleForceRefresh = useMemoizedFn(async () => {
+    setRefreshing(true)
+    forceRefreshRef.current = true
+
+    try {
+      await fetchAllMedias()
+      await loadData()
+
+      toast({
+        title: '刷新成功',
+        description: '已获取最新数据',
+      })
+    } catch (error) {
+      toast({
+        title: '刷新失败',
+        description: '无法获取最新数据，请稍后重试',
+        variant: 'destructive',
+      })
     } finally {
-      setLoading(false)
+      forceRefreshRef.current = false
+      setRefreshing(false)
     }
-  }
+  })
 
-  useEffect(() => {
-    loadData()
-  }, [favoriteData, dateRange])
-
-  // 导出功能
-  const handleExport = () => {
-    const exportData = {
-      stats: statsData,
-      distribution: distributionData,
-      trend: trendData,
-      generatedAt: new Date().toISOString(),
+  // 初始加载
+  useMount(() => {
+    if (favoriteData.length > 0) {
+      loadData()
     }
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `bilibili-analysis-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-
-    toast({
-      title: '导出成功',
-      description: '分析数据已导出',
-    })
-  }
+  })
 
   return (
     <div className="w-full h-full bg-gray-50 p-6">
@@ -181,7 +144,13 @@ export const OptionsAnalysisTab: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-gray-900">收藏夹数据分析</h2>
           <div className="flex gap-2">
-            <Select value={dateRange} onValueChange={setDateRange}>
+            <Select
+              defaultValue={dateRange.current}
+              onValueChange={(value) => {
+                dateRange.current = value
+                generateTrendData()
+              }}
+            >
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
@@ -191,29 +160,27 @@ export const OptionsAnalysisTab: React.FC = () => {
                 <SelectItem value="90d">最近90天</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={loadData} disabled={loading}>
-              <RefreshCwIcon className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              刷新
+            <Button variant="outline" onClick={loadData} disabled={dataLoading || refreshing}>
+              <RefreshCwIcon className={`w-4 h-4 mr-2 ${dataLoading ? 'animate-spin' : ''}`} />
+              {refreshing ? '刷新中...' : '刷新'}
             </Button>
-            <Button onClick={handleExport}>
-              <DownloadIcon className="w-4 h-4 mr-2" />
-              导出
+            <Button onClick={handleForceRefresh} disabled={dataLoading || refreshing}>
+              <RefreshCwIcon className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              强制刷新
             </Button>
           </div>
         </div>
 
         {/* 统计卡片 */}
         <div className="mb-8">
-          <StatsCards data={statsData} loading={loading} />
+          <StatsCards data={statsData} loading={dataLoading} />
         </div>
 
         {/* 图表区域 */}
         <Tabs defaultValue="distribution" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="distribution">收藏分布</TabsTrigger>
             <TabsTrigger value="trend">收藏趋势</TabsTrigger>
-            <TabsTrigger value="activity">活跃度分析</TabsTrigger>
-            <TabsTrigger value="insights">智能洞察</TabsTrigger>
           </TabsList>
 
           <TabsContent value="distribution" className="space-y-6">
@@ -244,100 +211,6 @@ export const OptionsAnalysisTab: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <TrendChart data={trendData} title="每日收藏趋势" showCumulative={true} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="activity" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>收藏活跃度分析</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-16 text-gray-500">
-                  <div className="mb-4">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto flex items-center justify-center">
-                      <svg
-                        className="w-8 h-8 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    活跃度分析功能正在开发中...
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-4">将展示收藏时间段分析、收藏频率统计等</p>
-                  <div className="flex justify-center space-x-4 text-sm text-gray-400">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-blue-200 rounded-full mr-2"></div>
-                      <span>时间段分析</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-green-200 rounded-full mr-2"></div>
-                      <span>收藏频率</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-purple-200 rounded-full mr-2"></div>
-                      <span>活跃度排行</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="insights" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>智能洞察</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-16 text-gray-500">
-                  <div className="mb-4">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto flex items-center justify-center">
-                      <svg
-                        className="w-8 h-8 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    智能洞察功能正在开发中...
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-4">将基于AI提供收藏内容分析和建议</p>
-                  <div className="flex justify-center space-x-4 text-sm text-gray-400">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-blue-200 rounded-full mr-2"></div>
-                      <span>内容分析</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-green-200 rounded-full mr-2"></div>
-                      <span>关键词提取</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-purple-200 rounded-full mr-2"></div>
-                      <span>智能建议</span>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>

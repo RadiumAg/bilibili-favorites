@@ -6,9 +6,16 @@ import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import classNames from 'classnames'
 import { useGlobalConfig } from '@/store/global-data'
+import { useShallow } from 'zustand/react/shallow'
 
 const useMove = () => {
-  const dataContext = useGlobalConfig((state) => state)
+  const dataContext = useGlobalConfig(
+    useShallow((state) => ({
+      keyword: state.keyword,
+      favoriteData: state.favoriteData,
+      defaultFavoriteId: state.defaultFavoriteId,
+    })),
+  )
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 
@@ -87,19 +94,16 @@ const useMove = () => {
         (key) => key.favoriteDataId !== dataContext.defaultFavoriteId,
       )) {
         for (const keyValue of keywordInfo.value) {
-          // 预先查找目标收藏夹，避免重复查找
           const targetFavoriteTag = dataContext.favoriteData.find(
             (fav) => fav.id === keywordInfo.favoriteDataId,
           )
           if (targetFavoriteTag == null) continue
 
-          // 将关键词转为小写，实现不区分大小写的模糊匹配
           const keyword = keyValue.value.toLowerCase()
 
           for (const videoInfo of allDefaultFavoriteVideo) {
             const videoTitle = videoInfo.title.toLowerCase()
 
-            // 使用 includes 进行模糊匹配（类似 ES 的 match 查询）
             if (videoTitle.includes(keyword)) {
               await fetchMove(targetFavoriteTag.id, videoInfo.id)
             }
