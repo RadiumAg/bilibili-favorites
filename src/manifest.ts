@@ -25,7 +25,12 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: ['http://*/*', 'https://*/*'],
+      matches: [
+        'https://*.bilibili.com/*',
+        'https://bilibili.com/*',
+        'http://*.bilibili.com/*',
+        'http://bilibili.com/*',
+      ],
       js: ['src/contentScript/index.ts'],
     },
   ],
