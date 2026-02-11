@@ -57,6 +57,7 @@ export const OptionsAnalysisTab: React.FC = () => {
   // 使用数据获取 hook
   const {
     allMedias,
+    allMedaisRef,
     loading: dataLoading,
     fetchAllMedias,
   } = useAnalysisData({
@@ -85,6 +86,7 @@ export const OptionsAnalysisTab: React.FC = () => {
 
   // 加载数据
   const loadData = useMemoizedFn(async () => {
+    const allMedias = allMedaisRef.current
     try {
       // 计算基础统计
       calculateStats()
@@ -133,7 +135,9 @@ export const OptionsAnalysisTab: React.FC = () => {
   // 初始加载
   useMount(() => {
     if (favoriteData.length > 0) {
-      loadData()
+      fetchAllMedias().then(() => {
+        loadData()
+      })
     }
   })
 

@@ -1,8 +1,7 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
-import { flushSync } from 'react-dom'
 
 type UseAnalysisDataProps = {
   favoriteData: Array<{
@@ -34,6 +33,7 @@ const simpleHash = (str: string): string => {
 export const useAnalysisData = (props: UseAnalysisDataProps) => {
   const { favoriteData, forceRefreshRef, cookie } = props
   const [allMedias, setAllMedias] = React.useState<FavoriteMedia[]>([])
+  const allMedaisRef = useRef(allMedias)
   const [loading, setLoading] = React.useState(false)
 
   // 生成缓存键
@@ -46,11 +46,11 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
     return `analysis-medias-${simpleHash(folderIds)}`
   })
 
+  const cacheKey = React.useMemo(() => getCacheKey(), [favoriteData])
   // 获取所有收藏夹的媒体数据
   const fetchAllMedias = useMemoizedFn(async (): Promise<FavoriteMedia[]> => {
     if (!favoriteData.length || !cookie) return []
     setLoading(true)
-    const cacheKey = getCacheKey()
     try {
       // 如果不是强制刷新，先尝试从缓存获取
       if (!forceRefreshRef.current) {
@@ -60,6 +60,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
           if (cached && cached.data) {
             console.log('[useAnalysisData] 使用缓存数据')
             setAllMedias(cached.data)
+            allMedaisRef.current = cached.data
             setLoading(false)
             return cached.data
           }
@@ -81,12 +82,10 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
           console.error(`Failed to fetch medias for folder ${folder.id}:`, error)
         }
       }
-
       // 保存到缓存
       await dbManager.set(cacheKey, allMedias)
-      flushSync(() => {
-        setAllMedias(allMedias)
-      })
+      setAllMedias(allMedias)
+      allMedaisRef.current = allMedias
       setLoading(false)
       return allMedias
     } catch (error) {
@@ -96,9 +95,18 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
     }
   })
 
+  useEffect(() => {
+    dbManager.get(cacheKey).then((allMedias) => {
+      if (allMedias == null) return
+      setAllMedias(allMedias.data)
+      allMedaisRef.current = allMedias.data
+    })
+  }, [])
+
   return {
     allMedias,
     loading,
+    allMedaisRef,
     fetchAllMedias,
   }
 }
