@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { getFavoriteDetail, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
+import { useSleep } from '@/hooks'
 
 type UseAnalysisDataProps = {
   favoriteData: Array<{
@@ -34,6 +35,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
   const { favoriteData, forceRefreshRef, cookie } = props
   const [allMedias, setAllMedias] = React.useState<FavoriteMedia[]>([])
   const allMedaisRef = useRef(allMedias)
+  const { sleep } = useSleep()
   const [loading, setLoading] = React.useState(false)
 
   // 生成缓存键
@@ -74,6 +76,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       // 遍历所有收藏夹，获取媒体数据
       for (const folder of favoriteData) {
         try {
+          await sleep(300) // 怕触发安全策略
           const response = await getFavoriteDetail(folder.id.toString())
           if (response.code === 0 && response.data.medias) {
             allMedias.push(...response.data.medias)
