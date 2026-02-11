@@ -57,6 +57,7 @@ export const OptionsAnalysisTab: React.FC = () => {
   // 使用数据获取 hook
   const {
     allMedias,
+    allMedaisRef,
     loading: dataLoading,
     fetchAllMedias,
   } = useAnalysisData({
@@ -85,6 +86,7 @@ export const OptionsAnalysisTab: React.FC = () => {
 
   // 加载数据
   const loadData = useMemoizedFn(async () => {
+    const allMedias = allMedaisRef.current
     try {
       // 计算基础统计
       calculateStats()
@@ -133,7 +135,9 @@ export const OptionsAnalysisTab: React.FC = () => {
   // 初始加载
   useMount(() => {
     if (favoriteData.length > 0) {
-      loadData()
+      fetchAllMedias().then(() => {
+        loadData()
+      })
     }
   })
 
@@ -160,13 +164,13 @@ export const OptionsAnalysisTab: React.FC = () => {
                 <SelectItem value="90d">最近90天</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={loadData} disabled={dataLoading || refreshing}>
+            {/* <Button variant="outline" onClick={loadData} disabled={dataLoading || refreshing}>
               <RefreshCwIcon className={`w-4 h-4 mr-2 ${dataLoading ? 'animate-spin' : ''}`} />
               {refreshing ? '刷新中...' : '刷新'}
-            </Button>
+            </Button> */}
             <Button onClick={handleForceRefresh} disabled={dataLoading || refreshing}>
               <RefreshCwIcon className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              强制刷新
+              刷新
             </Button>
           </div>
         </div>
