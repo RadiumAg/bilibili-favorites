@@ -76,7 +76,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       // 遍历所有收藏夹，获取媒体数据
       for (const folder of favoriteData) {
         try {
-          await sleep(300) // 怕触发安全策略
+          await sleep(50) // 怕触发安全策略
           const response = await getFavoriteDetail(folder.id.toString())
           if (response.code === 0 && response.data.medias) {
             allMedias.push(...response.data.medias)
