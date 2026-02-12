@@ -40,7 +40,7 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['sidePanel', 'storage'],
+  permissions: ['storage'],
   options_ui: {
     page: 'options.html',
     open_in_tab: true,
