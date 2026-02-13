@@ -1,5 +1,5 @@
 import React from 'react'
-import { getFavoriteList } from '@/utils/api'
+import { GetFavoriteListRes } from '@/utils/api'
 import { useToast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
@@ -10,6 +10,8 @@ import {
   createStreamAdapter,
 } from '../use-create-keyword-by-ai/ai-stream-parser'
 import { useMemoizedFn } from 'ahooks'
+import { queryAndSendMessage } from '@/utils/tab'
+import { MessageEnum } from '@/utils/message'
 
 export type ExtractionMode = 'local' | 'ai' | 'manual'
 
@@ -39,7 +41,14 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
    * 使用本地算法提取关键词
    */
   const extractWithLocal = useMemoizedFn(async (favKey: string) => {
-    const allDefaultFavoriteVideo = await getFavoriteList(favKey, 1, 36)
+    const allDefaultFavoriteVideo = await queryAndSendMessage<GetFavoriteListRes>({
+      type: MessageEnum.getFavoriteList,
+      data: {
+        mediaId: favKey,
+        pn: 1,
+        ps: 36,
+      },
+    })
     const titleArray = allDefaultFavoriteVideo.data?.medias?.map((item) => item.title)
 
     if (titleArray == null || titleArray.length === 0) {
@@ -94,7 +103,14 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       }
     }
 
-    const allDefaultFavoriteVideo = await getFavoriteList(favKey, 1, 36)
+    const allDefaultFavoriteVideo = await queryAndSendMessage<GetFavoriteListRes>({
+      type: MessageEnum.getFavoriteList,
+      data: {
+        mediaId: favKey,
+        pn: 1,
+        ps: 36,
+      },
+    })
     const titleArray = allDefaultFavoriteVideo.data?.medias?.map((item) => item.title)
 
     if (titleArray == null || titleArray.length === 0) {
@@ -229,6 +245,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
         }
       } catch (error) {
         if (error instanceof Error) {
+          debugger
           toast({
             variant: 'destructive',
             title: '操作失败',

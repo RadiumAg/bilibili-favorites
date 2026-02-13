@@ -10,7 +10,7 @@ type BResponse<T> = {
 }
 
 type GetAllFavoriteFlagRes = BResponse<{ list: DataContextType['favoriteData'] }>
-type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | null }>
+export type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | null }>
 
 type MediaCountInfo = {
   collect: number

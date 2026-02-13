@@ -12,7 +12,7 @@ const Move: React.FC = () => {
         size="sm"
         className=" bg-b-primary hover:bg-b-primary hover:bg-opacity-50 p-1 h-6"
       >
-        移动
+        开始整理
       </Button>
 
       {isLoadingElement}

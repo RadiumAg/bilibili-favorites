@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { GetFavoriteDetailRes, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
@@ -36,7 +36,7 @@ const simpleHash = (str: string): string => {
 export const useAnalysisData = (props: UseAnalysisDataProps) => {
   const { favoriteData, forceRefreshRef, cookie } = props
   const [allMedias, setAllMedias] = React.useState<FavoriteMedia[]>([])
-  const allMedaisRef = useRef(allMedias)
+  const allMedaisRef = React.useRef(allMedias)
   const { sleep } = useSleep()
   const [loading, setLoading] = React.useState(false)
 
@@ -110,14 +110,6 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       return []
     }
   })
-
-  useEffect(() => {
-    dbManager.get(cacheKey).then((allMedias) => {
-      if (allMedias == null) return
-      setAllMedias(allMedias.data)
-      allMedaisRef.current = allMedias.data
-    })
-  }, [])
 
   return {
     allMedias,

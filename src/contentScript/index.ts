@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
           sendResponse(MessageEnum.moveVideo)
         })
         .catch(() => {
-          sendResponse(MessageEnum.moveVideo)
+          sendResponse({ code: -1 })
         })
 
       break
@@ -30,7 +30,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
           sendResponse(data)
         })
         .catch(() => {
-          sendResponse(MessageEnum.getFavoriteList)
+          sendResponse({ code: -1 })
         })
 
       break
