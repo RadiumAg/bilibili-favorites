@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { useMemoizedFn } from 'ahooks'
+import { useMemoizedFn, useMount } from 'ahooks'
 import { GetFavoriteDetailRes, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
 import { useSleep } from '@/hooks'
@@ -111,13 +111,9 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
     }
   })
 
-  useEffect(() => {
-    dbManager.get(cacheKey).then((allMedias) => {
-      if (allMedias == null) return
-      setAllMedias(allMedias.data)
-      allMedaisRef.current = allMedias.data
-    })
-  }, [])
+  useMount(() => {
+    fetchAllMedias()
+  })
 
   return {
     allMedias,
