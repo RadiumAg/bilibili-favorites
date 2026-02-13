@@ -1,5 +1,5 @@
 import React from 'react'
-import { getFavoriteList } from '@/utils/api'
+import { GetFavoriteListRes } from '@/utils/api'
 import { useToast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
@@ -41,10 +41,10 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
    * 使用本地算法提取关键词
    */
   const extractWithLocal = useMemoizedFn(async (favKey: string) => {
-    const allDefaultFavoriteVideo = await queryAndSendMessage({
+    const allDefaultFavoriteVideo = await queryAndSendMessage<GetFavoriteListRes>({
       type: MessageEnum.getFavoriteList,
       data: {
-        favKey,
+        mediaId: favKey,
         pn: 1,
         ps: 36,
       },
@@ -103,10 +103,10 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       }
     }
 
-    const allDefaultFavoriteVideo = await queryAndSendMessage({
+    const allDefaultFavoriteVideo = await queryAndSendMessage<GetFavoriteListRes>({
       type: MessageEnum.getFavoriteList,
       data: {
-        favKey,
+        mediaId: favKey,
         pn: 1,
         ps: 36,
       },
