@@ -31,6 +31,13 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
-    plugins: [crx({ manifest }), react()],
+    plugins: [
+      crx({ manifest }),
+      react({
+        babel: {
+          plugins: ['babel-plugin-react-compiler'],
+        },
+      }),
+    ],
   }
 })
