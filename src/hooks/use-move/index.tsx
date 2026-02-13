@@ -7,6 +7,7 @@ import Finished from '@/components/finished-animate'
 import classNames from 'classnames'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
+import { queryAndSendMessage } from '@/utils/tab'
 
 const useMove = () => {
   const dataContext = useGlobalConfig(
@@ -28,34 +29,21 @@ const useMove = () => {
   const fetchMove = async (targetFavoriteId: number, videoId: number) => {
     if (dataContext.defaultFavoriteId == null) return
 
-    await new Promise((resolve, reject) => {
-      try {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          const tabId = tabs[0].id
-          if (tabId == null) return
-
-          chrome.tabs.sendMessage(
-            tabId,
-            {
-              type: MessageEnum.moveVideo,
-              data: {
-                srcMediaId: dataContext.defaultFavoriteId,
-                tarMediaId: targetFavoriteId,
-                videoId,
-              },
-            },
-            (message) => {
-              resolve(message)
-            },
-          )
-        })
-      } catch (e) {
-        reject(e)
-        if (e instanceof Error) {
-          console.error('move video error', e.message)
-        }
+    try {
+      await queryAndSendMessage({
+        type: MessageEnum.moveVideo,
+        data: {
+          srcMediaId: dataContext.defaultFavoriteId,
+          tarMediaId: targetFavoriteId,
+          videoId,
+        },
+      })
+    } catch (e) {
+      if (e instanceof Error) {
+        console.error('move video error', e.message)
       }
-    })
+      throw e
+    }
   }
 
   const startMove = async () => {
@@ -64,30 +52,16 @@ const useMove = () => {
     const run = async () => {
       if (dataContext.defaultFavoriteId == null) return
 
-      const {
-        data: { medias: allDefaultFavoriteVideo },
-      } = await new Promise<ReturnType<typeof getFavoriteList>>((resolve) => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          const tabId = tabs[0].id
-          if (tabId == null) return
-
-          chrome.tabs.sendMessage(
-            tabId,
-            {
-              type: MessageEnum.getFavoriteList,
-              data: {
-                mediaId: dataContext.defaultFavoriteId?.toString(),
-                pn,
-                ps: 36,
-              },
-            },
-            (value) => {
-              resolve(value)
-            },
-          )
-        })
+      const result = await queryAndSendMessage<ReturnType<typeof getFavoriteList>>({
+        type: MessageEnum.getFavoriteList,
+        data: {
+          mediaId: dataContext.defaultFavoriteId?.toString(),
+          pn,
+          ps: 36,
+        },
       })
 
+      const allDefaultFavoriteVideo = result.data?.medias
       if (allDefaultFavoriteVideo == null) return
 
       for (const keywordInfo of dataContext.keyword.filter(

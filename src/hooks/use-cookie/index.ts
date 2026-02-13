@@ -2,6 +2,7 @@ import React from 'react'
 import { MessageEnum } from '@/utils/message'
 import { getCookieValue } from '@/utils/cookie'
 import { useGlobalConfig } from '@/store/global-data'
+import { queryAndSendMessage } from '@/utils/tab'
 
 const useCookie = (popup: boolean) => {
   const setGlobalData = useGlobalConfig((state) => state.setGlobalData)
@@ -10,11 +11,8 @@ const useCookie = (popup: boolean) => {
 
   React.useEffect(() => {
     if (popup) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tabId = tabs[0].id
-        if (tabId == null) return
-
-        chrome.tabs.sendMessage(tabId, { type: MessageEnum.getCookie }, (cookieValue) => {
+      queryAndSendMessage({ type: MessageEnum.getCookie })
+        .then((cookieValue) => {
           const dedeUserID = getCookieValue('DedeUserID', cookieValue)
           if (dedeUserID === null) {
             setIsLogin(false)
@@ -27,7 +25,9 @@ const useCookie = (popup: boolean) => {
             cookie: cookieValue,
           })
         })
-      })
+        .catch((error) => {
+          console.error('Failed to query and send message to tab:', error)
+        })
     } else {
       setIsLogin(cookie !== null)
     }
