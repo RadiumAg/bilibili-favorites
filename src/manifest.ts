@@ -1,5 +1,6 @@
 import { defineManifest } from '@crxjs/vite-plugin'
 import packageData from '../package.json'
+import { bilibiliUrlPatterns } from './utils/tab'
 
 //@ts-ignore
 const isDev = process.env.NODE_ENV == 'development'
@@ -25,12 +26,7 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: [
-        'https://*.bilibili.com/*',
-        'https://bilibili.com/*',
-        'http://*.bilibili.com/*',
-        'http://bilibili.com/*',
-      ],
+      matches: bilibiliUrlPatterns,
       js: ['src/contentScript/index.ts'],
     },
   ],
@@ -40,7 +36,7 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['storage'],
+  permissions: ['storage', 'tabs', 'activeTab'],
   options_ui: {
     page: 'options.html',
     open_in_tab: true,

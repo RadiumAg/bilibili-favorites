@@ -6,8 +6,8 @@ export const bilibiliUrlPatterns = [
   'http://bilibili.com/*',
 ]
 
-// 用于 chrome.tabs.query 的单个模式（只能匹配 HTTPS 子域名）
-export const tabUrlPattern = 'https://*.bilibili.com/*'
+// 用于 chrome.tabs.query 的模式（支持所有 B 站域名）
+export const tabUrlPattern = '*://*.bilibili.com/*'
 
 // 检查 URL 是否为 B 站域名的函数
 export const isBilibiliUrl = (url: string): boolean => {
