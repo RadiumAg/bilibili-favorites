@@ -1,4 +1,4 @@
-import { getFavoriteList, moveFavorite } from '@/utils/api'
+import { getFavoriteDetail, getFavoriteList, moveFavorite } from '@/utils/api'
 import { Message, MessageEnum } from '@/utils/message'
 
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
@@ -31,6 +31,21 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         })
         .catch(() => {
           sendResponse(MessageEnum.getFavoriteList)
+        })
+
+      break
+    }
+
+    case MessageEnum.getFavoriteDetail: {
+      const { mediaId } = message.data
+
+      getFavoriteDetail(mediaId)
+        .then((data) => {
+          sendResponse(data)
+        })
+        .catch((error) => {
+          console.error('Error fetching favorite detail:', error)
+          sendResponse({ code: -1, message: error.message || 'Failed to fetch favorite detail' })
         })
 
       break

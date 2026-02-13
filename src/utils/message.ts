@@ -2,6 +2,7 @@ enum MessageEnum {
   getCookie = 'getCookie',
   moveVideo = 'moveVideo',
   getFavoriteList = 'getFavoriteList',
+  getFavoriteDetail = 'getFavoriteDetail',
 }
 
 type Message<T = any> = {
