@@ -41,7 +41,7 @@ type TrendData = {
 
 type UseAnalysisStatsProps = {
   favoriteData: FavoriteFolder[]
-  allMedias: FavoriteMedia[]
+  allMedaisRef: React.RefObject<FavoriteMedia[]>
   dateRange: React.RefObject<string>
   forceRefreshRef: React.RefObject<boolean>
   postWorkerMessage: (message: WorkerMessage) => void
@@ -51,7 +51,7 @@ type UseAnalysisStatsProps = {
  * 计算和管理分析统计数据
  */
 export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
-  const { favoriteData, dateRange, forceRefreshRef, allMedias, postWorkerMessage } = props
+  const { favoriteData, dateRange, forceRefreshRef, allMedaisRef, postWorkerMessage } = props
   const [statsData, setStatsData] = React.useState<StatsData>() // 头部数据
   const [distributionData, setDistributionData] = React.useState<DistributionData[]>([]) // 收藏夹视频数量分布
   const [trendData, setTrendDataState] = React.useState<TrendData[]>([]) // 收藏趋势分析
@@ -72,6 +72,7 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
   const generateTrendData = useMemoizedFn(async () => {
     const days = parseInt(dateRange.current.replace('d', ''))
     const trendCacheKey = `trend-data-${dateRange.current}`
+    const allMedias = allMedaisRef.current
 
     // 检查缓存
     const isExpired = await dbManager.isExpired(trendCacheKey)

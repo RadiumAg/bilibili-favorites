@@ -56,7 +56,6 @@ export const OptionsAnalysisTab: React.FC = () => {
 
   // 使用数据获取 hook
   const {
-    allMedias,
     allMedaisRef,
     loading: dataLoading,
     fetchAllMedias,
@@ -78,7 +77,7 @@ export const OptionsAnalysisTab: React.FC = () => {
     updateRecentCount,
   } = useAnalysisStats({
     favoriteData,
-    allMedias,
+    allMedaisRef,
     dateRange,
     forceRefreshRef,
     postWorkerMessage,
@@ -92,7 +91,7 @@ export const OptionsAnalysisTab: React.FC = () => {
       calculateStats()
       calculateDistribution()
       // 生成趋势数据
-      await generateTrendData()
+      generateTrendData()
       postWorkerMessage({
         type: 'calculateRecentFavorites',
         data: { medias: allMedias, days: '7' },
