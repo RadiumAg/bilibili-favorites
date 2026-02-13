@@ -111,10 +111,6 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
     }
   })
 
-  useMount(() => {
-    fetchAllMedias()
-  })
-
   return {
     allMedias,
     loading,
