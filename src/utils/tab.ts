@@ -31,11 +31,22 @@ export const queryBilibiliTabs = (callback: (tabs: chrome.tabs.Tab[]) => void): 
  * 向指定标签页发送消息并返回 Promise
  * @param tabId 标签页 ID
  * @param message 要发送的消息
+ * @param timeout 超时时间（毫秒），默认 10000ms
  * @returns Promise<T> 返回的消息响应
  */
-export const sendMessageToTab = <T = any>(tabId: number, message: any): Promise<T> => {
+export const sendMessageToTab = <T = any>(
+  tabId: number,
+  message: any,
+  timeout: number = 10000,
+): Promise<T> => {
   return new Promise((resolve, reject) => {
+    // 设置超时定时器
+    const timer = setTimeout(() => {
+      reject(new Error('Message timeout: The message port closed before a response was received.'))
+    }, timeout)
+
     chrome.tabs.sendMessage(tabId, message, (response) => {
+      clearTimeout(timer)
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message))
       } else {
@@ -48,9 +59,10 @@ export const sendMessageToTab = <T = any>(tabId: number, message: any): Promise<
 /**
  * 查询 B 站标签页并向第一个标签页发送消息
  * @param message 要发送的消息
+ * @param timeout 超时时间（毫秒），默认 10000ms
  * @returns Promise<T> 返回的消息响应
  */
-export const queryAndSendMessage = <T = any>(message: any): Promise<T> => {
+export const queryAndSendMessage = <T = any>(message: any, timeout: number = 10000): Promise<T> => {
   return new Promise((resolve, reject) => {
     chrome.tabs.query({ url: tabUrlPattern }, (tabs) => {
       if (tabs == null || tabs.length === 0) {
@@ -64,7 +76,7 @@ export const queryAndSendMessage = <T = any>(message: any): Promise<T> => {
         return
       }
 
-      sendMessageToTab<T>(tabId, message).then(resolve).catch(reject)
+      sendMessageToTab<T>(tabId, message, timeout).then(resolve).catch(reject)
     })
   })
 }
