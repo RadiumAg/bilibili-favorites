@@ -36,7 +36,7 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['storage', 'tabs', 'activeTab'],
+  permissions: ['storage', 'tabs'],
   options_ui: {
     page: 'options.html',
     open_in_tab: true,
