@@ -2,7 +2,7 @@ import React from 'react'
 import { FavoriteTag, Keyword } from '@/components'
 import { getAllFavoriteFlag } from '@/utils/api'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Move, LoginCheck, AutoCreateKeyword } from './components'
+import { Move, LoginCheck, AutoCreateKeyword, AIMove } from './components'
 import { useGlobalConfig } from '@/store/global-data'
 
 export const Popup = () => {
@@ -26,6 +26,7 @@ export const Popup = () => {
       <div className="flex items-center mt-2 gap-x-1">
         <Move />
         <AutoCreateKeyword />
+        <AIMove />
       </div>
 
       <LoginCheck />
