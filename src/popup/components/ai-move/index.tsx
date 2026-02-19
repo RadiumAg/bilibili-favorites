@@ -8,6 +8,7 @@ import Finished from '@/components/finished-animate'
 import { useToast } from '@/hooks/use-toast'
 import { getFavoriteDetail } from '@/utils/api'
 import { useMemoizedFn } from 'ahooks'
+import { useShallow } from 'zustand/react/shallow'
 
 interface AIMoveResult {
   title: string
@@ -19,13 +20,15 @@ interface AIMoveResult {
 
 const useAIMove = () => {
   const { toast } = useToast()
-  const dataContext = useGlobalConfig((state) => ({
-    keyword: state.keyword,
-    favoriteData: state.favoriteData,
-    defaultFavoriteId: state.defaultFavoriteId,
-    aiConfig: state.aiConfig,
-    cookie: state.cookie,
-  }))
+  const dataContext = useGlobalConfig(
+    useShallow((state) => ({
+      keyword: state.keyword,
+      favoriteData: state.favoriteData,
+      defaultFavoriteId: state.defaultFavoriteId,
+      aiConfig: state.aiConfig,
+      cookie: state.cookie,
+    })),
+  )
   const [isFinished, setIsFinished] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [moveResults, setMoveResults] = useState<AIMoveResult[]>([])
@@ -405,5 +408,4 @@ const AIMove: React.FC = () => {
   )
 }
 
-export { AIMove, useAIMove }
 export default AIMove
