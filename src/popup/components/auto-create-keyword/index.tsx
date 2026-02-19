@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 const AutoCreateKeyword: React.FC = () => {
   const handleClick = async () => {
     await chrome.tabs.create({
-      url: 'options.html',
+      url: 'options.html?tab=keyword-manager',
       active: true,
     })
   }

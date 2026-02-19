@@ -184,7 +184,7 @@ const useAIMove = () => {
         if (chrome.runtime?.openOptionsPage) {
           chrome.runtime.openOptionsPage()
         } else {
-          window.open(chrome.runtime.getURL('options.html'), '_blank')
+          window.open(chrome.runtime.getURL('options.html?tab=setting'), '_blank')
         }
       }, 1500)
       return
