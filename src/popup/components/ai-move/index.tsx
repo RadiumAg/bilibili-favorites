@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import { useGlobalConfig } from '@/store/global-data'
 import { fetchAIMove } from '@/utils/api'
@@ -42,11 +42,11 @@ const useAIMove = () => {
       cookie: state.cookie,
     })),
   )
-  const [isFinished, setIsFinished] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [moveResults, setMoveResults] = useState<AIMoveResult[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const [isFinished, setIsFinished] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [moveResults, setMoveResults] = React.useState<AIMoveResult[]>([])
+  const [isProcessing, setIsProcessing] = React.useState(false)
+  const abortControllerRef = React.useRef<AbortController | null>(null)
 
   // 构建收藏夹映射
   const favoriteMap = React.useMemo(() => {

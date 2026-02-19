@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React from 'react'
 import {
   Form,
   FormControl,
@@ -59,7 +59,7 @@ const Setting: React.FC = () => {
       adapter: globalData.aiConfig.adapter || 'spark',
     },
   })
-  const adapterSelectItemEleArray = useMemo(() => {
+  const adapterSelectItemEleArray = React.useMemo(() => {
     return selectItemsArray.map((adapterName, index) => {
       const { value, label, help } = adapterName
 
@@ -100,7 +100,7 @@ const Setting: React.FC = () => {
   }
 
   // 监听适配器变化，自动填充 Extra Params
-  useEffect(() => {
+  React.useEffect(() => {
     if (globalData.aiConfig.adapter == null) return
     const currentExtraParams = form.getValues('extraParams')
     const defaultParams = defaultExtraParams[globalData.aiConfig.adapter]
