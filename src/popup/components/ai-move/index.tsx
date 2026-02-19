@@ -1,14 +1,27 @@
 import React, { useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { useGlobalConfig } from '@/store/global-data'
-import { fetchAIMove, moveFavorite } from '@/utils/api'
+import { fetchAIMove } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { useToast } from '@/hooks/use-toast'
-import { getFavoriteDetail } from '@/utils/api'
 import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
+import { queryAndSendMessage } from '@/utils/tab'
+import { MessageEnum } from '@/utils/message'
+
+type GetFavoriteDetailRes = {
+  code: number
+  message: string
+  ttl: number
+  data: {
+    info: any
+    medias: { id: number; title: string }[] | null
+    has_more: boolean
+    ttl: number
+  }
+}
 
 interface AIMoveResult {
   title: string
@@ -122,12 +135,14 @@ const useAIMove = () => {
 
     for (const result of results) {
       try {
-        await moveFavorite(
-          dataContext.defaultFavoriteId,
-          result.targetFavoriteId,
-          result.videoId,
-          dataContext.cookie,
-        )
+        await queryAndSendMessage({
+          type: MessageEnum.moveVideo,
+          data: {
+            srcMediaId: dataContext.defaultFavoriteId,
+            tarMediaId: result.targetFavoriteId,
+            videoId: result.videoId,
+          },
+        })
 
         resultsWithMove.push({
           ...result,
@@ -193,7 +208,12 @@ const useAIMove = () => {
 
     try {
       // 获取默认收藏夹的所有视频
-      const favoriteDetail = await getFavoriteDetail(dataContext.defaultFavoriteId.toString())
+      const favoriteDetail = await queryAndSendMessage<GetFavoriteDetailRes>({
+        type: MessageEnum.getFavoriteDetail,
+        data: {
+          mediaId: dataContext.defaultFavoriteId.toString(),
+        },
+      })
 
       if (favoriteDetail.code !== 0) {
         throw new Error(favoriteDetail.message || '获取收藏夹数据失败')
