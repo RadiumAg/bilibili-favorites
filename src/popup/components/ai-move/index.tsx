@@ -7,6 +7,7 @@ import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { useToast } from '@/hooks/use-toast'
 import { getFavoriteDetail } from '@/utils/api'
+import { useMemoizedFn } from 'ahooks'
 
 interface AIMoveResult {
   title: string
@@ -46,7 +47,7 @@ const useAIMove = () => {
   }, [dataContext.aiConfig])
 
   // 构建 AI 系统提示词
-  const buildAISystemPrompt = useCallback((favoriteTitles: string[]) => {
+  const buildAISystemPrompt = useMemoizedFn((favoriteTitles: string[]) => {
     return `你是一个视频分类助手。任务：根据视频标题，判断应该移动到哪个收藏夹。
 
 可用的收藏夹列表：
@@ -75,10 +76,10 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
   {"title": "React Hooks详解","targetFavorite":"前端开发","reason":"React是前端框架"},
   {"title": "Python数据分析","targetFavorite":"数据分析","reason":"主题是数据分析"}
 ]`
-  }, [])
+  })
 
   // 使用 AI 分析视频
-  const analyzeVideosWithAI = useCallback(
+  const analyzeVideosWithAI = useMemoizedFn(
     async (videos: { id: number; title: string }[]): Promise<AIMoveResult[]> => {
       if (!hasAIConfig) {
         throw new Error('请先在设置中配置 AI（OpenAI API Key）')
@@ -160,11 +161,10 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
         throw new Error('AI 分析失败')
       }
     },
-    [dataContext, hasAIConfig, buildAISystemPrompt],
   )
 
   // 执行移动
-  const executeMove = useCallback(async (results: AIMoveResult[]) => {
+  const executeMove = useMemoizedFn(async (results: AIMoveResult[]) => {
     if (dataContext.defaultFavoriteId == null) return
 
     const resultsWithMove: AIMoveResult[] = []
@@ -202,10 +202,10 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
     }
 
     return resultsWithMove
-  }, [])
+  })
 
   // 开始 AI 整理
-  const handleAIMove = useCallback(async () => {
+  const handleAIMove = useMemoizedFn(async () => {
     // 检查配置
     if (!hasAIConfig) {
       toast({
@@ -308,10 +308,10 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
       setIsProcessing(false)
       abortControllerRef.current = null
     }
-  }, [dataContext, hasAIConfig, toast, analyzeVideosWithAI, executeMove])
+  })
 
   // 取消操作
-  const cancelMove = useCallback(() => {
+  const cancelMove = useMemoizedFn(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
       setIsProcessing(false)
@@ -321,7 +321,7 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
         description: '操作已取消',
       })
     }
-  }, [])
+  })
 
   const isLoadingElement = (
     <div
@@ -369,7 +369,9 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
                 {moveResults.map((result: AIMoveResult, idx: number) => (
                   <div key={idx} className="border-b py-1">
                     <span className="font-medium">{result.title}</span>
-                    <span className="text-gray-500 ml-2">→ {favoriteMap.get(result.targetFavoriteId)}</span>
+                    <span className="text-gray-500 ml-2">
+                      → {favoriteMap.get(result.targetFavoriteId)}
+                    </span>
                   </div>
                 ))}
               </div>
