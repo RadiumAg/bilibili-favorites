@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { useGlobalConfig } from '@/store/global-data'
-import { fetchChatGpt, moveFavorite } from '@/utils/api'
+import { fetchAIMove, moveFavorite } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
@@ -49,38 +49,6 @@ const useAIMove = () => {
     return dataContext.aiConfig && dataContext.aiConfig.key
   }, [dataContext.aiConfig])
 
-  // 构建 AI 系统提示词
-  const buildAISystemPrompt = useMemoizedFn((favoriteTitles: string[]) => {
-    return `你是一个视频分类助手。任务：根据视频标题，判断应该移动到哪个收藏夹。
-
-可用的收藏夹列表：
-${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
-
-规则：
-1. 仔细阅读视频标题，理解其主题内容
-2. 根据标题内容，选择最合适的收藏夹
-3. 如果没有合适的收藏夹，返回"默认收藏夹"
-4. 只返回 JSON 数组格式，不要任何解释
-
-返回格式（严格按照此格式）：
-[
-  {
-    "title": "原始视频标题",
-    "targetFavorite": "目标收藏夹名称",
-    "reason": "选择理由（简短）"
-  }
-]
-
-示例：
-输入：["React Hooks详解","Python数据分析"]
-收藏夹：["前端开发","后端开发","数据分析","默认收藏夹"]
-输出：
-[
-  {"title": "React Hooks详解","targetFavorite":"前端开发","reason":"React是前端框架"},
-  {"title": "Python数据分析","targetFavorite":"数据分析","reason":"主题是数据分析"}
-]`
-  })
-
   // 使用 AI 分析视频
   const analyzeVideosWithAI = useMemoizedFn(
     async (videos: { id: number; title: string }[]): Promise<AIMoveResult[]> => {
@@ -89,36 +57,16 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
       }
 
       const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
-      const videoTitles = videos.map((v) => v.title)
-
-      const systemPrompt = buildAISystemPrompt(favoriteTitles)
 
       try {
-        // 我们需要自己构建 OpenAI 请求，因为 fetchChatGpt 是为关键词提取设计的
-        // 这里直接使用 OpenAI SDK
-        const openai = new (await import('openai')).default({
-          apiKey: dataContext.aiConfig.key,
-          baseURL: dataContext.aiConfig.baseUrl,
-          dangerouslyAllowBrowser: true,
-        })
-
-        const requestParams: any = {
-          model: dataContext.aiConfig.model || 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system' as const,
-              content: systemPrompt,
-            },
-            {
-              role: 'user' as const,
-              content: JSON.stringify(videoTitles),
-            },
-          ],
-          stream: true,
-          ...(dataContext.aiConfig.extraParams || {}),
+        const config = {
+          apiKey: dataContext.aiConfig.key!,
+          baseURL: dataContext.aiConfig.baseUrl!,
+          model: dataContext.aiConfig.model!,
+          extraParams: dataContext.aiConfig.extraParams || {},
         }
 
-        const stream = await openai.chat.completions.create(requestParams)
+        const stream = await fetchAIMove(videos, favoriteTitles, config)
 
         let fullContent = ''
         for await (const chunk of stream as any) {

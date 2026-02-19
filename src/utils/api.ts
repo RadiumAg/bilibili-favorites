@@ -9,6 +9,21 @@ type BResponse<T> = {
   data: T
 }
 
+type AIConfig = {
+  apiKey: string
+  baseURL?: string
+  model?: string
+  extraParams?: Record<string, any> // 额外参数，会被塞入请求 body
+}
+type AIMoveInput = { id: number; title: string }[]
+
+type AIMoveConfig = {
+  apiKey: string
+  baseURL?: string
+  model?: string
+  extraParams?: Record<string, any>
+}
+
 type GetAllFavoriteFlagRes = BResponse<{ list: DataContextType['favoriteData'] }>
 export type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | null }>
 
@@ -173,13 +188,6 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
-type AIConfig = {
-  apiKey: string
-  baseURL?: string
-  model?: string
-  extraParams?: Record<string, any> // 额外参数，会被塞入请求 body
-}
-
 const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   // 检查并使用配额
   // const hasQuota = await useQuota()
@@ -237,7 +245,75 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   return openai
 }
 
-export { getAllFavoriteFlag, getFavoriteList, moveFavorite, fetchChatGpt, getFavoriteDetail }
+const fetchAIMove = async (videos: AIMoveInput, favoriteTitles: string[], config: AIMoveConfig) => {
+  const { apiKey, baseURL, model, extraParams } = config
+
+  const systemPrompt = `你是一个视频分类助手。任务：根据视频标题，判断应该移动到哪个收藏夹。
+
+可用的收藏夹列表：
+${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
+
+规则：
+1. 仔细阅读视频标题，理解其主题内容
+2. 根据标题内容，选择最合适的收藏夹
+3. 如果没有合适的收藏夹，返回"默认收藏夹"
+4. 只返回 JSON 数组格式，不要任何解释
+
+返回格式（严格按照此格式）：
+[
+  {
+    "title": "原始视频标题",
+    "targetFavorite": "目标收藏夹名称",
+    "reason": "选择理由（简短）"
+  }
+]
+
+示例：
+输入：["React Hooks详解","Python数据分析"]
+收藏夹：["前端开发","后端开发","数据分析","默认收藏夹"]
+输出：
+[
+  {"title": "React Hooks详解","targetFavorite":"前端开发","reason":"React是前端框架"},
+  {"title": "Python数据分析","targetFavorite":"数据分析","reason":"主题是数据分析"}
+]`
+
+  const messages = [
+    {
+      role: 'system' as const,
+      content: systemPrompt,
+    },
+    {
+      role: 'user' as const,
+      content: JSON.stringify(videos.map((v) => v.title)),
+    },
+  ]
+
+  // 合并所有配置参数
+  const requestParams = {
+    model: model!,
+    messages,
+    stream: true,
+    ...(extraParams || {}),
+  }
+
+  // 使用 OpenAI SDK 的兼容模式（支持所有 OpenAI 兼容的 API）
+  const openai = await new OpenAI({
+    baseURL,
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  }).chat.completions.create(requestParams)
+
+  return openai
+}
+
+export {
+  getAllFavoriteFlag,
+  getFavoriteList,
+  moveFavorite,
+  fetchChatGpt,
+  fetchAIMove,
+  getFavoriteDetail,
+}
 export type {
   FavoriteMedia,
   FavoriteDetailInfo,
@@ -246,4 +322,5 @@ export type {
   FavoriteMediaUpper,
   FavoriteMediaUGC,
   FavoriteDetailInfoUpper,
+  AIConfig,
 }
