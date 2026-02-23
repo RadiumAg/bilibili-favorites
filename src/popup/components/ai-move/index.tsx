@@ -81,13 +81,17 @@ const useAIMove = () => {
 
         const stream = await fetchAIMove(videos, favoriteTitles, config)
 
+        // 读取 stream 内容
         let fullContent = ''
-        for await (const chunk of stream as any) {
-          const content = chunk.choices[0]?.delta?.content
-          if (content) {
-            fullContent += content
-          }
+        const reader = stream.toReadableStream().getReader()
+        const decoder = new TextDecoder()
+
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+          fullContent += decoder.decode(value, { stream: true })
         }
+        fullContent += decoder.decode() // 解码剩余内容
 
         // 提取 JSON 数组
         const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
@@ -181,11 +185,7 @@ const useAIMove = () => {
       })
       // 延迟跳转，让用户看到提示
       setTimeout(() => {
-        if (chrome.runtime?.openOptionsPage) {
-          chrome.runtime.openOptionsPage()
-        } else {
-          window.open(chrome.runtime.getURL('options.html?tab=setting'), '_blank')
-        }
+        window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
       }, 1500)
       return
     }

@@ -3,6 +3,8 @@ enum MessageEnum {
   moveVideo = 'moveVideo',
   getFavoriteList = 'getFavoriteList',
   getFavoriteDetail = 'getFavoriteDetail',
+  fetchChatGpt = 'fetchChatGpt',
+  fetchAIMove = 'fetchAIMove',
 }
 
 type Message<T = any> = {
