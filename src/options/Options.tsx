@@ -9,9 +9,11 @@ import Setting from './components/setting'
 import { OptionsAnalysisTab } from '@/components/analysis'
 import { useGlobalConfig } from '@/store/global-data'
 import { LoginCheck } from '@/popup/components'
+import { useSearchParams } from '@/utils/search-params'
 
 const Options: React.FC = () => {
   const cookie = useGlobalConfig((state) => state.cookie)
+  const searchParams = useSearchParams()
 
   const favoriteFlagFetchPromise = React.useMemo(() => {
     return getAllFavoriteFlag(cookie)
@@ -34,13 +36,21 @@ const Options: React.FC = () => {
       )}
     >
       <TabWrapper>
-        <TabWrapper.Tab title="配置" keyValue="setting">
+        <TabWrapper.Tab
+          title="配置"
+          keyValue="setting"
+          defaultTab={searchParams.get('tab') === 'setting'}
+        >
           <TabWrapper.Content>
             <Setting />
           </TabWrapper.Content>
         </TabWrapper.Tab>
 
-        <TabWrapper.Tab title="关键字管理" keyValue="keyword-manager" defaultTab>
+        <TabWrapper.Tab
+          title="关键字管理"
+          keyValue="keyword-manager"
+          defaultTab={searchParams.get('tab') === 'keyword-manager' || !searchParams.get('tab')}
+        >
           <TabWrapper.Content>
             <div className="mb-2 flex items-center">
               <OperateButton />
@@ -60,7 +70,11 @@ const Options: React.FC = () => {
           </TabWrapper.Content>
         </TabWrapper.Tab>
 
-        <TabWrapper.Tab title="收藏夹数据分析" keyValue="analysis">
+        <TabWrapper.Tab
+          title="收藏夹数据分析"
+          keyValue="analysis"
+          defaultTab={searchParams.get('tab') === 'analysis'}
+        >
           <TabWrapper.Content>
             <OptionsAnalysisTab />
           </TabWrapper.Content>

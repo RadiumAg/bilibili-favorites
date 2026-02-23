@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import React from 'react'
 import {
   getQuotaUsage,
   hasQuota,
@@ -31,16 +31,16 @@ type UseQuotaReturn = {
  * AI API 配额管理 Hook
  */
 export const useQuotaManagement = (): UseQuotaReturn => {
-  const [usage, setUsage] = useState<QuotaUsage | null>(null)
-  const [config, setConfig] = useState<QuotaConfig | null>(null)
-  const [remaining, setRemaining] = useState<number>(0)
-  const [percentage, setPercentage] = useState<number>(0)
-  const [hasQuotaAvailable, setHasQuotaAvailable] = useState<boolean>(true)
-  const [showWarning, setShowWarning] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(true)
+  const [usage, setUsage] = React.useState<QuotaUsage | null>(null)
+  const [config, setConfig] = React.useState<QuotaConfig | null>(null)
+  const [remaining, setRemaining] = React.useState<number>(0)
+  const [percentage, setPercentage] = React.useState<number>(0)
+  const [hasQuotaAvailable, setHasQuotaAvailable] = React.useState<boolean>(true)
+  const [showWarning, setShowWarning] = React.useState<boolean>(false)
+  const [loading, setLoading] = React.useState<boolean>(true)
 
   // 刷新配额使用情况
-  const refreshUsage = useCallback(async () => {
+  const refreshUsage = React.useCallback(async () => {
     setLoading(true)
     try {
       const [usageData, configData, remainingData, percentageData, hasQuotaData, shouldWarnData] =
@@ -67,7 +67,7 @@ export const useQuotaManagement = (): UseQuotaReturn => {
   }, [])
 
   // 使用配额
-  const handleUseQuota = useCallback(async (): Promise<boolean> => {
+  const handleUseQuota = React.useCallback(async (): Promise<boolean> => {
     const success = await useQuota()
     if (success) {
       await refreshUsage()
@@ -76,13 +76,13 @@ export const useQuotaManagement = (): UseQuotaReturn => {
   }, [refreshUsage])
 
   // 重置配额
-  const handleResetQuota = useCallback(async (): Promise<void> => {
+  const handleResetQuota = React.useCallback(async (): Promise<void> => {
     await resetQuota()
     await refreshUsage()
   }, [refreshUsage])
 
   // 更新配置
-  const handleUpdateConfig = useCallback(
+  const handleUpdateConfig = React.useCallback(
     async (newConfig: QuotaConfig): Promise<void> => {
       await setQuotaConfig(newConfig)
       await refreshUsage()
@@ -91,7 +91,7 @@ export const useQuotaManagement = (): UseQuotaReturn => {
   )
 
   // 初始化和监听存储变化
-  useEffect(() => {
+  React.useEffect(() => {
     refreshUsage()
 
     // 监听 Chrome Storage 变化

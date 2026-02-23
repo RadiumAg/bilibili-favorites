@@ -1,14 +1,27 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import { useGlobalConfig } from '@/store/global-data'
-import { fetchChatGpt, moveFavorite } from '@/utils/api'
+import { fetchAIMove } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { useToast } from '@/hooks/use-toast'
-import { getFavoriteDetail } from '@/utils/api'
 import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
+import { queryAndSendMessage } from '@/utils/tab'
+import { MessageEnum } from '@/utils/message'
+
+type GetFavoriteDetailRes = {
+  code: number
+  message: string
+  ttl: number
+  data: {
+    info: any
+    medias: { id: number; title: string }[] | null
+    has_more: boolean
+    ttl: number
+  }
+}
 
 interface AIMoveResult {
   title: string
@@ -29,11 +42,11 @@ const useAIMove = () => {
       cookie: state.cookie,
     })),
   )
-  const [isFinished, setIsFinished] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [moveResults, setMoveResults] = useState<AIMoveResult[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const [isFinished, setIsFinished] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [moveResults, setMoveResults] = React.useState<AIMoveResult[]>([])
+  const [isProcessing, setIsProcessing] = React.useState(false)
+  const abortControllerRef = React.useRef<AbortController | null>(null)
 
   // 构建收藏夹映射
   const favoriteMap = React.useMemo(() => {
@@ -49,38 +62,6 @@ const useAIMove = () => {
     return dataContext.aiConfig && dataContext.aiConfig.key
   }, [dataContext.aiConfig])
 
-  // 构建 AI 系统提示词
-  const buildAISystemPrompt = useMemoizedFn((favoriteTitles: string[]) => {
-    return `你是一个视频分类助手。任务：根据视频标题，判断应该移动到哪个收藏夹。
-
-可用的收藏夹列表：
-${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
-
-规则：
-1. 仔细阅读视频标题，理解其主题内容
-2. 根据标题内容，选择最合适的收藏夹
-3. 如果没有合适的收藏夹，返回"默认收藏夹"
-4. 只返回 JSON 数组格式，不要任何解释
-
-返回格式（严格按照此格式）：
-[
-  {
-    "title": "原始视频标题",
-    "targetFavorite": "目标收藏夹名称",
-    "reason": "选择理由（简短）"
-  }
-]
-
-示例：
-输入：["React Hooks详解","Python数据分析"]
-收藏夹：["前端开发","后端开发","数据分析","默认收藏夹"]
-输出：
-[
-  {"title": "React Hooks详解","targetFavorite":"前端开发","reason":"React是前端框架"},
-  {"title": "Python数据分析","targetFavorite":"数据分析","reason":"主题是数据分析"}
-]`
-  })
-
   // 使用 AI 分析视频
   const analyzeVideosWithAI = useMemoizedFn(
     async (videos: { id: number; title: string }[]): Promise<AIMoveResult[]> => {
@@ -89,44 +70,28 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
       }
 
       const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
-      const videoTitles = videos.map((v) => v.title)
-
-      const systemPrompt = buildAISystemPrompt(favoriteTitles)
 
       try {
-        // 我们需要自己构建 OpenAI 请求，因为 fetchChatGpt 是为关键词提取设计的
-        // 这里直接使用 OpenAI SDK
-        const openai = new (await import('openai')).default({
-          apiKey: dataContext.aiConfig.key,
-          baseURL: dataContext.aiConfig.baseUrl,
-          dangerouslyAllowBrowser: true,
-        })
-
-        const requestParams: any = {
-          model: dataContext.aiConfig.model || 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system' as const,
-              content: systemPrompt,
-            },
-            {
-              role: 'user' as const,
-              content: JSON.stringify(videoTitles),
-            },
-          ],
-          stream: true,
-          ...(dataContext.aiConfig.extraParams || {}),
+        const config = {
+          apiKey: dataContext.aiConfig.key!,
+          baseURL: dataContext.aiConfig.baseUrl!,
+          model: dataContext.aiConfig.model!,
+          extraParams: dataContext.aiConfig.extraParams || {},
         }
 
-        const stream = await openai.chat.completions.create(requestParams)
+        const stream = await fetchAIMove(videos, favoriteTitles, config)
 
+        // 读取 stream 内容
         let fullContent = ''
-        for await (const chunk of stream as any) {
-          const content = chunk.choices[0]?.delta?.content
-          if (content) {
-            fullContent += content
-          }
+        const reader = stream.toReadableStream().getReader()
+        const decoder = new TextDecoder()
+
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+          fullContent += decoder.decode(value, { stream: true })
         }
+        fullContent += decoder.decode() // 解码剩余内容
 
         // 提取 JSON 数组
         const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
@@ -174,12 +139,14 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
 
     for (const result of results) {
       try {
-        await moveFavorite(
-          dataContext.defaultFavoriteId,
-          result.targetFavoriteId,
-          result.videoId,
-          dataContext.cookie,
-        )
+        await queryAndSendMessage({
+          type: MessageEnum.moveVideo,
+          data: {
+            srcMediaId: dataContext.defaultFavoriteId,
+            tarMediaId: result.targetFavoriteId,
+            videoId: result.videoId,
+          },
+        })
 
         resultsWithMove.push({
           ...result,
@@ -218,11 +185,7 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
       })
       // 延迟跳转，让用户看到提示
       setTimeout(() => {
-        if (chrome.runtime?.openOptionsPage) {
-          chrome.runtime.openOptionsPage()
-        } else {
-          window.open(chrome.runtime.getURL('options.html'), '_blank')
-        }
+        window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
       }, 1500)
       return
     }
@@ -245,7 +208,12 @@ ${favoriteTitles.map((title, idx) => `${idx + 1}. ${title}`).join('\n')}
 
     try {
       // 获取默认收藏夹的所有视频
-      const favoriteDetail = await getFavoriteDetail(dataContext.defaultFavoriteId.toString())
+      const favoriteDetail = await queryAndSendMessage<GetFavoriteDetailRes>({
+        type: MessageEnum.getFavoriteDetail,
+        data: {
+          mediaId: dataContext.defaultFavoriteId.toString(),
+        },
+      })
 
       if (favoriteDetail.code !== 0) {
         throw new Error(favoriteDetail.message || '获取收藏夹数据失败')

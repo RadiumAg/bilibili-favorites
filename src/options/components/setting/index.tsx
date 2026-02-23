@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React from 'react'
 import {
   Form,
   FormControl,
@@ -24,6 +24,7 @@ import {
 import { Adapter, adapterArray, defaultExtraParams, selectItemsArray } from './util'
 import { Badge } from '@/components/ui/badge'
 import { useShallow } from 'zustand/react/shallow'
+import { Eye, EyeOff } from 'lucide-react'
 
 type FormData = {
   key: string
@@ -42,6 +43,8 @@ const formSchema = z.object({
 })
 
 const Setting: React.FC = () => {
+  const [showApiKey, setShowApiKey] = React.useState(false)
+
   const globalData = useGlobalConfig(
     useShallow((state) => ({
       aiConfig: state.aiConfig,
@@ -59,7 +62,7 @@ const Setting: React.FC = () => {
       adapter: globalData.aiConfig.adapter || 'spark',
     },
   })
-  const adapterSelectItemEleArray = useMemo(() => {
+  const adapterSelectItemEleArray = React.useMemo(() => {
     return selectItemsArray.map((adapterName, index) => {
       const { value, label, help } = adapterName
 
@@ -100,7 +103,7 @@ const Setting: React.FC = () => {
   }
 
   // 监听适配器变化，自动填充 Extra Params
-  useEffect(() => {
+  React.useEffect(() => {
     if (globalData.aiConfig.adapter == null) return
     const currentExtraParams = form.getValues('extraParams')
     const defaultParams = defaultExtraParams[globalData.aiConfig.adapter]
@@ -153,7 +156,20 @@ const Setting: React.FC = () => {
             <FormItem>
               <FormLabel>API Key</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="输入 API Key" {...field} />
+                <div className="relative">
+                  <Input
+                    type={showApiKey ? 'text' : 'password'}
+                    placeholder="输入 API Key"
+                    {...field}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </FormControl>
               <FormDescription>从对应服务商获取 API Key</FormDescription>
               <FormMessage />

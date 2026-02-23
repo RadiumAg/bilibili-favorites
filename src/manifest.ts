@@ -37,6 +37,12 @@ export default defineManifest({
     },
   ],
   permissions: ['storage', 'tabs'],
+  host_permissions: [
+    'https://api.openai.com/*',
+    'https://*.openai.com/*',
+    'https://spark-api.xf-yun.com/*',
+    'https://*.xf-yun.com/*',
+  ],
   options_ui: {
     page: 'options.html',
     open_in_tab: true,
