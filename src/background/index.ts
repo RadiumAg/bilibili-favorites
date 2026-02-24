@@ -8,14 +8,8 @@ const streamAIRequest = async (
   port: chrome.runtime.Port,
   config: { apiKey: string; baseURL?: string; model?: string; extraParams?: Record<string, any> },
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  abortController: AbortController,
 ) => {
-  const requestParams = {
-    model: config.model!,
-    messages,
-    stream: true,
-    ...(config.extraParams || {}),
-  }
-
   const openai = new OpenAI({
     baseURL: config.baseURL,
     apiKey: config.apiKey,
@@ -23,9 +17,26 @@ const streamAIRequest = async (
   })
 
   try {
-    const stream = await openai.chat.completions.create(requestParams)
+    const stream = await openai.chat.completions.create(
+      {
+        model: config.model!,
+        messages,
+        stream: true,
+        ...(config.extraParams || {}),
+      },
+      {
+        signal: abortController.signal,
+      },
+    )
 
     for await (const chunk of stream as any) {
+      // 双重检查：在处理每个 chunk 前检查是否已取消
+      if (abortController.signal.aborted) {
+        console.log('[Background] Request aborted during streaming')
+        port.postMessage({ type: 'aborted' })
+        return
+      }
+
       if (chunk) {
         port.postMessage({ type: 'chunk', content: JSON.stringify(chunk) })
       }
@@ -33,6 +44,12 @@ const streamAIRequest = async (
 
     port.postMessage({ type: 'done' })
   } catch (error) {
+    // 检查是否是因为取消导致的错误
+    if (abortController.signal.aborted || (error instanceof Error && error.name === 'AbortError')) {
+      console.log('[Background] Request aborted')
+      port.postMessage({ type: 'aborted' })
+      return
+    }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error('AI request failed:', error)
     port.postMessage({ type: 'error', error: errorMessage })
@@ -109,27 +126,50 @@ ${favoriteTitles.map((title: string, idx: number) => `${idx + 1}. ${title}`).joi
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'ai-stream') return
 
+  let currentAbortController: AbortController | null = null
+
   port.onMessage.addListener((message) => {
     console.log('[Background] Received message:', message)
+
+    // 处理取消请求
+    if (message.type === 'cancel') {
+      if (currentAbortController) {
+        currentAbortController.abort()
+        currentAbortController = null
+        console.log('[Background] Request cancelled by user')
+      }
+      return
+    }
 
     switch (message.type) {
       case MessageEnum.fetchChatGpt: {
         const { titleArray, config } = message.data
         const messages = buildKeywordExtractionMessages(titleArray)
-        streamAIRequest(port, config, messages)
+        currentAbortController = new AbortController()
+        streamAIRequest(port, config, messages, currentAbortController)
         break
       }
 
       case MessageEnum.fetchAIMove: {
         const { videos, favoriteTitles, config } = message.data
         const messages = buildAIMoveMessages(videos, favoriteTitles)
-        streamAIRequest(port, config, messages)
+        currentAbortController = new AbortController()
+        streamAIRequest(port, config, messages, currentAbortController)
         break
       }
 
       default:
         console.warn('[Background] Unknown message type:', message.type)
         port.postMessage({ type: 'error', error: `Unknown message type: ${message.type}` })
+    }
+  })
+
+  // 当 port 断开时，取消正在进行的请求
+  port.onDisconnect.addListener(() => {
+    if (currentAbortController) {
+      currentAbortController.abort()
+      currentAbortController = null
+      console.log('[Background] Port disconnected, request cancelled')
     }
   })
 })

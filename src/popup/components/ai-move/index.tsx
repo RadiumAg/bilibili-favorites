@@ -37,6 +37,7 @@ const useAIMove = () => {
   const [moveResults, setMoveResults] = React.useState<AIMoveResult[]>([])
   const [isProcessing, setIsProcessing] = React.useState(false)
   const abortControllerRef = React.useRef<AbortController | null>(null)
+  const streamRef = React.useRef<{ cancel: () => void } | null>(null)
 
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
@@ -67,6 +68,7 @@ const useAIMove = () => {
         }
 
         const stream = await fetchAIMove(videos, favoriteTitles, config)
+        streamRef.current = stream
 
         // 使用流适配器从每个 chunk 中提取纯内容文本
         let fullContent = ''
@@ -74,11 +76,19 @@ const useAIMove = () => {
         const adapter = createStreamAdapter('spark')
 
         while (true) {
+          // 检查是否已取消
+          if (abortControllerRef.current?.signal.aborted) {
+            reader.cancel()
+            streamRef.current?.cancel()
+            throw new Error('用户取消操作')
+          }
+
           const { value, done } = await reader.read()
           if (done) break
           const content = adapter.parse(value)
           fullContent += content
         }
+        streamRef.current = null
         console.log('[DEBUG] fullContent', fullContent)
         const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
         if (!jsonMatch) {
@@ -257,13 +267,18 @@ const useAIMove = () => {
   const cancelMove = useMemoizedFn(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
-      setIsProcessing(false)
-      setIsLoading(false)
-      toast({
-        title: '已取消',
-        description: '操作已取消',
-      })
     }
+    // 取消 background 中的 AI 请求
+    if (streamRef.current) {
+      streamRef.current.cancel()
+      streamRef.current = null
+    }
+    setIsProcessing(false)
+    setIsLoading(false)
+    toast({
+      title: '已取消',
+      description: '操作已取消',
+    })
   })
 
   const isLoadingElement = (

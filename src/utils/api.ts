@@ -173,11 +173,12 @@ const moveFavorite = (
 
 /**
  * 通过 chrome.runtime.connect 建立长连接，实现流式 AI 通信
- * 返回一个带有 toReadableStream 方法的对象，保持与调用方的兼容性
+ * 返回一个带有 toReadableStream 方法和 cancel 方法的对象
  */
 const connectAndStream = (message: { type: MessageEnum; data: any }) => {
   const port = chrome.runtime.connect({ name: 'ai-stream' })
   const encoder = new TextEncoder()
+  let isCancelled = false
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -185,7 +186,9 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
         console.log('[Background] Received response:', response)
         switch (response.type) {
           case 'chunk':
-            controller.enqueue(encoder.encode(response.content))
+            if (!isCancelled) {
+              controller.enqueue(encoder.encode(response.content))
+            }
             break
           case 'done':
             controller.close()
@@ -195,12 +198,16 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
             controller.error(new Error(response.error))
             port.disconnect()
             break
+          case 'aborted':
+            controller.close()
+            port.disconnect()
+            break
         }
       })
 
       port.onDisconnect.addListener(() => {
         const lastError = chrome.runtime.lastError
-        if (lastError) {
+        if (lastError && !isCancelled) {
           controller.error(new Error(lastError.message))
         }
       })
@@ -210,7 +217,14 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
     },
   })
 
-  return { toReadableStream: () => stream }
+  return {
+    toReadableStream: () => stream,
+    cancel: () => {
+      isCancelled = true
+      port.postMessage({ type: 'cancel' })
+      port.disconnect()
+    },
+  }
 }
 
 const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
