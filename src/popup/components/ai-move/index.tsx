@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { FC } from 'react'
 import { Button } from '@/components/ui/button'
 import { useGlobalConfig } from '@/store/global-data'
 import { fetchAIMove } from '@/utils/api'
@@ -10,6 +10,7 @@ import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
+import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
 
 type GetFavoriteDetailRes = {
   code: number
@@ -81,18 +82,18 @@ const useAIMove = () => {
 
         const stream = await fetchAIMove(videos, favoriteTitles, config)
 
-        // 读取 stream 内容
+        // 使用流适配器从每个 chunk 中提取纯内容文本
         let fullContent = ''
         const reader = stream.toReadableStream().getReader()
-        const decoder = new TextDecoder()
+        const adapter = createStreamAdapter('spark')
 
         while (true) {
           const { value, done } = await reader.read()
           if (done) break
-          fullContent += decoder.decode(value, { stream: true })
+          const content = adapter.parse(value)
+          fullContent += content
         }
-        fullContent += decoder.decode() // 解码剩余内容
-
+        console.log('[DEBUG] fullContent', fullContent)
         // 提取 JSON 数组
         const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
         if (!jsonMatch) {
