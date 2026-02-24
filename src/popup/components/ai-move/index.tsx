@@ -49,7 +49,6 @@ const useAIMove = () => {
   const [isProcessing, setIsProcessing] = React.useState(false)
   const abortControllerRef = React.useRef<AbortController | null>(null)
 
-  // 构建收藏夹映射
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
     dataContext.favoriteData.forEach((fav) => {
@@ -58,12 +57,10 @@ const useAIMove = () => {
     return map
   }, [dataContext.favoriteData])
 
-  // 检查是否配置了 AI
   const hasAIConfig = React.useMemo(() => {
     return dataContext.aiConfig && dataContext.aiConfig.key
   }, [dataContext.aiConfig])
 
-  // 使用 AI 分析视频
   const analyzeVideosWithAI = useMemoizedFn(
     async (videos: { id: number; title: string }[]): Promise<AIMoveResult[]> => {
       if (!hasAIConfig) {
@@ -94,7 +91,6 @@ const useAIMove = () => {
           fullContent += content
         }
         console.log('[DEBUG] fullContent', fullContent)
-        // 提取 JSON 数组
         const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
         if (!jsonMatch) {
           throw new Error('AI 返回的数据格式错误')
@@ -102,7 +98,6 @@ const useAIMove = () => {
 
         const aiResults = JSON.parse(jsonMatch[0])
 
-        // 转换为移动结果
         const results: AIMoveResult[] = videos
           .map((video) => {
             const aiResult = aiResults.find((r: any) => r.title === video.title)
@@ -132,7 +127,6 @@ const useAIMove = () => {
     },
   )
 
-  // 执行移动
   const executeMove = useMemoizedFn(async (results: AIMoveResult[]) => {
     if (dataContext.defaultFavoriteId == null) return
 
