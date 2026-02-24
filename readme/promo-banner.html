@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B站收藏夹整理工具 - 宣传图</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .banner {
+      width: 1280px;
+      height: 800px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    }
+
+    /* 左侧内容区 */
+    .left-content {
+      flex: 1;
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* B站粉色主题色 */
+    .bilibili-pink {
+      color: #fb7299;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #fb7299 0%, #ff9a9e 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 8px 24px rgba(251, 114, 153, 0.4);
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .title {
+      font-size: 56px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 24px;
+    }
+
+    .title .highlight {
+      background: linear-gradient(90deg, #fb7299, #ff9a9e, #ffecd2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 22px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 48px;
+      line-height: 1.6;
+    }
+
+    /* 功能卡片 */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .feature-icon.pink {
+      background: linear-gradient(135deg, #fb7299 0%, #ff9a9e 100%);
+    }
+
+    .feature-icon.blue {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .feature-icon.green {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .feature-icon.orange {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .feature-text h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .feature-text p {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.5;
+    }
+
+    /* 右侧截图展示区 */
+    .right-content {
+      width: 520px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .screenshot-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .screenshot {
+      position: absolute;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      background: #1a1a2e;
+    }
+
+    .screenshot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .screenshot-1 {
+      width: 320px;
+      height: 400px;
+      top: 40px;
+      left: 20px;
+      z-index: 3;
+      transform: rotate(-3deg);
+    }
+
+    .screenshot-2 {
+      width: 280px;
+      height: 350px;
+      top: 100px;
+      right: 20px;
+      z-index: 2;
+      transform: rotate(5deg);
+    }
+
+    .screenshot-3 {
+      width: 240px;
+      height: 300px;
+      bottom: 60px;
+      left: 60px;
+      z-index: 1;
+      transform: rotate(-8deg);
+    }
+
+    /* 装饰元素 */
+    .decoration {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+    }
+
+    .decoration-1 {
+      width: 300px;
+      height: 300px;
+      background: #fb7299;
+      top: -100px;
+      right: 100px;
+    }
+
+    .decoration-2 {
+      width: 200px;
+      height: 200px;
+      background: #667eea;
+      bottom: 50px;
+      left: 200px;
+    }
+
+    .decoration-3 {
+      width: 150px;
+      height: 150px;
+      background: #38ef7d;
+      top: 200px;
+      right: -50px;
+    }
+
+    /* Chrome Web Store 徽章 */
+    .badge {
+      position: absolute;
+      bottom: 60px;
+      left: 60px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px 20px;
+    }
+
+    .badge-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .badge-text {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .badge-text span {
+      display: block;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 400;
+    }
+
+    /* AI 标签 */
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .ai-badge::before {
+      content: '✨';
+    }
+
+    /* 版本号 */
+    .version {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <!-- 装饰元素 -->
+    <div class="decoration decoration-1"></div>
+    <div class="decoration decoration-2"></div>
+    <div class="decoration decoration-3"></div>
+
+    <!-- 版本号 -->
+    <div class="version">v1.1.2</div>
+
+    <!-- 左侧内容 -->
+    <div class="left-content">
+      <div class="logo-area">
+        <div class="logo-icon">📁</div>
+        <div class="logo-text">B站收藏夹整理工具</div>
+      </div>
+
+      <div class="ai-badge">AI 驱动</div>
+
+      <h1 class="title">
+        让你的 B 站收藏夹<br>
+        <span class="highlight">井井有条</span>
+      </h1>
+
+      <p class="subtitle">
+        一款强大的 Chrome 扩展，帮助你高效管理和分析 Bilibili 收藏夹内容。<br>
+        支持智能分析、AI 自动分类、一键整理。
+      </p>
+
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon pink">📊</div>
+          <div class="feature-text">
+            <h3>智能分析</h3>
+            <p>深度分析收藏内容分布，可视化展示类别占比</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon blue">🤖</div>
+          <div class="feature-text">
+            <h3>AI 自动分类</h3>
+            <p>基于 GPT 智能提取关键词，自动归类视频</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon green">⚡</div>
+          <div class="feature-text">
+            <h3>一键整理</h3>
+            <p>批量移动视频，支持自定义关键词匹配规则</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon orange">🔒</div>
+          <div class="feature-text">
+            <h3>隐私安全</h3>
+            <p>数据仅存储在本地，不上传任何个人信息</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧截图 -->
+    <div class="right-content">
+      <div class="screenshot-container">
+        <div class="screenshot screenshot-1">
+          <img src="./product.png" alt="产品截图" onerror="this.parentElement.style.background='linear-gradient(135deg, #2d2d44 0%, #1a1a2e 100%)'">
+        </div>
+        <div class="screenshot screenshot-2">
+          <img src="./fav-1.png" alt="收藏分析" onerror="this.parentElement.style.background='linear-gradient(135deg, #2d2d44 0%, #1a1a2e 100%)'">
+        </div>
+        <div class="screenshot screenshot-3">
+          <img src="./fav-2.png" alt="收藏分析2" onerror="this.parentElement.style.background='linear-gradient(135deg, #2d2d44 0%, #1a1a2e 100%)'">
+        </div>
+      </div>
+    </div>
+
+    <!-- Chrome Web Store 徽章 -->
+    <div class="badge">
+      <div class="badge-icon">🌐</div>
+      <div class="badge-text">
+        Chrome Web Store
+        <span>免费下载</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
