@@ -23,6 +23,7 @@
     "test:browser": "vitest --workspace=vitest.workspace.ts"
   },
   "dependencies": {
+    "@ahooksjs/use-url-state": "^3.5.1",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-progress": "^1.1.8",
@@ -32,7 +33,7 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.4",
-    "ahooks": "^3.8.4",
+    "ahooks": "^3.9.6",
     "class-variance-authority": "^0.7.1",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
