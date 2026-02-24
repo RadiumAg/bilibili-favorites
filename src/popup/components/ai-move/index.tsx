@@ -357,7 +357,7 @@ const AIMove: FC = () => {
       <Button
         onClick={handleClick}
         size="sm"
-        className="bg-gradient-to-r  to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-1 h-6"
+        className="bg-b-primary hover:bg-b-primary hover:bg-opacity-50 p-1 h-6"
         title="AI 智能分类视频到对应收藏夹（会消耗较多 Token）"
       >
         🤖 AI 整理
