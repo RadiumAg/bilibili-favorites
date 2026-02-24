@@ -14,7 +14,12 @@
 
 ## 📸 产品预览
 
-![产品展示](./readme/product.png)
+<p align="center">
+  <img src="./readme/product.png" height="200" />
+  <img src="./readme/fav-1.png" height="200" />
+  <img src="./readme/fav-2.png" height="200" />
+  <img src="./readme/ai-config.png" height="200" />
+</p>
 
 ---
 
@@ -47,21 +52,6 @@
 - **侧边栏模式**：在侧边栏中便捷访问
   ![配置](./readme/ai-config.png)
   推荐星火大模型，因为有免费的额度
-
----
-
-## 🛠️ 技术栈
-
-| 类别       | 技术                         |
-| ---------- | ---------------------------- |
-| 前端框架   | React 19 + TypeScript        |
-| 构建工具   | Vite 6                       |
-| UI 组件库  | Radix UI + Tailwind CSS      |
-| 数据可视化 | ECharts                      |
-| AI 集成    | OpenAI API                   |
-| 数据存储   | IndexedDB + Chrome Storage   |
-| 并发处理   | Web Worker                   |
-| 扩展平台   | Chrome Extension Manifest V3 |
 
 ---
 
