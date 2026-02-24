@@ -1,14 +1,14 @@
 import React, { FC } from 'react'
 import { Button } from '@/components/ui/button'
 import { useGlobalConfig } from '@/store/global-data'
-import { fetchAIMove, GetFavoriteListRes } from '@/utils/api'
+import { fetchAIMove } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { useToast } from '@/hooks/use-toast'
 import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
-import { queryAndSendMessage } from '@/utils/tab'
+import { fetchAllFavoriteMedias, queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
 import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
 
@@ -190,23 +190,12 @@ const useAIMove = () => {
     abortControllerRef.current = new AbortController()
 
     try {
-      // 获取默认收藏夹的所有视频
-      const favoriteDetail = await queryAndSendMessage<GetFavoriteListRes>({
-        type: MessageEnum.getFavoriteList,
-        data: {
-          mediaId: dataContext.defaultFavoriteId.toString(),
-          pn: 1,
-          ps: 40,
-        },
-      })
+      // 获取默认收藏夹的所有视频（自动分页）
+      const videos = await fetchAllFavoriteMedias<{ id: number; title: string }>(
+        dataContext.defaultFavoriteId.toString(),
+      )
 
-      if (favoriteDetail.code !== 0) {
-        throw new Error(favoriteDetail.message || '获取收藏夹数据失败')
-      }
-
-      const videos = favoriteDetail.data.medias
-
-      if (!videos || videos.length === 0) {
+      if (videos.length === 0) {
         toast({
           title: '暂无数据',
           description: '默认收藏夹中没有视频需要整理',

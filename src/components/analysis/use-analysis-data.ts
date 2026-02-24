@@ -1,10 +1,9 @@
 import React from 'react'
 import { useMemoizedFn } from 'ahooks'
-import { GetFavoriteListRes, type FavoriteMedia } from '@/utils/api'
+import { type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
 import { useSleep } from '@/hooks'
-import { queryAndSendMessage } from '@/utils/tab'
-import { MessageEnum } from '@/utils/message'
+import { fetchAllFavoriteMedias } from '@/utils/tab'
 
 type UseAnalysisDataProps = {
   favoriteData: Array<{
@@ -75,24 +74,13 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       console.log('[useAnalysisData] 从API获取数据')
       const allMedias: FavoriteMedia[] = []
 
-      // 遍历所有收藏夹，获取媒体数据
+      // 遍历所有收藏夹，分页获取全部媒体数据
       for (const folder of favoriteData) {
         try {
-          const response = await queryAndSendMessage<GetFavoriteListRes>({
-            type: MessageEnum.getFavoriteList,
-            data: {
-              mediaId: folder.id.toString(),
-              pn: 1,
-              ps: 40,
-            },
-          })
-
-          if (response.code === 0 && response.data.medias) {
-            allMedias.push(...response.data.medias)
-          }
+          const medias = await fetchAllFavoriteMedias<FavoriteMedia>(folder.id.toString())
+          allMedias.push(...medias)
         } catch (error) {
           console.error(`Failed to fetch medias for folder ${folder.id}:`, error)
-          // 添加更详细的错误信息
           if (error instanceof Error && error.message.includes('message port closed')) {
             console.warn(
               'Possible cross-origin issue. Make sure Bilibili tab is active and content script is loaded.',

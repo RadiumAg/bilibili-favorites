@@ -80,3 +80,43 @@ export const queryAndSendMessage = <T = any>(message: any, timeout: number = 100
     })
   })
 }
+
+/**
+ * 分页获取某个收藏夹的全部视频列表
+ * @param mediaId 收藏夹 ID
+ * @param pageSize 每页数量，默认 40（B 站最大值）
+ * @returns 该收藏夹下的全部视频
+ */
+export const fetchAllFavoriteMedias = async <T extends { id: number; title: string }>(
+  mediaId: string,
+  pageSize = 40,
+): Promise<T[]> => {
+  const allMedias: T[] = []
+  let currentPage = 1
+  let hasMore = true
+
+  while (hasMore) {
+    const response = await queryAndSendMessage<{
+      code: number
+      message: string
+      data: { medias: T[] | null; has_more: boolean }
+    }>({
+      type: 'getFavoriteList',
+      data: { mediaId, pn: currentPage, ps: pageSize },
+    })
+
+    if (response.code !== 0) {
+      throw new Error(response.message || '获取收藏夹数据失败')
+    }
+
+    const medias = response.data.medias
+    if (medias && medias.length > 0) {
+      allMedias.push(...medias)
+    }
+
+    hasMore = response.data.has_more
+    currentPage++
+  }
+
+  return allMedias
+}
