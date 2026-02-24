@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import { FavoriteTag, Keyword } from '@/components'
 import { Button } from '@/components/ui/button'
-import { Move, LoginCheck, AutoCreateKeyword, AIMove } from './components'
+import { Move, LoginCheck, AutoCreateKeyword, AIMove, DragManagerButton } from './components'
 import { Toaster } from '@/components/ui/toaster'
 import { Settings } from 'lucide-react'
 
@@ -32,10 +32,11 @@ const Popup: FC = () => {
         <Keyword />
       </div>
 
-      <div className="flex items-center mt-2 gap-x-1">
+      <div className="flex items-center mt-2 gap-1 w-full flex-wrap">
         <Move />
         <AutoCreateKeyword />
         <AIMove />
+        <DragManagerButton />
       </div>
 
       <LoginCheck />

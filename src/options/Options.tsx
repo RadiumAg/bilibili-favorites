@@ -5,6 +5,7 @@ import { FavoriteTag, Keyword } from '@/components'
 import OperateButton from './components/create-keyword/operate-button'
 import Setting from './components/setting'
 import { OptionsAnalysisTab } from './components/analysis'
+import DragManager from './components/drag-manager'
 import { LoginCheck } from '@/popup/components'
 import { useSearchParams } from '@/utils/search-params'
 
@@ -57,6 +58,16 @@ const Options: React.FC = () => {
                 <Keyword className="h-full" />
               </div>
             </div>
+          </TabWrapper.Content>
+        </TabWrapper.Tab>
+
+        <TabWrapper.Tab
+          title="可视化管理"
+          keyValue="drag-manager"
+          defaultTab={searchParams.get('tab') === 'drag-manager'}
+        >
+          <TabWrapper.Content>
+            <DragManager />
           </TabWrapper.Content>
         </TabWrapper.Tab>
 
