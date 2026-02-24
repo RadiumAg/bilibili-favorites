@@ -1,10 +1,10 @@
 <div align="center">
 
-# Bilibili 收藏夹管理助手
+# B站收藏夹整理工具
 
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/your-repo/bilibili-favorite)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Chrome](https://img.shields.io/badge/Chrome-Extension-yellow.svg)](https://chrome.google.com/webstore)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/b%E7%AB%99%E6%94%B6%E8%97%8F%E5%A4%B9%E6%95%B4%E7%90%86%E5%B7%A5%E5%85%B7/kompiebhklojoioghbddednmmnebnkoc)
 
 一款强大的 Chrome 扩展，帮助你高效管理和分析 Bilibili 收藏夹内容。
 
@@ -69,9 +69,8 @@
 
 ### 方式一：从 Chrome Web Store 安装（推荐）
 
-1. 访问 [Chrome Web Store](https://chrome.google.com/webstore)
-2. 搜索 "Bilibili 收藏夹管理助手"
-3. 点击"添加到 Chrome"按钮
+1. 访问 [Chrome Web Store - B站收藏夹整理工具](https://chromewebstore.google.com/detail/b%E7%AB%99%E6%94%B6%E8%97%8F%E5%A4%B9%E6%95%B4%E7%90%86%E5%B7%A5%E5%85%B7/kompiebhklojoioghbddednmmnebnkoc)
+2. 点击"添加到 Chrome"按钮
 
 ### 方式二：本地安装
 
@@ -115,64 +114,6 @@
 ### 手动 关键词提取
 
 项目提供本地算法提取关键字，使用**TF-IDF**算法
-
----
-
-## 🔨 开发指南
-
-### 环境要求
-
-- **Node.js** >= 16.18.0
-- **pnpm** >= 8
-
-### 本地开发
-
-```bash
-# 克隆仓库
-git clone https://github.com/your-repo/bilibili-favorite.git
-cd bilibili-favorite
-
-# 安装依赖
-pnpm install
-
-# 启动开发服务器
-pnpm dev
-
-# 构建生产版本
-pnpm build
-
-# 打包扩展
-pnpm zip
-```
-
-### 项目结构
-
-```
-src/
-├── background/         # 后台服务脚本
-├── contentScript/      # 内容脚本（注入到 Bilibili 页面）
-├── popup/              # 弹出窗口组件
-├── options/            # 选项页面组件
-├── components/         # 共享组件
-│   ├── analysis/       # 收藏夹分析相关组件
-│   ├── favorite-tag/   # 收藏夹标签组件
-│   ├── keyword/        # 关键词管理组件
-│   └── quota/          # 配额管理组件
-├── hooks/              # 自定义 React Hooks
-├── workers/            # Web Worker（数据分析）
-├── utils/              # 工具函数
-│   ├── api.ts          # Bilibili API 封装
-│   ├── indexed-db.ts   # IndexedDB 管理器
-│   └── keyword-extractor.ts  # 关键词提取工具
-├── store/              # 全局状态管理
-└── assets/             # 静态资源
-```
-
-### 开发说明
-
-- 修改代码后，Vite 会自动热重载
-- 在 `chrome://extensions/` 页面点击刷新按钮以加载更改
-- 开发模式下扩展名称会显示为 "bilibili-favorite ➡️ Dev"
 
 ---
 
