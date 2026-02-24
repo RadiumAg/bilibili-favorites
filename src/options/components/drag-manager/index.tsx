@@ -44,6 +44,15 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
   const [loading, setLoading] = React.useState(false)
   const [moving, setMoving] = React.useState(false)
   const [dragOverFolderId, setDragOverFolderId] = React.useState<number | null>(null)
+  const [initialized, setInitialized] = React.useState(false)
+
+  // 默认选中第一个收藏夹
+  React.useEffect(() => {
+    if (!initialized && favoriteData.length > 0) {
+      setInitialized(true)
+      handleSelectFolder(favoriteData[0].id)
+    }
+  }, [favoriteData, initialized])
 
   // 加载收藏夹视频
   const loadVideos = useMemoizedFn(async (folderId: number) => {
