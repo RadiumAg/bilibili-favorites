@@ -16,9 +16,10 @@
 
 <p align="center">
   <img src="./readme/product.png" height="200" />
+  <img src="./readme/ai-config.png" height="200" />
+  <img src="./readme/visualization.png" height="200" />
   <img src="./readme/fav-1.png" height="200" />
   <img src="./readme/fav-2.png" height="200" />
-  <img src="./readme/ai-config.png" height="200" />
 </p>
 
 ---
@@ -45,6 +46,16 @@
 - **🤖 AI 智能整理**：使用 AI 自动分析视频标题，智能分类到对应收藏夹
 
 ![关键词管理](./readme/keyword-manager.png)
+
+### 🖱️ 可视化拖拽管理
+
+- **直观操作**：左侧显示收藏夹列表，右侧显示视频列表
+- **多选支持**：支持 Ctrl/Cmd + 点击多选视频
+- **拖拽移动**：选中视频后直接拖拽到目标收藏夹即可完成移动
+- **批量处理**：一次性移动多个视频，高效便捷
+- **实时反馈**：移动完成后自动刷新列表，显示操作结果
+
+![可视化拖拽管理](./readme/visualization.png)
 
 ### ⚙️ 配置管理
 

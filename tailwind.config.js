@@ -1,3 +1,5 @@
+import plugin from 'tailwindcss/plugin'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class'],
@@ -55,5 +57,56 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        '.scrollbar-hide': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+        },
+        '.scrollbar-styled': {
+          'scrollbar-width': 'thin',
+          'scrollbar-color': '#00AEEC #f1f1f1',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: '#f1f1f1',
+            'border-radius': '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#00AEEC',
+            'border-radius': '4px',
+            transition: 'background 0.2s ease',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: '#0095cc',
+          },
+        },
+        '.scrollbar-thin': {
+          'scrollbar-width': 'thin',
+          'scrollbar-color': '#00AEEC transparent',
+          '&::-webkit-scrollbar': {
+            width: '4px',
+            height: '4px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#00AEEC',
+            'border-radius': '2px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: '#0095cc',
+          },
+        },
+      })
+    }),
+  ],
 }
