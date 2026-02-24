@@ -1,6 +1,7 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import { TabProvide } from './provide'
 import classNames from 'classnames'
+import { setSearchParams } from '@/utils/search-params'
 
 type TabProps = React.PropsWithChildren<{
   title: string
@@ -22,6 +23,7 @@ const Tab: React.FC<TabProps> = (props) => {
           activeKey: keyValue,
         }
       })
+      setSearchParams({ tab: keyValue })
     }
   }
 

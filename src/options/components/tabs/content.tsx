@@ -10,9 +10,16 @@ const Content: React.FC<ContentProps> = (props) => {
   const { children, keyValue } = props
   const provideData = React.use(TabProvide)
 
-  if (keyValue !== provideData.activeKey) return null
+  // if (keyValue !== provideData.activeKey) return null
 
-  return <div className={classNames('flex-grow h-full')}>{children}</div>
+  return (
+    <div
+      className={classNames('flex-grow h-full')}
+      style={{ display: keyValue === provideData.activeKey ? 'block' : 'none' }}
+    >
+      {children}
+    </div>
+  )
 }
 
 export default Content

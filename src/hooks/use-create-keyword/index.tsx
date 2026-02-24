@@ -35,6 +35,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
 
   const [isLoading, setIsLoading] = React.useState(false)
   const [currentMode, setCurrentMode] = React.useState<ExtractionMode>(defaultMode)
+  const abortControllerRef = React.useRef<AbortController | null>(null)
   const { toast } = useToast()
 
   /**
@@ -124,13 +125,8 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       extraParams: aiConfig?.extraParams,
     })
 
-    // 确保返回的是 Stream 类型
-    const render = (gptResult as any).toReadableStream().getReader()
-
-    // 根据配置创建适配器
+    const reader = (gptResult as any).toReadableStream().getReader()
     const adapter = createStreamAdapter(aiConfig.adapter || 'spark')
-
-    // 创建 AI Stream 解析器
     const parser = createAIStreamParser({
       favKey,
       getGlobalData: () => dataProvideData.getGlobalData(),
@@ -141,15 +137,27 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       adapter,
     })
 
-    while (true) {
-      const { value, done } = await render.read()
+    try {
+      while (true) {
+        if (abortControllerRef.current?.signal.aborted) {
+          await reader.cancel()
+          throw new DOMException('用户取消操作', 'AbortError')
+        }
 
-      if (done) {
-        parser.flush()
-        break
+        const { value, done } = await reader.read()
+
+        if (done) {
+          parser.flush()
+          break
+        }
+
+        parser.processChunk(value)
       }
-
-      parser.processChunk(value)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error
+      }
+      throw error
     }
   })
 
@@ -176,6 +184,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   const handleCreate = useMemoizedFn(
     async (type: 'select' | 'all', mode: ExtractionMode = currentMode) => {
       setIsLoading(true)
+      abortControllerRef.current = new AbortController()
 
       try {
         switch (type) {
@@ -244,8 +253,14 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
             break
         }
       } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          toast({
+            title: '已取消',
+            description: '操作已取消',
+          })
+          return
+        }
         if (error instanceof Error) {
-          debugger
           toast({
             variant: 'destructive',
             title: '操作失败',
@@ -253,18 +268,26 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
           })
         }
       } finally {
+        abortControllerRef.current = null
         setIsLoading(false)
       }
     },
   )
 
+  const cancelCreate = useMemoizedFn(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+  })
+
   return {
     isLoading,
     currentMode,
-    setCurrentMode,
-    handleCreate,
     extractWithLocal,
     extractWithAI,
+    handleCreate,
+    cancelCreate,
+    setCurrentMode,
   }
 }
 

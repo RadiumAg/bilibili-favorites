@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { FC } from 'react'
 import { Button } from '@/components/ui/button'
 import { useGlobalConfig } from '@/store/global-data'
 import { fetchAIMove } from '@/utils/api'
@@ -10,6 +10,7 @@ import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
+import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
 
 type GetFavoriteDetailRes = {
   code: number
@@ -48,7 +49,6 @@ const useAIMove = () => {
   const [isProcessing, setIsProcessing] = React.useState(false)
   const abortControllerRef = React.useRef<AbortController | null>(null)
 
-  // 构建收藏夹映射
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
     dataContext.favoriteData.forEach((fav) => {
@@ -57,12 +57,10 @@ const useAIMove = () => {
     return map
   }, [dataContext.favoriteData])
 
-  // 检查是否配置了 AI
   const hasAIConfig = React.useMemo(() => {
     return dataContext.aiConfig && dataContext.aiConfig.key
   }, [dataContext.aiConfig])
 
-  // 使用 AI 分析视频
   const analyzeVideosWithAI = useMemoizedFn(
     async (videos: { id: number; title: string }[]): Promise<AIMoveResult[]> => {
       if (!hasAIConfig) {
@@ -81,19 +79,18 @@ const useAIMove = () => {
 
         const stream = await fetchAIMove(videos, favoriteTitles, config)
 
-        // 读取 stream 内容
+        // 使用流适配器从每个 chunk 中提取纯内容文本
         let fullContent = ''
         const reader = stream.toReadableStream().getReader()
-        const decoder = new TextDecoder()
+        const adapter = createStreamAdapter('spark')
 
         while (true) {
           const { value, done } = await reader.read()
           if (done) break
-          fullContent += decoder.decode(value, { stream: true })
+          const content = adapter.parse(value)
+          fullContent += content
         }
-        fullContent += decoder.decode() // 解码剩余内容
-
-        // 提取 JSON 数组
+        console.log('[DEBUG] fullContent', fullContent)
         const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
         if (!jsonMatch) {
           throw new Error('AI 返回的数据格式错误')
@@ -101,7 +98,6 @@ const useAIMove = () => {
 
         const aiResults = JSON.parse(jsonMatch[0])
 
-        // 转换为移动结果
         const results: AIMoveResult[] = videos
           .map((video) => {
             const aiResult = aiResults.find((r: any) => r.title === video.title)
@@ -131,7 +127,6 @@ const useAIMove = () => {
     },
   )
 
-  // 执行移动
   const executeMove = useMemoizedFn(async (results: AIMoveResult[]) => {
     if (dataContext.defaultFavoriteId == null) return
 
@@ -236,7 +231,6 @@ const useAIMove = () => {
         description: `正在分析 ${videos.length} 个视频...`,
       })
 
-      // AI 分析
       const results = await analyzeVideosWithAI(videos)
 
       if (abortControllerRef.current?.signal.aborted) {
@@ -248,7 +242,6 @@ const useAIMove = () => {
         description: `正在移动 ${results.length} 个视频...`,
       })
 
-      // 执行移动
       const movedResults = await executeMove(results)
       if (!movedResults) return
 
@@ -263,7 +256,6 @@ const useAIMove = () => {
         description: `成功: ${successCount}, 失败: ${failCount}`,
       })
 
-      // 显示完成动画
       await sleep(1000)
       setIsFinished(true)
     } catch (error) {
@@ -367,7 +359,7 @@ const AIMove: React.FC = () => {
       <Button
         onClick={handleAIMove}
         size="sm"
-        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-1 h-6"
+        className="bg-gradient-to-r  to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-1 h-6"
       >
         🤖 AI 整理
       </Button>

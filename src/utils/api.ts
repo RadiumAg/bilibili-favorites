@@ -188,100 +188,76 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
+/**
+ * 通过 chrome.runtime.connect 建立长连接，实现流式 AI 通信
+ * 返回一个带有 toReadableStream 方法的对象，保持与调用方的兼容性
+ */
+const connectAndStream = (message: { type: MessageEnum; data: any }) => {
+  const port = chrome.runtime.connect({ name: 'ai-stream' })
+  const encoder = new TextEncoder()
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      port.onMessage.addListener((response) => {
+        console.log('[Background] Received response:', response)
+        switch (response.type) {
+          case 'chunk':
+            controller.enqueue(encoder.encode(response.content))
+            break
+          case 'done':
+            controller.close()
+            port.disconnect()
+            break
+          case 'error':
+            controller.error(new Error(response.error))
+            port.disconnect()
+            break
+        }
+      })
+
+      port.onDisconnect.addListener(() => {
+        const lastError = chrome.runtime.lastError
+        if (lastError) {
+          controller.error(new Error(lastError.message))
+        }
+      })
+
+      // 发送请求消息
+      port.postMessage(message)
+    },
+  })
+
+  return { toReadableStream: () => stream }
+}
+
 const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
-  // 通过 background script 发送请求，避免跨域问题
-  return new Promise<any>((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      {
-        type: MessageEnum.fetchChatGpt,
-        data: {
-          titleArray,
-          config: {
-            apiKey: config.apiKey,
-            baseURL: config.baseURL,
-            model: config.model,
-            extraParams: config.extraParams,
-          },
-        },
+  return connectAndStream({
+    type: MessageEnum.fetchChatGpt,
+    data: {
+      titleArray,
+      config: {
+        apiKey: config.apiKey,
+        baseURL: config.baseURL,
+        model: config.model,
+        extraParams: config.extraParams,
       },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message))
-          return
-        }
-
-        if (response && response.error) {
-          reject(new Error(response.error))
-          return
-        }
-
-        // 创建一个模拟 stream 对象，使其具有 toReadableStream 方法
-        const mockStream = {
-          toReadableStream: () => {
-            const encoder = new TextEncoder()
-            const content = response.content || ''
-            const chunks = encoder.encode(content)
-            return new ReadableStream({
-              start(controller) {
-                controller.enqueue(chunks)
-                controller.close()
-              },
-            })
-          },
-        }
-
-        resolve(mockStream)
-      },
-    )
+    },
   })
 }
 
 const fetchAIMove = async (videos: AIMoveInput, favoriteTitles: string[], config: AIMoveConfig) => {
-  // 通过 background script 发送请求，避免跨域问题
-  return new Promise<any>((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      {
-        type: MessageEnum.fetchAIMove,
-        data: {
-          videos,
-          favoriteTitles,
-          config: {
-            apiKey: config.apiKey,
-            baseURL: config.baseURL,
-            model: config.model,
-            extraParams: config.extraParams,
-          },
-        },
+  return connectAndStream({
+    type: MessageEnum.fetchAIMove,
+    data: {
+      videos,
+      favoriteTitles,
+      config: {
+        apiKey: config.apiKey,
+        baseURL: config.baseURL,
+        model: config.model,
+        extraParams: config.extraParams,
       },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message))
-          return
-        }
-
-        if (response && response.error) {
-          reject(new Error(response.error))
-          return
-        }
-
-        // 创建一个模拟 stream 对象，使其具有 toReadableStream 方法
-        const mockStream = {
-          toReadableStream: () => {
-            const encoder = new TextEncoder()
-            const content = response.content || ''
-            const chunks = encoder.encode(content)
-            return new ReadableStream({
-              start(controller) {
-                controller.enqueue(chunks)
-                controller.close()
-              },
-            })
-          },
-        }
-
-        resolve(mockStream)
-      },
-    )
+    },
   })
 }
 
