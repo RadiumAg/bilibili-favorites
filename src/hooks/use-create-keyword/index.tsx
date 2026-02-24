@@ -62,23 +62,17 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
     if (keywords.length === 0) {
       throw new Error('未能提取到关键词')
     }
-
-    // 保存关键词到全局状态
     const currentData = dataProvideData.getGlobalData()
     const existingKeywordIndex = currentData.keyword.findIndex(
       (item) => item.favoriteDataId === Number(favKey),
     )
-
     const newKeywordValues = keywords.map((keyword, index) => ({
       id: `${favKey}-${index}-${Date.now()}`,
       value: keyword,
     }))
-
     if (existingKeywordIndex !== -1) {
-      // 更新现有关键词
       currentData.keyword[existingKeywordIndex].value = newKeywordValues
     } else {
-      // 添加新关键词
       currentData.keyword.push({
         favoriteDataId: Number(favKey),
         value: newKeywordValues,
@@ -96,7 +90,6 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   const extractWithAI = useMemoizedFn(async (favKey: string) => {
     const aiConfig = dataProvideData.aiConfig || {}
 
-    // 验证 AI 配置
     const requiredFields: Array<keyof typeof aiConfig> = ['key', 'model']
     for (const field of requiredFields) {
       if (!aiConfig[field]) {
@@ -224,6 +217,8 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
             let failCount = 0
 
             for (const fav of dataProvideData.favoriteData) {
+              if (abortControllerRef.current.signal?.aborted) return
+
               try {
                 const activeKey = fav.id
                 dataProvideData.setGlobalData({ activeKey })
