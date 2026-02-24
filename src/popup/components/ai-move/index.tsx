@@ -367,7 +367,7 @@ const AIMove: React.FC = () => {
       <Button
         onClick={handleAIMove}
         size="sm"
-        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-1 h-6"
+        className="bg-gradient-to-r  to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-1 h-6"
       >
         🤖 AI 整理
       </Button>
