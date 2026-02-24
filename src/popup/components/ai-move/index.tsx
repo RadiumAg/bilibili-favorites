@@ -11,6 +11,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { fetchAllFavoriteMedias, queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
 import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface AIMoveResult {
   title: string
@@ -353,7 +354,7 @@ const AIMove: FC = () => {
   }, [handleAIMove, toast])
 
   return (
-    <div>
+    <div className="flex items-center gap-1">
       <Button
         onClick={handleClick}
         size="sm"
@@ -361,7 +362,25 @@ const AIMove: FC = () => {
         title="AI 智能分类视频到对应收藏夹（会消耗较多 Token）"
       >
         🤖 AI 整理
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs flex items-center justify-center cursor-pointer"
+              onClick={(event) => {
+                event.stopPropagation()
+              }}
+            >
+              ?
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 text-sm">
+            <p className="text-gray-700">
+              大模型根据视频标题与收藏夹名称自动进行智能整理，比较消耗 Token。
+            </p>
+          </PopoverContent>
+        </Popover>
       </Button>
+
       {isLoadingElement}
     </div>
   )
