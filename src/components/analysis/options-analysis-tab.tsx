@@ -1,6 +1,5 @@
 import React from 'react'
 import { useMemoizedFn, useMount } from 'ahooks'
-import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,14 +20,11 @@ import { useToast } from '@/hooks/use-toast'
 import { useAnalysisData } from '@/components/analysis/use-analysis-data'
 import { useAnalysisWorker } from '@/components/analysis/use-analysis-worker'
 import { useAnalysisStats } from '@/components/analysis/use-analysis-stats'
+import { useFavoriteData } from '@/hooks'
 
 export const OptionsAnalysisTab: React.FC = () => {
-  const { favoriteData, cookie } = useGlobalConfig(
-    useShallow((state) => ({
-      favoriteData: state.favoriteData,
-      cookie: state.cookie,
-    })),
-  )
+  const { favoriteData } = useFavoriteData()
+  const cookie = useGlobalConfig((state) => state.cookie)
   const forceRefreshRef = React.useRef(false)
   const dateRange = React.useRef<string>('30d')
   const [refreshing, setRefreshing] = React.useState(false)

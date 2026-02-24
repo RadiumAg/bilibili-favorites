@@ -1,18 +1,11 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { FavoriteTag, Keyword } from '@/components'
-import { getAllFavoriteFlag } from '@/utils/api'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Move, LoginCheck, AutoCreateKeyword, AIMove } from './components'
-import { useGlobalConfig } from '@/store/global-data'
 import { Toaster } from '@/components/ui/toaster'
 import { Settings } from 'lucide-react'
 
 const Popup: FC = () => {
-  const cookie = useGlobalConfig((state) => state.cookie)
-
-  const favoriteFlagFetchPromise = React.useMemo(() => getAllFavoriteFlag(cookie), [cookie])
-
   const handleOpenSettings = () => {
     window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
   }
@@ -33,9 +26,7 @@ const Popup: FC = () => {
           </Button>
         </h3>
 
-        <React.Suspense fallback={<Skeleton className="w-full h-[200px]" />}>
-          <FavoriteTag fetchPromise={favoriteFlagFetchPromise} className="h-[200px]" />
-        </React.Suspense>
+        <FavoriteTag className="h-[200px]" />
 
         <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
         <Keyword />

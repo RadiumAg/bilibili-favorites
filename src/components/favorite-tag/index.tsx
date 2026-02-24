@@ -1,18 +1,17 @@
 import React from 'react'
 import classNames from 'classnames'
-import { getAllFavoriteFlag } from '@/utils/api'
-import { useSetDefaultFav } from '@/hooks'
+import { useSetDefaultFav, useFavoriteData } from '@/hooks'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type FavoriteTagProps = {
   className?: string
-  fetchPromise: ReturnType<typeof getAllFavoriteFlag>
 }
 
 const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
-  const { className, fetchPromise } = props
+  const { className } = props
   const {
     domRef,
     clickTagId,
@@ -22,17 +21,16 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     handleMouseDown,
     handleMouseUp,
   } = useSetDefaultFav()
+  const { favoriteData, loading } = useFavoriteData()
   const globalConfig = useGlobalConfig(
     useShallow((state) => ({
       activeKey: state.activeKey,
       defaultFavoriteId: state.defaultFavoriteId,
-      setGlobalData: state.setGlobalData,
     })),
   )
-  const promiseData = React.use(fetchPromise)
 
   const tagElementArray = React.useMemo(() => {
-    return promiseData.data?.list?.map((data) => {
+    return favoriteData.map((data) => {
       return (
         <div
           key={data.id}
@@ -57,18 +55,14 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   }, [
     clickTagId,
     isLongPress,
-    promiseData.data,
+    favoriteData,
     globalConfig.activeKey,
     globalConfig.defaultFavoriteId,
   ])
 
-  React.useEffect(() => {
-    const list = promiseData.data?.list
-
-    if (list == null) return
-
-    globalConfig.setGlobalData({ favoriteData: list })
-  }, [])
+  if (loading && favoriteData.length === 0) {
+    return <Skeleton className={classNames('w-full', className)} />
+  }
 
   return (
     <ScrollArea className={classNames(className)}>

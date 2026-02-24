@@ -1,23 +1,15 @@
-import React, { Suspense } from 'react'
+import React from 'react'
 import classNames from 'classnames'
 import TabWrapper from './components/tabs'
 import { FavoriteTag, Keyword } from '@/components'
-import { getAllFavoriteFlag } from '@/utils/api'
 import OperateButton from './components/create-keyword/operate-button'
-import { Skeleton } from '@/components/ui/skeleton'
 import Setting from './components/setting'
 import { OptionsAnalysisTab } from '@/components/analysis'
-import { useGlobalConfig } from '@/store/global-data'
 import { LoginCheck } from '@/popup/components'
 import { useSearchParams } from '@/utils/search-params'
 
 const Options: React.FC = () => {
-  const cookie = useGlobalConfig((state) => state.cookie)
   const searchParams = useSearchParams()
-
-  const favoriteFlagFetchPromise = React.useMemo(() => {
-    return getAllFavoriteFlag(cookie)
-  }, [cookie])
 
   return (
     <div
@@ -58,9 +50,7 @@ const Options: React.FC = () => {
 
             <div className="flex gap-x-2 h-[700px]">
               <div className="w-1/2 h-full">
-                <Suspense fallback={<Skeleton className="w-full h-full" />}>
-                  <FavoriteTag fetchPromise={favoriteFlagFetchPromise} className="h-full" />
-                </Suspense>
+                <FavoriteTag className="h-full" />
               </div>
 
               <div className="w-1/2 h-full">
