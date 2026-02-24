@@ -62,7 +62,7 @@ const Options: React.FC = () => {
         </TabWrapper.Tab>
 
         <TabWrapper.Tab
-          title="拖拽管理"
+          title="可视化管理"
           keyValue="drag-manager"
           defaultTab={searchParams.get('tab') === 'drag-manager'}
         >
