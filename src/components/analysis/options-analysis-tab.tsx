@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'
-import { useMemoizedFn, useMount } from 'ahooks'
+import React from 'react'
+import { useMemoizedFn } from 'ahooks'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import {
@@ -128,7 +128,7 @@ export const OptionsAnalysisTab: React.FC = () => {
   })
 
   // 初始加载
-  useEffect(() => {
+  React.useEffect(() => {
     if (favoriteData.length > 0) {
       fetchAllMedias().then(() => {
         loadData()

@@ -3,6 +3,7 @@ import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
+import { useMemoizedFn } from 'ahooks'
 import type { DataContextType } from '@/utils/data-context'
 
 type FavoriteDataItem = DataContextType['favoriteData'][number]
@@ -29,7 +30,7 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
   )
   const [loading, setLoading] = React.useState(false)
 
-  const fetchFavoriteData = React.useCallback(async (): Promise<FavoriteDataItem[]> => {
+  const fetchFavoriteData = useMemoizedFn(async (): Promise<FavoriteDataItem[]> => {
     if (pendingPromise) {
       return pendingPromise
     }
@@ -50,7 +51,7 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
       })
 
     return pendingPromise
-  }, [setGlobalData])
+  })
 
   React.useEffect(() => {
     if (favoriteData.length === 0) {
