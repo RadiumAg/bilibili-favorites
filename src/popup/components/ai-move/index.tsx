@@ -231,7 +231,6 @@ const useAIMove = () => {
         description: `正在分析 ${videos.length} 个视频...`,
       })
 
-      // AI 分析
       const results = await analyzeVideosWithAI(videos)
 
       if (abortControllerRef.current?.signal.aborted) {
@@ -243,7 +242,6 @@ const useAIMove = () => {
         description: `正在移动 ${results.length} 个视频...`,
       })
 
-      // 执行移动
       const movedResults = await executeMove(results)
       if (!movedResults) return
 
@@ -258,7 +256,6 @@ const useAIMove = () => {
         description: `成功: ${successCount}, 失败: ${failCount}`,
       })
 
-      // 显示完成动画
       await sleep(1000)
       setIsFinished(true)
     } catch (error) {
