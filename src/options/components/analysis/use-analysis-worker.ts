@@ -35,9 +35,12 @@ export const useAnalysisWorker = (props: UseAnalysisWorkerProps): UseAnalysisWor
   React.useEffect(() => {
     if (typeof Worker !== 'undefined') {
       // 初始化 Worker
-      workerRef.current = new Worker(new URL('../../workers/analysis.worker.ts', import.meta.url), {
-        type: 'module',
-      })
+      workerRef.current = new Worker(
+        new URL('../../../workers/analysis.worker.ts', import.meta.url),
+        {
+          type: 'module',
+        },
+      )
 
       // 监听 Worker 消息
       workerRef.current.onmessage = (event: MessageEvent) => {
