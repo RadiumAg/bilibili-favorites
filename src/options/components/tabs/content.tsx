@@ -4,13 +4,14 @@ import { TabProvide } from './provide'
 
 type ContentProps = React.PropsWithChildren<{
   keyValue?: string
+  destroyOnHide?: boolean
 }>
 
 const Content: React.FC<ContentProps> = (props) => {
-  const { children, keyValue } = props
+  const { children, keyValue, destroyOnHide = false } = props
   const provideData = React.use(TabProvide)
 
-  // if (keyValue !== provideData.activeKey) return null
+  if (destroyOnHide && keyValue !== provideData.activeKey) return null
 
   return (
     <div

@@ -65,7 +65,7 @@ const Options: React.FC = () => {
           keyValue="analysis"
           defaultTab={searchParams.get('tab') === 'analysis'}
         >
-          <TabWrapper.Content>
+          <TabWrapper.Content destroyOnHide>
             <OptionsAnalysisTab />
           </TabWrapper.Content>
         </TabWrapper.Tab>

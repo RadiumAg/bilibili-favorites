@@ -2,7 +2,6 @@ import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
-import { useSleep } from '@/hooks'
 import { fetchAllFavoriteMedias } from '@/utils/tab'
 
 type UseAnalysisDataProps = {
@@ -36,7 +35,6 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
   const { favoriteData, forceRefreshRef, cookie } = props
   const [allMedias, setAllMedias] = React.useState<FavoriteMedia[]>([])
   const allMedaisRef = React.useRef(allMedias)
-  const { sleep } = useSleep()
   const [loading, setLoading] = React.useState(false)
 
   // 生成缓存键

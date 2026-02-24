@@ -127,7 +127,6 @@ export const OptionsAnalysisTab: React.FC = () => {
     }
   })
 
-  // 初始加载
   React.useEffect(() => {
     if (favoriteData.length > 0) {
       fetchAllMedias().then(() => {
