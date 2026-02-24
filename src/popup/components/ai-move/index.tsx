@@ -351,15 +351,35 @@ const useAIMove = () => {
   }
 }
 
-const AIMove: React.FC = () => {
+const AIMove: FC = () => {
   const { handleAIMove, isLoadingElement } = useAIMove()
+  const { toast } = useToast()
+  const pendingConfirmRef = React.useRef(false)
+
+  const handleClick = React.useCallback(() => {
+    if (!pendingConfirmRef.current) {
+      pendingConfirmRef.current = true
+      toast({
+        title: '⚠️ Token 消耗提醒',
+        description:
+          '此操作会将所有视频标题发送给 AI 进行分析，可能消耗大量 Token。再次点击确认执行。',
+      })
+      setTimeout(() => {
+        pendingConfirmRef.current = false
+      }, 5000)
+      return
+    }
+    pendingConfirmRef.current = false
+    handleAIMove()
+  }, [handleAIMove, toast])
 
   return (
     <div>
       <Button
-        onClick={handleAIMove}
+        onClick={handleClick}
         size="sm"
         className="bg-gradient-to-r  to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-1 h-6"
+        title="AI 智能分类视频到对应收藏夹（会消耗较多 Token）"
       >
         🤖 AI 整理
       </Button>
