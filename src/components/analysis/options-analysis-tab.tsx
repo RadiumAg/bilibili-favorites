@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useMemoizedFn, useMount } from 'ahooks'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -128,13 +128,13 @@ export const OptionsAnalysisTab: React.FC = () => {
   })
 
   // 初始加载
-  useMount(() => {
+  useEffect(() => {
     if (favoriteData.length > 0) {
       fetchAllMedias().then(() => {
         loadData()
       })
     }
-  })
+  }, [favoriteData])
 
   return (
     <div className="w-full h-full bg-gray-50 p-6">
