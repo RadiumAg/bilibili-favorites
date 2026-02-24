@@ -156,6 +156,7 @@ const getAllFavoriteFlag = (cookies?: string): Promise<GetAllFavoriteFlagRes> =>
 
   return fetch(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${dedeUserID}`, {
     method: 'get',
+    credentials: 'include',
   }).then((res) => res.json())
 }
 

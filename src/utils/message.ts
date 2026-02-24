@@ -3,6 +3,7 @@ enum MessageEnum {
   moveVideo = 'moveVideo',
   getFavoriteList = 'getFavoriteList',
   getFavoriteDetail = 'getFavoriteDetail',
+  getAllFavoriteFlag = 'getAllFavoriteFlag',
   fetchChatGpt = 'fetchChatGpt',
   fetchAIMove = 'fetchAIMove',
 }

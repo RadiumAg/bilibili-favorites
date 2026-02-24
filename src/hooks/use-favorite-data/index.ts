@@ -1,10 +1,16 @@
 import React from 'react'
-import { getAllFavoriteFlag } from '@/utils/api'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
+import { queryAndSendMessage } from '@/utils/tab'
+import { MessageEnum } from '@/utils/message'
 import type { DataContextType } from '@/utils/data-context'
 
 type FavoriteDataItem = DataContextType['favoriteData'][number]
+
+type GetAllFavoriteFlagRes = {
+  code: number
+  data: { list: FavoriteDataItem[] }
+}
 
 type UseFavoriteDataReturn = {
   favoriteData: FavoriteDataItem[]
@@ -15,9 +21,8 @@ type UseFavoriteDataReturn = {
 let pendingPromise: Promise<FavoriteDataItem[]> | null = null
 
 const useFavoriteData = (): UseFavoriteDataReturn => {
-  const { cookie, favoriteData, setGlobalData } = useGlobalConfig(
+  const { favoriteData, setGlobalData } = useGlobalConfig(
     useShallow((state) => ({
-      cookie: state.cookie,
       favoriteData: state.favoriteData,
       setGlobalData: state.setGlobalData,
     })),
@@ -31,7 +36,9 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
 
     setLoading(true)
 
-    pendingPromise = getAllFavoriteFlag(cookie)
+    pendingPromise = queryAndSendMessage<GetAllFavoriteFlagRes>({
+      type: MessageEnum.getAllFavoriteFlag,
+    })
       .then((response) => {
         const list = response.data?.list ?? []
         setGlobalData({ favoriteData: list })
@@ -43,13 +50,13 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
       })
 
     return pendingPromise
-  }, [cookie, setGlobalData])
+  }, [setGlobalData])
 
   React.useEffect(() => {
-    if (favoriteData.length === 0 && cookie) {
+    if (favoriteData.length === 0) {
       fetchFavoriteData()
     }
-  }, [cookie])
+  }, [])
 
   return { favoriteData, loading, fetchFavoriteData }
 }

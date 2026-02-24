@@ -1,4 +1,4 @@
-import { getFavoriteDetail, getFavoriteList, moveFavorite } from '@/utils/api'
+import { getAllFavoriteFlag, getFavoriteDetail, getFavoriteList, moveFavorite } from '@/utils/api'
 import { Message, MessageEnum } from '@/utils/message'
 
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
@@ -46,6 +46,19 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         .catch((error) => {
           console.error('Error fetching favorite detail:', error)
           sendResponse({ code: -1, message: error.message || 'Failed to fetch favorite detail' })
+        })
+
+      break
+    }
+
+    case MessageEnum.getAllFavoriteFlag: {
+      getAllFavoriteFlag(document.cookie)
+        .then((data) => {
+          sendResponse(data)
+        })
+        .catch((error) => {
+          console.error('Error fetching all favorite flags:', error)
+          sendResponse({ code: -1, message: error.message || 'Failed to fetch favorite flags' })
         })
 
       break
