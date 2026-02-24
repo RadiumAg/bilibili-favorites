@@ -1,20 +1,37 @@
-import React from 'react'
+import React, { FC } from 'react'
 import { FavoriteTag, Keyword } from '@/components'
 import { getAllFavoriteFlag } from '@/utils/api'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { Move, LoginCheck, AutoCreateKeyword, AIMove } from './components'
 import { useGlobalConfig } from '@/store/global-data'
 import { Toaster } from '@/components/ui/toaster'
+import { Settings } from 'lucide-react'
 
-export const Popup = () => {
+const Popup: FC = () => {
   const cookie = useGlobalConfig((state) => state.cookie)
 
   const favoriteFlagFetchPromise = React.useMemo(() => getAllFavoriteFlag(cookie), [cookie])
 
+  const handleOpenSettings = () => {
+    window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
+  }
+
   return (
     <main className="w-96 min-h-96 p-3 bg-b-primary bg-opacity-15 flex flex-col">
       <div className="flex-grow">
-        <h3 className="text-lg font-bold mb-2 text-b-text-primary flex justify-between">收藏夹</h3>
+        <h3 className="text-lg font-bold mb-2 text-b-text-primary flex justify-between">
+          收藏夹
+          <Button
+            onClick={handleOpenSettings}
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20"
+            title="打开设置页面"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        </h3>
 
         <React.Suspense fallback={<Skeleton className="w-full h-[200px]" />}>
           <FavoriteTag fetchPromise={favoriteFlagFetchPromise} className="h-[200px]" />
