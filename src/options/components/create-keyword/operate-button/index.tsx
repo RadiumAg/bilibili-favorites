@@ -13,7 +13,7 @@ const OperateButton: React.FC = () => {
     <div className="absolute w-full h-full top-0 left-0 bg-white bg-opacity-55 z-[999]">
       <div className="left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] absolute flex flex-col items-center">
         <img alt="loading-img" className="mt-[-51px]" src={loadingImg} />
-        <Button onClick={cancelCreate} size="sm" variant="ghost" className="mt-2">
+        <Button onClick={cancelCreate} size="sm" variant="outline">
           取消
         </Button>
       </div>

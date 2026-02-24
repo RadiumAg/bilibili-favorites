@@ -17,9 +17,9 @@ import { TrendChart } from './chart/trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
 import { RefreshCwIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { useAnalysisData } from '@/components/analysis/use-analysis-data'
-import { useAnalysisWorker } from '@/components/analysis/use-analysis-worker'
-import { useAnalysisStats } from '@/components/analysis/use-analysis-stats'
+import { useAnalysisData } from './use-analysis-data'
+import { useAnalysisWorker } from './use-analysis-worker'
+import { useAnalysisStats } from './use-analysis-stats'
 import { useFavoriteData } from '@/hooks'
 
 export const OptionsAnalysisTab: React.FC = () => {

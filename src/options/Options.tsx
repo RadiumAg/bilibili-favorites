@@ -4,7 +4,7 @@ import TabWrapper from './components/tabs'
 import { FavoriteTag, Keyword } from '@/components'
 import OperateButton from './components/create-keyword/operate-button'
 import Setting from './components/setting'
-import { OptionsAnalysisTab } from '@/components/analysis'
+import { OptionsAnalysisTab } from './components/analysis'
 import { LoginCheck } from '@/popup/components'
 import { useSearchParams } from '@/utils/search-params'
 
