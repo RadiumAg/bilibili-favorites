@@ -199,6 +199,7 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       port.onMessage.addListener((response) => {
+        console.log('[Background] Received response:', response)
         switch (response.type) {
           case 'chunk':
             controller.enqueue(encoder.encode(response.content))

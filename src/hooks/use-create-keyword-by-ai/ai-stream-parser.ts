@@ -42,8 +42,8 @@ export class SparkStreamAdapter implements AIStreamAdapter {
 
     try {
       const decoded = decoder.decode(chunk)
+      console.log('[DEBUG] AI stream chunk:', decoded)
       const parsed = JSON.parse(decoded)
-
       return (
         parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.delta?.reasoning_content || ''
       )
@@ -230,6 +230,7 @@ export function createAIStreamParser(options: StreamParserOptions) {
      */
     processChunk(value: Uint8Array): void {
       const data = adapter.parse(value)
+      console.log('[AIStreamParser] Received data:', data)
 
       // 跳过不需要的内容
       if (shouldSkipContent(data)) {

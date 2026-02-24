@@ -26,9 +26,8 @@ const streamAIRequest = async (
     const stream = await openai.chat.completions.create(requestParams)
 
     for await (const chunk of stream as any) {
-      const content = chunk.choices[0]?.delta?.content
-      if (content) {
-        port.postMessage({ type: 'chunk', content })
+      if (chunk) {
+        port.postMessage({ type: 'chunk', content: JSON.stringify(chunk) })
       }
     }
 

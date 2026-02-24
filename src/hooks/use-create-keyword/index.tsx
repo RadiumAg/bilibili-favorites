@@ -124,13 +124,8 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       extraParams: aiConfig?.extraParams,
     })
 
-    // 确保返回的是 Stream 类型
     const render = (gptResult as any).toReadableStream().getReader()
-
-    // 根据配置创建适配器
     const adapter = createStreamAdapter(aiConfig.adapter || 'spark')
-
-    // 创建 AI Stream 解析器
     const parser = createAIStreamParser({
       favKey,
       getGlobalData: () => dataProvideData.getGlobalData(),
