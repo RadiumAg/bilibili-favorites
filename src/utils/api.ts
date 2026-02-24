@@ -25,7 +25,12 @@ type AIMoveConfig = {
 }
 
 type GetAllFavoriteFlagRes = BResponse<{ list: DataContextType['favoriteData'] }>
-export type GetFavoriteListRes = BResponse<{ medias: { id: number; title: string }[] | null }>
+export type GetFavoriteListRes = BResponse<{
+  info: FavoriteDetailInfo
+  medias: FavoriteMedia[] | null
+  has_more: boolean
+  ttl: number
+}>
 
 type MediaCountInfo = {
   collect: number
@@ -98,29 +103,6 @@ type FavoriteDetailInfo = {
   is_top: boolean
 }
 
-type GetFavoriteDetailRes = BResponse<{
-  info: FavoriteDetailInfo
-  medias: FavoriteMedia[]
-  has_more: boolean
-  ttl: number
-}>
-
-/**
- * get favorite detail (folder information)
- *
- * @param mediaId - Favorite folder ID
- * @returns Promise<GetFavoriteDetailRes>
- */
-const getFavoriteDetail = (mediaId: string): Promise<GetFavoriteDetailRes> => {
-  return fetch(
-    `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${mediaId}&pn=1&ps=40&keyword=&order=mtime&type=0&tid=0&platform=web&web_location=333.1387`,
-    {
-      method: 'get',
-      credentials: 'include',
-    },
-  ).then((res) => res.json())
-}
-
 /**
  * get favorite list
  *
@@ -156,6 +138,7 @@ const getAllFavoriteFlag = (cookies?: string): Promise<GetAllFavoriteFlagRes> =>
 
   return fetch(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${dedeUserID}`, {
     method: 'get',
+    credentials: 'include',
   }).then((res) => res.json())
 }
 
@@ -261,18 +244,10 @@ const fetchAIMove = async (videos: AIMoveInput, favoriteTitles: string[], config
   })
 }
 
-export {
-  getAllFavoriteFlag,
-  getFavoriteList,
-  moveFavorite,
-  fetchChatGpt,
-  fetchAIMove,
-  getFavoriteDetail,
-}
+export { getAllFavoriteFlag, getFavoriteList, moveFavorite, fetchChatGpt, fetchAIMove }
 export type {
   FavoriteMedia,
   FavoriteDetailInfo,
-  GetFavoriteDetailRes,
   MediaCountInfo,
   FavoriteMediaUpper,
   FavoriteMediaUGC,
