@@ -1,0 +1,100 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build extension
+        run: pnpm build
+
+      - name: Create ZIP package
+        run: pnpm zip
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          # 获取上一个 tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # 如果没有上一个 tag，获取所有提交
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # 获取两个 tag 之间的提交
+            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          
+          # 分类提交信息
+          FEATURES=$(echo "$COMMITS" | grep -E "^- (feat|feature)" || true)
+          FIXES=$(echo "$COMMITS" | grep -E "^- (fix|bugfix)" || true)
+          OTHERS=$(echo "$COMMITS" | grep -vE "^- (feat|feature|fix|bugfix)" || true)
+          
+          # 构建 release notes
+          NOTES="## 🎉 B站收藏夹整理工具 v${{ steps.get_version.outputs.VERSION }}"
+          NOTES+="\n\n"
+          
+          if [ -n "$FEATURES" ]; then
+            NOTES+="### ✨ 新功能\n$FEATURES\n\n"
+          fi
+          
+          if [ -n "$FIXES" ]; then
+            NOTES+="### 🐛 修复\n$FIXES\n\n"
+          fi
+          
+          if [ -n "$OTHERS" ]; then
+            NOTES+="### 📝 其他\n$OTHERS\n\n"
+          fi
+          
+          NOTES+="---\n\n"
+          NOTES+="### 📦 安装方式\n\n"
+          NOTES+="1. 下载 \`bilibili-favorite-v${{ steps.get_version.outputs.VERSION }}.zip\`\n"
+          NOTES+="2. 打开 Chrome 浏览器，进入 \`chrome://extensions/\`\n"
+          NOTES+="3. 开启「开发者模式」\n"
+          NOTES+="4. 将 ZIP 文件解压后，点击「加载已解压的扩展程序」\n\n"
+          NOTES+="或直接从 [Chrome Web Store](https://chromewebstore.google.com/detail/b%E7%AB%99%E6%94%B6%E8%97%8F%E5%A4%B9%E6%95%B4%E7%90%86%E5%B7%A5%E5%85%B7/kompiebhklojoioghbddednmmnebnkoc) 安装"
+          
+          # 保存到文件避免多行问题
+          echo -e "$NOTES" > release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: v${{ steps.get_version.outputs.VERSION }}
+          body_path: release_notes.md
+          files: |
+            dist/*.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
