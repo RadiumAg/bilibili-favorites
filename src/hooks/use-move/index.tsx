@@ -8,6 +8,7 @@ import classNames from 'classnames'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
+import { Button } from '@/components/ui/button'
 
 const useMove = () => {
   const dataContext = useGlobalConfig(
@@ -19,11 +20,20 @@ const useMove = () => {
   )
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [isCancelled, setIsCancelled] = React.useState(false)
+  const cancelRef = React.useRef(false)
 
   const handleMove = async () => {
+    cancelRef.current = false
+    setIsCancelled(false)
     setIsLoading(true)
     setIsFinished(false)
     await startMove()
+  }
+
+  const handleCancel = () => {
+    cancelRef.current = true
+    setIsCancelled(true)
   }
 
   const fetchMove = async (targetFavoriteId: number, videoId: number) => {
@@ -49,8 +59,9 @@ const useMove = () => {
   const startMove = async () => {
     let pn = 1
 
-    const run = async () => {
-      if (dataContext.defaultFavoriteId == null) return
+    const run = async (): Promise<boolean> => {
+      if (cancelRef.current) return false
+      if (dataContext.defaultFavoriteId == null) return false
 
       const result = await queryAndSendMessage<ReturnType<typeof getFavoriteList>>({
         type: MessageEnum.getFavoriteList,
@@ -62,12 +73,16 @@ const useMove = () => {
       })
 
       const allDefaultFavoriteVideo = result.data?.medias
-      if (allDefaultFavoriteVideo == null) return
+      if (allDefaultFavoriteVideo == null) return false
 
       for (const keywordInfo of dataContext.keyword.filter(
         (key) => key.favoriteDataId !== dataContext.defaultFavoriteId,
       )) {
+        if (cancelRef.current) return false
+
         for (const keyValue of keywordInfo.value) {
+          if (cancelRef.current) return false
+
           const targetFavoriteTag = dataContext.favoriteData.find(
             (fav) => fav.id === keywordInfo.favoriteDataId,
           )
@@ -76,6 +91,8 @@ const useMove = () => {
           const keyword = keyValue.value.toLowerCase()
 
           for (const videoInfo of allDefaultFavoriteVideo) {
+            if (cancelRef.current) return false
+
             const videoTitle = videoInfo.title.toLowerCase()
 
             if (videoTitle.includes(keyword)) {
@@ -87,12 +104,17 @@ const useMove = () => {
 
       await sleep(20)
       pn++
-      await run()
+      return run()
     }
     const start = Date.now()
-    await run()
+    const completed = await run()
 
-    if (Date.now() - start < 1000) {
+    if (cancelRef.current) {
+      setIsLoading(false)
+      return
+    }
+
+    if (completed && Date.now() - start < 1000) {
       await sleep(1000)
       setIsFinished(true)
     } else {
@@ -103,7 +125,7 @@ const useMove = () => {
   const isLoadingElement = (
     <div
       className={classNames(
-        'fixed flex w-full h-full bg-white top-0 left-0 bg-opacity-70 items-center justify-center',
+        'fixed flex flex-col w-full h-full bg-white top-0 left-0 bg-opacity-70 items-center justify-center',
         { hidden: !isLoading },
       )}
     >
@@ -119,6 +141,12 @@ const useMove = () => {
       />
 
       <img alt="loading-gif" src={loadingGif} className={classNames({ ['hidden']: isFinished })} />
+
+      {!isFinished && (
+        <Button onClick={handleCancel} disabled={isCancelled}>
+          {isCancelled ? '正在取消...' : '取消整理'}
+        </Button>
+      )}
     </div>
   )
 
