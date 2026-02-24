@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMemoizedFn } from 'ahooks'
-import { GetFavoriteDetailRes, type FavoriteMedia } from '@/utils/api'
+import { GetFavoriteListRes, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
 import { useSleep } from '@/hooks'
 import { queryAndSendMessage } from '@/utils/tab'
@@ -78,10 +78,12 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       // 遍历所有收藏夹，获取媒体数据
       for (const folder of favoriteData) {
         try {
-          const response = await queryAndSendMessage<GetFavoriteDetailRes>({
-            type: MessageEnum.getFavoriteDetail,
+          const response = await queryAndSendMessage<GetFavoriteListRes>({
+            type: MessageEnum.getFavoriteList,
             data: {
               mediaId: folder.id.toString(),
+              pn: 1,
+              ps: 40,
             },
           })
 

@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { Button } from '@/components/ui/button'
 import { useGlobalConfig } from '@/store/global-data'
-import { fetchAIMove } from '@/utils/api'
+import { fetchAIMove, GetFavoriteListRes } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
@@ -11,18 +11,6 @@ import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
 import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
-
-type GetFavoriteDetailRes = {
-  code: number
-  message: string
-  ttl: number
-  data: {
-    info: any
-    medias: { id: number; title: string }[] | null
-    has_more: boolean
-    ttl: number
-  }
-}
 
 interface AIMoveResult {
   title: string
@@ -203,10 +191,12 @@ const useAIMove = () => {
 
     try {
       // 获取默认收藏夹的所有视频
-      const favoriteDetail = await queryAndSendMessage<GetFavoriteDetailRes>({
-        type: MessageEnum.getFavoriteDetail,
+      const favoriteDetail = await queryAndSendMessage<GetFavoriteListRes>({
+        type: MessageEnum.getFavoriteList,
         data: {
           mediaId: dataContext.defaultFavoriteId.toString(),
+          pn: 1,
+          ps: 40,
         },
       })
 
