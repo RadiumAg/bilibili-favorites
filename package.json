@@ -1,7 +1,7 @@
 {
   "name": "bilibili-favorite",
   "displayName": "B站收藏夹整理工具",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": "Radium",
   "description": "",
   "type": "module",
