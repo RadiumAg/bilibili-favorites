@@ -1,5 +1,4 @@
 import React from 'react'
-import { getFavoriteList } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import { MessageEnum } from '@/utils/message'
 import loadingGif from '@/assets/loading.gif'

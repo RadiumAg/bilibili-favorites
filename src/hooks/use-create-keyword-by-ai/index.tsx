@@ -1,10 +1,11 @@
 import React from 'react'
-import { fetchChatGpt, getFavoriteList } from '@/utils/api'
+import { fetchChatGpt } from '@/utils/api'
 import loadingImg from '@/assets/loading.gif'
 import { useToast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { createAIStreamParser, createStreamAdapter } from './ai-stream-parser'
 import { useShallow } from 'zustand/react/shallow'
+import { fetchAllFavoriteMedias } from '@/utils/tab'
 
 const useCreateKeywordByAi = () => {
   const dataProvideData = useGlobalConfig(
@@ -31,8 +32,8 @@ const useCreateKeywordByAi = () => {
      * @param {string} favKey
      */
     const fetchSingle = async (favKey: string) => {
-      const allDefaultFavoriteVideo = await getFavoriteList(favKey, 1, 36)
-      const titleArray = allDefaultFavoriteVideo.data?.medias?.map((item) => item.title)
+      const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey)
+      const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
 
       console.log('[DEBUG] lastDataProvideData', aiConfig)
 
