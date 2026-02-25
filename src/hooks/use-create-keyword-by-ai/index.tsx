@@ -160,7 +160,7 @@ const useCreateKeywordByAi = () => {
         alt="loading-img"
         className="left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%]  absolute mt-[-51px]"
         src={loadingImg}
-      ></img>
+      />
     </div>
   )
 
