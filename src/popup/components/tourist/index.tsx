@@ -1,5 +1,6 @@
-import { FC, useEffect, useState, useImperativeHandle, RefObject } from 'react'
+import React from 'react'
 import { createPortal } from 'react-dom'
+
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useTourist } from './use-tourist'
@@ -53,10 +54,10 @@ type TouristRef = {
 }
 
 interface TouristProps {
-  ref?: RefObject<TouristRef | null>
+  ref?: React.RefObject<TouristRef | null>
 }
 
-const Tourist: FC<TouristProps> = (props) => {
+const Tourist: React.FC<TouristProps> = (props) => {
   const { ref } = props
   const {
     isVisible,
@@ -68,8 +69,8 @@ const Tourist: FC<TouristProps> = (props) => {
     skipTourist,
     completeTourist,
   } = useTourist()
-  const [targetRect, setTargetRect] = useState<TargetRect | null>(null)
-  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 })
+  const [targetRect, setTargetRect] = React.useState<TargetRect | null>(null)
+  const [popoverPosition, setPopoverPosition] = React.useState({ top: 0, left: 0 })
 
   const currentStepData = TOUR_STEPS[currentStep]
   const isLastStep = currentStep === totalSteps - 1
@@ -126,7 +127,7 @@ const Tourist: FC<TouristProps> = (props) => {
     setPopoverPosition({ top, left })
   })
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isVisible) return
 
     updatePosition()
@@ -139,7 +140,7 @@ const Tourist: FC<TouristProps> = (props) => {
     }
   }, [isVisible, currentStep, updatePosition])
 
-  useImperativeHandle(ref, () => {
+  React.useImperativeHandle(ref, () => {
     return {
       resetTourist,
     }
