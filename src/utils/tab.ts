@@ -1,4 +1,5 @@
 import { FavoriteMedia, GetFavoriteListRes } from './api'
+import dbManager from './indexed-db'
 import { MessageEnum } from './message'
 
 // 用于 manifest.ts 中的 content_scripts.matches
@@ -97,6 +98,10 @@ export const fetchAllFavoriteMedias = async (
   const allMedias: FavoriteMedia[] = []
   let currentPage = 1
   let hasMore = true
+  const key = `favorite-all-${mediaId}`
+  const mediaData = await dbManager.get(key)
+  const isExpired = await dbManager.isExpired(key)
+  if (mediaData && !isExpired) return mediaData.data
 
   while (hasMore) {
     const response = await queryAndSendMessage<GetFavoriteListRes>({
@@ -117,5 +122,6 @@ export const fetchAllFavoriteMedias = async (
     currentPage++
   }
 
+  dbManager.set(key, allMedias)
   return allMedias
 }
