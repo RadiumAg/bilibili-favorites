@@ -5,6 +5,7 @@ import { Move, LoginCheck, AutoCreateKeyword, AIMove, DragManagerButton } from '
 import { Toaster } from '@/components/ui/toaster'
 import { Settings } from 'lucide-react'
 import Tourist from './components/tourist'
+import { cn } from '@/lib/utils'
 
 interface PopupProps {
   isSidePanel?: boolean
@@ -23,7 +24,7 @@ const Popup: FC<PopupProps> = (props) => {
         isSidePanel ? 'w-full min-h-screen' : 'w-96 min-h-96'
       }`}
     >
-      <div className="flex-grow">
+      <div className="flex-grow flex flex-col">
         <h3 className="text-lg font-bold mb-2 text-b-text-primary flex justify-between">
           收藏夹
           <Button
@@ -42,8 +43,8 @@ const Popup: FC<PopupProps> = (props) => {
         </div>
 
         <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
-        <div data-tour="keywords">
-          <Keyword />
+        <div className={cn(isSidePanel ? 'flex flex-col flex-1' : undefined)} data-tour="keywords">
+          <Keyword className={cn(isSidePanel ? 'flex-1' : undefined)} />
         </div>
       </div>
 
