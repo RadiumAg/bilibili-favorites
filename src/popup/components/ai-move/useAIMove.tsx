@@ -1,3 +1,4 @@
+import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { fetchAllFavoriteMedias, queryAndSendMessage } from '@/utils/tab'
