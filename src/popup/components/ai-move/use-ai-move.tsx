@@ -340,8 +340,8 @@ const useAIMove = () => {
   )
 
   return {
-    handleAIMove,
     isLoadingElement,
+    handleAIMove,
   }
 }
 
