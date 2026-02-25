@@ -125,7 +125,6 @@ const useMove = () => {
           description: e.message,
         })
       }
-      setIsFinished(true)
       setIsLoading(false)
     }
   }
