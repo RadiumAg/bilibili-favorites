@@ -6,13 +6,23 @@ import { Toaster } from '@/components/ui/toaster'
 import { Settings } from 'lucide-react'
 import Tourist from './components/tourist'
 
-const Popup: FC = () => {
+interface PopupProps {
+  isSidePanel?: boolean
+}
+
+const Popup: FC<PopupProps> = (props) => {
+  const { isSidePanel = false } = props
+
   const handleOpenSettings = () => {
     window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
   }
 
   return (
-    <main className="w-96 min-h-96 p-3 bg-b-primary bg-opacity-15 flex flex-col">
+    <main
+      className={`p-3 bg-b-primary bg-opacity-15 flex flex-col ${
+        isSidePanel ? 'w-full min-h-screen' : 'w-96 min-h-96'
+      }`}
+    >
       <div className="flex-grow">
         <h3 className="text-lg font-bold mb-2 text-b-text-primary flex justify-between">
           收藏夹
@@ -28,7 +38,7 @@ const Popup: FC = () => {
         </h3>
 
         <div data-tour="favorites">
-          <FavoriteTag className="h-[200px]" />
+          <FavoriteTag className={isSidePanel ? 'h-[300px]' : 'h-[200px]'} />
         </div>
 
         <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>

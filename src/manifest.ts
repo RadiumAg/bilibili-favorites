@@ -17,7 +17,6 @@ export default defineManifest({
     128: 'img/logo-128.png',
   },
   action: {
-    default_popup: 'popup.html',
     default_icon: 'img/logo-48.png',
   },
   background: {
@@ -36,7 +35,7 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['storage', 'tabs'],
+  permissions: ['storage', 'tabs', 'sidePanel'],
   host_permissions: [
     'https://api.openai.com/*',
     'https://*.openai.com/*',
@@ -46,5 +45,8 @@ export default defineManifest({
   options_ui: {
     page: 'options.html',
     open_in_tab: true,
+  },
+  side_panel: {
+    default_path: 'sidepanel.html',
   },
 })
