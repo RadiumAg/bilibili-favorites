@@ -78,7 +78,7 @@ export class OpenAIStreamAdapter implements AIStreamAdapter {
  * @param adapterType - 适配器类型
  * @returns AI 流解析适配器实例
  */
-export function createStreamAdapter(adapterType: Adapter): AIStreamAdapter {
+export function createStreamAdapter(adapterType: Adapter = 'spark'): AIStreamAdapter {
   switch (adapterType) {
     case 'spark':
       return new SparkStreamAdapter()
