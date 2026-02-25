@@ -11,21 +11,21 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
-interface VideoItem {
+type VideoItem = {
   id: number
   title: string
   cover?: string
   bvid?: string
 }
 
-interface FavoriteMediaResponse {
+type FavoriteMediaResponse = {
   id: number
   title: string
   cover: string
   bvid: string
 }
 
-interface DragManagerProps {
+type DragManagerProps = {
   className?: string
 }
 

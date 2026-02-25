@@ -42,7 +42,7 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
     })
       .then((response) => {
         const list = response.data?.list ?? []
-        setGlobalData({ favoriteData: list })
+        setGlobalData({ favoriteData: list, defaultFavoriteId: list[0]?.id })
         return list
       })
       .finally(() => {
