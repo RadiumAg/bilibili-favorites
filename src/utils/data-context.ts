@@ -1,4 +1,4 @@
-type Adapter = 'spark' | 'openai'
+type Adapter = 'spark' | 'openai' | 'custom'
 
 type DataContextType = {
   favoriteData: {
