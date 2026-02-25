@@ -16,10 +16,9 @@ type GetAllFavoriteFlagRes = {
 type UseFavoriteDataReturn = {
   favoriteData: FavoriteDataItem[]
   loading: boolean
-  fetchFavoriteData: () => Promise<FavoriteDataItem[]>
 }
 
-let pendingPromise: Promise<FavoriteDataItem[]> | null = null
+let favorIteData: FavoriteDataItem[] = []
 
 const useFavoriteData = (): UseFavoriteDataReturn => {
   const { favoriteData, setGlobalData } = useGlobalConfig(
@@ -30,36 +29,35 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
   )
   const [loading, setLoading] = React.useState(false)
 
-  const fetchFavoriteData = useMemoizedFn(async (): Promise<FavoriteDataItem[]> => {
-    if (pendingPromise) {
-      return pendingPromise
+  const fetchFavoriteData = useMemoizedFn(async () => {
+    if (favorIteData && favoriteData.length > 0) {
+      setGlobalData({ favoriteData })
+      return
     }
 
     setLoading(true)
 
-    pendingPromise = queryAndSendMessage<GetAllFavoriteFlagRes>({
+    queryAndSendMessage<GetAllFavoriteFlagRes>({
       type: MessageEnum.getAllFavoriteFlag,
     })
       .then((response) => {
         const list = response.data?.list ?? []
         setGlobalData({ favoriteData: list, defaultFavoriteId: list[0]?.id })
+        favorIteData = list
         return list
       })
       .finally(() => {
-        pendingPromise = null
         setLoading(false)
       })
-
-    return pendingPromise
   })
 
   React.useEffect(() => {
-    if (favoriteData.length === 0) {
+    if (favoriteData == null || favoriteData.length === 0) {
       fetchFavoriteData()
     }
   }, [])
 
-  return { favoriteData, loading, fetchFavoriteData }
+  return { favoriteData, loading }
 }
 
 export { useFavoriteData }

@@ -1,18 +1,19 @@
-import { FC } from 'react'
+import React from 'react'
 import { FavoriteTag, Keyword } from '@/components'
 import { Button } from '@/components/ui/button'
 import { Move, LoginCheck, AutoCreateKeyword, AIMove, DragManagerButton } from './components'
 import { Toaster } from '@/components/ui/toaster'
-import { Settings } from 'lucide-react'
-import Tourist from './components/tourist'
+import { Settings, HelpCircle } from 'lucide-react'
+import Tourist, { TouristRef, useTourist } from './components/tourist'
 import { cn } from '@/lib/utils'
 
 interface PopupProps {
   isSidePanel?: boolean
 }
 
-const Popup: FC<PopupProps> = (props) => {
+const Popup: React.FC<PopupProps> = (props) => {
   const { isSidePanel = false } = props
+  const touristRef = React.useRef<TouristRef>(null)
 
   const handleOpenSettings = () => {
     window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
@@ -27,15 +28,28 @@ const Popup: FC<PopupProps> = (props) => {
       <div className="flex-grow flex flex-col">
         <h3 className="text-lg font-bold mb-2 text-b-text-primary flex justify-between">
           收藏夹
-          <Button
-            onClick={handleOpenSettings}
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20"
-            title="打开设置页面"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              onClick={() => {
+                touristRef.current?.resetTourist()
+              }}
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20"
+              title="查看使用方式"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={handleOpenSettings}
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20"
+              title="打开设置页面"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
         </h3>
 
         <div data-tour="favorites">
@@ -57,7 +71,7 @@ const Popup: FC<PopupProps> = (props) => {
 
       <LoginCheck />
       <Toaster />
-      <Tourist />
+      <Tourist ref={touristRef} />
     </main>
   )
 }
