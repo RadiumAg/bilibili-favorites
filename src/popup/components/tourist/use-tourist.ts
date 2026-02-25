@@ -1,6 +1,8 @@
+import React from 'react'
 import { useFavoriteData } from '@/hooks'
 import { useMemoizedFn } from 'ahooks'
-import { useState, useEffect, useCallback } from 'react'
+
+const { useState, useEffect } = React
 
 const TOURIST_STORAGE_KEY = 'bilibili_favorites_tourist_completed'
 

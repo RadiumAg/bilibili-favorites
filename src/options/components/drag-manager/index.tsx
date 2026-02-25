@@ -63,7 +63,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
     setLoading(true)
     setSelectedVideoIds(new Set())
     try {
-      const medias = await fetchAllFavoriteMedias<FavoriteMediaResponse>(folderId.toString())
+      const medias = await fetchAllFavoriteMedias(folderId.toString())
       setVideos(
         medias.map((m) => ({
           id: m.id,
