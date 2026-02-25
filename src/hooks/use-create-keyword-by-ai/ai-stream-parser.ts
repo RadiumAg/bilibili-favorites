@@ -1,4 +1,4 @@
-import { DataContextType } from '@/utils/data-context'
+import { Adapter, DataContextType } from '@/utils/data-context'
 import { v4 as uuid } from 'uuid'
 
 export type StreamParserOptions = {
@@ -78,7 +78,7 @@ export class OpenAIStreamAdapter implements AIStreamAdapter {
  * @param adapterType - 适配器类型
  * @returns AI 流解析适配器实例
  */
-export function createStreamAdapter(adapterType: string): AIStreamAdapter {
+export function createStreamAdapter(adapterType: Adapter = 'spark'): AIStreamAdapter {
   switch (adapterType) {
     case 'spark':
       return new SparkStreamAdapter()

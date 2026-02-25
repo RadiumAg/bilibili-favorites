@@ -119,7 +119,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
     })
 
     const reader = (gptResult as any).toReadableStream().getReader()
-    const adapter = createStreamAdapter(aiConfig.adapter || 'spark')
+    const adapter = createStreamAdapter(aiConfig.adapter)
     const parser = createAIStreamParser({
       favKey,
       getGlobalData: () => dataProvideData.getGlobalData(),
