@@ -1,6 +1,6 @@
 import React from 'react'
 import { TabProvide } from './provide'
-import classNames from 'classnames'
+import { cn } from '@/lib/utils'
 import { setSearchParams } from '@/utils/search-params'
 
 type TabProps = React.PropsWithChildren<{
@@ -41,7 +41,7 @@ const Tab: React.FC<TabProps> = (props) => {
   return (
     <div
       onClick={handleClick}
-      className={classNames(
+      className={cn(
         'text-lg',
         'px-2',
         'py-1',

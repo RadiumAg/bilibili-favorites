@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
-import classNames from 'classnames'
+import { cn } from '@/lib/utils'
 
 interface VideoItem {
   id: number
@@ -197,7 +197,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         failCount++
         console.error('Move failed:', error)
       }
-      
+
       // 更新进度
       const progress = ((i + 1) / total) * 100
       setMoveProgress(progress)
@@ -220,13 +220,11 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
   // 过滤视频列表
   const filteredVideos = React.useMemo(() => {
     if (!searchTerm.trim()) return videos
-    return videos.filter(video => 
-      video.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    return videos.filter((video) => video.title.toLowerCase().includes(searchTerm.toLowerCase()))
   }, [videos, searchTerm])
 
   return (
-    <div className={classNames('flex gap-4 h-[700px]', className)}>
+    <div className={cn('flex gap-4 h-[700px]', className)}>
       {/* 左侧：收藏夹列表 */}
       <div className="w-64 flex flex-col border border-[#00AEEC]/20 rounded-xl overflow-hidden shadow-sm bg-white">
         <div className="bg-gradient-to-r from-[#00AEEC] to-[#00AEEC]/80 px-4 py-3 font-medium text-sm text-white flex items-center gap-2">
@@ -242,7 +240,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                 onDragOver={(e) => handleDragOver(e, folder.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, folder.id)}
-                className={classNames(
+                className={cn(
                   'px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm',
                   'border-2',
                   {
@@ -258,7 +256,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                 <div className="flex items-center justify-between">
                   <span className="truncate font-medium">{folder.title}</span>
                   <span
-                    className={classNames('text-xs px-1.5 py-0.5 rounded-full', {
+                    className={cn('text-xs px-1.5 py-0.5 rounded-full', {
                       'bg-white/20': selectedFolderId === folder.id,
                       'bg-[#00AEEC]/10 text-[#00AEEC]': selectedFolderId !== folder.id,
                     })}
@@ -328,9 +326,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
           ) : filteredVideos.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
               <span className="text-4xl">📭</span>
-              <span>
-                {searchTerm ? '未找到匹配的视频' : '该收藏夹暂无视频'}
-              </span>
+              <span>{searchTerm ? '未找到匹配的视频' : '该收藏夹暂无视频'}</span>
             </div>
           ) : (
             <div className="p-3 space-y-2">
@@ -341,7 +337,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                   onClick={(e) => toggleVideoSelection(video.id, e)}
                   onDragStart={(e) => handleDragStart(e, video.id)}
                   onDragEnd={handleDragEnd}
-                  className={classNames(
+                  className={cn(
                     'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-200',
                     'border-2 group',
                     {
@@ -362,7 +358,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                         draggable={false}
                       />
                       <div
-                        className={classNames(
+                        className={cn(
                           'absolute inset-0 rounded-lg transition-opacity duration-200',
                           {
                             'bg-[#00AEEC]/20': selectedVideoIds.has(video.id),
@@ -377,7 +373,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                   {/* 标题 */}
                   <div className="flex-1 min-w-0">
                     <div
-                      className={classNames('text-sm line-clamp-2 font-medium', {
+                      className={cn('text-sm line-clamp-2 font-medium', {
                         'text-[#00AEEC]': selectedVideoIds.has(video.id),
                         'text-gray-700': !selectedVideoIds.has(video.id),
                       })}
@@ -390,7 +386,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                   </div>
                   {/* 选中指示器 */}
                   <div
-                    className={classNames(
+                    className={cn(
                       'w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all duration-200',
                       {
                         'bg-[#00AEEC] text-white shadow-md shadow-[#00AEEC]/30':

@@ -1,5 +1,5 @@
 import React from 'react'
-import classNames from 'classnames'
+import { cn } from '@/lib/utils'
 import TabWrapper from './components/tabs'
 import { FavoriteTag, Keyword } from '@/components'
 import OperateButton from './components/create-keyword/operate-button'
@@ -14,7 +14,7 @@ const Options: React.FC = () => {
 
   return (
     <div
-      className={classNames(
+      className={cn(
         'flex',
         'mt-[5%]',
         'shadow-xl',
