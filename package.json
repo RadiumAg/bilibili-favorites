@@ -13,6 +13,7 @@
   "engines": {
     "node": ">=14.18.0"
   },
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -20,7 +21,8 @@
     "fmt": "prettier --write '**/*.{tsx,ts,json,css,scss,md}'",
     "zip": "npm run build && node src/zip.js",
     "coverage": "vitest run --coverage",
-    "test:browser": "vitest --workspace=vitest.workspace.ts"
+    "test:browser": "vitest --workspace=vitest.workspace.ts",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -53,6 +55,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "@crxjs/vite-plugin": "2.0.0-beta.28",
     "@testing-library/react": "^16.2.0",
     "@types/chrome": "^0.0.287",

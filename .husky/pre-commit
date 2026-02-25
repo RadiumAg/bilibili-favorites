@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# 从 package.json 读取版本号
+VERSION=$(node -p "require('./package.json').version")
+
+if [ -z "$VERSION" ]; then
+    echo "Error: Could not read version from package.json"
+    exit 1
+fi
+
+# 检查 README.md 是否存在
+if [ ! -f "README.md" ]; then
+    echo "Warning: README.md not found, skipping version sync"
+    exit 0
+fi
+
+# 获取 README 中当前的版本号（macOS 兼容）
+CURRENT_README_VERSION=$(grep -o 'version-[0-9]*\.[0-9]*\.[0-9]*' README.md | head -1 | sed 's/version-//')
+
+# 如果版本号不一致，则更新 README
+if [ "$CURRENT_README_VERSION" != "$VERSION" ]; then
+    echo "Syncing README.md version: $CURRENT_README_VERSION -> $VERSION"
+    
+    # 使用 sed 替换版本号（macOS 兼容）
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-$VERSION/g" README.md
+    else
+        # Linux
+        sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-$VERSION/g" README.md
+    fi
+    
+    # 将更新后的 README.md 添加到暂存区
+    git add README.md
+    
+    echo "README.md version updated to $VERSION and staged"
+fi
+
+exit 0
