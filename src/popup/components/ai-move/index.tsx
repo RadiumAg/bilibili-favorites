@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAIMove } from './useAIMove'
+import { useMemoizedFn } from 'ahooks'
 
 const AIMove: React.FC = () => {
   const { toast } = useToast()
   const { handleAIMove, isLoadingElement } = useAIMove()
   const pendingConfirmRef = React.useRef(false)
 
-  const handleClick = React.useCallback(() => {
+  const handleClick = useMemoizedFn(() => {
     if (!pendingConfirmRef.current) {
       pendingConfirmRef.current = true
       toast({
@@ -24,7 +25,7 @@ const AIMove: React.FC = () => {
     }
     pendingConfirmRef.current = false
     handleAIMove()
-  }, [handleAIMove, toast])
+  })
 
   return (
     <div className="flex items-center gap-1">
