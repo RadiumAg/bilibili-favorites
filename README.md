@@ -16,7 +16,9 @@
 
 <p align="center">
   <img src="./readme/product.png" height="200" />
+  <img src="./readme/side-panel.png" height="200" />
   <img src="./readme/ai-config.png" height="200" />
+  <img src="./readme/keyword-manager.png" height="200" />
   <img src="./readme/visualization.png" height="200" />
   <img src="./readme/fav-1.png" height="200" />
   <img src="./readme/fav-2.png" height="200" />
@@ -56,6 +58,17 @@
 - **实时反馈**：移动完成后自动刷新列表，显示操作结果
 
 ![可视化拖拽管理](./readme/visualization.png)
+
+### 📌 侧边栏模式 (SidePanel)
+
+- **持久显示**：在浏览器侧边栏中打开，不会因点击其他地方而消失
+- **边浏览边操作**：可以一边浏览 B 站视频，一边整理收藏夹
+- **更大空间**：比弹窗模式有更大的操作空间
+- **两种打开方式**：
+  - 右键点击扩展图标 → 选择「在侧边栏中打开」
+  - 点击浏览器侧边栏图标 → 选择本扩展
+
+![侧边栏模式](./readme/side-panel.png)
 
 ### ⚙️ 配置管理
 
