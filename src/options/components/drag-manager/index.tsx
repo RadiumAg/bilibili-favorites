@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
 import classNames from 'classnames'
 
 interface VideoItem {
@@ -45,6 +46,9 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
   const [moving, setMoving] = React.useState(false)
   const [dragOverFolderId, setDragOverFolderId] = React.useState<number | null>(null)
   const [initialized, setInitialized] = React.useState(false)
+  const [moveProgress, setMoveProgress] = React.useState(0)
+  const [isDragging, setIsDragging] = React.useState(false)
+  const [searchTerm, setSearchTerm] = React.useState('')
 
   // 默认选中第一个收藏夹
   React.useEffect(() => {
@@ -125,16 +129,23 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
 
     event.dataTransfer.setData('application/json', JSON.stringify(dragIds))
     event.dataTransfer.effectAllowed = 'move'
+    setIsDragging(true)
 
     // 设置拖拽图像提示
     const dragImage = document.createElement('div')
-    dragImage.className = 'bg-b-primary text-white px-3 py-2 rounded shadow-lg'
+    dragImage.className = 'bg-[#00AEEC] text-white px-3 py-2 rounded shadow-lg text-sm font-medium'
     dragImage.textContent = `移动 ${dragIds.length} 个视频`
     dragImage.style.position = 'absolute'
     dragImage.style.top = '-1000px'
     document.body.appendChild(dragImage)
     event.dataTransfer.setDragImage(dragImage, 0, 0)
     setTimeout(() => document.body.removeChild(dragImage), 0)
+  })
+
+  // 拖拽结束
+  const handleDragEnd = useMemoizedFn(() => {
+    setIsDragging(false)
+    setDragOverFolderId(null)
   })
 
   // 拖拽经过收藏夹
@@ -165,10 +176,13 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
     if (videoIds.length === 0) return
 
     setMoving(true)
+    setMoveProgress(0)
     let successCount = 0
     let failCount = 0
 
-    for (const videoId of videoIds) {
+    const total = videoIds.length
+    for (let i = 0; i < total; i++) {
+      const videoId = videoIds[i]
       try {
         await queryAndSendMessage({
           type: MessageEnum.moveVideo,
@@ -183,9 +197,14 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         failCount++
         console.error('Move failed:', error)
       }
+      
+      // 更新进度
+      const progress = ((i + 1) / total) * 100
+      setMoveProgress(progress)
     }
 
     setMoving(false)
+    setMoveProgress(0)
 
     toast({
       title: '移动完成',
@@ -197,6 +216,14 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
       loadVideos(selectedFolderId)
     }
   })
+
+  // 过滤视频列表
+  const filteredVideos = React.useMemo(() => {
+    if (!searchTerm.trim()) return videos
+    return videos.filter(video => 
+      video.title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [videos, searchTerm])
 
   return (
     <div className={classNames('flex gap-4 h-[700px]', className)}>
@@ -253,21 +280,31 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
             <span>视频列表</span>
             {selectedFolderId && (
               <span className="ml-2 text-white/80 text-xs">
-                ({videos.length} 个视频, 已选{' '}
+                ({filteredVideos.length} 个视频, 已选{' '}
                 <span className="text-white font-bold">{selectedVideoIds.size}</span> 个)
               </span>
             )}
           </div>
-          {videos.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={toggleSelectAll}
-              className="h-7 text-xs bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
-            >
-              {selectedVideoIds.size === videos.length ? '取消全选' : '全选'}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {/* 搜索框 */}
+            <input
+              type="text"
+              placeholder="搜索视频标题..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-7 px-2 text-xs rounded border border-white/30 bg-white/10 text-white placeholder-white/60 focus:outline-none focus:ring-1 focus:ring-white"
+            />
+            {videos.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={toggleSelectAll}
+                className="h-7 text-xs bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+              >
+                {selectedVideoIds.size === videos.length ? '取消全选' : '全选'}
+              </Button>
+            )}
+          </div>
         </div>
 
         <ScrollArea className="flex-1 scrollbar-thin">
@@ -288,19 +325,22 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                 </div>
               ))}
             </div>
-          ) : videos.length === 0 ? (
+          ) : filteredVideos.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
               <span className="text-4xl">📭</span>
-              <span>该收藏夹暂无视频</span>
+              <span>
+                {searchTerm ? '未找到匹配的视频' : '该收藏夹暂无视频'}
+              </span>
             </div>
           ) : (
             <div className="p-3 space-y-2">
-              {videos.map((video) => (
+              {filteredVideos.map((video) => (
                 <div
                   key={video.id}
                   draggable
                   onClick={(e) => toggleVideoSelection(video.id, e)}
                   onDragStart={(e) => handleDragStart(e, video.id)}
+                  onDragEnd={handleDragEnd}
                   className={classNames(
                     'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-200',
                     'border-2 group',
@@ -379,9 +419,9 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         {/* 移动中遮罩 */}
         {moving && (
           <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10">
-            <div className="text-center">
-              <div className="animate-spin w-10 h-10 border-4 border-[#00AEEC] border-t-transparent rounded-full mx-auto mb-3" />
-              <div className="text-sm text-[#00AEEC] font-medium">正在移动视频...</div>
+            <div className="text-center w-full max-w-xs">
+              <div className="text-sm text-[#00AEEC] font-medium mb-2">正在移动视频...</div>
+              <Progress value={moveProgress} className="w-full h-2" />
             </div>
           </div>
         )}
