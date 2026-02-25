@@ -13,7 +13,7 @@ const Move: React.FC = () => {
         size="sm"
         className="bg-b-primary hover:bg-b-primary hover:bg-opacity-50 p-1 h-6"
       >
-        关键字整理
+        通过关键字整理
         <Popover>
           <PopoverTrigger asChild>
             <button

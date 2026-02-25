@@ -1,9 +1,10 @@
-import { FC, useEffect, useState, useCallback } from 'react'
+import { FC, useEffect, useState, useImperativeHandle, RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useTourist } from './use-tourist'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { useMemoizedFn } from 'ahooks'
 
 type TourStep = {
   target: string
@@ -47,9 +48,26 @@ interface TargetRect {
   height: number
 }
 
-const Tourist: FC = () => {
-  const { isVisible, currentStep, totalSteps, nextStep, prevStep, skipTourist, completeTourist } =
-    useTourist()
+type TouristRef = {
+  resetTourist: () => void
+}
+
+interface TouristProps {
+  ref?: RefObject<TouristRef | null>
+}
+
+const Tourist: FC<TouristProps> = (props) => {
+  const { ref } = props
+  const {
+    isVisible,
+    currentStep,
+    totalSteps,
+    resetTourist,
+    nextStep,
+    prevStep,
+    skipTourist,
+    completeTourist,
+  } = useTourist()
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null)
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 })
 
@@ -57,7 +75,7 @@ const Tourist: FC = () => {
   const isLastStep = currentStep === totalSteps - 1
   const isFirstStep = currentStep === 0
 
-  const updatePosition = useCallback(() => {
+  const updatePosition = useMemoizedFn(() => {
     if (!currentStepData) return
 
     const targetElement = document.querySelector(currentStepData.target)
@@ -106,7 +124,7 @@ const Tourist: FC = () => {
     top = Math.max(8, Math.min(top, window.innerHeight - popoverHeight - 8))
 
     setPopoverPosition({ top, left })
-  }, [currentStepData])
+  })
 
   useEffect(() => {
     if (!isVisible) return
@@ -120,6 +138,12 @@ const Tourist: FC = () => {
       window.removeEventListener('resize', handleResize)
     }
   }, [isVisible, currentStep, updatePosition])
+
+  useImperativeHandle(ref, () => {
+    return {
+      resetTourist,
+    }
+  })
 
   if (!isVisible || !currentStepData) {
     return null
@@ -247,3 +271,5 @@ const Tourist: FC = () => {
 }
 
 export default Tourist
+export { useTourist } from './use-tourist'
+export type { TouristRef }
