@@ -8,6 +8,7 @@ import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { fetchAllFavoriteMedias, queryAndSendMessage } from '@/utils/tab'
 import { Button } from '@/components/ui/button'
+import { useToast } from '../use-toast'
 
 const useMove = () => {
   const dataContext = useGlobalConfig(
@@ -17,6 +18,7 @@ const useMove = () => {
       defaultFavoriteId: state.defaultFavoriteId,
     })),
   )
+  const { toast } = useToast()
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [isCancelled, setIsCancelled] = React.useState(false)
@@ -99,19 +101,32 @@ const useMove = () => {
       pn++
       return run()
     }
-    const start = Date.now()
-    const completed = await run()
 
-    if (cancelRef.current) {
+    try {
+      const start = Date.now()
+      const completed = await run()
+
+      if (cancelRef.current) {
+        setIsLoading(false)
+        return
+      }
+
+      if (completed && Date.now() - start < 1000) {
+        await sleep(1000)
+        setIsFinished(true)
+      } else {
+        setIsFinished(true)
+      }
+    } catch (e) {
+      if (e instanceof Error) {
+        toast({
+          variant: 'destructive',
+          title: '操作失败',
+          description: e.message,
+        })
+      }
+      setIsFinished(true)
       setIsLoading(false)
-      return
-    }
-
-    if (completed && Date.now() - start < 1000) {
-      await sleep(1000)
-      setIsFinished(true)
-    } else {
-      setIsFinished(true)
     }
   }
 

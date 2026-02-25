@@ -201,11 +201,9 @@ const useAIMove = () => {
 
     try {
       // 获取默认收藏夹的所有视频（自动分页）
-      const videos = await fetchAllFavoriteMedias<{ id: number; title: string }>(
-        dataContext.defaultFavoriteId.toString(),
-      )
+      const videos = await fetchAllFavoriteMedias(dataContext.defaultFavoriteId.toString())
 
-      if (videos.length === 0) {
+      if (videos?.length === 0) {
         toast({
           title: '暂无数据',
           description: '默认收藏夹中没有视频需要整理',
