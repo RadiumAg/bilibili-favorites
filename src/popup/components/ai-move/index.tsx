@@ -73,7 +73,7 @@ const useAIMove = () => {
         // 使用流适配器从每个 chunk 中提取纯内容文本
         let fullContent = ''
         const reader = stream.toReadableStream().getReader()
-        const adapter = createStreamAdapter('spark')
+        const adapter = createStreamAdapter(dataContext.aiConfig.model!)
 
         while (true) {
           // 检查是否已取消
