@@ -1,3 +1,6 @@
+import { FavoriteMedia, GetFavoriteListRes } from './api'
+import { MessageEnum } from './message'
+
 // 用于 manifest.ts 中的 content_scripts.matches
 export const bilibiliUrlPatterns = [
   'https://*.bilibili.com/*',
@@ -87,21 +90,17 @@ export const queryAndSendMessage = <T = any>(message: any, timeout: number = 100
  * @param pageSize 每页数量，默认 40（B 站最大值）
  * @returns 该收藏夹下的全部视频
  */
-export const fetchAllFavoriteMedias = async <T extends { id: number; title: string }>(
+export const fetchAllFavoriteMedias = async (
   mediaId: string,
   pageSize = 40,
-): Promise<T[]> => {
-  const allMedias: T[] = []
+): Promise<FavoriteMedia[]> => {
+  const allMedias: FavoriteMedia[] = []
   let currentPage = 1
   let hasMore = true
 
   while (hasMore) {
-    const response = await queryAndSendMessage<{
-      code: number
-      message: string
-      data: { medias: T[] | null; has_more: boolean }
-    }>({
-      type: 'getFavoriteList',
+    const response = await queryAndSendMessage<GetFavoriteListRes>({
+      type: MessageEnum.getFavoriteList,
       data: { mediaId, pn: currentPage, ps: pageSize },
     })
 

@@ -10,8 +10,7 @@ import {
   createStreamAdapter,
 } from '../use-create-keyword-by-ai/ai-stream-parser'
 import { useMemoizedFn } from 'ahooks'
-import { queryAndSendMessage } from '@/utils/tab'
-import { MessageEnum } from '@/utils/message'
+import { fetchAllFavoriteMedias } from '@/utils/tab'
 
 export type ExtractionMode = 'local' | 'ai' | 'manual'
 
@@ -42,15 +41,8 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
    * 使用本地算法提取关键词
    */
   const extractWithLocal = useMemoizedFn(async (favKey: string) => {
-    const allDefaultFavoriteVideo = await queryAndSendMessage<GetFavoriteListRes>({
-      type: MessageEnum.getFavoriteList,
-      data: {
-        mediaId: favKey,
-        pn: 1,
-        ps: 36,
-      },
-    })
-    const titleArray = allDefaultFavoriteVideo.data?.medias?.map((item) => item.title)
+    const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey)
+    const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
 
     if (titleArray == null || titleArray.length === 0) {
       throw new Error('没有找到视频标题')
@@ -97,15 +89,8 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       }
     }
 
-    const allDefaultFavoriteVideo = await queryAndSendMessage<GetFavoriteListRes>({
-      type: MessageEnum.getFavoriteList,
-      data: {
-        mediaId: favKey,
-        pn: 1,
-        ps: 36,
-      },
-    })
-    const titleArray = allDefaultFavoriteVideo.data?.medias?.map((item) => item.title)
+    const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey)
+    const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
 
     if (titleArray == null || titleArray.length === 0) {
       throw new Error('没有找到视频标题')

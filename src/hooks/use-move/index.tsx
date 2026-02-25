@@ -7,7 +7,7 @@ import Finished from '@/components/finished-animate'
 import { cn } from '@/lib/utils'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
-import { queryAndSendMessage } from '@/utils/tab'
+import { fetchAllFavoriteMedias, queryAndSendMessage } from '@/utils/tab'
 import { Button } from '@/components/ui/button'
 
 const useMove = () => {
@@ -63,16 +63,10 @@ const useMove = () => {
       if (cancelRef.current) return false
       if (dataContext.defaultFavoriteId == null) return false
 
-      const result = await queryAndSendMessage<ReturnType<typeof getFavoriteList>>({
-        type: MessageEnum.getFavoriteList,
-        data: {
-          mediaId: dataContext.defaultFavoriteId?.toString(),
-          pn,
-          ps: 36,
-        },
-      })
+      const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(
+        dataContext.defaultFavoriteId?.toString(),
+      )
 
-      const allDefaultFavoriteVideo = result.data?.medias
       if (allDefaultFavoriteVideo == null) return false
 
       for (const keywordInfo of dataContext.keyword.filter(
