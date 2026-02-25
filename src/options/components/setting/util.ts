@@ -18,6 +18,7 @@ const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode 
 const defaultExtraParams: Record<Adapter, Record<string, any>> = {
   spark: { thinking: { type: 'disabled' } },
   openai: {},
+  custom: {},
 }
 
 export type { Adapter }
