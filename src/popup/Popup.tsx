@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Move, LoginCheck, AutoCreateKeyword, AIMove, DragManagerButton } from './components'
 import { Toaster } from '@/components/ui/toaster'
 import { Settings } from 'lucide-react'
+import Tourist from './components/tourist'
 
 const Popup: FC = () => {
   const handleOpenSettings = () => {
@@ -26,13 +27,17 @@ const Popup: FC = () => {
           </Button>
         </h3>
 
-        <FavoriteTag className="h-[200px]" />
+        <div data-tour="favorites">
+          <FavoriteTag className="h-[200px]" />
+        </div>
 
         <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
-        <Keyword />
+        <div data-tour="keywords">
+          <Keyword />
+        </div>
       </div>
 
-      <div className="flex items-center mt-2 gap-1 w-full flex-wrap">
+      <div className="flex items-center mt-2 gap-1 w-full flex-wrap" data-tour="actions">
         <Move />
         <AutoCreateKeyword />
         <AIMove />
@@ -41,6 +46,7 @@ const Popup: FC = () => {
 
       <LoginCheck />
       <Toaster />
+      <Tourist />
     </main>
   )
 }
