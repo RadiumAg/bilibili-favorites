@@ -39,7 +39,7 @@ const Popup: FC<PopupProps> = (props) => {
         </h3>
 
         <div data-tour="favorites">
-          <FavoriteTag className={isSidePanel ? 'h-[300px]' : 'h-[200px]'} />
+          <FavoriteTag className={isSidePanel ? 'max-h-[300px]' : 'h-[200px]'} />
         </div>
 
         <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
