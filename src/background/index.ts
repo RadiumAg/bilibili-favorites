@@ -1,13 +1,6 @@
 import OpenAI from 'openai'
 import { MessageEnum } from '@/utils/message'
 
-// 点击扩展图标时打开 SidePanel
-chrome.action.onClicked.addListener((tab) => {
-  if (tab.id) {
-    chrome.sidePanel.open({ tabId: tab.id })
-  }
-})
-
 /**
  * 通过 port 流式发送 AI 请求结果
  */
