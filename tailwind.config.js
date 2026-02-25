@@ -52,8 +52,13 @@ export default {
           4: 'hsl(var(--chart-4))',
           5: 'hsl(var(--chart-5))',
         },
-        ['b-primary']: '#00AEEC',
-        ['b-text-primary']: '#18191C',
+        ['b-primary']: '#BF00FF',
+        ['b-primary-hover']: '#A000D9',
+        ['b-secondary']: '#FF1493',
+        ['b-accent']: '#00FFFF',
+        ['b-warning']: '#FFAA00',
+        ['b-neon']: '#39FF14',
+        ['b-text-primary']: '#2D1B4E',
       },
     },
   },
@@ -70,27 +75,27 @@ export default {
         },
         '.scrollbar-styled': {
           'scrollbar-width': 'thin',
-          'scrollbar-color': '#00AEEC #f1f1f1',
+          'scrollbar-color': '#BF00FF #f8f0ff',
           '&::-webkit-scrollbar': {
             width: '8px',
             height: '8px',
           },
           '&::-webkit-scrollbar-track': {
-            background: '#f1f1f1',
+            background: '#f8f0ff',
             'border-radius': '4px',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: '#00AEEC',
+            background: 'linear-gradient(180deg, #BF00FF 0%, #FF1493 100%)',
             'border-radius': '4px',
             transition: 'background 0.2s ease',
           },
           '&::-webkit-scrollbar-thumb:hover': {
-            background: '#0095cc',
+            background: 'linear-gradient(180deg, #A000D9 0%, #E01280 100%)',
           },
         },
         '.scrollbar-thin': {
           'scrollbar-width': 'thin',
-          'scrollbar-color': '#00AEEC transparent',
+          'scrollbar-color': '#BF00FF transparent',
           '&::-webkit-scrollbar': {
             width: '4px',
             height: '4px',
@@ -99,11 +104,11 @@ export default {
             background: 'transparent',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: '#00AEEC',
+            background: '#BF00FF',
             'border-radius': '2px',
           },
           '&::-webkit-scrollbar-thumb:hover': {
-            background: '#0095cc',
+            background: '#A000D9',
           },
         },
       })

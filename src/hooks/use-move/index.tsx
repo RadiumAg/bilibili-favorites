@@ -4,7 +4,7 @@ import { sleep } from '@/utils/promise'
 import { MessageEnum } from '@/utils/message'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
-import classNames from 'classnames'
+import { cn } from '@/lib/utils'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
@@ -124,7 +124,7 @@ const useMove = () => {
 
   const isLoadingElement = (
     <div
-      className={classNames(
+      className={cn(
         'fixed flex flex-col w-full h-full bg-white top-0 left-0 bg-opacity-70 items-center justify-center',
         { hidden: !isLoading },
       )}
@@ -140,7 +140,7 @@ const useMove = () => {
         }}
       />
 
-      <img alt="loading-gif" src={loadingGif} className={classNames({ ['hidden']: isFinished })} />
+      <img alt="loading-gif" src={loadingGif} className={cn({ ['hidden']: isFinished })} />
 
       {!isFinished && (
         <Button onClick={handleCancel} disabled={isCancelled}>

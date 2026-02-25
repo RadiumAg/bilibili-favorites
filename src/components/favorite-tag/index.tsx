@@ -1,5 +1,5 @@
 import React from 'react'
-import classNames from 'classnames'
+import { cn } from '@/lib/utils'
 import { useSetDefaultFav, useFavoriteData } from '@/hooks'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useGlobalConfig } from '@/store/global-data'
@@ -39,7 +39,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
             if (event.button === 0) handleMouseDown(data.id)
           }}
           onMouseUp={handleMouseUp}
-          className={classNames(
+          className={cn(
             'whitespace-nowrap rounded p-1 text-sm flex items-center gap-x-1 relative overflow-hidden border-[1px] border-solid border-black',
             {
               ['bg-b-primary text-white']: globalConfig.activeKey === data.id,
@@ -61,11 +61,11 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   ])
 
   if (loading && favoriteData.length === 0) {
-    return <Skeleton className={classNames('w-full', className)} />
+    return <Skeleton className={cn('w-full', className)} />
   }
 
   return (
-    <ScrollArea className={classNames(className)}>
+    <ScrollArea className={cn(className)}>
       <div ref={domRef} className="flex gap-1 flex-wrap cursor-pointer">
         {tagElementArray}
       </div>

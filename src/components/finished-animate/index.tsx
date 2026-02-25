@@ -4,7 +4,7 @@ import img2 from '@/assets/finish-img/2.png'
 import img3 from '@/assets/finish-img/3.png'
 import img4 from '@/assets/finish-img/4.png'
 import img5 from '@/assets/finish-img/5.png'
-import classNames from 'classnames'
+import { cn } from '@/lib/utils'
 import { useSleep } from '@/hooks'
 
 type FinishedProps = {
@@ -106,7 +106,7 @@ const Finished: React.FC<FinishedProps> = (props) => {
   }, [start])
 
   return (
-    <div className={classNames('mt-[-10px]', { ['hidden']: start === false })}>
+    <div className={cn('mt-[-10px]', { ['hidden']: start === false })}>
       <canvas width={width} height={height} ref={canvasRef}></canvas>
       {title && <div className="text-b-primary text-sm text-center mt-1">{title}</div>}
     </div>

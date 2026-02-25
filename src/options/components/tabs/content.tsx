@@ -1,4 +1,4 @@
-import classNames from 'classnames'
+import { cn } from '@/lib/utils'
 import React from 'react'
 import { TabProvide } from './provide'
 
@@ -15,7 +15,7 @@ const Content: React.FC<ContentProps> = (props) => {
 
   return (
     <div
-      className={classNames('flex-grow h-full')}
+      className={cn('flex-grow h-full')}
       style={{ display: keyValue === provideData.activeKey ? 'block' : 'none' }}
     >
       {children}
