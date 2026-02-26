@@ -1,0 +1,671 @@
+---
+description: 
+alwaysApply: false
+enabled: true
+updatedAt: 2025-11-20T14:41:42.739Z
+provider: 
+---
+
+# 收藏夹数据分析功能设计规范
+
+## 功能概述
+
+收藏夹数据分析TAB为用户提供全面的收藏夹数据洞察，包括统计信息、趋势分析、智能分类等功能。该功能充分利用ECharts进行数据可视化，结合OpenAI API提供智能分析。
+
+## 核心功能模块
+
+### 1. 数据概览模块
+
+#### 统计卡片组件
+```typescript
+// components/analysis/StatsCards.tsx
+interface StatsCardProps {
+  title: string
+  value: number | string
+  icon: React.ReactNode
+  trend?: {
+    value: number
+    isPositive: boolean
+  }
+  loading?: boolean
+}
+
+export const StatsCards: React.FC = () => {
+  const { data: stats, loading } = useQuery('favorite-stats', getFavoriteStats)
+  
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatsCard
+        title="总收藏夹数量"
+        value={stats?.totalFolders || 0}
+        icon={<FolderIcon />}
+        trend={{
+          value: stats?.folderGrowth || 0,
+          isPositive: true
+        }}
+      />
+      <StatsCard
+        title="总视频数量"
+        value={stats?.totalVideos || 0}
+        icon={<VideoIcon />}
+        trend={{
+          value: stats?.videoGrowth || 0,
+          isPositive: true
+        }}
+      />
+      <StatsCard
+        title="最近收藏"
+        value={stats?.recentCount || 0}
+        icon={<ClockIcon />}
+        subtitle="最近7天"
+      />
+      <StatsCard
+        title="最活跃收藏夹"
+        value={stats?.mostActiveFolder?.name || '-'}
+        icon={<TrendingUpIcon />}
+        subtitle={`${stats?.mostActiveFolder?.count || 0} 个视频`}
+      />
+    </div>
+  )
+}
+```
+
+### 2. 收藏分布分析
+
+#### 饼图组件
+```typescript
+// components/analysis/DistributionChart.tsx
+import { useEffect, useRef } from 'react'
+import * as echarts from 'echarts'
+
+interface DistributionData {
+  name: string
+  value: number
+  percentage?: number
+}
+
+export const DistributionChart: React.FC<{
+  data: DistributionData[]
+  title: string
+  type?: 'pie' | 'doughnut'
+}> = ({ data, title, type = 'pie' }) => {
+  const chartRef = useRef<HTMLDivElement>(null)
+  const chartInstance = useRef<echarts.ECharts>()
+  
+  useEffect(() => {
+    if (!chartRef.current) return
+    
+    // 初始化图表
+    chartInstance.current = echarts.init(chartRef.current)
+    
+    // 配置选项
+    const option = {
+      title: {
+        text: title,
+        left: 'center'
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+      },
+      legend: {
+        orient: 'vertical',
+        left: 'left'
+      },
+      series: [{
+        name: title,
+        type: 'pie',
+        radius: type === 'doughnut' ? ['40%', '70%'] : '70%',
+        data: data.map(item => ({
+          name: item.name,
+          value: item.value
+        })),
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }]
+    }
+    
+    chartInstance.current.setOption(option)
+    
+    // 响应式处理
+    const handleResize = () => {
+      chartInstance.current?.resize()
+    }
+    
+    window.addEventListener('resize', handleResize)
+    
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      chartInstance.current?.dispose()
+    }
+  }, [data, title, type])
+  
+  return <div ref={chartRef} className="w-full h-96" />
+}
+```
+
+#### 柱状图组件
+```typescript
+// components/analysis/BarChart.tsx
+export const BarChart: React.FC<{
+  data: Array<{ name: string; value: number }>
+  title: string
+  horizontal?: boolean
+}> = ({ data, title, horizontal = false }) => {
+  const chartRef = useRef<HTMLDivElement>(null)
+  const chartInstance = useRef<echarts.ECharts>()
+  
+  useEffect(() => {
+    if (!chartRef.current) return
+    
+    chartInstance.current = echarts.init(chartRef.current)
+    
+    const option = {
+      title: {
+        text: title,
+        left: 'center'
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: horizontal ? 'value' : 'category',
+        data: horizontal ? undefined : data.map(item => item.name)
+      },
+      yAxis: {
+        type: horizontal ? 'category' : 'value',
+        data: horizontal ? data.map(item => item.name) : undefined
+      },
+      series: [{
+        type: 'bar',
+        data: data.map(item => item.value),
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#83bff6' },
+            { offset: 0.5, color: '#188df0' },
+            { offset: 1, color: '#188df0' }
+          ])
+        }
+      }]
+    }
+    
+    chartInstance.current.setOption(option)
+    
+    return () => {
+      chartInstance.current?.dispose()
+    }
+  }, [data, title, horizontal])
+  
+  return <div ref={chartRef} className="w-full h-96" />
+}
+```
+
+### 3. 时间趋势分析
+
+#### 趋势图组件
+```typescript
+// components/analysis/TrendChart.tsx
+interface TrendData {
+  date: string
+  count: number
+  cumulative?: number
+}
+
+export const TrendChart: React.FC<{
+  data: TrendData[]
+  title: string
+  showCumulative?: boolean
+}> = ({ data, title, showCumulative = false }) => {
+  const chartRef = useRef<HTMLDivElement>(null)
+  const chartInstance = useRef<echarts.ECharts>()
+  
+  useEffect(() => {
+    if (!chartRef.current) return
+    
+    chartInstance.current = echarts.init(chartRef.current)
+    
+    const series: any[] = [{
+      name: '每日收藏',
+      type: 'line',
+      data: data.map(item => item.count),
+      smooth: true,
+      areaStyle: {
+        opacity: 0.3
+      }
+    }]
+    
+    if (showCumulative) {
+      series.push({
+        name: '累计收藏',
+        type: 'line',
+        data: data.map(item => item.cumulative || 0),
+        smooth: true
+      })
+    }
+    
+    const option = {
+      title: {
+        text: title,
+        left: 'center'
+      },
+      tooltip: {
+        trigger: 'axis'
+      },
+      legend: {
+        data: series.map(s => s.name),
+        bottom: 0
+      },
+      xAxis: {
+        type: 'category',
+        data: data.map(item => item.date)
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series
+    }
+    
+    chartInstance.current.setOption(option)
+    
+    return () => {
+      chartInstance.current?.dispose()
+    }
+  }, [data, title, showCumulative])
+  
+  return <div ref={chartRef} className="w-full h-96" />
+}
+```
+
+### 4. 智能分析功能
+
+#### AI关键词提取
+```typescript
+// hooks/useKeywordExtraction.ts
+export const useKeywordExtraction = () => {
+  const [isExtracting, setIsExtracting] = useState(false)
+  
+  const extractKeywords = async (videoTitles: string[]): Promise<KeywordResult[]> => {
+    setIsExtracting(true)
+    
+    try {
+      const prompt = `
+        请分析以下B站视频标题，提取关键词并进行分类：
+        
+        ${videoTitles.slice(0, 50).join('\n')}
+        
+        请按以下JSON格式返回结果：
+        {
+          "keywords": [
+            {
+              "word": "关键词",
+              "count": 出现次数,
+              "category": "分类（如：教程、娱乐、游戏等）",
+              "sentiment": "情感倾向（正面/中性/负面）"
+            }
+          ],
+          "summary": "整体内容总结"
+        }
+      `
+      
+      const result = await MessageSender.sendToBackground(
+        MessageType.EXTRACT_KEYWORDS,
+        { titles: videoTitles }
+      )
+      
+      return JSON.parse(result)
+    } catch (error) {
+      console.error('关键词提取失败:', error)
+      throw error
+    } finally {
+      setIsExtracting(false)
+    }
+  }
+  
+  return { extractKeywords, isExtracting }
+}
+```
+
+#### 词云图组件
+```typescript
+// components/analysis/WordCloud.tsx
+export const WordCloud: React.FC<{
+  keywords: Array<{ word: string; count: number; category?: string }>
+  title: string
+}> = ({ keywords, title }) => {
+  const chartRef = useRef<HTMLDivElement>(null)
+  const chartInstance = useRef<echarts.ECharts>()
+  
+  useEffect(() => {
+    if (!chartRef.current || keywords.length === 0) return
+    
+    chartInstance.current = echarts.init(chartRef.current)
+    
+    // 计算字体大小范围
+    const maxCount = Math.max(...keywords.map(k => k.count))
+    const minCount = Math.min(...keywords.map(k => k.count))
+    
+    const data = keywords.map(keyword => ({
+      name: keyword.word,
+      value: keyword.count,
+      textStyle: {
+        fontSize: Math.max(12, (keyword.count / maxCount) * 60),
+        color: getCategoryColor(keyword.category)
+      }
+    }))
+    
+    const option = {
+      title: {
+        text: title,
+        left: 'center'
+      },
+      tooltip: {
+        show: true,
+        formatter: '{b}: {c}'
+      },
+      series: [{
+        type: 'wordCloud',
+        shape: 'circle',
+        sizeRange: [12, 60],
+        rotationRange: [-90, 90],
+        rotationStep: 45,
+        gridSize: 8,
+        drawOutOfBound: false,
+        data
+      }]
+    }
+    
+    chartInstance.current.setOption(option)
+    
+    return () => {
+      chartInstance.current?.dispose()
+    }
+  }, [keywords, title])
+  
+  return <div ref={chartRef} className="w-full h-96" />
+}
+
+const getCategoryColor = (category?: string): string => {
+  const colors: Record<string, string> = {
+    '教程': '#1890ff',
+    '娱乐': '#52c41a',
+    '游戏': '#fa8c16',
+    '科技': '#722ed1',
+    '生活': '#eb2f96'
+  }
+  return colors[category || ''] || '#666'
+}
+```
+
+### 5. 数据筛选和导出
+
+#### 筛选器组件
+```typescript
+// components/analysis/FilterPanel.tsx
+interface FilterOptions {
+  dateRange: [Date, Date]
+  folders: string[]
+  categories: string[]
+  minDuration?: number
+  maxDuration?: number
+}
+
+export const FilterPanel: React.FC<{
+  filters: FilterOptions
+  onFiltersChange: (filters: FilterOptions) => void
+  folders: FavoriteFolder[]
+}> = ({ filters, onFiltersChange, folders }) => {
+  const [dateRange, setDateRange] = useState<[Date, Date]>(filters.dateRange)
+  const [selectedFolders, setSelectedFolders] = useState<string[]>(filters.folders)
+  
+  const handleApplyFilters = () => {
+    onFiltersChange({
+      ...filters,
+      dateRange,
+      folders: selectedFolders
+    })
+  }
+  
+  return (
+    <div className="bg-white p-4 rounded-lg shadow">
+      <h3 className="text-lg font-semibold mb-4">数据筛选</h3>
+      
+      {/* 时间范围选择 */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">时间范围</label>
+        <DatePicker
+          selectsRange={true}
+          startDate={dateRange[0]}
+          endDate={dateRange[1]}
+          onChange={(dates) => setDateRange(dates as [Date, Date])}
+        />
+      </div>
+      
+      {/* 收藏夹选择 */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">收藏夹</label>
+        <Select
+          mode="multiple"
+          value={selectedFolders}
+          onChange={setSelectedFolders}
+          placeholder="选择收藏夹"
+        >
+          {folders.map(folder => (
+            <Select.Option key={folder.id} value={folder.id}>
+              {folder.name} ({folder.media_count})
+            </Select.Option>
+          ))}
+        </Select>
+      </div>
+      
+      {/* 操作按钮 */}
+      <div className="flex space-x-2">
+        <Button onClick={handleApplyFilters} type="primary">
+          应用筛选
+        </Button>
+        <Button onClick={() => {
+          // 重置筛选条件
+          setDateRange([new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), new Date()])
+          setSelectedFolders([])
+        }}>
+          重置
+        </Button>
+      </div>
+    </div>
+  )
+}
+```
+
+#### 导出功能
+```typescript
+// hooks/useDataExport.ts
+export const useDataExport = () => {
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) return
+    
+    const headers = Object.keys(data[0])
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => headers.map(header => row[header]).join(','))
+    ].join('\n')
+    
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    
+    link.setAttribute('href', url)
+    link.setAttribute('download', `${filename}.csv`)
+    link.style.visibility = 'hidden'
+    
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+  
+  const exportChartAsImage = async (chartElement: HTMLElement, filename: string) => {
+    try {
+      const canvas = await html2canvas(chartElement)
+      const link = document.createElement('a')
+      
+      link.download = `${filename}.png`
+      link.href = canvas.toDataURL()
+      link.click()
+    } catch (error) {
+      console.error('导出图表失败:', error)
+    }
+  }
+  
+  const generateReport = async (analysisData: AnalysisData) => {
+    const reportData = {
+      generatedAt: new Date().toISOString(),
+      summary: analysisData.summary,
+      charts: analysisData.charts,
+      tables: analysisData.tables
+    }
+    
+    // 生成PDF报告（可使用jsPDF等库）
+    return reportData
+  }
+  
+  return {
+    exportToCSV,
+    exportChartAsImage,
+    generateReport
+  }
+}
+```
+
+## 性能优化策略
+
+### 数据分页和虚拟化
+```typescript
+// hooks/useVirtualizedData.ts
+export const useVirtualizedData = <T>(
+  data: T[],
+  itemHeight: number,
+  containerHeight: number
+) => {
+  const [scrollTop, setScrollTop] = useState(0)
+  
+  const visibleCount = Math.ceil(containerHeight / itemHeight)
+  const startIndex = Math.floor(scrollTop / itemHeight)
+  const endIndex = Math.min(startIndex + visibleCount, data.length)
+  
+  const visibleData = useMemo(() => {
+    return data.slice(startIndex, endIndex)
+  }, [data, startIndex, endIndex])
+  
+  const offsetY = startIndex * itemHeight
+  
+  return {
+    visibleData,
+    offsetY,
+    totalHeight: data.length * itemHeight,
+    onScroll: (e: React.UIEvent) => setScrollTop(e.currentTarget.scrollTop)
+  }
+}
+```
+
+### 图表懒加载
+```typescript
+// components/analysis/LazyChart.tsx
+export const LazyChart: React.FC<{
+  children: React.ReactNode
+  placeholder?: React.ReactNode
+}> = ({ children, placeholder }) => {
+  const [isVisible, setIsVisible] = useState(false)
+  const chartRef = useRef<HTMLDivElement>(null)
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 }
+    )
+    
+    if (chartRef.current) {
+      observer.observe(chartRef.current)
+    }
+    
+    return () => observer.disconnect()
+  }, [])
+  
+  return (
+    <div ref={chartRef} className="w-full h-96">
+      {isVisible ? children : (placeholder || <div className="flex items-center justify-center h-full">加载中...</div>)}
+    </div>
+  )
+}
+```
+
+## 测试策略
+
+### 图表测试
+```typescript
+// tests/components/DistributionChart.test.tsx
+describe('DistributionChart', () => {
+  it('should render pie chart with data', () => {
+    const mockData = [
+      { name: '收藏夹A', value: 10 },
+      { name: '收藏夹B', value: 20 }
+    ]
+    
+    render(<DistributionChart data={mockData} title="测试图表" />)
+    
+    expect(screen.getByText('测试图表')).toBeInTheDocument()
+  })
+  
+  it('should handle empty data gracefully', () => {
+    render(<DistributionChart data={[]} title="空数据图表" />)
+    
+    expect(screen.getByText('空数据图表')).toBeInTheDocument()
+  })
+})
+```
+
+### 数据处理测试
+```typescript
+// tests/hooks/useKeywordExtraction.test.ts
+describe('useKeywordExtraction', () => {
+  it('should extract keywords from video titles', async () => {
+    const mockTitles = [
+      'React教程：入门到精通',
+      'Vue.js实战项目开发',
+      'JavaScript高级编程技巧'
+    ]
+    
+    const mockResult = {
+      keywords: [
+        { word: 'React', count: 1, category: '教程' },
+        { word: 'Vue', count: 1, category: '教程' },
+        { word: 'JavaScript', count: 1, category: '教程' }
+      ],
+      summary: '主要包含前端技术教程'
+    }
+    
+    jest.spyOn(MessageSender, 'sendToBackground').mockResolvedValue(JSON.stringify(mockResult))
+    
+    const { result } = renderHook(() => useKeywordExtraction())
+    const keywords = await result.current.extractKeywords(mockTitles)
+    
+    expect(keywords).toEqual(mockResult.keywords)
+  })
+})
+```
