@@ -75,7 +75,8 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       // 遍历所有收藏夹，分页获取全部媒体数据
       for (const folder of favoriteData) {
         try {
-          const medias = await fetchAllFavoriteMedias(folder.id.toString())
+          // 立马过期，重新请求
+          const medias = await fetchAllFavoriteMedias(folder.id.toString(), undefined, 0)
           allMedias.push(...medias)
         } catch (error) {
           console.error(`Failed to fetch medias for folder ${folder.id}:`, error)
