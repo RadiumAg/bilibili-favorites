@@ -166,6 +166,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
   // 当 port 断开时，取消正在进行的请求
   port.onDisconnect.addListener(() => {
+    console.log('cancel')
     if (currentAbortController) {
       currentAbortController.abort()
       currentAbortController = null

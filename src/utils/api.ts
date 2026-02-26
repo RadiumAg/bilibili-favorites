@@ -179,6 +179,11 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
   const port = chrome.runtime.connect({ name: 'ai-stream' })
   const encoder = new TextEncoder()
   let isCancelled = false
+  const cancel = () => {
+    isCancelled = true
+    port.postMessage({ type: 'cancel' })
+    port.disconnect()
+  }
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -215,15 +220,12 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
       // 发送请求消息
       port.postMessage(message)
     },
+    cancel,
   })
 
   return {
     toReadableStream: () => stream,
-    cancel: () => {
-      isCancelled = true
-      port.postMessage({ type: 'cancel' })
-      port.disconnect()
-    },
+    cancel,
   }
 }
 
