@@ -2,7 +2,7 @@
 
 # B站收藏夹整理工具
 
-[![Version](https://img.shields.io/badge/version-1.1.4-blue.svg)](https://github.com/your-repo/bilibili-favorite)
+[![Version](https://img.shields.io/badge/version-1.1.5-blue.svg)](https://github.com/your-repo/bilibili-favorite)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/b%E7%AB%99%E6%94%B6%E8%97%8F%E5%A4%B9%E6%95%B4%E7%90%86%E5%B7%A5%E5%85%B7/kompiebhklojoioghbddednmmnebnkoc)
 
