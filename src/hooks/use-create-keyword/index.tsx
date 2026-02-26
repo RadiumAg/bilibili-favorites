@@ -1,6 +1,5 @@
 import React from 'react'
-import { GetFavoriteListRes } from '@/utils/api'
-import { useToast } from '../use-toast'
+import { toast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { quickExtractKeywords } from '@/utils/keyword-extractor'
@@ -35,7 +34,6 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   const [isLoading, setIsLoading] = React.useState(false)
   const [currentMode, setCurrentMode] = React.useState<ExtractionMode>(defaultMode)
   const abortControllerRef = React.useRef<AbortController | null>(null)
-  const { toast } = useToast()
 
   /**
    * 使用本地算法提取关键词

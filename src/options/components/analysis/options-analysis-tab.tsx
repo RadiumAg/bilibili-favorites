@@ -16,7 +16,7 @@ import { BarChart } from './chart/bar-chart'
 import { TrendChart } from './chart/trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
 import { RefreshCwIcon } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from '@/hooks'
 import { useAnalysisData } from './use-analysis-data'
 import { useAnalysisWorker } from './use-analysis-worker'
 import { useAnalysisStats } from './use-analysis-stats'
@@ -28,7 +28,6 @@ export const OptionsAnalysisTab: React.FC = () => {
   const forceRefreshRef = React.useRef(false)
   const dateRange = React.useRef<string>('30d')
   const [refreshing, setRefreshing] = React.useState(false)
-  const { toast } = useToast()
   // 使用 Worker hook
   const { postMessage: postWorkerMessage } = useAnalysisWorker({
     onMessage: useMemoizedFn((type: string, data: any) => {

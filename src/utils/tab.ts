@@ -94,13 +94,14 @@ export const queryAndSendMessage = <T = any>(message: any, timeout: number = 100
 export const fetchAllFavoriteMedias = async (
   mediaId: string,
   pageSize = 40,
+  expireTime = 2 * 60 * 1000,
 ): Promise<FavoriteMedia[]> => {
   const allMedias: FavoriteMedia[] = []
   let currentPage = 1
   let hasMore = true
   const key = `favorite-all-${mediaId}`
   const mediaData = await dbManager.get(key)
-  const isExpired = await dbManager.isExpired(key)
+  const isExpired = await dbManager.isExpired(key, expireTime)
   if (mediaData && !isExpired) return mediaData.data
 
   while (hasMore) {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { fetchChatGpt } from '@/utils/api'
 import loadingImg from '@/assets/loading.gif'
-import { useToast } from '../use-toast'
+import { toast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { createAIStreamParser, createStreamAdapter } from './ai-stream-parser'
 import { useShallow } from 'zustand/react/shallow'
@@ -18,7 +18,6 @@ const useCreateKeywordByAi = () => {
     })),
   )
   const [isLoading, setIsLoading] = React.useState(false)
-  const { toast } = useToast()
 
   const handleCreate = async (type: 'select' | 'all') => {
     let aiConfig = dataProvideData.aiConfig || {}

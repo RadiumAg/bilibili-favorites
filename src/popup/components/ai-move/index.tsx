@@ -1,12 +1,11 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from '@/hooks'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAIMove } from './use-ai-move'
 import { useMemoizedFn } from 'ahooks'
 
 const AIMove: React.FC = () => {
-  const { toast } = useToast()
   const { handleAIMove, isLoadingElement } = useAIMove()
   const pendingConfirmRef = React.useRef(false)
 
