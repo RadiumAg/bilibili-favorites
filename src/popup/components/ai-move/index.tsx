@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAIMove } from './use-ai-move'
 import { useMemoizedFn } from 'ahooks'

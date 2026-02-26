@@ -1,5 +1,4 @@
 import React from 'react'
-import { GetFavoriteListRes } from '@/utils/api'
 import { useToast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
