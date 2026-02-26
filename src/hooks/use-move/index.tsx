@@ -57,9 +57,7 @@ const useMove = () => {
   }
 
   const startMove = async () => {
-    let pn = 1
-
-    const run = async (): Promise<boolean> => {
+    const run = async () => {
       if (cancelRef.current) return false
       if (dataContext.defaultFavoriteId == null) return false
 
@@ -95,10 +93,6 @@ const useMove = () => {
           }
         }
       }
-
-      await sleep(20)
-      pn++
-      return run()
     }
 
     try {
