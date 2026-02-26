@@ -101,7 +101,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       extraParams: aiConfig?.extraParams,
     })
 
-    const reader = (gptResult as any).toReadableStream().getReader()
+    const reader = gptResult.toReadableStream().getReader()
     const adapter = createStreamAdapter(aiConfig.adapter)
     const parser = createAIStreamParser({
       favKey,

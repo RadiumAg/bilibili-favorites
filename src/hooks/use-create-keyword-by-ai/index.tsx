@@ -46,7 +46,7 @@ const useCreateKeywordByAi = () => {
       })
 
       // 确保返回的是 Stream 类型
-      const render = (gptResult as any).toReadableStream().getReader()
+      const render = gptResult.toReadableStream().getReader()
 
       // 根据配置创建适配器
       const adapter = createStreamAdapter(aiConfig.adapter || 'spark')
