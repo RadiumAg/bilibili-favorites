@@ -7,7 +7,7 @@ import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-
 import { useGlobalConfig } from '@/store/global-data'
 import { fetchAIMove } from '@/utils/api'
 import { sleep } from '@/utils/promise'
-import { useToast } from '@/hooks'
+import { toast } from '@/hooks'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,6 @@ type AIMoveResult = {
 }
 
 const useAIMove = () => {
-  const { toast } = useToast()
   const dataContext = useGlobalConfig(
     useShallow((state) => ({
       keyword: state.keyword,

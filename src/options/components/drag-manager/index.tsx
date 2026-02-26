@@ -6,7 +6,7 @@ import { queryAndSendMessage, fetchAllFavoriteMedias } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks'
+import { toast } from '@/hooks'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
@@ -31,7 +31,6 @@ type DragManagerProps = {
 
 const DragManager: React.FC<DragManagerProps> = (props) => {
   const { className } = props
-  const { toast } = useToast()
 
   const { favoriteData } = useGlobalConfig(
     useShallow((state) => ({

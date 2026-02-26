@@ -8,7 +8,7 @@ import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { fetchAllFavoriteMedias, queryAndSendMessage } from '@/utils/tab'
 import { Button } from '@/components/ui/button'
-import { useToast } from '../use-toast'
+import { toast } from '../use-toast'
 
 const useMove = () => {
   const dataContext = useGlobalConfig(
@@ -18,7 +18,6 @@ const useMove = () => {
       defaultFavoriteId: state.defaultFavoriteId,
     })),
   )
-  const { toast } = useToast()
   const [isFinished, setIsFinished] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [isCancelled, setIsCancelled] = React.useState(false)
