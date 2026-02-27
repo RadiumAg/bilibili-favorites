@@ -1,11 +1,10 @@
 import React from 'react'
-import { fetchChatGpt } from '@/utils/api'
+import { fetchChatGpt, fetchAllFavoriteMedias } from '@/utils/api'
 import loadingImg from '@/assets/loading.gif'
 import { toast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { createAIStreamParser, createStreamAdapter } from './ai-stream-parser'
 import { useShallow } from 'zustand/react/shallow'
-import { fetchAllFavoriteMedias } from '@/utils/tab'
 
 const useCreateKeywordByAi = () => {
   const dataProvideData = useGlobalConfig(

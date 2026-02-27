@@ -3,13 +3,12 @@ import { toast } from '../use-toast'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { quickExtractKeywords } from '@/utils/keyword-extractor'
-import { fetchChatGpt } from '@/utils/api'
+import { fetchChatGpt, fetchAllFavoriteMedias } from '@/utils/api'
 import {
   createAIStreamParser,
   createStreamAdapter,
 } from '../use-create-keyword-by-ai/ai-stream-parser'
 import { useMemoizedFn } from 'ahooks'
-import { fetchAllFavoriteMedias } from '@/utils/tab'
 
 export type ExtractionMode = 'local' | 'ai' | 'manual'
 

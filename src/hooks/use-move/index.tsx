@@ -6,9 +6,10 @@ import Finished from '@/components/finished-animate'
 import { cn } from '@/lib/utils'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
-import { fetchAllFavoriteMedias, queryAndSendMessage } from '@/utils/tab'
+import { queryAndSendMessage } from '@/utils/tab'
 import { Button } from '@/components/ui/button'
 import { toast } from '../use-toast'
+import { fetchAllFavoriteMedias } from '@/utils/api'
 
 const useMove = () => {
   const dataContext = useGlobalConfig(
