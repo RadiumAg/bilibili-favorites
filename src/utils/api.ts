@@ -1,6 +1,8 @@
 import { getCookieValue } from './cookie'
 import { DataContextType } from './data-context'
 import { MessageEnum } from './message'
+import dbManager from './indexed-db'
+import { queryAndSendMessage } from './tab'
 
 type BResponse<T> = {
   code: number
@@ -260,7 +262,56 @@ const fetchAIMove = async (videos: AIMoveInput, favoriteTitles: string[], config
   })
 }
 
-export { getAllFavoriteFlag, getFavoriteList, moveFavorite, fetchChatGpt, fetchAIMove }
+/**
+ * 分页获取某个收藏夹的全部视频列表
+ * @param mediaId 收藏夹 ID
+ * @param pageSize 每页数量，默认 40（B 站最大值）
+ * @returns 该收藏夹下的全部视频
+ */
+const fetchAllFavoriteMedias = async (
+  mediaId: string,
+  pageSize = 40,
+  expireTime = 2 * 60 * 1000,
+): Promise<FavoriteMedia[]> => {
+  const allMedias: FavoriteMedia[] = []
+  let currentPage = 1
+  let hasMore = true
+  const key = `favorite-all-${mediaId}`
+  const mediaData = await dbManager.get(key)
+  const isExpired = await dbManager.isExpired(key, expireTime)
+  if (mediaData && !isExpired) return mediaData.data
+
+  while (hasMore) {
+    const response = await queryAndSendMessage<GetFavoriteListRes>({
+      type: MessageEnum.getFavoriteList,
+      data: { mediaId, pn: currentPage, ps: pageSize },
+    })
+
+    if (response.code !== 0) {
+      throw new Error(response.message || '获取收藏夹数据失败')
+    }
+
+    const medias = response.data.medias
+    if (medias && medias.length > 0) {
+      allMedias.push(...medias)
+    }
+
+    hasMore = response.data.has_more
+    currentPage++
+  }
+
+  dbManager.set(key, allMedias)
+  return allMedias
+}
+
+export {
+  getAllFavoriteFlag,
+  getFavoriteList,
+  moveFavorite,
+  fetchChatGpt,
+  fetchAIMove,
+  fetchAllFavoriteMedias,
+}
 export type {
   FavoriteMedia,
   FavoriteDetailInfo,

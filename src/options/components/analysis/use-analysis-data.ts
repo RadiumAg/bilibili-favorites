@@ -1,8 +1,7 @@
 import React from 'react'
 import { useMemoizedFn } from 'ahooks'
-import { type FavoriteMedia } from '@/utils/api'
+import { fetchAllFavoriteMedias, type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
-import { fetchAllFavoriteMedias } from '@/utils/tab'
 
 type UseAnalysisDataProps = {
   favoriteData: Array<{

@@ -2,7 +2,7 @@ import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
-import { queryAndSendMessage, fetchAllFavoriteMedias } from '@/utils/tab'
+import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { toast } from '@/hooks'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import { fetchAllFavoriteMedias } from '@/utils/api'
 
 type VideoItem = {
   id: number
