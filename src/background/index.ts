@@ -30,7 +30,7 @@ const checkAIGateQuota = async (
   message: string
 }> => {
   try {
-    // 实际使用时替换为真实的 AIGate API 地址
+    // 调用 AIGate 配额检查 API
     const response = await fetch('http://localhost:3000/api/trpc/ai.getQuotaInfo', {
       method: 'POST',
       headers: {
@@ -44,29 +44,34 @@ const checkAIGateQuota = async (
       }),
     })
 
-    // 模拟响应数据（实际应该解析真实 API 响应）
+    const result = await response.json()
+
+    // 解析实际的 API 响应结构
+    const { policy, usage, remaining } = result.result.data.json
+
+    // 根据实际数据结构调整配额信息
     const quotaInfo: QuotaInfo = {
       daily: {
-        limit: 10000,
-        used: 2500,
-        remaining: 7500,
+        limit: policy.dailyRequestLimit,
+        used: usage.requestsToday,
+        remaining: remaining.daily,
       },
       monthly: {
-        limit: 100000,
-        used: 45000,
-        remaining: 55000,
+        limit: 0, // 请求限制模式下没有月配额概念
+        used: 0,
+        remaining: 0,
       },
       rpm: {
-        limit: 60,
-        used: 15,
-        remaining: 45,
+        limit: policy.rpmLimit,
+        used: 0, // API 没有返回当前 RPM 使用情况
+        remaining: policy.rpmLimit,
       },
     }
 
     return {
       hasQuota: quotaInfo.daily.remaining > 0,
       quotaInfo,
-      message: `今日剩余配额: ${quotaInfo.daily.remaining} tokens`,
+      message: `今日剩余配额: ${quotaInfo.daily.remaining} 次请求`,
     }
   } catch (error) {
     console.error('AIGate 配额检查失败:', error)

@@ -38,6 +38,8 @@ type FormData = {
   // 新增 AIGate 配置
   aigateUserId?: string
   aigateApiKeyId?: string
+  // 新增配置模式选择
+  configMode: 'custom' | 'free' // custom: 自定义配置, free: 免费额度
 }
 
 // 配额信息类型
@@ -66,16 +68,70 @@ type QuotaCheckResult = {
   message: string
 }
 
-const formSchema = z.object({
-  key: z.string(),
-  baseUrl: z.string(),
-  model: z.string(),
-  extraParams: z.string().optional(),
-  adapter: z.enum(adapterArray),
-  // 新增 AIGate 字段验证
-  aigateUserId: z.string().optional(),
-  aigateApiKeyId: z.string().optional(),
-})
+const formSchema = z
+  .object({
+    // 基础字段设为可选，根据模式动态验证
+    key: z.string().optional(),
+    baseUrl: z.string().optional(),
+    model: z.string().optional(),
+    extraParams: z.string().optional(),
+    adapter: z.enum(adapterArray).optional(),
+    // AIGate 字段设为可选
+    aigateUserId: z.string().optional(),
+    aigateApiKeyId: z.string().optional(),
+    // 配置模式验证
+    configMode: z.enum(['custom', 'free']),
+  })
+  .superRefine((data, ctx) => {
+    // 根据配置模式进行动态验证
+    if (data.configMode === 'custom') {
+      // 自定义模式需要这些字段
+      if (!data.key) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['key'],
+          message: 'API Key 是必填项',
+        })
+      }
+      if (!data.model) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['model'],
+          message: '模型名称是必填项',
+        })
+      }
+      if (!data.adapter) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['adapter'],
+          message: '请选择 AI 模型',
+        })
+      }
+    } else if (data.configMode === 'free') {
+      // 免费模式需要这些字段
+      if (!data.aigateUserId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['aigateUserId'],
+          message: '用户邮箱是必填项',
+        })
+      }
+      if (!data.aigateApiKeyId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['aigateApiKeyId'],
+          message: 'API Key ID 是必填项',
+        })
+      }
+      if (!data.model) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['model'],
+          message: '模型名称是必填项',
+        })
+      }
+    }
+  })
 
 const Setting: React.FC = () => {
   const [showApiKey, setShowApiKey] = React.useState(false)
@@ -83,6 +139,7 @@ const Setting: React.FC = () => {
   const [quotaInfo, setQuotaInfo] = React.useState<QuotaInfo | null>(null)
   const [checkingQuota, setCheckingQuota] = React.useState(false)
   const [lastCheckTime, setLastCheckTime] = React.useState<string>('')
+  const [configMode, setConfigMode] = React.useState<'custom' | 'free'>('custom')
 
   const globalData = useGlobalConfig(
     useShallow((state) => ({
@@ -102,6 +159,8 @@ const Setting: React.FC = () => {
       // AIGate 配置默认值
       aigateUserId: globalData.aiConfig.aigateUserId || '',
       aigateApiKeyId: globalData.aiConfig.aigateApiKeyId || '',
+      // 配置模式默认值
+      configMode: globalData.aiConfig.configMode || 'custom',
     },
   })
   const adapterSelectItemEleArray = React.useMemo(() => {
@@ -129,6 +188,9 @@ const Setting: React.FC = () => {
           baseUrl: data.baseUrl,
           extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
           adapter: data.adapter,
+          aigateUserId: data.aigateUserId,
+          aigateApiKeyId: data.aigateApiKeyId,
+          configMode: data.configMode,
         },
       })
     } catch (e) {
@@ -221,9 +283,8 @@ const Setting: React.FC = () => {
   const testAICall = async () => {
     const userId = form.getValues('aigateUserId')
     const apiKeyId = form.getValues('aigateApiKeyId')
-    const model = form.getValues('model')
 
-    if (!userId || !apiKeyId || !model) {
+    if (!userId || !apiKeyId) {
       toast({
         variant: 'destructive',
         title: '配置缺失',
@@ -242,7 +303,7 @@ const Setting: React.FC = () => {
         data: {
           userId,
           apiKeyId,
-          model,
+          model: 'spark-x',
           messages: [{ role: 'user', content: '你好，请简单介绍一下你自己' }],
           temperature: 0.7,
         },
@@ -309,9 +370,12 @@ const Setting: React.FC = () => {
   const renderQuotaCard = () => {
     if (!quotaInfo) return null
 
-    const dailyUsagePercent = (quotaInfo.daily.used / quotaInfo.daily.limit) * 100
-    const monthlyUsagePercent = (quotaInfo.monthly.used / quotaInfo.monthly.limit) * 100
-    const rpmUsagePercent = (quotaInfo.rpm.used / quotaInfo.rpm.limit) * 100
+    const dailyUsagePercent = quotaInfo.daily.limit > 0 
+      ? (quotaInfo.daily.used / quotaInfo.daily.limit) * 100 
+      : 0
+    const rpmUsagePercent = quotaInfo.rpm.limit > 0 
+      ? (quotaInfo.rpm.used / quotaInfo.rpm.limit) * 100 
+      : 0
 
     return (
       <Card className="mt-6">
@@ -330,7 +394,7 @@ const Setting: React.FC = () => {
           {/* 日配额 */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="font-medium">今日配额</span>
+              <span className="font-medium">今日请求配额</span>
               <span
                 className={`text-sm ${
                   quotaInfo.daily.remaining > quotaInfo.daily.limit * 0.2
@@ -340,28 +404,13 @@ const Setting: React.FC = () => {
                       : 'text-red-600'
                 }`}
               >
-                {quotaInfo.daily.remaining}/{quotaInfo.daily.limit} tokens
+                {quotaInfo.daily.remaining}/{quotaInfo.daily.limit} 次请求
               </span>
             </div>
             <Progress value={dailyUsagePercent} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>已使用: {quotaInfo.daily.used}</span>
-              <span>剩余: {quotaInfo.daily.remaining}</span>
-            </div>
-          </div>
-
-          {/* 月配额 */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-medium">本月配额</span>
-              <span className="text-sm text-muted-foreground">
-                {quotaInfo.monthly.remaining}/{quotaInfo.monthly.limit} tokens
-              </span>
-            </div>
-            <Progress value={monthlyUsagePercent} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>已使用: {quotaInfo.monthly.used}</span>
-              <span>剩余: {quotaInfo.monthly.remaining}</span>
+              <span>已使用: {quotaInfo.daily.used} 次</span>
+              <span>剩余: {quotaInfo.daily.remaining} 次</span>
             </div>
           </div>
 
@@ -375,8 +424,8 @@ const Setting: React.FC = () => {
             </div>
             <Progress value={rpmUsagePercent} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>当前: {quotaInfo.rpm.used}</span>
-              <span>剩余: {quotaInfo.rpm.remaining}</span>
+              <span>限制: {quotaInfo.rpm.limit} 次/分钟</span>
+              <span>当前可用: {quotaInfo.rpm.remaining} 次/分钟</span>
             </div>
           </div>
 
@@ -386,7 +435,13 @@ const Setting: React.FC = () => {
               <CheckCircle className="h-4 w-4 text-green-500" />
               <span className="text-sm">服务正常</span>
             </div>
-            {quotaInfo.daily.remaining < quotaInfo.daily.limit * 0.2 && (
+            {quotaInfo.daily.remaining === 0 && (
+              <div className="flex items-center gap-1">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <span className="text-sm text-red-600">今日配额已用完</span>
+              </div>
+            )}
+            {quotaInfo.daily.remaining > 0 && quotaInfo.daily.remaining < quotaInfo.daily.limit * 0.2 && (
               <div className="flex items-center gap-1">
                 <AlertTriangle className="h-4 w-4 text-yellow-500" />
                 <span className="text-sm text-yellow-600">配额即将用完</span>
@@ -401,115 +456,58 @@ const Setting: React.FC = () => {
     <div className="space-y-8">
       <Form {...form}>
         <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[60%]">
-          {/* 原有的配置表单 */}
-          <FormField
-            control={form.control}
-            name="adapter"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>AI 模型</FormLabel>
-                <Select {...field} onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择 AI 模型" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>{adapterSelectItemEleArray}</SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* 配置模式选择 */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-4">AI 配置模式</h3>
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                variant={configMode === 'custom' ? 'default' : 'outline'}
+                onClick={() => {
+                  setConfigMode('custom')
+                  form.setValue('configMode', 'custom')
+                }}
+                className="flex-1"
+              >
+                <div className="text-left">
+                  <div className="font-medium">自定义配置</div>
+                  <div className="text-xs opacity-75">使用自己的 API Key</div>
+                </div>
+              </Button>
+              <Button
+                type="button"
+                variant={configMode === 'free' ? 'default' : 'outline'}
+                onClick={() => {
+                  setConfigMode('free')
+                  form.setValue('configMode', 'free')
+                }}
+                className="flex-1"
+              >
+                <div className="text-left">
+                  <div className="font-medium">免费额度</div>
+                  <div className="text-xs opacity-75">使用 AIGate 免费大模型</div>
+                </div>
+              </Button>
+            </div>
+          </div>
 
-          <FormField
-            control={form.control}
-            name="model"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>模型</FormLabel>
-                <FormControl>
-                  <Input placeholder="输入模型名称，如：deepseek-chat" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="key"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>API Key</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showApiKey ? 'text' : 'password'}
-                      placeholder="输入 API Key"
-                      {...field}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    >
-                      {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </FormControl>
-                <FormDescription>从对应服务商获取 API Key</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="baseUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Base URL (可选)</FormLabel>
-                <FormControl>
-                  <Input placeholder="自定义 Base URL" {...field} />
-                </FormControl>
-                <FormDescription>默认使用官方地址，如有自定义代理可填写</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="extraParams"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Extra Params</FormLabel>
-                <FormControl>
-                  <Textarea placeholder="输入其它参数，例如调整跳过思考过程" {...field} />
-                </FormControl>
-                <FormDescription>其它参数</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* 新增的 AIGate 配置部分 */}
-          <div className="border-t pt-6 mt-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Badge variant="secondary">AIGate 免费大模型</Badge>
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 自定义配置部分 - 仅在 custom 模式下显示 */}
+          {configMode === 'custom' && (
+            <>
               <FormField
                 control={form.control}
-                name="aigateUserId"
+                name="adapter"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>用户邮箱</FormLabel>
-                    <FormControl>
-                      <Input placeholder="your-email@example.com" {...field} />
-                    </FormControl>
-                    <FormDescription>用于身份验证的邮箱地址</FormDescription>
+                    <FormLabel>AI 模型</FormLabel>
+                    <Select {...field} onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="选择 AI 模型" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>{adapterSelectItemEleArray}</SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -517,23 +515,37 @@ const Setting: React.FC = () => {
 
               <FormField
                 control={form.control}
-                name="aigateApiKeyId"
+                name="model"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>API Key ID</FormLabel>
+                    <FormLabel>模型</FormLabel>
+                    <FormControl>
+                      <Input placeholder="输入模型名称，如：deepseek-chat" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="key"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>API Key</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
-                          type={showAIGateKey ? 'text' : 'password'}
-                          placeholder="输入 API Key ID"
+                          type={showApiKey ? 'text' : 'password'}
+                          placeholder="输入 API Key"
                           {...field}
                         />
                         <button
                           type="button"
-                          onClick={() => setShowAIGateKey(!showAIGateKey)}
+                          onClick={() => setShowApiKey(!showApiKey)}
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         >
-                          {showAIGateKey ? (
+                          {showApiKey ? (
                             <EyeOff className="h-4 w-4" />
                           ) : (
                             <Eye className="h-4 w-4" />
@@ -541,27 +553,120 @@ const Setting: React.FC = () => {
                         </button>
                       </div>
                     </FormControl>
-                    <FormDescription>从 AIGate 控制台获取的 API Key ID</FormDescription>
+                    <FormDescription>从对应服务商获取 API Key</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="flex gap-3 mt-4">
-              <Button type="button" onClick={checkQuota} disabled={checkingQuota} variant="outline">
-                {checkingQuota ? '检查中...' : '检查配额'}
-              </Button>
-              <Button type="button" onClick={testAICall} variant="secondary">
-                测试 AI 调用
-              </Button>
+              <FormField
+                control={form.control}
+                name="baseUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Base URL (可选)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="自定义 Base URL" {...field} />
+                    </FormControl>
+                    <FormDescription>默认使用官方地址，如有自定义代理可填写</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="extraParams"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Extra Params</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="输入其它参数，例如调整跳过思考过程" {...field} />
+                    </FormControl>
+                    <FormDescription>其它参数</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
+
+          {/* 免费额度配置部分 - 仅在 free 模式下显示 */}
+          {configMode === 'free' && (
+            <div className="border-t pt-6 mt-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Badge variant="secondary">AIGate 免费大模型</Badge>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="aigateUserId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>用户邮箱</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your-email@example.com" {...field} />
+                      </FormControl>
+                      <FormDescription>用于身份验证的邮箱地址</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="aigateApiKeyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>API Key ID</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showAIGateKey ? 'text' : 'password'}
+                            placeholder="输入 API Key ID"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAIGateKey(!showAIGateKey)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showAIGateKey ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormDescription>从 AIGate 控制台获取的 API Key ID</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex gap-3 mt-4">
+                <Button
+                  type="button"
+                  onClick={checkQuota}
+                  disabled={checkingQuota}
+                  variant="outline"
+                >
+                  {checkingQuota ? '检查中...' : '检查配额'}
+                </Button>
+                <Button type="button" onClick={testAICall} variant="secondary">
+                  测试 AI 调用
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </form>
       </Form>
 
-      {/* 配额信息展示 */}
-      {renderQuotaCard()}
+      {/* 配额信息展示 - 仅在 free 模式下显示 */}
+      {configMode === 'free' && renderQuotaCard()}
     </div>
   )
 }
