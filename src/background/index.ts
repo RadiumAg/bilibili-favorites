@@ -1,6 +1,140 @@
 import OpenAI from 'openai'
 import { MessageEnum } from '@/utils/message'
 
+// AIGate 配额信息类型
+type QuotaInfo = {
+  daily: {
+    limit: number
+    used: number
+    remaining: number
+  }
+  monthly: {
+    limit: number
+    used: number
+    remaining: number
+  }
+  rpm: {
+    limit: number
+    used: number
+    remaining: number
+  }
+}
+
+// 检查 AIGate 配额
+const checkAIGateQuota = async (
+  userId: string,
+  apiKeyId: string,
+): Promise<{
+  hasQuota: boolean
+  quotaInfo: QuotaInfo
+  message: string
+}> => {
+  try {
+    // 实际使用时替换为真实的 AIGate API 地址
+    const response = await fetch('http://localhost:3000/api/trpc/ai.getQuotaInfo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        json: {
+          userId,
+          apiKeyId,
+        },
+      }),
+    })
+
+    // 模拟响应数据（实际应该解析真实 API 响应）
+    const quotaInfo: QuotaInfo = {
+      daily: {
+        limit: 10000,
+        used: 2500,
+        remaining: 7500,
+      },
+      monthly: {
+        limit: 100000,
+        used: 45000,
+        remaining: 55000,
+      },
+      rpm: {
+        limit: 60,
+        used: 15,
+        remaining: 45,
+      },
+    }
+
+    return {
+      hasQuota: quotaInfo.daily.remaining > 0,
+      quotaInfo,
+      message: `今日剩余配额: ${quotaInfo.daily.remaining} tokens`,
+    }
+  } catch (error) {
+    console.error('AIGate 配额检查失败:', error)
+    return {
+      hasQuota: false,
+      quotaInfo: {
+        daily: { limit: 0, used: 0, remaining: 0 },
+        monthly: { limit: 0, used: 0, remaining: 0 },
+        rpm: { limit: 0, used: 0, remaining: 0 },
+      },
+      message: error instanceof Error ? error.message : '配额检查失败',
+    }
+  }
+}
+
+// 调用 AIGate AI 服务
+const callAIGateAI = async (
+  userId: string,
+  apiKeyId: string,
+  model: string,
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  temperature: number = 0.7,
+) => {
+  try {
+    // 先检查配额
+    const quotaCheck = await checkAIGateQuota(userId, apiKeyId)
+    if (!quotaCheck.hasQuota) {
+      throw new Error('配额不足')
+    }
+
+    // 调用 AIGate AI 接口
+    const response = await fetch('http://localhost:3000/api/trpc/ai.chatCompletion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        json: {
+          userId,
+          apiKeyId,
+          request: {
+            model,
+            messages,
+            temperature,
+            max_tokens: 2000,
+          },
+        },
+      }),
+    })
+
+    // 解析响应（实际应该根据真实 API 响应格式调整）
+    const responseData = await response.json()
+
+    return {
+      success: true,
+      data: responseData,
+      quotaInfo: quotaCheck.quotaInfo,
+    }
+  } catch (error: any) {
+    console.error('AIGate AI 调用失败:', error)
+    return {
+      success: false,
+      error: error.message || 'AI 调用失败',
+      quotaInfo: null,
+    }
+  }
+}
+
 /**
  * 通过 port 流式发送 AI 请求结果
  */
@@ -155,6 +289,36 @@ chrome.runtime.onConnect.addListener((port) => {
         const messages = buildAIMoveMessages(videos, favoriteTitles)
         currentAbortController = new AbortController()
         streamAIRequest(port, config, messages, currentAbortController)
+        break
+      }
+
+      case MessageEnum.checkAIGateQuota: {
+        const { userId, apiKeyId } = message.data
+        checkAIGateQuota(userId, apiKeyId)
+          .then((result) => {
+            port.postMessage({ type: 'quota-result', data: result })
+          })
+          .catch((error) => {
+            port.postMessage({
+              type: 'error',
+              error: error instanceof Error ? error.message : '配额检查失败',
+            })
+          })
+        break
+      }
+
+      case MessageEnum.callAIGateAI: {
+        const { userId, apiKeyId, model, messages, temperature } = message.data
+        callAIGateAI(userId, apiKeyId, model, messages, temperature)
+          .then((result) => {
+            port.postMessage({ type: 'ai-result', data: result })
+          })
+          .catch((error) => {
+            port.postMessage({
+              type: 'error',
+              error: error instanceof Error ? error.message : 'AI 调用失败',
+            })
+          })
         break
       }
 
