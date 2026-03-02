@@ -114,6 +114,7 @@ const callAIGateAI = async (
           apiKeyId,
           request: {
             model,
+            stream: true,
             messages,
             temperature,
             max_tokens: 2000,
