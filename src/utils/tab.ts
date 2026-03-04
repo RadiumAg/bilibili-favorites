@@ -80,3 +80,13 @@ export const queryAndSendMessage = <T = any>(message: any, timeout: number = 100
     })
   })
 }
+
+export const getExtensionDeviceId = async () => {
+  const { deviceId } = await chrome.storage.local.get('deviceId')
+  if (!deviceId) {
+    const newId = crypto.randomUUID()
+    await chrome.storage.local.set({ deviceId: newId })
+    return newId
+  }
+  return deviceId
+}

@@ -2,11 +2,10 @@ import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
-import { fetchAllFavoriteMedias } from '@/utils/api'
+import { fetchAllFavoriteMedias, fetchAIMove, callAIGateAI } from '@/utils/api'
 import { MessageEnum } from '@/utils/message'
 import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
 import { useGlobalConfig } from '@/store/global-data'
-import { fetchAIMove } from '@/utils/api'
 import { sleep } from '@/utils/promise'
 import { toast } from '@/hooks'
 import loadingGif from '@/assets/loading.gif'
@@ -46,27 +45,71 @@ const useAIMove = () => {
     return map
   }, [dataContext.favoriteData])
 
-  const hasAIConfig = React.useMemo(() => {
-    return dataContext.aiConfig && dataContext.aiConfig.key
-  }, [dataContext.aiConfig])
+  /**
+   * 构建 AI 移动分类的 messages
+   */
+  const buildAIMoveMessages = (
+    videos: { id: number; title: string }[],
+    favoriteTitles: string[],
+  ): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> => {
+    const systemPrompt = `你是一个视频分类助手。任务：根据视频标题，判断应该移动到哪个收藏夹。
+
+可用的收藏夹列表：
+${favoriteTitles.map((title: string, idx: number) => `${idx + 1}. ${title}`).join('\n')}
+
+规则：
+1. 仔细阅读视频标题，理解其主题内容
+2. 根据标题内容，选择最合适的收藏夹
+3. 如果没有合适的收藏夹，返回"默认收藏夹"
+4. 只返回 JSON 数组格式，不要任何解释
+
+返回格式（严格按照此格式）：
+[
+  {
+    "title": "原始视频标题",
+    "targetFavorite": "目标收藏夹名称",
+    "reason": "选择理由（简短）"
+  }
+]
+
+示例：
+输入：["React Hooks详解","Python数据分析"]
+收藏夹：["前端开发","后端开发","数据分析","默认收藏夹"]
+输出：
+[
+  {"title": "React Hooks详解","targetFavorite":"前端开发","reason":"React是前端框架"},
+  {"title": "Python数据分析","targetFavorite":"数据分析","reason":"主题是数据分析"}
+]`
+
+    return [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: JSON.stringify(videos.map((v) => v.title)) },
+    ]
+  }
 
   const analyzeVideosWithAI = useMemoizedFn(
     async (videos: { id: number; title: string }[]): Promise<AIMoveResult[]> => {
-      if (!hasAIConfig) {
-        throw new Error('请先在设置中配置 AI（OpenAI API Key）')
-      }
-
       const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
 
-      try {
-        const config = {
-          apiKey: dataContext.aiConfig.key!,
-          baseURL: dataContext.aiConfig.baseUrl!,
-          model: dataContext.aiConfig.model!,
-          extraParams: dataContext.aiConfig.extraParams || {},
-        }
+      // 判断是否配置了自定义模型（有 API Key 和模型名称）
+      const hasCustomConfig = dataContext.aiConfig?.key && dataContext.aiConfig?.model
 
-        const stream = await fetchAIMove(videos, favoriteTitles, config)
+      try {
+        let stream
+        if (hasCustomConfig) {
+          // 使用自定义模型
+          const config = {
+            apiKey: dataContext.aiConfig.key!,
+            baseURL: dataContext.aiConfig.baseUrl!,
+            model: dataContext.aiConfig.model!,
+            extraParams: dataContext.aiConfig.extraParams || {},
+          }
+          stream = await fetchAIMove(videos, favoriteTitles, config)
+        } else {
+          // 使用 AIGate 免费额度
+          const messages = buildAIMoveMessages(videos, favoriteTitles)
+          stream = await callAIGateAI(messages)
+        }
         streamRef.current = stream
 
         // 使用流适配器从每个 chunk 中提取纯内容文本
@@ -169,11 +212,14 @@ const useAIMove = () => {
 
   // 开始 AI 整理
   const handleAIMove = useMemoizedFn(async () => {
-    // 检查配置
-    if (!hasAIConfig) {
+    // 检查是否有可用配置（自定义配置或 AIGate 免费额度）
+    const hasCustomConfig = dataContext.aiConfig?.key && dataContext.aiConfig?.model
+    const hasAIGate = true // AIGate 始终可用
+
+    if (!hasCustomConfig && !hasAIGate) {
       toast({
         title: '未配置 AI',
-        description: '请先在设置页面配置 OpenAI API Key',
+        description: '请先在设置页面配置 AI 或使用免费额度',
         variant: 'destructive',
       })
       // 延迟跳转，让用户看到提示
