@@ -208,18 +208,6 @@ const Setting: React.FC = () => {
 
   // 检查配额的函数
   const checkQuota = async () => {
-    const userId = form.getValues('aigateUserId')
-    const apiKeyId = form.getValues('aigateApiKeyId')
-
-    if (!userId || !apiKeyId) {
-      toast({
-        variant: 'destructive',
-        title: '配置缺失',
-        description: '请先填写 AIGate 用户ID 和 API Key ID',
-      })
-      return
-    }
-
     setCheckingQuota(true)
     try {
       // 通过 background script 调用 AIGate API
@@ -228,7 +216,6 @@ const Setting: React.FC = () => {
       // 发送配额检查请求
       port.postMessage({
         type: 'checkAIGateQuota',
-        data: { userId, apiKeyId },
       })
 
       // 监听响应
@@ -281,18 +268,6 @@ const Setting: React.FC = () => {
 
   // 测试 AI 调用的函数
   const testAICall = async () => {
-    const userId = form.getValues('aigateUserId')
-    const apiKeyId = form.getValues('aigateApiKeyId')
-
-    if (!userId || !apiKeyId) {
-      toast({
-        variant: 'destructive',
-        title: '配置缺失',
-        description: '请先完善 AIGate 配置和模型设置',
-      })
-      return
-    }
-
     try {
       // 通过 background script 调用 AIGate AI
       const port = chrome.runtime.connect({ name: 'ai-stream' })
@@ -301,9 +276,6 @@ const Setting: React.FC = () => {
       port.postMessage({
         type: 'callAIGateAI',
         data: {
-          userId,
-          apiKeyId,
-          model: 'spark-x',
           messages: [{ role: 'user', content: '你好，请简单介绍一下你自己' }],
           temperature: 0.7,
         },
@@ -311,21 +283,14 @@ const Setting: React.FC = () => {
 
       // 监听响应
       port.onMessage.addListener((response) => {
-        if (response.type === 'ai-result') {
-          if (response.data.success) {
-            toast({
-              variant: 'default',
-              title: 'AI 调用测试成功',
-              description: '可以正常使用免费限额的大模型服务',
-            })
-          } else {
-            toast({
-              variant: 'destructive',
-              title: 'AI 调用失败',
-              description: response.data.error,
-            })
-          }
+        if (response.type === 'chunk') {
+          toast({
+            variant: 'default',
+            title: 'AI 调用测试成功',
+            description: '可以正常使用免费限额的大模型服务',
+          })
           port.disconnect()
+          port.postMessage({ type: 'cancel' })
         } else if (response.type === 'error') {
           toast({
             variant: 'destructive',
@@ -370,12 +335,10 @@ const Setting: React.FC = () => {
   const renderQuotaCard = () => {
     if (!quotaInfo) return null
 
-    const dailyUsagePercent = quotaInfo.daily.limit > 0 
-      ? (quotaInfo.daily.used / quotaInfo.daily.limit) * 100 
-      : 0
-    const rpmUsagePercent = quotaInfo.rpm.limit > 0 
-      ? (quotaInfo.rpm.used / quotaInfo.rpm.limit) * 100 
-      : 0
+    const dailyUsagePercent =
+      quotaInfo.daily.limit > 0 ? (quotaInfo.daily.used / quotaInfo.daily.limit) * 100 : 0
+    const rpmUsagePercent =
+      quotaInfo.rpm.limit > 0 ? (quotaInfo.rpm.used / quotaInfo.rpm.limit) * 100 : 0
 
     return (
       <Card className="mt-6">
@@ -441,12 +404,13 @@ const Setting: React.FC = () => {
                 <span className="text-sm text-red-600">今日配额已用完</span>
               </div>
             )}
-            {quotaInfo.daily.remaining > 0 && quotaInfo.daily.remaining < quotaInfo.daily.limit * 0.2 && (
-              <div className="flex items-center gap-1">
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm text-yellow-600">配额即将用完</span>
-              </div>
-            )}
+            {quotaInfo.daily.remaining > 0 &&
+              quotaInfo.daily.remaining < quotaInfo.daily.limit * 0.2 && (
+                <div className="flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm text-yellow-600">配额即将用完</span>
+                </div>
+              )}
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,8 @@
 import OpenAI from 'openai'
 import { MessageEnum } from '@/utils/message'
+import { getExtensionDeviceId } from '@/utils/tab'
+
+const apiKeyId = 'key_1772198331317_qt44tvwv8gm'
 
 // AIGate 配额信息类型
 type QuotaInfo = {
@@ -21,14 +24,13 @@ type QuotaInfo = {
 }
 
 // 检查 AIGate 配额
-const checkAIGateQuota = async (
-  userId: string,
-  apiKeyId: string,
-): Promise<{
+const checkAIGateQuota = async (): Promise<{
   hasQuota: boolean
   quotaInfo: QuotaInfo
   message: string
 }> => {
+  const userId = await getExtensionDeviceId()
+
   try {
     // 调用 AIGate 配额检查 API
     const response = await fetch('http://localhost:3000/api/trpc/ai.getQuotaInfo', {
@@ -89,55 +91,102 @@ const checkAIGateQuota = async (
 
 // 调用 AIGate AI 服务
 const callAIGateAI = async (
-  userId: string,
-  apiKeyId: string,
-  model: string,
+  port: chrome.runtime.Port,
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-  temperature: number = 0.7,
+  abortController: AbortController,
 ) => {
+  const userId = await getExtensionDeviceId()
+
   try {
     // 先检查配额
-    const quotaCheck = await checkAIGateQuota(userId, apiKeyId)
+    const quotaCheck = await checkAIGateQuota()
     if (!quotaCheck.hasQuota) {
       throw new Error('配额不足')
     }
 
-    // 调用 AIGate AI 接口
-    const response = await fetch('http://localhost:3000/api/trpc/ai.chatCompletion', {
+    // 调用 AIGate AI 接口（SSE 流式响应）
+    const response = await fetch('http://localhost:3000/api/ai/chat/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        json: {
-          userId,
-          apiKeyId,
-          request: {
-            model,
-            stream: true,
-            messages,
-            temperature,
-            max_tokens: 2000,
-          },
+        userId,
+        request: {
+          model: 'lite',
+          messages,
+          temperature: 0.7,
         },
+        apiKeyId,
       }),
     })
 
-    // 解析响应（实际应该根据真实 API 响应格式调整）
-    const responseData = await response.json()
+    // 解析 SSE 流式响应
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error('无法读取响应流')
+    }
 
-    return {
-      success: true,
-      data: responseData,
-      quotaInfo: quotaCheck.quotaInfo,
+    const decoder = new TextDecoder()
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      // 双重检查：在处理每个 chunk 前检查是否已取消
+      if (abortController.signal.aborted) {
+        console.log('[Background] Request aborted during streaming')
+        port.postMessage({ type: 'aborted' })
+        return
+      }
+
+      const chunk = decoder.decode(value, { stream: true })
+      const lines = chunk.split('\n')
+
+      for (const line of lines) {
+        const trimmedLine = line.trim()
+        if (!trimmedLine) continue
+
+        // 跳过 [DONE] 标记
+        if (trimmedLine === 'data: [DONE]') {
+          port.postMessage({ type: 'done' })
+          continue
+        }
+
+        // 解析 SSE 数据行
+        if (trimmedLine.startsWith('data: ')) {
+          try {
+            const dataStr = trimmedLine.substring(6) // 移除 "data: " 前缀
+            const data = JSON.parse(dataStr)
+
+            // 检查是否有错误
+            if (data.code !== 0) {
+              const error = data.message || 'API 返回错误'
+              port.postMessage({ type: 'error', content: error })
+              throw new Error(error)
+            }
+
+            // 流式发送每个 chunk
+            if (data.choices && data.choices[0]?.delta) {
+              port.postMessage({ type: 'chunk', content: JSON.stringify(data) })
+            }
+          } catch (e) {
+            // 忽略解析错误，继续处理下一行
+            console.warn('解析 SSE 数据失败:', e)
+          }
+        }
+      }
     }
-  } catch (error: any) {
-    console.error('AIGate AI 调用失败:', error)
-    return {
-      success: false,
-      error: error.message || 'AI 调用失败',
-      quotaInfo: null,
+  } catch (error) {
+    // 检查是否是因为取消导致的错误
+    if (abortController.signal.aborted || (error instanceof Error && error.name === 'AbortError')) {
+      console.log('[Background] Request aborted')
+      port.postMessage({ type: 'aborted' })
+      return
     }
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('AI request failed:', error)
+    port.postMessage({ type: 'error', error: errorMessage })
   }
 }
 
@@ -299,8 +348,7 @@ chrome.runtime.onConnect.addListener((port) => {
       }
 
       case MessageEnum.checkAIGateQuota: {
-        const { userId, apiKeyId } = message.data
-        checkAIGateQuota(userId, apiKeyId)
+        checkAIGateQuota()
           .then((result) => {
             port.postMessage({ type: 'quota-result', data: result })
           })
@@ -314,17 +362,14 @@ chrome.runtime.onConnect.addListener((port) => {
       }
 
       case MessageEnum.callAIGateAI: {
-        const { userId, apiKeyId, model, messages, temperature } = message.data
-        callAIGateAI(userId, apiKeyId, model, messages, temperature)
-          .then((result) => {
-            port.postMessage({ type: 'ai-result', data: result })
+        const { messages } = message.data
+        currentAbortController = new AbortController()
+        callAIGateAI(port, messages, currentAbortController).catch((error) => {
+          port.postMessage({
+            type: 'error',
+            error: error instanceof Error ? error.message : 'AI 调用失败',
           })
-          .catch((error) => {
-            port.postMessage({
-              type: 'error',
-              error: error instanceof Error ? error.message : 'AI 调用失败',
-            })
-          })
+        })
         break
       }
 
