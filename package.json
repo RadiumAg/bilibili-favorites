@@ -28,6 +28,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "@langchain/core": "^1.1.30",
+    "@langchain/openai": "^1.2.12",
     "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-progress": "^1.1.8",
@@ -43,6 +45,7 @@
     "clsx": "^2.1.1",
     "echarts": "^5.6.0",
     "immer": "^10.1.1",
+    "langchain": "^1.2.29",
     "lottie-web": "^5.12.2",
     "lucide-react": "^0.469.0",
     "openai": "^6.22.0",

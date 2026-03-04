@@ -14,7 +14,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -29,6 +29,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@langchain/core/messages": [
+        "./node_modules/@langchain/core/dist/messages/index.d.ts"
       ]
     }
   },

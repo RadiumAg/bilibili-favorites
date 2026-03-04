@@ -1,4 +1,5 @@
-import OpenAI from 'openai'
+import { ChatOpenAI } from '@langchain/openai'
+import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages'
 import { MessageEnum } from '@/utils/message'
 
 // AIGate 配额信息类型
@@ -150,26 +151,39 @@ const streamAIRequest = async (
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   abortController: AbortController,
 ) => {
-  const openai = new OpenAI({
-    baseURL: config.baseURL,
-    apiKey: config.apiKey,
-    dangerouslyAllowBrowser: true,
+  // 初始化 LangChain ChatOpenAI 模型
+  const model = new ChatOpenAI({
+    openAIApiKey: config.apiKey,
+    configuration: {
+      baseURL: config.baseURL,
+    },
+    modelName: config.model || 'gpt-3.5-turbo',
+    streaming: true,
+    temperature: config.extraParams?.temperature || 0.7,
+    maxTokens: config.extraParams?.max_tokens || 2000,
   })
 
   try {
-    const stream = await openai.chat.completions.create(
-      {
-        model: config.model!,
-        messages,
-        stream: true,
-        ...(config.extraParams || {}),
-      },
-      {
-        signal: abortController.signal,
-      },
-    )
+    // 转换消息格式为 LangChain 格式
+    const langchainMessages = messages.map((msg) => {
+      switch (msg.role) {
+        case 'system':
+          return new SystemMessage(msg.content)
+        case 'user':
+          return new HumanMessage(msg.content)
+        case 'assistant':
+          return new AIMessage(msg.content)
+        default:
+          return new HumanMessage(msg.content)
+      }
+    })
 
-    for await (const chunk of stream as any) {
+    // 使用 LangChain 的流式调用
+    const stream = await model.stream(langchainMessages, {
+      signal: abortController.signal,
+    })
+
+    for await (const chunk of stream) {
       // 双重检查：在处理每个 chunk 前检查是否已取消
       if (abortController.signal.aborted) {
         console.log('[Background] Request aborted during streaming')
@@ -177,11 +191,42 @@ const streamAIRequest = async (
         return
       }
 
-      if (chunk) {
-        port.postMessage({ type: 'chunk', content: JSON.stringify(chunk) })
+      if (chunk && chunk.content) {
+        // 将 LangChain 的响应格式转换为与原 OpenAI SDK 兼容的格式
+        const formattedChunk = {
+          id: `chatcmpl-${Date.now()}`,
+          object: 'chat.completion.chunk',
+          created: Math.floor(Date.now() / 1000),
+          model: config.model || 'gpt-3.5-turbo',
+          choices: [
+            {
+              index: 0,
+              delta: {
+                content: chunk.content,
+              },
+              finish_reason: null,
+            },
+          ],
+        }
+        port.postMessage({ type: 'chunk', content: JSON.stringify(formattedChunk) })
       }
     }
 
+    // 发送结束标记
+    const finalChunk = {
+      id: `chatcmpl-${Date.now()}`,
+      object: 'chat.completion.chunk',
+      created: Math.floor(Date.now() / 1000),
+      model: config.model || 'gpt-3.5-turbo',
+      choices: [
+        {
+          index: 0,
+          delta: {},
+          finish_reason: 'stop',
+        },
+      ],
+    }
+    port.postMessage({ type: 'chunk', content: JSON.stringify(finalChunk) })
     port.postMessage({ type: 'done' })
   } catch (error) {
     // 检查是否是因为取消导致的错误
