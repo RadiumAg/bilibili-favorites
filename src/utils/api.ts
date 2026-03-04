@@ -263,6 +263,18 @@ const fetchAIMove = async (videos: AIMoveInput, favoriteTitles: string[], config
 }
 
 /**
+ * 调用 AIGate AI 服务（免费额度）
+ */
+const callAIGateAI = async (messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>) => {
+  return connectAndStream({
+    type: MessageEnum.callAIGateAI,
+    data: {
+      messages,
+    },
+  })
+}
+
+/**
  * 分页获取某个收藏夹的全部视频列表
  * @param mediaId 收藏夹 ID
  * @param pageSize 每页数量，默认 40（B 站最大值）
@@ -311,6 +323,7 @@ export {
   fetchChatGpt,
   fetchAIMove,
   fetchAllFavoriteMedias,
+  callAIGateAI,
 }
 export type {
   FavoriteMedia,
