@@ -3,6 +3,7 @@ import { MessageEnum } from '@/utils/message'
 import { getExtensionDeviceId } from '@/utils/tab'
 
 const apiKeyId = 'key_1772198331317_qt44tvwv8gm'
+const freeApiUrl = import.meta.env.VITE_FREE_API
 
 // AIGate 配额信息类型
 type QuotaInfo = {
@@ -33,7 +34,7 @@ const checkAIGateQuota = async (): Promise<{
 
   try {
     // 调用 AIGate 配额检查 API
-    const response = await fetch('http://localhost:3000/api/trpc/ai.getQuotaInfo', {
+    const response = await fetch(`${freeApiUrl}/api/trpc/ai.getQuotaInfo`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -105,7 +106,7 @@ const callAIGateAI = async (
     }
 
     // 调用 AIGate AI 接口（SSE 流式响应）
-    const response = await fetch('http://localhost:3000/api/ai/chat/stream', {
+    const response = await fetch(`${freeApiUrl}/api/ai/chat/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
