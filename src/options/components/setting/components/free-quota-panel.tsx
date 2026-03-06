@@ -60,11 +60,7 @@ export const FreeQuotaPanel: React.FC<FreeQuotaPanelProps> = ({ checkingQuota, o
 
   return (
     <div className="pt-6 mt-6">
-      <div className="flex gap-3">
-        <Button type="button" onClick={checkQuota} disabled={checkingQuota} variant="outline">
-          {checkingQuota ? '检查中...' : '检查配额'}
-        </Button>
-      </div>
+      <div className="flex gap-3"></div>
     </div>
   )
 }
