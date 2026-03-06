@@ -5,11 +5,9 @@ import { z } from 'zod'
 import { useGlobalConfig } from '@/store/global-data'
 import { toast } from '@/hooks/use-toast'
 import { useShallow } from 'zustand/react/shallow'
-import { useMount } from 'ahooks'
 import { ConfigModeSelector } from './components/config-mode-selector'
 import { CustomConfigForm } from './components/custom-config-form'
 import { QuotaCard } from './components/quota-card'
-import { FreeQuotaPanel } from './components/free-quota-panel'
 import { defaultExtraParams, Adapter } from './util'
 import type { ConfigMode, QuotaInfo, formSchema as formSchemaType } from './types'
 
@@ -66,12 +64,6 @@ const Setting: React.FC = () => {
     toast({ variant: 'default', title: 'ok没问题' })
   }
 
-  const handleQuotaCheckResult = (result: QuotaInfo | null) => {
-    setQuotaInfo(result)
-    setLastCheckTime(new Date().toLocaleString())
-    setCheckingQuota(false)
-  }
-
   React.useEffect(() => {
     if (globalData.aiConfig.adapter == null) return
     const currentExtraParams = form.getValues('extraParams')
@@ -83,10 +75,10 @@ const Setting: React.FC = () => {
 
   return (
     <div className="space-y-8">
+      <ConfigModeSelector configMode={configMode} onModeChange={setConfigMode} />
+
       <Form {...form}>
         <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[60%]">
-          <ConfigModeSelector configMode={configMode} onModeChange={setConfigMode} />
-
           {configMode === 'custom' && (
             <CustomConfigForm
               form={form}
