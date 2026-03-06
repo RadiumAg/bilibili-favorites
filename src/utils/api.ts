@@ -265,7 +265,9 @@ const fetchAIMove = async (videos: AIMoveInput, favoriteTitles: string[], config
 /**
  * 调用 AIGate AI 服务（免费额度）
  */
-const callAIGateAI = async (messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>) => {
+const callAIGateAI = async (
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+) => {
   return connectAndStream({
     type: MessageEnum.callAIGateAI,
     data: {

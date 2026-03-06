@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import { MessageEnum } from '@/utils/message'
 import { getExtensionDeviceId } from '@/utils/tab'
 
-const apiKeyId = 'key_1772198331317_qt44tvwv8gm'
+const apiKeyId = 'key_1772769367541_uih3fdvuwf'
 const freeApiUrl = import.meta.env.VITE_FREE_API
 
 // AIGate 配额信息类型
