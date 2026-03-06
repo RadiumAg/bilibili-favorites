@@ -1,7 +1,10 @@
-import React from 'react'
+import React, { Fragment, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Info, CheckCircle, AlertTriangle } from 'lucide-react'
+import { toast } from '@/hooks'
+import { useMount } from 'ahooks'
+import { Button } from '@/components/ui/button'
 
 type QuotaInfo = {
   daily: {
@@ -21,16 +24,148 @@ type QuotaInfo = {
   }
 }
 
-interface QuotaCardProps {
-  quotaInfo: QuotaInfo
-  lastCheckTime: string
-}
+interface QuotaCardProps {}
 
-export const QuotaCard: React.FC<QuotaCardProps> = ({ quotaInfo, lastCheckTime }) => {
-  const dailyUsagePercent =
-    quotaInfo.daily.limit > 0 ? (quotaInfo.daily.used / quotaInfo.daily.limit) * 100 : 0
-  const rpmUsagePercent =
-    quotaInfo.rpm.limit > 0 ? (quotaInfo.rpm.used / quotaInfo.rpm.limit) * 100 : 0
+export const QuotaCard: React.FC<QuotaCardProps> = () => {
+  const [quotaInfo, setQuotaInfo] = React.useState<QuotaInfo | null>(null)
+  const [checkingQuota, setCheckingQuota] = React.useState(false)
+  const [lastCheckTime, setLastCheckTime] = React.useState<string>('')
+
+  const dailyUsagePercent = useMemo(() => {
+    if (quotaInfo == null) {
+      return null
+    }
+    return quotaInfo?.daily.limit > 0 ? (quotaInfo.daily.used / quotaInfo.daily.limit) * 100 : 0
+  }, [quotaInfo])
+
+  const rpmUsagePercent = useMemo(() => {
+    if (quotaInfo == null) {
+      return null
+    }
+    return quotaInfo.rpm.limit > 0 ? (quotaInfo.rpm.used / quotaInfo.rpm.limit) * 100 : 0
+  }, [quotaInfo])
+
+  const handleCheckQuota = async () => {
+    setCheckingQuota(true)
+    try {
+      const port = chrome.runtime.connect({ name: 'ai-stream' })
+
+      port.postMessage({
+        type: 'checkAIGateQuota',
+      })
+
+      port.onMessage.addListener((response) => {
+        if (response.type === 'quota-result') {
+          const { quotaInfo: newQuotaInfo, message } = response.data
+          setQuotaInfo(newQuotaInfo)
+          setLastCheckTime(new Date().toLocaleString())
+
+          toast({
+            variant: 'default',
+            title: '配额检查成功',
+            description: message,
+          })
+          port.disconnect()
+          setCheckingQuota(false)
+        } else if (response.type === 'error') {
+          toast({
+            variant: 'destructive',
+            title: '配额检查失败',
+            description: response.error,
+          })
+          port.disconnect()
+          setCheckingQuota(false)
+        }
+      })
+
+      setTimeout(() => {
+        if (checkingQuota) {
+          port.disconnect()
+          setCheckingQuota(false)
+          toast({
+            variant: 'destructive',
+            title: '请求超时',
+            description: '配额检查请求超时',
+          })
+        }
+      }, 10000)
+    } catch (error) {
+      console.error('配额检查失败:', error)
+      setCheckingQuota(false)
+      toast({
+        variant: 'destructive',
+        title: '配额检查失败',
+        description: error instanceof Error ? error.message : '未知错误',
+      })
+    }
+  }
+
+  const cardContentEle = quotaInfo && (
+    <Fragment>
+      {/* 日配额 */}
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="font-medium">今日请求配额</span>
+          <span
+            className={`text-sm ${
+              quotaInfo.daily.remaining > quotaInfo.daily.limit * 0.2
+                ? 'text-green-600'
+                : quotaInfo.daily.remaining > 0
+                  ? 'text-yellow-600'
+                  : 'text-red-600'
+            }`}
+          >
+            {quotaInfo.daily.remaining}/{quotaInfo.daily.limit} 次请求
+          </span>
+        </div>
+        <Progress value={dailyUsagePercent} className="h-2" />
+        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <span>已使用: {quotaInfo.daily.used} 次</span>
+          <span>剩余: {quotaInfo.daily.remaining} 次</span>
+        </div>
+      </div>
+
+      {/* RPM 限制 */}
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="font-medium">请求频率限制</span>
+          <span className="text-sm text-muted-foreground">
+            {quotaInfo.rpm.remaining}/{quotaInfo.rpm.limit} RPM
+          </span>
+        </div>
+        <Progress value={rpmUsagePercent} className="h-2" />
+        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <span>限制: {quotaInfo.rpm.limit} 次/分钟</span>
+          <span>当前可用: {quotaInfo.rpm.remaining} 次/分钟</span>
+        </div>
+      </div>
+
+      {/* 状态指示器 */}
+      <div className="flex items-center gap-4 pt-2">
+        <div className="flex items-center gap-1">
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <span className="text-sm">服务正常</span>
+        </div>
+        {quotaInfo.daily.remaining === 0 && (
+          <div className="flex items-center gap-1">
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <span className="text-sm text-red-600">今日配额已用完</span>
+          </div>
+        )}
+        {quotaInfo.daily.remaining > 0 &&
+          quotaInfo.daily.remaining < quotaInfo.daily.limit * 0.2 && (
+            <div className="flex items-center gap-1">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <span className="text-sm text-yellow-600">配额即将用完</span>
+            </div>
+          )}
+      </div>
+    </Fragment>
+  )
+
+  useMount(() => {
+    handleCheckQuota()
+  })
 
   return (
     <Card className="mt-6">
@@ -45,65 +180,12 @@ export const QuotaCard: React.FC<QuotaCardProps> = ({ quotaInfo, lastCheckTime }
           )}
         </CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-4">
-        {/* 日配额 */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-medium">今日请求配额</span>
-            <span
-              className={`text-sm ${
-                quotaInfo.daily.remaining > quotaInfo.daily.limit * 0.2
-                  ? 'text-green-600'
-                  : quotaInfo.daily.remaining > 0
-                    ? 'text-yellow-600'
-                    : 'text-red-600'
-              }`}
-            >
-              {quotaInfo.daily.remaining}/{quotaInfo.daily.limit} 次请求
-            </span>
-          </div>
-          <Progress value={dailyUsagePercent} className="h-2" />
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>已使用: {quotaInfo.daily.used} 次</span>
-            <span>剩余: {quotaInfo.daily.remaining} 次</span>
-          </div>
-        </div>
-
-        {/* RPM 限制 */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-medium">请求频率限制</span>
-            <span className="text-sm text-muted-foreground">
-              {quotaInfo.rpm.remaining}/{quotaInfo.rpm.limit} RPM
-            </span>
-          </div>
-          <Progress value={rpmUsagePercent} className="h-2" />
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>限制: {quotaInfo.rpm.limit} 次/分钟</span>
-            <span>当前可用: {quotaInfo.rpm.remaining} 次/分钟</span>
-          </div>
-        </div>
-
-        {/* 状态指示器 */}
-        <div className="flex items-center gap-4 pt-2">
-          <div className="flex items-center gap-1">
-            <CheckCircle className="h-4 w-4 text-green-500" />
-            <span className="text-sm">服务正常</span>
-          </div>
-          {quotaInfo.daily.remaining === 0 && (
-            <div className="flex items-center gap-1">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              <span className="text-sm text-red-600">今日配额已用完</span>
-            </div>
-          )}
-          {quotaInfo.daily.remaining > 0 &&
-            quotaInfo.daily.remaining < quotaInfo.daily.limit * 0.2 && (
-              <div className="flex items-center gap-1">
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm text-yellow-600">配额即将用完</span>
-              </div>
-            )}
-        </div>
+        <Button type="button" onClick={handleCheckQuota} disabled={checkingQuota} variant="outline">
+          {checkingQuota ? '检查中...' : '检查配额'}
+        </Button>
+        {cardContentEle}
       </CardContent>
     </Card>
   )

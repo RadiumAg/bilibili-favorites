@@ -6,32 +6,33 @@ import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
-import { toast } from '@/hooks'
+import { useToast } from '@/hooks/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
+import classNames from 'classnames'
 import { fetchAllFavoriteMedias } from '@/utils/api'
+import { FolderOpen, Video } from 'lucide-react'
 
-type VideoItem = {
+interface VideoItem {
   id: number
   title: string
   cover?: string
   bvid?: string
 }
 
-type FavoriteMediaResponse = {
+interface FavoriteMediaResponse {
   id: number
   title: string
   cover: string
   bvid: string
 }
 
-type DragManagerProps = {
+interface DragManagerProps {
   className?: string
 }
 
 const DragManager: React.FC<DragManagerProps> = (props) => {
   const { className } = props
+  const { toast } = useToast()
 
   const { favoriteData } = useGlobalConfig(
     useShallow((state) => ({
@@ -46,24 +47,13 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
   const [moving, setMoving] = React.useState(false)
   const [dragOverFolderId, setDragOverFolderId] = React.useState<number | null>(null)
   const [initialized, setInitialized] = React.useState(false)
-  const [moveProgress, setMoveProgress] = React.useState(0)
-  const [isDragging, setIsDragging] = React.useState(false)
-  const [searchTerm, setSearchTerm] = React.useState('')
-
-  // 默认选中第一个收藏夹
-  React.useEffect(() => {
-    if (!initialized && favoriteData.length > 0) {
-      setInitialized(true)
-      handleSelectFolder(favoriteData[0].id)
-    }
-  }, [favoriteData, initialized])
 
   // 加载收藏夹视频
   const loadVideos = useMemoizedFn(async (folderId: number) => {
     setLoading(true)
     setSelectedVideoIds(new Set())
     try {
-      const medias = await fetchAllFavoriteMedias(folderId.toString())
+      const medias = await fetchAllFavoriteMedias<FavoriteMediaResponse>(folderId.toString())
       setVideos(
         medias.map((m) => ({
           id: m.id,
@@ -129,23 +119,16 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
 
     event.dataTransfer.setData('application/json', JSON.stringify(dragIds))
     event.dataTransfer.effectAllowed = 'move'
-    setIsDragging(true)
 
     // 设置拖拽图像提示
     const dragImage = document.createElement('div')
-    dragImage.className = 'bg-[#BF00FF] text-white px-3 py-2 rounded shadow-lg text-sm font-medium'
+    dragImage.className = 'bg-b-primary text-white px-3 py-2 rounded shadow-lg'
     dragImage.textContent = `移动 ${dragIds.length} 个视频`
     dragImage.style.position = 'absolute'
     dragImage.style.top = '-1000px'
     document.body.appendChild(dragImage)
     event.dataTransfer.setDragImage(dragImage, 0, 0)
     setTimeout(() => document.body.removeChild(dragImage), 0)
-  })
-
-  // 拖拽结束
-  const handleDragEnd = useMemoizedFn(() => {
-    setIsDragging(false)
-    setDragOverFolderId(null)
   })
 
   // 拖拽经过收藏夹
@@ -176,13 +159,10 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
     if (videoIds.length === 0) return
 
     setMoving(true)
-    setMoveProgress(0)
     let successCount = 0
     let failCount = 0
 
-    const total = videoIds.length
-    for (let i = 0; i < total; i++) {
-      const videoId = videoIds[i]
+    for (const videoId of videoIds) {
       try {
         await queryAndSendMessage({
           type: MessageEnum.moveVideo,
@@ -197,14 +177,9 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         failCount++
         console.error('Move failed:', error)
       }
-
-      // 更新进度
-      const progress = ((i + 1) / total) * 100
-      setMoveProgress(progress)
     }
 
     setMoving(false)
-    setMoveProgress(0)
 
     toast({
       title: '移动完成',
@@ -217,18 +192,20 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
     }
   })
 
-  // 过滤视频列表
-  const filteredVideos = React.useMemo(() => {
-    if (!searchTerm.trim()) return videos
-    return videos.filter((video) => video.title.toLowerCase().includes(searchTerm.toLowerCase()))
-  }, [videos, searchTerm])
+  // 默认选中第一个收藏夹
+  React.useEffect(() => {
+    if (!initialized && favoriteData.length > 0) {
+      setInitialized(true)
+      handleSelectFolder(favoriteData[0].id)
+    }
+  }, [favoriteData, handleSelectFolder, initialized])
 
   return (
-    <div className={cn('flex gap-4 h-[700px]', className)}>
+    <div className={classNames('flex gap-4 h-[700px]', className)}>
       {/* 左侧：收藏夹列表 */}
-      <div className="w-64 flex flex-col border border-[#BF00FF]/20 rounded-xl overflow-hidden shadow-sm bg-white">
-        <div className="bg-gradient-to-r from-[#BF00FF] to-[#BF00FF]/80 px-4 py-3 font-medium text-sm text-white flex items-center gap-2">
-          <span className="text-base">📁</span>
+      <div className="w-64 flex flex-col border border-[#00AEEC]/20 rounded-xl overflow-hidden shadow-sm bg-white">
+        <div className="bg-gradient-to-r from-[#00AEEC] to-[#00AEEC]/80 px-4 py-3 font-medium text-sm text-white flex items-center gap-2">
+          <FolderOpen className="w-5 h-5" />
           <span>收藏夹列表</span>
         </div>
         <ScrollArea className="flex-1 scrollbar-thin">
@@ -240,15 +217,15 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                 onDragOver={(e) => handleDragOver(e, folder.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, folder.id)}
-                className={cn(
+                className={classNames(
                   'px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm',
                   'border-2',
                   {
-                    'bg-[#BF00FF] text-white border-[#BF00FF] shadow-md shadow-[#BF00FF]/30':
+                    'bg-[#00AEEC] text-white border-[#00AEEC] shadow-md shadow-[#00AEEC]/30':
                       selectedFolderId === folder.id,
-                    'border-transparent hover:bg-[#BF00FF]/5 hover:border-[#BF00FF]/20':
+                    'border-transparent hover:bg-[#00AEEC]/5 hover:border-[#00AEEC]/20':
                       selectedFolderId !== folder.id && dragOverFolderId !== folder.id,
-                    'border-[#BF00FF] border-dashed bg-[#BF00FF]/10':
+                    'border-[#00AEEC] border-dashed bg-[#00AEEC]/10':
                       dragOverFolderId === folder.id && selectedFolderId !== folder.id,
                   },
                 )}
@@ -256,9 +233,9 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                 <div className="flex items-center justify-between">
                   <span className="truncate font-medium">{folder.title}</span>
                   <span
-                    className={cn('text-xs px-1.5 py-0.5 rounded-full', {
+                    className={classNames('text-xs px-1.5 py-0.5 rounded-full', {
                       'bg-white/20': selectedFolderId === folder.id,
-                      'bg-[#BF00FF]/10 text-[#BF00FF]': selectedFolderId !== folder.id,
+                      'bg-[#00AEEC]/10 text-[#00AEEC]': selectedFolderId !== folder.id,
                     })}
                   >
                     {folder.media_count}
@@ -271,38 +248,28 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
       </div>
 
       {/* 右侧：视频列表 */}
-      <div className="flex-1 flex flex-col border border-[#BF00FF]/20 rounded-xl overflow-hidden shadow-sm bg-white relative">
-        <div className="bg-gradient-to-r from-[#BF00FF] to-[#BF00FF]/80 px-4 py-3 flex items-center justify-between">
+      <div className="flex-1 flex flex-col border border-[#00AEEC]/20 rounded-xl overflow-hidden shadow-sm bg-white relative">
+        <div className="bg-gradient-to-r from-[#00AEEC] to-[#00AEEC]/80 px-4 py-3 flex items-center justify-between">
           <div className="font-medium text-sm text-white flex items-center gap-2">
-            <span className="text-base">🎬</span>
+            <Video className="w-5 h-5" />
             <span>视频列表</span>
             {selectedFolderId && (
               <span className="ml-2 text-white/80 text-xs">
-                ({filteredVideos.length} 个视频, 已选{' '}
+                ({videos.length} 个视频, 已选
                 <span className="text-white font-bold">{selectedVideoIds.size}</span> 个)
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {/* 搜索框 */}
-            <input
-              type="text"
-              placeholder="搜索视频标题..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-7 px-2 text-xs rounded border border-white/30 bg-white/10 text-white placeholder-white/60 focus:outline-none focus:ring-1 focus:ring-white"
-            />
-            {videos.length > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={toggleSelectAll}
-                className="h-7 text-xs bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
-              >
-                {selectedVideoIds.size === videos.length ? '取消全选' : '全选'}
-              </Button>
-            )}
-          </div>
+          {videos.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={toggleSelectAll}
+              className="h-7 text-xs bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+            >
+              {selectedVideoIds.size === videos.length ? '取消全选' : '全选'}
+            </Button>
+          )}
         </div>
 
         <ScrollArea className="flex-1 scrollbar-thin">
@@ -323,25 +290,24 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                 </div>
               ))}
             </div>
-          ) : filteredVideos.length === 0 ? (
+          ) : videos.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
               <span className="text-4xl">📭</span>
-              <span>{searchTerm ? '未找到匹配的视频' : '该收藏夹暂无视频'}</span>
+              <span>该收藏夹暂无视频</span>
             </div>
           ) : (
             <div className="p-3 space-y-2">
-              {filteredVideos.map((video) => (
+              {videos.map((video) => (
                 <div
                   key={video.id}
                   draggable
                   onClick={(e) => toggleVideoSelection(video.id, e)}
                   onDragStart={(e) => handleDragStart(e, video.id)}
-                  onDragEnd={handleDragEnd}
-                  className={cn(
+                  className={classNames(
                     'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-200',
                     'border-2 group',
                     {
-                      'border-[#BF00FF] bg-[#BF00FF]/5 shadow-sm shadow-[#BF00FF]/20':
+                      'border-[#00AEEC] bg-[#00AEEC]/5 shadow-sm shadow-[#00AEEC]/20':
                         selectedVideoIds.has(video.id),
                       'border-transparent hover:bg-gray-50 hover:border-gray-200':
                         !selectedVideoIds.has(video.id),
@@ -358,10 +324,10 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                         draggable={false}
                       />
                       <div
-                        className={cn(
+                        className={classNames(
                           'absolute inset-0 rounded-lg transition-opacity duration-200',
                           {
-                            'bg-[#BF00FF]/20': selectedVideoIds.has(video.id),
+                            'bg-[#00AEEC]/20': selectedVideoIds.has(video.id),
                             'bg-transparent group-hover:bg-black/5': !selectedVideoIds.has(
                               video.id,
                             ),
@@ -373,8 +339,8 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                   {/* 标题 */}
                   <div className="flex-1 min-w-0">
                     <div
-                      className={cn('text-sm line-clamp-2 font-medium', {
-                        'text-[#BF00FF]': selectedVideoIds.has(video.id),
+                      className={classNames('text-sm line-clamp-2 font-medium', {
+                        'text-[#00AEEC]': selectedVideoIds.has(video.id),
                         'text-gray-700': !selectedVideoIds.has(video.id),
                       })}
                     >
@@ -386,12 +352,12 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                   </div>
                   {/* 选中指示器 */}
                   <div
-                    className={cn(
+                    className={classNames(
                       'w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all duration-200',
                       {
-                        'bg-[#BF00FF] text-white shadow-md shadow-[#BF00FF]/30':
+                        'bg-[#00AEEC] text-white shadow-md shadow-[#00AEEC]/30':
                           selectedVideoIds.has(video.id),
-                        'border-2 border-gray-200 group-hover:border-[#BF00FF]/50':
+                        'border-2 border-gray-200 group-hover:border-[#00AEEC]/50':
                           !selectedVideoIds.has(video.id),
                       },
                     )}
@@ -406,7 +372,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
 
         {/* 底部提示 */}
         {selectedFolderId && videos.length > 0 && (
-          <div className="px-4 py-2.5 border-t border-[#BF00FF]/10 bg-[#BF00FF]/5 text-xs text-[#BF00FF] flex items-center gap-2">
+          <div className="px-4 py-2.5 border-t border-[#00AEEC]/10 bg-[#00AEEC]/5 text-xs text-[#00AEEC] flex items-center gap-2">
             <span className="text-sm">💡</span>
             <span>选中视频后拖拽到左侧收藏夹即可移动。支持 Ctrl/Cmd + 点击多选。</span>
           </div>
@@ -415,9 +381,9 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         {/* 移动中遮罩 */}
         {moving && (
           <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10">
-            <div className="text-center w-full max-w-xs">
-              <div className="text-sm text-[#BF00FF] font-medium mb-2">正在移动视频...</div>
-              <Progress value={moveProgress} className="w-full h-2" />
+            <div className="text-center">
+              <div className="animate-spin w-10 h-10 border-4 border-[#00AEEC] border-t-transparent rounded-full mx-auto mb-3" />
+              <div className="text-sm text-[#00AEEC] font-medium">正在移动视频...</div>
             </div>
           </div>
         )}
