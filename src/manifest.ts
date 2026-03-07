@@ -42,6 +42,7 @@ export default defineManifest({
     'https://*.openai.com/*',
     'https://spark-api.xf-yun.com/*',
     'https://*.xf-yun.com/*',
+    'https://*.radiumg.top/*',
   ],
   options_ui: {
     page: 'options.html',
