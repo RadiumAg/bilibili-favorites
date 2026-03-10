@@ -293,7 +293,6 @@ const fetchAllFavoriteMedias = async (
   const key = `favorite-all-${mediaId}`
   const mediaData = await dbManager.get(key)
   const isExpired = await dbManager.isExpired(key, expireTime)
-  debugger
   if (mediaData && !isExpired) return mediaData.data
 
   while (hasMore) {
