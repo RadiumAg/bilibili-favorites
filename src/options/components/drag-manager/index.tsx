@@ -204,7 +204,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
     <div className={classNames('flex gap-4 h-[700px]', className)}>
       {/* 左侧：收藏夹列表 */}
       <div className="w-64 flex flex-col border border-[#00AEEC]/20 rounded-xl overflow-hidden shadow-sm bg-white">
-        <div className="bg-gradient-to-r from-[#00AEEC] to-[#00AEEC]/80 px-4 py-3 font-medium text-sm text-white flex items-center gap-2">
+        <div className="bg-gradient-to-r bg-primary px-4 py-3 font-medium text-sm text-white flex items-center gap-2">
           <FolderOpen className="w-5 h-5" />
           <span>收藏夹列表</span>
         </div>
@@ -221,11 +221,11 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                   'px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm',
                   'border-2',
                   {
-                    'bg-[#00AEEC] text-white border-[#00AEEC] shadow-md shadow-[#00AEEC]/30':
+                    'bg-primary text-white border-[#00AEEC] shadow-md shadow-[#00AEEC]/30':
                       selectedFolderId === folder.id,
                     'border-transparent hover:bg-[#00AEEC]/5 hover:border-[#00AEEC]/20':
                       selectedFolderId !== folder.id && dragOverFolderId !== folder.id,
-                    'border-[#00AEEC] border-dashed bg-[#00AEEC]/10':
+                    'border-primary border-dashed bg-[#00AEEC]/10':
                       dragOverFolderId === folder.id && selectedFolderId !== folder.id,
                   },
                 )}
@@ -249,7 +249,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
 
       {/* 右侧：视频列表 */}
       <div className="flex-1 flex flex-col border border-[#00AEEC]/20 rounded-xl overflow-hidden shadow-sm bg-white relative">
-        <div className="bg-gradient-to-r from-[#00AEEC] to-[#00AEEC]/80 px-4 py-3 flex items-center justify-between">
+        <div className="bg-gradient-to-r bg-primary px-4 py-3 flex items-center justify-between">
           <div className="font-medium text-sm text-white flex items-center gap-2">
             <Video className="w-5 h-5" />
             <span>视频列表</span>
