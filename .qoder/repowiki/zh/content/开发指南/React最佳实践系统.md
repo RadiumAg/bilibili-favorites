@@ -15,7 +15,26 @@
 - [src/utils/api.ts](file://src/utils/api.ts)
 - [src/lib/utils.ts](file://src/lib/utils.ts)
 - [src/utils/log.ts](file://src/utils/log.ts)
+- [tailwind.config.js](file://tailwind.config.js)
+- [postcss.config.js](file://postcss.config.js)
+- [src/popup/index.css](file://src/popup/index.css)
+- [src/options/index.css](file://src/options/index.css)
+- [components.json](file://components.json)
+- [src/components/ui/button.tsx](file://src/components/ui/button.tsx)
+- [src/components/ui/card.tsx](file://src/components/ui/card.tsx)
+- [src/components/ui/form.tsx](file://src/components/ui/form.tsx)
+- [src/components/ui/input.tsx](file://src/components/ui/input.tsx)
+- [src/components/ui/select.tsx](file://src/components/ui/select.tsx)
+- [src/components/ui/label.tsx](file://src/components/ui/label.tsx)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增样式系统和主题管理最佳实践章节
+- 更新组件设计模式以反映新的样式系统改进
+- 增加颜色管理和交互设计指导原则
+- 完善Tailwind CSS和CSS变量的使用规范
+- 添加暗黑模式和OLED优化的实现指南
 
 ## 目录
 1. [项目概述](#项目概述)
@@ -24,11 +43,14 @@
 4. [状态管理系统](#状态管理系统)
 5. [数据流架构](#数据流架构)
 6. [组件设计模式](#组件设计模式)
-7. [性能优化策略](#性能优化策略)
-8. [错误处理与调试](#错误处理与调试)
-9. [测试策略](#测试策略)
-10. [部署与构建](#部署与构建)
-11. [总结](#总结)
+7. [样式系统与主题管理](#样式系统与主题管理)
+8. [颜色管理与视觉设计](#颜色管理与视觉设计)
+9. [交互设计与用户体验](#交互设计与用户体验)
+10. [性能优化策略](#性能优化策略)
+11. [错误处理与调试](#错误处理与调试)
+12. [测试策略](#测试策略)
+13. [部署与构建](#部署与构建)
+14. [总结](#总结)
 
 ## 项目概述
 
@@ -65,9 +87,9 @@ B1 --> B6[workers/]
 B1 --> B7[contentScript/]
 B1 --> B8[background/]
 end
-subgraph "配置文件"
-C1[manifest.ts] --> C2[tsconfig.json]
-C3[vite.config.ts] --> C4[postcss.config.js]
+subgraph "样式系统"
+C1[tailwind.config.js] --> C2[postcss.config.js]
+C3[components.json] --> C4[CSS变量]
 end
 ```
 
@@ -79,6 +101,7 @@ end
 
 - **按功能域分层**：components、hooks、store、utils等模块化组织
 - **按页面分离**：popup、options、sidepanel独立管理
+- **样式系统集中**：tailwind.config.js统一管理样式配置
 - **工具函数集中**：utils目录统一管理工具方法
 - **状态管理分离**：store目录专门处理全局状态
 
@@ -97,24 +120,29 @@ subgraph "用户界面层"
 A[Popup界面] --> B[Options界面]
 C[SidePanel界面] --> D[ContentScript]
 end
+subgraph "样式系统层"
+E[Tailwind CSS] --> F[CSS变量]
+G[主题切换] --> H[暗黑模式]
+end
 subgraph "状态管理层"
-E[Zustand Store] --> F[Chrome Storage]
-G[Immer中间件] --> E
+I[Zustand Store] --> J[Chrome Storage]
+K[Immer中间件] --> I
 end
 subgraph "数据访问层"
-H[API封装] --> I[B站API]
-J[AI服务] --> K[OpenAI/AIGate]
+L[API封装] --> M[B站API]
+N[AI服务] --> O[OpenAI/AIGate]
 end
 subgraph "后台服务"
-L[Background Script] --> M[消息传递]
-N[IndexedDB] --> O[数据缓存]
+P[Background Script] --> Q[消息传递]
+R[IndexedDB] --> S[数据缓存]
 end
 A --> E
 B --> E
 C --> E
-E --> H
-H --> L
-L --> M
+E --> I
+I --> L
+L --> P
+P --> Q
 ```
 
 **图表来源**
@@ -124,9 +152,10 @@ L --> M
 ### 架构设计特点
 
 1. **模块化设计**：每个功能域都有独立的模块和职责边界
-2. **状态集中管理**：使用Zustand实现全局状态管理
-3. **异步数据流**：通过消息传递实现前后端通信
-4. **缓存策略**：智能缓存机制提升性能
+2. **样式系统统一**：使用Tailwind CSS和CSS变量实现一致的样式管理
+3. **状态集中管理**：使用Zustand实现全局状态管理
+4. **异步数据流**：通过消息传递实现前后端通信
+5. **主题系统支持**：内置暗黑模式和主题切换机制
 
 **章节来源**
 - [src/store/global-data.ts: 6-25:6-25](file://src/store/global-data.ts#L6-L25)
@@ -316,6 +345,171 @@ Store-->>Child : 更新状态
 - [src/popup/Popup.tsx: 1-80:1-80](file://src/popup/Popup.tsx#L1-L80)
 - [src/options/Options.tsx: 1-91:1-91](file://src/options/Options.tsx#L1-L91)
 
+## 样式系统与主题管理
+
+### Tailwind CSS配置体系
+
+项目采用Tailwind CSS作为主要样式框架，结合CSS变量实现灵活的主题管理：
+
+```mermaid
+graph TB
+subgraph "样式配置层"
+A[tailwind.config.js] --> B[主题扩展]
+C[颜色系统] --> D[圆角系统]
+E[阴影系统] --> F[字体系统]
+end
+subgraph "CSS变量层"
+G[:root变量] --> H[明暗主题变量]
+I[自定义颜色变量] --> J[间距变量]
+K[动画变量] --> L[过渡变量]
+end
+subgraph "组件样式层"
+M[Button样式] --> N[Card样式]
+O[Form样式] --> P[Input样式]
+Q[Select样式] --> R[Label样式]
+end
+A --> G
+G --> M
+H --> N
+I --> O
+J --> P
+K --> Q
+L --> R
+```
+
+**图表来源**
+- [tailwind.config.js: 1-118:1-118](file://tailwind.config.js#L1-L118)
+- [src/popup/index.css: 1-86:1-86](file://src/popup/index.css#L1-L86)
+
+### 主题系统实现
+
+项目实现了完整的主题管理系统，支持明暗模式切换：
+
+```mermaid
+sequenceDiagram
+participant User as 用户
+participant ThemeToggle as 主题切换器
+participant CSSVars as CSS变量
+participant Components as 组件
+User->>ThemeToggle : 切换主题
+ThemeToggle->>CSSVars : 更新 : root变量
+CSSVars->>Components : 触发样式更新
+Components->>Components : 重新计算样式
+Components-->>User : 显示新主题
+Note over User,CSSVars : 暗黑模式变量
+User->>CSSVars : .dark类添加
+CSSVars->>CSSVars : 更新暗黑模式变量
+CSSVars-->>Components : 应用暗黑模式样式
+```
+
+**图表来源**
+- [src/popup/index.css: 34-59:34-59](file://src/popup/index.css#L34-L59)
+- [src/options/index.css: 35-60:35-60](file://src/options/index.css#L35-L60)
+
+**章节来源**
+- [tailwind.config.js: 1-118:1-118](file://tailwind.config.js#L1-L118)
+- [src/popup/index.css: 1-86:1-86](file://src/popup/index.css#L1-L86)
+- [src/options/index.css: 1-83:1-83](file://src/options/index.css#L1-L83)
+
+## 颜色管理与视觉设计
+
+### 颜色系统架构
+
+项目建立了完整的颜色管理体系，包含品牌色、语义色和功能色：
+
+```mermaid
+graph TB
+subgraph "品牌色彩系统"
+A[b-primary: #BF00FF] --> B[b-primary-hover: #A000D9]
+C[b-secondary: #FF1493] --> D[b-accent: #00FFFF]
+E[b-warning: #FFAA00] --> F[b-neon: #39FF14]
+G[b-text-primary: #2D1B4E] --> H[品牌色彩变量]
+end
+subgraph "语义色彩系统"
+I[primary: hsl(var(--primary))] --> J[secondary: hsl(var(--secondary))]
+K[destructive: hsl(var(--destructive))] --> L[muted: hsl(var(--muted))]
+M[accent: hsl(var(--accent))] --> N[success: 绿色系]
+O[danger: 红色系] --> P[warning: 橙色系]
+end
+subgraph "主题色彩映射"
+Q[明暗模式变量] --> R[颜色空间转换]
+S[对比度调整] --> T[无障碍设计]
+U[OLED优化] --> V[深色模式优化]
+end
+A --> Q
+I --> S
+Q --> U
+```
+
+**图表来源**
+- [tailwind.config.js: 55-61:55-61](file://tailwind.config.js#L55-L61)
+- [src/popup/index.css: 6-31:6-31](file://src/popup/index.css#L6-L31)
+- [src/options/index.css: 7-32:7-32](file://src/options/index.css#L7-L32)
+
+### 暗黑模式优化
+
+项目针对OLED设备进行了专门的颜色优化：
+
+| 颜色类型 | 明亮模式 | 暗黑模式 | OLED优化 |
+|---------|---------|---------|---------|
+| 背景 | #F8FAFC | #1C1C1C | 深黑色#000000 |
+| 文本 | #1E293B | #F0F0F0 | 高对比度白色 |
+| 主色调 | #2563EB | #3B82F6 | 深蓝色#0A0E27 |
+| 强调色 | #F97316 | #F97316 | 保持鲜艳度 |
+| 边框 | #E2E8F0 | #333333 | 最小化发光 |
+
+**章节来源**
+- [tailwind.config.js: 55-61:55-61](file://tailwind.config.js#L55-L61)
+- [src/popup/index.css: 34-59:34-59](file://src/popup/index.css#L34-L59)
+- [src/options/index.css: 35-60:35-60](file://src/options/index.css#L35-L60)
+
+## 交互设计与用户体验
+
+### 交互反馈系统
+
+项目实现了完整的交互反馈机制，确保用户操作的即时响应：
+
+```mermaid
+sequenceDiagram
+participant User as 用户
+participant Component as UI组件
+participant State as 状态管理
+participant Animation as 动画系统
+User->>Component : 鼠标悬停
+Component->>Animation : 触发hover动画
+Animation-->>User : 平滑过渡效果
+User->>Component : 点击操作
+Component->>State : 更新状态
+State->>Component : 状态变更通知
+Component->>Animation : 触发active动画
+Animation-->>User : 确认操作反馈
+User->>Component : 操作完成
+Component->>Animation : 恢复默认状态
+Animation-->>User : 清晰的视觉反馈
+```
+
+**图表来源**
+- [src/components/ui/button.tsx: 7-32:7-32](file://src/components/ui/button.tsx#L7-L32)
+- [src/components/ui/input.tsx: 10-13:10-13](file://src/components/ui/input.tsx#L10-L13)
+
+### 无障碍设计规范
+
+项目遵循WCAG 2.1 AA标准，确保所有用户都能正常使用：
+
+| 设计要素 | 实现方式 | 无障碍标准 |
+|---------|---------|-----------|
+| 焦点管理 | `:focus-visible`伪类 | 键盘导航支持 |
+| 颜色对比 | 至少4.5:1对比度 | 视觉障碍用户 |
+| 字体大小 | 最小16px可读性 | 近视用户友好 |
+| 交互反馈 | 多种反馈形式 | 不同能力用户 |
+| 屏幕阅读器 | ARIA标签支持 | 视障用户 |
+| 触摸目标 | 最小44px尺寸 | 手指操作友好 |
+
+**章节来源**
+- [src/components/ui/button.tsx: 1-51:1-51](file://src/components/ui/button.tsx#L1-L51)
+- [src/components/ui/input.tsx: 1-23:1-23](file://src/components/ui/input.tsx#L1-L23)
+- [src/components/ui/form.tsx: 1-168:1-168](file://src/components/ui/form.tsx#L1-L168)
+
 ## 性能优化策略
 
 ### 缓存策略
@@ -339,6 +533,7 @@ end
 subgraph "运行时优化"
 I[懒加载组件] --> J[虚拟滚动]
 K[防抖节流] --> L[内存泄漏防护]
+M[样式提取] --> N[CSS变量优化]
 end
 ```
 
@@ -464,10 +659,13 @@ end
 ### 核心优势
 
 1. **架构清晰**：模块化设计，职责分离明确
-2. **状态管理优秀**：Zustand + Immer的组合实现高效的状态管理
-3. **性能优化到位**：多层次缓存和构建优化策略
-4. **开发体验良好**：完善的TypeScript支持和开发工具链
-5. **测试覆盖全面**：多层次的测试策略确保代码质量
+2. **样式系统完善**：Tailwind CSS + CSS变量实现灵活的主题管理
+3. **颜色体系专业**：品牌色、语义色、无障碍设计一体化
+4. **交互体验优秀**：完整的反馈系统和无障碍支持
+5. **状态管理优秀**：Zustand + Immer的组合实现高效的状态管理
+6. **性能优化到位**：多层次缓存和构建优化策略
+7. **开发体验良好**：完善的TypeScript支持和开发工具链
+8. **测试覆盖全面**：多层次的测试策略确保代码质量
 
 ### 技术亮点
 
@@ -476,5 +674,7 @@ end
 - **现代化工具链**：Vite + Tailwind CSS + Radix UI
 - **AI集成**：流畅的AI服务集成和流式处理
 - **Chrome扩展最佳实践**：符合Chrome Web Store规范
+- **OLED优化**：针对深色模式和OLED屏幕的专业优化
+- **无障碍设计**：完整的WCAG 2.1 AA标准支持
 
-这个项目为React应用开发提供了优秀的参考模板，展示了如何在实际项目中应用各种最佳实践和技术方案。
+这个项目为React应用开发提供了优秀的参考模板，展示了如何在实际项目中应用各种最佳实践和技术方案，特别是在样式系统、颜色管理和交互设计方面的专业实现。

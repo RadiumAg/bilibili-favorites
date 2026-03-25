@@ -22,6 +22,14 @@
 - [src/lib/utils.ts](file://src/lib/utils.ts)
 - [tailwind.config.js](file://tailwind.config.js)
 - [postcss.config.js](file://postcss.config.js)
+- [src/popup/index.css](file://src/popup/index.css)
+- [src/popup/index.tsx](file://src/popup/index.tsx)
+- [src/popup/Popup.tsx](file://src/popup/Popup.tsx)
+- [src/popup/components/move/index.tsx](file://src/popup/components/move/index.tsx)
+- [src/popup/components/login-check/index.tsx](file://src/popup/components/login-check/index.tsx)
+- [src/popup/components/auto-create-keyword/index.tsx](file://src/popup/components/auto-create-keyword/index.tsx)
+- [src/options/index.css](file://src/options/index.css)
+- [src/options/Options.tsx](file://src/options/Options.tsx)
 </cite>
 
 ## 目录
@@ -30,11 +38,12 @@
 3. [核心组件](#核心组件)
 4. [架构总览](#架构总览)
 5. [详细组件分析](#详细组件分析)
-6. [依赖关系分析](#依赖关系分析)
-7. [性能考量](#性能考量)
-8. [故障排查指南](#故障排查指南)
-9. [结论](#结论)
-10. [附录](#附录)
+6. [样式系统重大改进](#样式系统重大改进)
+7. [依赖关系分析](#依赖关系分析)
+8. [性能考量](#性能考量)
+9. [故障排查指南](#故障排查指南)
+10. [结论](#结论)
+11. [附录](#附录)
 
 ## 简介
 本文件系统化梳理 B站收藏夹整理工具的UI组件体系，围绕以下设计理念展开：
@@ -43,8 +52,10 @@
 
 组件覆盖从基础输入控件到复合交互组件（如表单、选择器、弹出层、进度条、标签页等），并提供组合模式、复用策略、响应式与跨浏览器兼容建议、可访问性与国际化支持说明，以及主题定制与样式扩展方法。
 
+**更新**：本次更新重点介绍了popup样式系统的重大改进，包括全新的颜色调色板系统、边框管理、字体优化、交互增强等，这些改进直接影响UI组件系统的整体外观和用户体验。
+
 ## 项目结构
-UI组件集中位于 src/components/ui 下，采用“按功能拆分”的模块化组织方式；公共工具函数 cn 负责类名合并；Tailwind 配置通过设计令牌与插件扩展提供统一主题与滚动条样式。
+UI组件集中位于 src/components/ui 下，采用"按功能拆分"的模块化组织方式；公共工具函数 cn 负责类名合并；Tailwind 配置通过设计令牌与插件扩展提供统一主题与滚动条样式。
 
 ```mermaid
 graph TB
@@ -102,7 +113,7 @@ Toast --> TW
 Toaster --> TW
 ```
 
-图表来源
+**图表来源**
 - [src/components/ui/button.tsx:1-51](file://src/components/ui/button.tsx#L1-L51)
 - [src/components/ui/input.tsx:1-23](file://src/components/ui/input.tsx#L1-L23)
 - [src/components/ui/form.tsx:1-168](file://src/components/ui/form.tsx#L1-L168)
@@ -122,7 +133,7 @@ Toaster --> TW
 - [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
 
-章节来源
+**章节来源**
 - [src/components/index.ts:1-4](file://src/components/index.ts#L1-L4)
 - [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
@@ -181,7 +192,7 @@ Toaster --> TW
   - Tabs/ScrollArea：标签页与滚动区域，增强长列表与多面板场景的可用性。
   - Toast/Toaster：全局提示消息与消息栈，支持多条消息队列与自动消失。
 
-章节来源
+**章节来源**
 - [src/components/ui/button.tsx:1-51](file://src/components/ui/button.tsx#L1-L51)
 - [src/components/ui/input.tsx:1-23](file://src/components/ui/input.tsx#L1-L23)
 - [src/components/ui/textarea.tsx:1-22](file://src/components/ui/textarea.tsx#L1-L22)
@@ -200,7 +211,7 @@ Toaster --> TW
 - [src/components/ui/toaster.tsx](file://src/components/ui/toaster.tsx)
 
 ## 架构总览
-UI组件体系遵循“基础组件 + 复合组件 + 工具函数 + 主题系统”的分层架构：
+UI组件体系遵循"基础组件 + 复合组件 + 工具函数 + 主题系统"的分层架构：
 - 基础组件：Button、Input、Textarea、Label、Badge、Progress 等，提供通用交互与视觉。
 - 复合组件：Form、Select、Popover、Tabs、ScrollArea 等，封装复杂交互与状态管理。
 - 工具函数：cn 合并类名，确保样式叠加与冲突最小化。
@@ -218,7 +229,7 @@ Base --> Theme
 Composite --> Theme
 ```
 
-图表来源
+**图表来源**
 - [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
 
@@ -299,7 +310,7 @@ class Toaster {
 }
 ```
 
-图表来源
+**图表来源**
 - [src/components/ui/button.tsx:34-51](file://src/components/ui/button.tsx#L34-L51)
 - [src/components/ui/input.tsx:5-23](file://src/components/ui/input.tsx#L5-L23)
 - [src/components/ui/textarea.tsx:5-22](file://src/components/ui/textarea.tsx#L5-L22)
@@ -334,7 +345,7 @@ FC->>FM : "根据校验状态显示错误"
 FM-->>U : "展示错误信息"
 ```
 
-图表来源
+**图表来源**
 - [src/components/ui/form.tsx:27-167](file://src/components/ui/form.tsx#L27-L167)
 
 ### 选择器交互流程
@@ -350,7 +361,7 @@ Close --> End(["结束"])
 Update --> End
 ```
 
-图表来源
+**图表来源**
 - [src/components/ui/select.tsx:13-91](file://src/components/ui/select.tsx#L13-L91)
 
 ### 组合模式与复用策略
@@ -358,13 +369,97 @@ Update --> End
 - 复用策略：通过 Variants（如 Button/Label/Badge）与 className 扩展实现跨页面复用；cn 工具保证样式叠加稳定。
 - 事件处理：Button/Select/Popover 等组件透传原生事件，同时提供回调钩子；表单组件通过 react-hook-form 提供统一状态管理。
 
-章节来源
+**章节来源**
 - [src/components/ui/form.tsx:1-168](file://src/components/ui/form.tsx#L1-L168)
 - [src/components/ui/card.tsx:1-57](file://src/components/ui/card.tsx#L1-L57)
 - [src/components/ui/select.tsx:1-151](file://src/components/ui/select.tsx#L1-L151)
 - [src/components/ui/button.tsx:1-51](file://src/components/ui/button.tsx#L1-L51)
 - [src/components/ui/label.tsx:1-22](file://src/components/ui/label.tsx#L1-L22)
 - [src/components/ui/badge.tsx:1-34](file://src/components/ui/badge.tsx#L1-L34)
+
+## 样式系统重大改进
+
+### 全新的颜色调色板系统
+popup样式系统引入了完整的B站风格色彩体系，包括品牌主色调、辅助色和中性色：
+
+- **品牌主色调**
+  - B站粉：`#BF00FF` (`b-primary`)
+  - B站粉-hover：`#A000D9` (`b-primary-hover`)
+  - B站红：`#FF1493` (`b-secondary`)
+  - 青色：`#00FFFF` (`b-accent`)
+  - 橙色：`#FFAA00` (`b-warning`)
+  - 荧光绿：`#39FF14` (`b-neon`)
+
+- **文本色彩**
+  - 主文本：`#2D1B4E` (`b-text-primary`)
+
+- **使用方式**
+  ```jsx
+  <Button className="bg-b-primary hover:bg-b-primary-hover text-white">
+    B站风格按钮
+  </Button>
+  ```
+
+**章节来源**
+- [tailwind.config.js:55-62](file://tailwind.config.js#L55-L62)
+- [src/popup/Popup.tsx:24](file://src/popup/Popup.tsx#L24)
+- [src/popup/components/move/index.tsx:14](file://src/popup/components/move/index.tsx#L14)
+- [src/popup/components/auto-create-keyword/index.tsx:15](file://src/popup/components/auto-create-keyword/index.tsx#L15)
+
+### 边框管理优化
+- **统一边框系统**：通过CSS变量 `--border` 实现全局边框颜色管理
+- **圆角半径**：使用 `--radius` 变量控制圆角大小，支持 lg/md/sm 不同层级
+- **边框应用**：所有组件继承 `border-border` 类，确保视觉一致性
+
+**章节来源**
+- [src/popup/index.css:64](file://src/popup/index.css#L64)
+- [src/popup/index.css:31](file://src/popup/index.css#L31)
+- [tailwind.config.js:9-13](file://tailwind.config.js#L9-L13)
+
+### 字体优化
+- **字体栈**：采用 `PingFang SC, HarmonyOS_Medium, Helvetica Neue, Microsoft YaHei, sans-serif` 确保中文字体显示效果
+- **字体大小**：基于 `font-size` 和 `line-height` 的层级系统
+- **字体权重**：支持从 `font-thin` 到 `font-black` 的完整权重范围
+
+**章节来源**
+- [src/popup/index.css:76](file://src/popup/index.css#L76)
+- [src/options/index.css:82](file://src/options/index.css#L82)
+
+### 交互增强
+- **选择高亮**：`::selection` 伪元素使用 `hsl(var(--primary) / 0.18)` 实现淡透明高亮
+- **焦点管理**：`:focus-visible` 伪类移除默认轮廓，提供更好的视觉反馈
+- **悬停效果**：统一的 `hover:bg-opacity-50` 透明度变化
+
+**章节来源**
+- [src/popup/index.css:79](file://src/popup/index.css#L79)
+- [src/popup/index.css:83](file://src/popup/index.css#L83)
+- [src/popup/components/move/index.tsx:23](file://src/popup/components/move/index.tsx#L23)
+
+### 滚动条样式系统
+新增三种滚动条样式方案：
+
+- **滚动条隐藏**：`.scrollbar-hide` 完全隐藏滚动条
+- **样式化滚动条**：`.scrollbar-styled` 提供渐变色滚动条
+- **细滚动条**：`.scrollbar-thin` 提供细线条滚动条
+
+```css
+.scrollbar-styled {
+  scrollbar-width: thin;
+  scrollbar-color: #BF00FF #f8f0ff;
+}
+```
+
+**章节来源**
+- [tailwind.config.js:67-114](file://tailwind.config.js#L67-L114)
+
+### 暗色模式支持
+- **自动切换**：通过 `.dark` 类名实现暗色模式
+- **颜色映射**：明暗模式下颜色值自动调整
+- **渐变背景**：暗色模式下使用深色渐变背景
+
+**章节来源**
+- [src/popup/index.css:34](file://src/popup/index.css#L34)
+- [src/options/index.css:35](file://src/options/index.css#L35)
 
 ## 依赖关系分析
 - 组件间耦合：基础组件低耦合，复合组件通过基础组件组合；Form 依赖 react-hook-form 与 Radix UI；Select/Popover/Progress 等依赖 Radix UI。
@@ -391,14 +486,14 @@ Utils["cn"] --> CVA
 TW["Tailwind 配置"] --> ANI
 ```
 
-图表来源
+**图表来源**
 - [src/components/ui/button.tsx:1-6](file://src/components/ui/button.tsx#L1-L6)
 - [src/components/ui/select.tsx:1-6](file://src/components/ui/select.tsx#L1-L6)
 - [src/components/ui/form.tsx:1-11](file://src/components/ui/form.tsx#L1-L11)
 - [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 - [tailwind.config.js:65-116](file://tailwind.config.js#L65-L116)
 
-章节来源
+**章节来源**
 - [src/components/ui/button.tsx:1-6](file://src/components/ui/button.tsx#L1-L6)
 - [src/components/ui/select.tsx:1-6](file://src/components/ui/select.tsx#L1-L6)
 - [src/components/ui/form.tsx:1-11](file://src/components/ui/form.tsx#L1-L11)
@@ -422,15 +517,22 @@ TW["Tailwind 配置"] --> ANI
   - 确认 tailwindcss-animate 插件已启用；检查数据属性（如 data-state）是否正确传递给动画组件。
 - 滚动条样式
   - 使用提供的滚动条工具类（如 scrollbar-styled）；在不同浏览器中验证渐变与宽度差异。
+- B站风格色彩
+  - 确保使用正确的 B站色彩类名（如 `bg-b-primary`）而非硬编码颜色值。
+  - 检查暗色模式下的颜色映射是否正确。
 
-章节来源
+**章节来源**
 - [src/components/ui/form.tsx:82-156](file://src/components/ui/form.tsx#L82-L156)
 - [src/components/ui/select.tsx:61-91](file://src/components/ui/select.tsx#L61-L91)
 - [src/components/ui/popover.tsx:9-33](file://src/components/ui/popover.tsx#L9-L33)
 - [tailwind.config.js:65-116](file://tailwind.config.js#L65-L116)
 
 ## 结论
-该UI组件系统以 Radix UI 的无障碍与语义化为基础，以 Tailwind 的设计令牌与插件为支撑，实现了高可复用、强一致性的组件生态。通过 cn 工具与 Variants 模式，开发者可在不牺牲可访问性的前提下快速扩展样式与行为。建议在实际项目中遵循组合模式与复用策略，结合表单与选择器等复合组件，构建一致、易维护的用户界面。
+该UI组件系统以 Radix UI 的无障碍与语义化为基础，以 Tailwind 的设计令牌与插件为支撑，实现了高可复用、强一致性的组件生态。通过 cn 工具与 Variants 模式，开发者可在不牺牲可访问性的前提下快速扩展样式与行为。
+
+**更新**：本次popup样式系统的重大改进引入了完整的B站风格色彩体系、优化的边框管理、字体优化和交互增强，显著提升了组件的整体外观和用户体验。新的样式系统通过CSS变量实现统一的主题管理，支持暗色模式切换，并提供了丰富的滚动条样式选项。
+
+建议在实际项目中遵循组合模式与复用策略，结合表单与选择器等复合组件，构建一致、易维护的用户界面。同时充分利用新的B站风格色彩系统，确保界面风格的一致性和品牌识别度。
 
 ## 附录
 
@@ -444,6 +546,7 @@ TW["Tailwind 配置"] --> ANI
 - 浏览器支持：现代浏览器（Chrome/Firefox/Safari/Edge）均支持 Tailwind 与 Radix UI；确保 polyfill（如 classnames 合并）在旧环境可用。
 - 动画与过渡：在不支持 CSS 动画的环境中降级为无动画；测试关键帧与 transform 的兼容性。
 - 滚动条：使用 CSS 自定义滚动条样式时，注意 WebKit 与非 WebKit 内核的差异。
+- 字体渲染：确保系统字体栈中的字体在不同操作系统上的可用性。
 
 ### 可访问性特性
 - 语义化标签：使用语义化元素与语义化组件（如 Label、Form*），确保屏幕阅读器可理解。
@@ -461,11 +564,14 @@ TW["Tailwind 配置"] --> ANI
 - 组件变体：通过 Variants（如 Button/Label/Badge）扩展更多视觉风格；保持命名一致性。
 - 工具类：新增工具类（如滚动条样式）通过插件添加，避免分散样式。
 - 深色模式：通过 class 切换与 CSS 变量映射实现深浅主题；确保所有组件适配。
+- B站风格：使用预定义的B站色彩变量，确保品牌一致性。
 
-章节来源
+**章节来源**
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
 - [postcss.config.js:1-7](file://postcss.config.js#L1-L7)
 - [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 - [src/components/ui/button.tsx:7-32](file://src/components/ui/button.tsx#L7-L32)
 - [src/components/ui/label.tsx:9-18](file://src/components/ui/label.tsx#L9-L18)
 - [src/components/ui/badge.tsx:6-23](file://src/components/ui/badge.tsx#L6-L23)
+- [src/popup/index.css:1-86](file://src/popup/index.css#L1-L86)
+- [src/options/index.css:1-83](file://src/options/index.css#L1-L83)

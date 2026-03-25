@@ -6,6 +6,9 @@
 - [tailwind.config.js](file://tailwind.config.js)
 - [components.json](file://components.json)
 - [src/options/index.css](file://src/options/index.css)
+- [src/popup/index.css](file://src/popup/index.css)
+- [src/popup/index.tsx](file://src/popup/index.tsx)
+- [src/popup/Popup.tsx](file://src/popup/Popup.tsx)
 - [src/components/ui/button.tsx](file://src/components/ui/button.tsx)
 - [src/components/ui/card.tsx](file://src/components/ui/card.tsx)
 - [src/components/ui/form.tsx](file://src/components/ui/form.tsx)
@@ -16,7 +19,17 @@
 - [src/components/ui/toast.tsx](file://src/components/ui/toast.tsx)
 - [src/components/ui/toaster.tsx](file://src/components/ui/toaster.tsx)
 - [src/components/ui/popover.tsx](file://src/components/ui/popover.tsx)
+- [.codebuddy/skills/bilibili-ui-design/SKILL.md](file://.codebuddy/skills/bilibili-ui-design/SKILL.md)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增popup样式系统章节，详细介绍B站风格的popup界面设计
+- 更新颜色方案章节，整合B站品牌色彩系统和新的CSS变量
+- 新增字体系统章节，说明中英文字体混排和适配方案
+- 更新交互反馈章节，增加微交互和动画效果说明
+- 新增滚动条样式规范，提供多种滚动条定制方案
+- 更新popup组件系统，分析实际的弹窗交互实现
 
 ## 目录
 1. [简介](#简介)
@@ -39,6 +52,7 @@
 - 响应式设计和无障碍访问支持
 - 动画和过渡效果增强用户交互体验
 - 渐进式Web应用(PWA)特性
+- **新增** B站品牌风格的popup界面设计系统
 
 ## 项目结构
 
@@ -59,31 +73,37 @@ H[src/lib/utils.ts]
 end
 subgraph "样式系统"
 I[src/options/index.css]
-J[CSS变量定义]
-K[渐变背景]
+J[src/popup/index.css]
+K[CSS变量定义]
+L[渐变背景]
+M[B站品牌风格]
 end
 A --> F
 B --> H
 C --> I
-D --> J
-E --> K
+C --> J
+D --> K
+E --> L
+E --> M
 ```
 
 **图表来源**
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
 - [components.json:1-22](file://components.json#L1-L22)
 - [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
+- [src/popup/index.css:1-86](file://src/popup/index.css#L1-L86)
 
 **章节来源**
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
 - [components.json:1-22](file://components.json#L1-L22)
 - [src/options/index.css:1-83](file://src/options/index.css#L1-L83)
+- [src/popup/index.css:1-86](file://src/popup/index.css#L1-L86)
 
 ## 核心组件
 
 ### 主题系统与颜色方案
 
-设计系统采用基于CSS变量的主题架构，支持明暗两种模式：
+设计系统采用基于CSS变量的主题架构，支持明暗两种模式，并集成了B站品牌色彩系统：
 
 ```mermaid
 classDiagram
@@ -104,6 +124,10 @@ class ColorPalette {
 +destructive : HSLColor
 +success : HSLColor
 +warning : HSLColor
++b-primary : HexColor
++b-secondary : HexColor
++b-accent : HexColor
++b-text-primary : HexColor
 }
 class SpacingScale {
 +unit : number
@@ -119,7 +143,72 @@ ThemeSystem --> SpacingScale
 
 **图表来源**
 - [tailwind.config.js:14-62](file://tailwind.config.js#L14-L62)
-- [src/options/index.css:6-60](file://src/options/index.css#L6-L60)
+- [tailwind.config.js:55-62](file://tailwind.config.js#L55-L62)
+- [src/options/index.css:6-33](file://src/options/index.css#L6-L33)
+- [src/popup/index.css:6-59](file://src/popup/index.css#L6-L59)
+
+### B站品牌色彩系统
+
+设计系统集成了完整的B站品牌色彩体系，包括主色调、辅助色和文本色彩：
+
+| 色彩类别 | 名称 | 色值 | Tailwind类 | 用途 |
+|---------|------|------|------------|------|
+| 主色调 | B站粉 | `#FB7299` | `bg-[#FB7299]` | 强调、警告、热门标签 |
+| 主色调 | B站蓝 | `#00AEEC` | `bg-[#00AEEC]` / `bg-b-primary` | 主按钮、链接、选中状态 |
+| 主色调 | 深蓝 | `#0095CC` | `bg-[#0095CC]` | 悬停状态 |
+| 主色调 | 浅蓝 | `#00AEEC/10` | `bg-[#00AEEC]/10` | 背景高亮、选中背景 |
+| 辅助色 | 深粉 | `#FF1493` | `bg-[#FF1493]` / `bg-b-secondary` | 强调、重要操作 |
+| 辅助色 | 青色 | `#00FFFF` | `bg-[#00FFFF]` / `bg-b-accent` | 强调、装饰元素 |
+| 辅助色 | 橙色 | `#FFAA00` | `bg-[#FFAA00]` / `bg-b-warning` | 警告、注意状态 |
+| 特殊色 | 荧光绿 | `#39FF14` | `bg-[#39FF14]` / `bg-b-neon` | 强调、特殊状态 |
+| 文本色 | 主文本 | `#2D1B4E` | `text-[#2D1B4E]` / `text-b-text-primary` | 标题、正文 |
+
+**章节来源**
+- [tailwind.config.js:55-62](file://tailwind.config.js#L55-L62)
+- [.codebuddy/skills/bilibili-ui-design/SKILL.md:10-29](file://.codebuddy/skills/bilibili-ui-design/SKILL.md#L10-L29)
+
+### 字体系统
+
+设计系统采用中英文字体混排方案，确保在不同语言环境下的最佳显示效果：
+
+```mermaid
+classDiagram
+class TypographySystem {
++fontFamily : FontStack
++fontSize : Scale
++fontWeight : WeightScale
++lineHeight : LineHeightScale
++letterSpacing : LetterSpacingScale
+}
+class FontStack {
++chinese : ChineseFontStack
++english : EnglishFontStack
++fallback : FallbackFonts
+}
+class ChineseFontStack {
++primary : PingFangSC
++secondary : HarmonyOS_Medium
++tertiary : MicrosoftYaHei
+}
+class EnglishFontStack {
++primary : HelveticaNeue
++secondary : Arial
++fallback : sans-serif
+}
+TypographySystem --> FontStack
+```
+
+**图表来源**
+- [src/popup/index.css:76](file://src/popup/index.css#L76)
+
+字体配置说明：
+- **中文支持**：`'PingFang SC, HarmonyOS_Medium, Microsoft YaHei'`
+- **英文支持**：`'Helvetica Neue, Arial'`
+- **备用字体**：`sans-serif`
+- **字体回退机制**：确保在任何环境下都有合适的字体显示
+
+**章节来源**
+- [src/popup/index.css:72-77](file://src/popup/index.css#L72-L77)
 
 ### 组件变体系统
 
@@ -172,37 +261,52 @@ C[src/lib/utils.ts]
 end
 subgraph "样式层"
 D[src/options/index.css]
-E[CSS变量定义]
-F[渐变背景系统]
+E[src/popup/index.css]
+F[CSS变量定义]
+G[渐变背景系统]
+H[B站品牌色彩]
+I[字体系统]
 end
 subgraph "组件层"
-G[基础组件]
-H[表单组件]
-I[反馈组件]
-J[布局组件]
+J[基础组件]
+K[表单组件]
+L[反馈组件]
+M[布局组件]
+N[弹窗组件]
+O[业务组件]
 end
 subgraph "业务层"
-K[弹窗组件]
-L[选项页面]
-M[主界面]
+P[弹窗组件]
+Q[选项页面]
+R[主界面]
+S[侧边栏]
 end
 A --> D
-B --> G
-C --> G
-D --> E
+A --> E
+B --> J
+C --> J
+D --> F
 E --> F
-G --> H
-H --> I
-I --> J
-J --> K
-K --> L
-L --> M
+F --> G
+F --> H
+F --> I
+G --> J
+H --> K
+I --> L
+J --> M
+K --> N
+L --> O
+M --> P
+N --> Q
+O --> R
+P --> S
 ```
 
 **图表来源**
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
 - [components.json:1-22](file://components.json#L1-L22)
 - [src/options/index.css:1-83](file://src/options/index.css#L1-L83)
+- [src/popup/index.css:1-86](file://src/popup/index.css#L1-L86)
 
 ## 详细组件分析
 
@@ -498,6 +602,82 @@ P->>T : 完成渲染
 - [src/components/ui/toast.tsx:1-127](file://src/components/ui/toast.tsx#L1-L127)
 - [src/components/ui/toaster.tsx:1-32](file://src/components/ui/toaster.tsx#L1-L32)
 
+### 弹窗组件系统
+
+**新增** 弹窗组件系统是B站收藏夹管理扩展的核心交互界面，采用B站品牌风格设计：
+
+```mermaid
+classDiagram
+class Popup {
++isSidePanel : boolean
++touristRef : RefObject
++handleOpenSettings() void
++render() ReactElement
+}
+class PopupLayout {
++container : MainContainer
++header : HeaderSection
++content : ContentSection
++actions : ActionSection
++footer : FooterSection
+}
+class PopupComponents {
++FavoriteTag : FavoriteTag
++Keyword : Keyword
++Move : Move
++AutoCreateKeyword : AutoCreateKeyword
++AIMove : AIMove
++DragManagerButton : DragManagerButton
++LoginCheck : LoginCheck
++Tourist : Tourist
+}
+Popup --> PopupLayout
+Popup --> PopupComponents
+```
+
+**图表来源**
+- [src/popup/Popup.tsx:10-80](file://src/popup/Popup.tsx#L10-L80)
+
+#### 弹窗布局结构
+
+弹窗采用灵活的布局设计，支持标准弹窗和侧边栏模式：
+
+```mermaid
+flowchart TD
+A[Popup容器] --> B[头部区域]
+B --> C[标题 + 操作按钮]
+C --> D[收藏夹区域]
+D --> E[FavoriteTag组件]
+E --> F[关键字区域]
+F --> G[Keyword组件]
+G --> H[操作按钮区域]
+H --> I[Move/AutoCreateKeyword/AIMove/DragManagerButton]
+I --> J[底部区域]
+J --> K[LoginCheck组件]
+K --> L[Toaster通知]
+L --> M[Tourist引导]
+```
+
+**图表来源**
+- [src/popup/Popup.tsx:22-76](file://src/popup/Popup.tsx#L22-L76)
+
+**章节来源**
+- [src/popup/Popup.tsx:1-80](file://src/popup/Popup.tsx#L1-L80)
+- [src/popup/index.css:72-86](file://src/popup/index.css#L72-L86)
+
+### 滚动条样式系统
+
+**新增** 设计系统提供了多种滚动条样式定制方案：
+
+| 类名 | 效果 | 颜色配置 | 适用场景 |
+|------|------|----------|----------|
+| `scrollbar-hide` | 完全隐藏滚动条 | 无 | 简洁界面、全屏内容 |
+| `scrollbar-styled` | 美化滚动条（8px） | 主色渐变：`#BF00FF → #FF1493` | 默认滚动区域 |
+| `scrollbar-thin` | 细滚动条（4px） | 主色：`#BF00FF` | 内容较多的列表 |
+
+**章节来源**
+- [tailwind.config.js:67-115](file://tailwind.config.js#L67-L115)
+
 ## 依赖关系分析
 
 设计系统的依赖关系清晰明确，遵循单一职责原则：
@@ -510,28 +690,36 @@ B[TailwindCSS]
 C[Radix UI]
 D[Lucide Icons]
 E[Class Variance Authority]
+F[Chrome Extensions API]
 end
 subgraph "内部模块"
-F[utils.ts]
-G[组件库]
-H[样式系统]
-I[主题配置]
+G[utils.ts]
+H[组件库]
+I[样式系统]
+J[主题配置]
+K[popup系统]
+L[bilibili-ui-design规范]
 end
 subgraph "业务逻辑"
-J[Hooks]
-K[Store]
-L[Workers]
+M[Hooks]
+N[Store]
+O[Workers]
+P[popup组件]
+Q[业务功能]
 end
-A --> G
-B --> H
-C --> G
-D --> G
-E --> G
-F --> G
-H --> I
-G --> J
-J --> K
-K --> L
+A --> H
+B --> I
+C --> H
+D --> H
+E --> H
+F --> P
+G --> H
+I --> J
+H --> M
+M --> N
+N --> O
+P --> Q
+J --> L
 ```
 
 **图表来源**
@@ -549,16 +737,24 @@ K --> L
 - 使用CSS变量减少重复样式定义
 - TailwindCSS按需生成，避免样式冗余
 - 组件样式通过CVA动态组合，提高复用性
+- **新增** B站品牌色彩变量预编译，减少运行时计算
 
 ### 渲染优化
 - React.memo化组件减少不必要的重渲染
 - 懒加载非关键组件
 - 合理的组件拆分和代码分割
+- **新增** popup组件的条件渲染优化
 
 ### 交互优化
 - CSS过渡动画替代JavaScript动画
 - 防抖和节流处理高频事件
 - 无障碍访问优化提升用户体验
+- **新增** 微交互和触觉反馈优化
+
+### 字体优化
+- **新增** 中英文字体分离加载
+- **新增** 字体回退机制确保显示稳定性
+- **新增** 字体缓存策略减少重复加载
 
 ## 故障排除指南
 
@@ -568,25 +764,40 @@ K --> L
 - 检查CSS变量是否正确编译
 - 确认Tailwind配置中的content路径
 - 验证暗色模式切换逻辑
+- **新增** 检查B站品牌色彩变量是否正确加载
 
 **组件样式冲突**
 - 检查组件className优先级
 - 避免直接内联样式覆盖
 - 使用CVA变体系统统一管理
+- **新增** 确认popup样式层叠顺序
 
 **响应式布局问题**
 - 确认断点设置符合设计规范
 - 检查媒体查询语法
 - 测试不同屏幕尺寸表现
+- **新增** 验证popup在不同窗口大小下的适配
+
+**字体显示问题**
+- **新增** 检查字体文件加载状态
+- **新增** 验证字体回退机制
+- **新增** 确认中英文字体混合显示
+
+**popup交互问题**
+- **新增** 检查Chrome扩展权限
+- **新增** 验证popup生命周期管理
+- **新增** 确认事件监听器正确绑定
 
 **性能问题排查**
 - 使用React DevTools Profiler分析
 - 检查组件重渲染次数
 - 优化大型列表渲染
+- **新增** 监控popup组件渲染性能
 
 **章节来源**
 - [src/options/index.css:63-83](file://src/options/index.css#L63-L83)
 - [tailwind.config.js:65-116](file://tailwind.config.js#L65-L116)
+- [src/popup/index.css:72-86](file://src/popup/index.css#L72-L86)
 
 ## 结论
 
@@ -597,14 +808,26 @@ K --> L
 - **可扩展性**: 模块化架构支持功能扩展和主题定制
 - **可访问性**: 完善的无障碍访问支持
 - **性能**: 优化的渲染和资源管理
+- **品牌化**: 完整的B站品牌风格实现
 
 ### 技术亮点
 - 基于CSS变量的主题系统
 - 组件化的原子设计模式
 - 完整的TypeScript类型支持
 - 现代化的构建工具链
+- **新增** B站品牌色彩系统集成
+- **新增** popup界面的完整实现
 
 ### 应用价值
 该设计系统不仅适用于B站收藏夹管理扩展，还可作为其他浏览器扩展项目的参考模板，为开发者提供了一套完整、可维护且具有良好用户体验的UI解决方案。
 
 通过持续的迭代和优化，这套设计系统将继续为用户提供优秀的视觉和交互体验，同时保持代码的可维护性和扩展性。
+
+**新增** 特别是在popup样式改进方面，系统成功整合了B站品牌风格，提供了专业的弹窗界面设计，包括：
+- 完整的品牌色彩体系
+- 优化的字体混排方案  
+- 微交互和动画反馈
+- 响应式布局适配
+- 无障碍访问支持
+
+这些改进使得整个设计系统更加专业化和品牌化，为用户提供了更好的使用体验。
