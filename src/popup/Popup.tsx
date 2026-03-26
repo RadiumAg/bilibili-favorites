@@ -35,19 +35,21 @@ const Popup: React.FC<PopupProps> = (props) => {
               }}
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20"
+              className="h-8 w-8 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20 transition-colors duration-200"
               title="查看使用方式"
+              aria-label="查看使用方式"
             >
-              <HelpCircle className="h-4 w-4" />
+              <HelpCircle className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               onClick={handleOpenSettings}
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20"
+              className="h-8 w-8 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20 transition-colors duration-200"
               title="打开设置页面"
+              aria-label="打开设置页面"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </h3>

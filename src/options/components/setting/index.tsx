@@ -78,7 +78,7 @@ const Setting: React.FC = () => {
       <ConfigModeSelector configMode={configMode} onModeChange={setConfigMode} />
 
       <Form {...form}>
-        <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-[60%]">
+        <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-full md:w-[60%]">
           {configMode === 'custom' && (
             <CustomConfigForm
               form={form}

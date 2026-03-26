@@ -42,10 +42,15 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
           className={cn(
             'whitespace-nowrap rounded-lg px-2 py-1 text-sm flex items-center gap-x-1 relative overflow-hidden border border-solid transition-all duration-200 select-none',
             {
-              'bg-b-primary text-white border-b-primary shadow-sm shadow-b-primary/30': globalConfig.activeKey === data.id,
-              'text-b-text-primary bg-white border-b-primary/30 hover:bg-b-primary/10 hover:border-b-primary/50': globalConfig.activeKey !== data.id,
+              'bg-b-primary text-white border-b-primary shadow-sm shadow-b-primary/30':
+                globalConfig.activeKey === data.id,
+              'text-b-text-primary bg-white border-b-primary/30 hover:bg-b-primary/10 hover:border-b-primary/50':
+                globalConfig.activeKey !== data.id,
             },
           )}
+          role="button"
+          aria-label={`收藏夹: ${data.title}`}
+          tabIndex={0}
         >
           # {data.title} {clickTagId === data.id && pendingElement}
           {globalConfig.defaultFavoriteId === data.id && starElement}

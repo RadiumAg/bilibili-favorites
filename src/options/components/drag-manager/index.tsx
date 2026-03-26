@@ -201,11 +201,11 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
   }, [favoriteData, handleSelectFolder, initialized])
 
   return (
-    <div className={classNames('flex gap-4 h-[700px]', className)}>
+    <div className={classNames('flex gap-4 h-[500px] md:h-[700px]', className)}>
       {/* 左侧：收藏夹列表 */}
       <div className="w-64 flex flex-col border border-[#00AEEC]/20 rounded-xl overflow-hidden shadow-sm bg-white">
         <div className="bg-gradient-to-r bg-primary px-4 py-3 font-medium text-sm text-white flex items-center gap-2">
-          <FolderOpen className="w-5 h-5" />
+          <FolderOpen className="w-5 h-5" aria-hidden="true" />
           <span>收藏夹列表</span>
         </div>
         <ScrollArea className="flex-1 scrollbar-thin">
@@ -251,7 +251,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
       <div className="flex-1 flex flex-col border border-[#00AEEC]/20 rounded-xl overflow-hidden shadow-sm bg-white relative">
         <div className="bg-gradient-to-r bg-primary px-4 py-3 flex items-center justify-between">
           <div className="font-medium text-sm text-white flex items-center gap-2">
-            <Video className="w-5 h-5" />
+            <Video className="w-5 h-5" aria-hidden="true" />
             <span>视频列表</span>
             {selectedFolderId && (
               <span className="ml-2 text-white/80 text-xs">
@@ -266,6 +266,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
               variant="outline"
               onClick={toggleSelectAll}
               className="h-7 text-xs bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+              aria-label={selectedVideoIds.size === videos.length ? '取消全选' : '全选'}
             >
               {selectedVideoIds.size === videos.length ? '取消全选' : '全选'}
             </Button>
@@ -275,7 +276,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         <ScrollArea className="flex-1 scrollbar-thin">
           {!selectedFolderId ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
-              <FolderOpen className="w-10 h-10 text-gray-300" />
+              <FolderOpen className="w-10 h-10 text-gray-300" aria-hidden="true" />
               <span>请先选择一个收藏夹</span>
             </div>
           ) : loading ? (
@@ -292,7 +293,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
             </div>
           ) : videos.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
-              <Video className="w-10 h-10 text-gray-300" />
+              <Video className="w-10 h-10 text-gray-300" aria-hidden="true" />
               <span>该收藏夹暂无视频</span>
             </div>
           ) : (
@@ -353,7 +354,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                   {/* 选中指示器 */}
                   <div
                     className={classNames(
-                      'w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all duration-200',
+                      'w-8 h-8 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all duration-200',
                       {
                         'bg-[#00AEEC] text-white shadow-md shadow-[#00AEEC]/30':
                           selectedVideoIds.has(video.id),
@@ -373,7 +374,20 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         {/* 底部提示 */}
         {selectedFolderId && videos.length > 0 && (
           <div className="px-4 py-2.5 border-t border-[#00AEEC]/10 bg-[#00AEEC]/5 text-xs text-[#00AEEC] flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4 flex-shrink-0"
+            >
+              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+              <path d="M9 18h6" />
+              <path d="M10 22h4" />
+            </svg>
             <span>选中视频后拖拽到左侧收藏夹即可移动。支持 Ctrl/Cmd + 点击多选。</span>
           </div>
         )}

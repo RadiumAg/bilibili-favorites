@@ -158,7 +158,7 @@ const Tourist: React.FC<TouristProps> = (props) => {
   }
 
   const tourContent = (
-    <div className="fixed inset-0 z-[9999]">
+    <div className="fixed inset-0 z-50">
       <svg className="absolute inset-0 w-full h-full">
         <defs>
           <mask id="tour-mask">
@@ -216,10 +216,11 @@ const Tourist: React.FC<TouristProps> = (props) => {
           variant="ghost"
           size="sm"
           onClick={skipTourist}
-          className="absolute top-2.5 right-2.5 w-6 h-6 p-0 rounded-full hover:bg-[#BF00FF]/10 transition-colors duration-200 text-gray-400 hover:text-[#BF00FF] cursor-pointer"
+          className="absolute top-2.5 right-2.5 w-8 h-8 p-0 rounded-full hover:bg-[#BF00FF]/10 transition-colors duration-200 text-gray-400 hover:text-[#BF00FF] cursor-pointer"
           title="跳过引导"
+          aria-label="跳过引导"
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="w-3.5 h-3.5" aria-hidden="true" />
         </Button>
 
         <div className="p-4 pb-3">
@@ -259,7 +260,7 @@ const Tourist: React.FC<TouristProps> = (props) => {
                 onClick={prevStep}
                 className="h-7 px-2 text-xs text-gray-500 hover:text-[#BF00FF] hover:bg-[#BF00FF]/10 transition-colors duration-200 cursor-pointer"
               >
-                <ChevronLeft className="w-3 h-3 mr-0.5" />
+                <ChevronLeft className="w-3 h-3 mr-0.5" aria-hidden="true" />
                 上一步
               </Button>
             )}
@@ -274,7 +275,7 @@ const Tourist: React.FC<TouristProps> = (props) => {
               ) : (
                 <>
                   下一步
-                  <ChevronRight className="w-3 h-3 ml-0.5" />
+                  <ChevronRight className="w-3 h-3 ml-0.5" aria-hidden="true" />
                 </>
               )}
             </Button>

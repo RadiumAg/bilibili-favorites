@@ -157,8 +157,15 @@ export const OptionsAnalysisTab: React.FC = () => {
                 <SelectItem value="90d">最近90天</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={handleForceRefresh} disabled={dataLoading || refreshing}>
-              <RefreshCwIcon className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <Button
+              onClick={handleForceRefresh}
+              disabled={dataLoading || refreshing}
+              aria-label="刷新数据"
+            >
+              <RefreshCwIcon
+                className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`}
+                aria-hidden="true"
+              />
               刷新
             </Button>
           </div>

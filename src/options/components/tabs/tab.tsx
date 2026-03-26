@@ -54,10 +54,15 @@ const Tab: React.FC<TabProps> = (props) => {
         'transition-all',
         'duration-200',
         {
-          'bg-b-primary text-white shadow-sm shadow-b-primary/30': tabProvideData.activeKey === keyValue,
+          'bg-b-primary text-white shadow-sm shadow-b-primary/30':
+            tabProvideData.activeKey === keyValue,
           'hover:bg-b-primary/10': tabProvideData.activeKey !== keyValue,
         },
       )}
+      role="tab"
+      aria-selected={tabProvideData.activeKey === keyValue}
+      aria-label={title}
+      tabIndex={0}
     >
       {title}
     </div>
