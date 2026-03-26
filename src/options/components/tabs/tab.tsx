@@ -43,16 +43,19 @@ const Tab: React.FC<TabProps> = (props) => {
       onClick={handleClick}
       className={cn(
         'text-lg',
-        'px-2',
-        'py-1',
+        'px-3',
+        'py-2',
         'text-center',
         'font-bold',
-        ' text-b-primary',
+        'text-b-primary',
         'cursor-pointer',
         'select-none',
-        'rounded-sm',
+        'rounded-lg',
+        'transition-all',
+        'duration-200',
         {
-          ['bg-b-primary bg-opacity-25']: tabProvideData.activeKey === keyValue,
+          'bg-b-primary text-white shadow-sm shadow-b-primary/30': tabProvideData.activeKey === keyValue,
+          'hover:bg-b-primary/10': tabProvideData.activeKey !== keyValue,
         },
       )}
     >

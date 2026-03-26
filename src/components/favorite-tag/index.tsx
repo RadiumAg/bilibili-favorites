@@ -40,10 +40,10 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
           }}
           onMouseUp={handleMouseUp}
           className={cn(
-            'whitespace-nowrap rounded p-1 text-sm flex items-center gap-x-1 relative overflow-hidden border-[1px] border-solid border-black',
+            'whitespace-nowrap rounded-lg px-2 py-1 text-sm flex items-center gap-x-1 relative overflow-hidden border border-solid transition-all duration-200 select-none',
             {
-              ['bg-b-primary text-white']: globalConfig.activeKey === data.id,
-              ['text-black bg-white']: globalConfig.activeKey !== data.id,
+              'bg-b-primary text-white border-b-primary shadow-sm shadow-b-primary/30': globalConfig.activeKey === data.id,
+              'text-b-text-primary bg-white border-b-primary/30 hover:bg-b-primary/10 hover:border-b-primary/50': globalConfig.activeKey !== data.id,
             },
           )}
         >
@@ -66,7 +66,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
 
   return (
     <ScrollArea className={cn(className)}>
-      <div ref={domRef} className="flex gap-1 flex-wrap cursor-pointer">
+      <div ref={domRef} className="flex gap-1.5 flex-wrap cursor-pointer">
         {tagElementArray}
       </div>
     </ScrollArea>

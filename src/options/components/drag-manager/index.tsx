@@ -275,7 +275,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         <ScrollArea className="flex-1 scrollbar-thin">
           {!selectedFolderId ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
-              <span className="text-4xl">👈</span>
+              <FolderOpen className="w-10 h-10 text-gray-300" />
               <span>请先选择一个收藏夹</span>
             </div>
           ) : loading ? (
@@ -292,7 +292,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
             </div>
           ) : videos.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
-              <span className="text-4xl">📭</span>
+              <Video className="w-10 h-10 text-gray-300" />
               <span>该收藏夹暂无视频</span>
             </div>
           ) : (
@@ -373,7 +373,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
         {/* 底部提示 */}
         {selectedFolderId && videos.length > 0 && (
           <div className="px-4 py-2.5 border-t border-[#00AEEC]/10 bg-[#00AEEC]/5 text-xs text-[#00AEEC] flex items-center gap-2">
-            <span className="text-sm">💡</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
             <span>选中视频后拖拽到左侧收藏夹即可移动。支持 Ctrl/Cmd + 点击多选。</span>
           </div>
         )}

@@ -31,7 +31,7 @@ const AIMove: React.FC = () => {
       <Button
         onClick={handleClick}
         size="sm"
-        className="bg-b-primary hover:bg-b-primary hover:bg-opacity-50 p-1 h-6"
+        className="bg-b-primary hover:bg-b-primary-hover p-1 h-6 transition-colors duration-200"
         title="AI 智能分类视频到对应收藏夹（会消耗较多 Token）"
       >
         🤖 AI 整理

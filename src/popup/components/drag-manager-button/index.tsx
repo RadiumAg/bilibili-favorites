@@ -12,7 +12,7 @@ const DragManagerButton: FC = () => {
       <Button
         onClick={handleOpenDragManager}
         size="sm"
-        className="bg-b-primary hover:bg-b-primary hover:bg-opacity-50 p-1 h-6"
+        className="bg-b-primary hover:bg-b-primary-hover p-1 h-6 transition-colors duration-200"
       >
         拖拽管理
         <Popover>

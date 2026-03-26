@@ -11,7 +11,7 @@ const Move: React.FC = () => {
       <Button
         onClick={handleMove}
         size="sm"
-        className="bg-b-primary hover:bg-b-primary hover:bg-opacity-50 p-1 h-6"
+        className="bg-b-primary hover:bg-b-primary-hover p-1 h-6 transition-colors duration-200"
       >
         通过关键字整理
         <Popover>
