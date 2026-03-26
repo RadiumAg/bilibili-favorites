@@ -24,4 +24,6 @@
 # secrets
 secrets.*.js
 
+.aone
+
 /build.zip
