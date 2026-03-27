@@ -30,15 +30,16 @@
 - [src/popup/components/auto-create-keyword/index.tsx](file://src/popup/components/auto-create-keyword/index.tsx)
 - [src/options/index.css](file://src/options/index.css)
 - [src/options/Options.tsx](file://src/options/Options.tsx)
+- [src/hooks/use-toast/index.ts](file://src/hooks/use-toast/index.ts)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 更新了样式系统重大改进章节，反映popup样式系统的全新B站品牌色彩体系
-- 新增了B站品牌色彩变量和使用示例
-- 更新了暗色模式支持和滚动条样式系统
-- 增强了字体优化和交互增强的详细说明
-- 更新了组件使用示例以体现新的样式系统
+- 新增全面的无障碍性改进章节，涵盖ARIA属性、键盘导航、屏幕阅读器兼容性
+- 更新核心组件无障碍特性说明，包括按钮、选择器、滑块、标签页、吐司组件
+- 增强表单组件的可访问性特性，包括自动ARIA属性注入
+- 新增无障碍性最佳实践和故障排查指南
+- 更新样式系统重大改进章节，反映popup样式系统的全新B站品牌色彩体系
 
 ## 目录
 1. [简介](#简介)
@@ -46,12 +47,13 @@
 3. [核心组件](#核心组件)
 4. [架构总览](#架构总览)
 5. [详细组件分析](#详细组件分析)
-6. [样式系统重大改进](#样式系统重大改进)
-7. [依赖关系分析](#依赖关系分析)
-8. [性能考量](#性能考量)
-9. [故障排查指南](#故障排查指南)
-10. [结论](#结论)
-11. [附录](#附录)
+6. [无障碍性改进](#无障碍性改进)
+7. [样式系统重大改进](#样式系统重大改进)
+8. [依赖关系分析](#依赖关系分析)
+9. [性能考量](#性能考量)
+10. [故障排查指南](#故障排查指南)
+11. [结论](#结论)
+12. [附录](#附录)
 
 ## 简介
 本文件系统化梳理 B站收藏夹整理工具的UI组件体系，围绕以下设计理念展开：
@@ -60,7 +62,7 @@
 
 组件覆盖从基础输入控件到复合交互组件（如表单、选择器、弹出层、进度条、标签页等），并提供组合模式、复用策略、响应式与跨浏览器兼容建议、可访问性与国际化支持说明，以及主题定制与样式扩展方法。
 
-**更新**：本次更新重点介绍了popup样式系统的重大改进，包括全新的B站品牌色彩体系（#BF00FF主色调）、暗色模式增强、滚动条样式系统、字体优化和交互增强等，这些改进直接影响UI组件系统的整体外观和用户体验。
+**更新**：本次更新重点介绍了全面的无障碍性改进，包括ARIA属性、键盘导航、屏幕阅读器兼容性，以及UI组件的可访问性增强。同时更新了样式系统重大改进章节，包括全新的B站品牌色彩体系（#BF00FF主色调）、暗色模式增强、滚动条样式系统、字体优化和交互增强等。
 
 ## 项目结构
 UI组件集中位于 src/components/ui 下，采用"按功能拆分"的模块化组织方式；公共工具函数 cn 负责类名合并；Tailwind 配置通过设计令牌与插件扩展提供统一主题与滚动条样式。
@@ -385,6 +387,106 @@ Update --> End
 - [src/components/ui/label.tsx:1-22](file://src/components/ui/label.tsx#L1-L22)
 - [src/components/ui/badge.tsx:1-34](file://src/components/ui/badge.tsx#L1-L34)
 
+## 无障碍性改进
+
+### 全面的ARIA属性支持
+所有交互组件都实现了标准的ARIA属性支持，确保屏幕阅读器能够正确识别和读取：
+
+- **表单组件**：FormControl 自动注入 aria-describedby 和 aria-invalid 属性
+- **按钮组件**：内置 focus-visible 样式，支持键盘导航
+- **选择器组件**：SelectTrigger 支持键盘操作和状态指示
+- **滑块组件**：SliderPrimitive 提供完整的键盘导航支持
+- **标签页组件**：TabsPrimitive 支持键盘切换和焦点管理
+- **吐司组件**：ToastPrimitive 提供通知状态管理
+
+### 键盘导航增强
+组件实现了完整的键盘导航支持：
+
+- **焦点可见性**：所有交互元素都有清晰的焦点指示
+- **Tab顺序**：符合视觉顺序的Tab键导航
+- **快捷键支持**：支持 Enter/Space 触发，Esc 关闭
+- **键盘可达性**：禁用态元素正确处理键盘事件
+
+### 屏幕阅读器兼容性
+- **语义化标签**：使用语义化HTML元素而非纯div
+- **替代文本**：装饰性图标使用 aria-hidden="true"
+- **动态内容**：异步更新使用 aria-live="polite"
+- **状态指示**：通过aria-label和aria-describedby提供上下文
+
+### 无障碍性最佳实践
+
+#### 表单无障碍性
+```typescript
+// 表单控件自动注入ARIA属性
+<FormControl 
+  aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
+  aria-invalid={!!error}
+/>
+```
+
+#### 按钮无障碍性
+```typescript
+// 图标按钮必须有可访问名称
+<button aria-label="关闭菜单">
+  <XIcon />
+</button>
+```
+
+#### 选择器无障碍性
+```typescript
+// 选择器支持键盘导航
+<Select>
+  <SelectTrigger>
+    <SelectValue placeholder="请选择..." />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="option1">选项1</SelectItem>
+  </SelectContent>
+</Select>
+```
+
+#### 滑块无障碍性
+```typescript
+// 滑块支持键盘操作和焦点管理
+<Slider defaultValue={[50]} aria-label="音量控制" />
+```
+
+#### 标签页无障碍性
+```typescript
+// 标签页支持键盘切换
+<Tabs defaultValue="tab1">
+  <TabsList>
+    <TabsTrigger value="tab1" aria-controls="tab1-content">标签1</TabsTrigger>
+    <TabsTrigger value="tab2" aria-controls="tab2-content">标签2</TabsTrigger>
+  </TabsList>
+</Tabs>
+```
+
+#### 吐司无障碍性
+```typescript
+// 吐司提供自动消失和键盘关闭
+<Toast>
+  <ToastTitle>操作成功</ToastTitle>
+  <ToastDescription>您的操作已成功完成</ToastDescription>
+  <ToastClose aria-label="关闭通知" />
+</Toast>
+```
+
+### 无障碍性故障排查
+- **ARIA属性缺失**：检查组件是否正确注入aria-describedby和aria-invalid
+- **键盘不可达**：确认组件支持Tab键导航和Enter/Space触发
+- **焦点指示问题**：验证:focus-visible样式是否正确应用
+- **屏幕阅读器问题**：测试语音朗读是否正确，检查aria-label使用
+- **对比度问题**：确保文本与背景的对比度满足WCAG要求
+
+**章节来源**
+- [src/components/ui/form.tsx:108-114](file://src/components/ui/form.tsx#L108-L114)
+- [src/components/ui/button.tsx:7-8](file://src/components/ui/button.tsx#L7-L8)
+- [src/components/ui/slider.tsx:17-18](file://src/components/ui/slider.tsx#L17-L18)
+- [src/components/ui/tabs.tsx:29-45](file://src/components/ui/tabs.tsx#L29-L45)
+- [src/components/ui/toast.tsx:74-84](file://src/components/ui/toast.tsx#L74-L84)
+- [src/hooks/use-toast/index.ts:136-163](file://src/hooks/use-toast/index.ts#L136-L163)
+
 ## 样式系统重大改进
 
 ### 全新的B站品牌色彩体系
@@ -514,11 +616,13 @@ TW["Tailwind 配置"] --> ANI
 - 滚动与虚拟化：长列表场景使用 ScrollArea；必要时考虑虚拟滚动以降低 DOM 节点数。
 - 图标与体积：图标来自 lucide-react，按需引入可减小组件体积。
 - 主题切换：Tailwind 暗色模式通过 class 切换，避免运行时样式计算开销。
+- 无障碍性：ARIA属性和键盘导航的实现不会影响组件性能，但会提升用户体验。
 
 ## 故障排查指南
 - 可访问性问题
   - 表单错误未被读屏识别：检查 FormLabel 是否绑定到对应控件 ID，FormMessage 是否存在且被 aria-describedby 包含。
   - 键盘不可达：确认 Select/Popover/Tabs 使用了 Radix UI 触发器与键盘导航。
+  - ARIA属性缺失：检查组件是否正确注入 aria-describedby 和 aria-invalid 属性。
 - 样式冲突
   - 使用 cn 合并类名，避免直接覆盖设计令牌；检查 Tailwind 配置中的颜色与圆角扩展。
 - 动画异常
@@ -538,9 +642,9 @@ TW["Tailwind 配置"] --> ANI
 ## 结论
 该UI组件系统以 Radix UI 的无障碍与语义化为基础，以 Tailwind 的设计令牌与插件为支撑，实现了高可复用、强一致性的组件生态。通过 cn 工具与 Variants 模式，开发者可在不牺牲可访问性的前提下快速扩展样式与行为。
 
-**更新**：本次popup样式系统的重大改进引入了完整的B站风格色彩体系、优化的边框管理、字体优化和交互增强，显著提升了组件的整体外观和用户体验。新的样式系统通过CSS变量实现统一的主题管理，支持暗色模式切换，并提供了丰富的滚动条样式选项。
+**更新**：本次更新引入了全面的无障碍性改进，包括ARIA属性、键盘导航、屏幕阅读器兼容性等，显著提升了组件的可访问性。同时，popup样式系统的重大改进引入了完整的B站风格色彩体系、优化的边框管理、字体优化和交互增强，显著提升了组件的整体外观和用户体验。新的样式系统通过CSS变量实现统一的主题管理，支持暗色模式切换，并提供了丰富的滚动条样式选项。
 
-建议在实际项目中遵循组合模式与复用策略，结合表单与选择器等复合组件，构建一致、易维护的用户界面。同时充分利用新的B站风格色彩系统，确保界面风格的一致性和品牌识别度。
+建议在实际项目中遵循组合模式与复用策略，结合表单与选择器等复合组件，构建一致、易维护的用户界面。同时充分利用新的B站风格色彩系统和无障碍性特性，确保界面风格的一致性和良好的用户体验。
 
 ## 附录
 
@@ -573,6 +677,14 @@ TW["Tailwind 配置"] --> ANI
 - 工具类：新增工具类（如滚动条样式）通过插件添加，避免分散样式。
 - 深色模式：通过 class 切换与 CSS 变量映射实现深浅主题；确保所有组件适配。
 - B站风格：使用预定义的B站色彩变量，确保品牌一致性。
+
+### 无障碍性最佳实践
+- **ARIA标签**：为图标按钮添加 aria-label，为装饰性图标添加 aria-hidden="true"
+- **焦点管理**：确保所有交互元素都有可见的焦点指示
+- **键盘导航**：支持Tab键导航、Enter/Space触发、Esc关闭
+- **屏幕阅读器**：提供适当的替代文本和上下文信息
+- **对比度**：确保文本与背景的对比度满足WCAG 2.1 AA标准
+- **响应速度**：避免过长的加载时间，提供进度指示
 
 **章节来源**
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
