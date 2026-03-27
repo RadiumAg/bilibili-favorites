@@ -26,15 +26,21 @@
 - [src/components/ui/input.tsx](file://src/components/ui/input.tsx)
 - [src/components/ui/select.tsx](file://src/components/ui/select.tsx)
 - [src/components/ui/label.tsx](file://src/components/ui/label.tsx)
+- [src/hooks/use-cookie/index.ts](file://src/hooks/use-cookie/index.ts)
+- [src/hooks/use-edit-keyword/index.tsx](file://src/hooks/use-edit-keyword/index.tsx)
+- [src/hooks/use-create-keyword/index.tsx](file://src/hooks/use-create-keyword/index.tsx)
+- [src/hooks/use-toast/index.ts](file://src/hooks/use-toast/index.ts)
+- [src/hooks/use-create-keyword-by-ai/index.tsx](file://src/hooks/use-create-keyword-by-ai/index.tsx)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 新增样式系统和主题管理最佳实践章节
-- 更新组件设计模式以反映新的样式系统改进
-- 增加颜色管理和交互设计指导原则
-- 完善Tailwind CSS和CSS变量的使用规范
-- 添加暗黑模式和OLED优化的实现指南
+- 新增React Hook性能优化最佳实践章节
+- 更新use-cookie hook依赖数组优化相关内容
+- 新增use-edit-keyword hook使用useMemoizedFn提升性能的详细说明
+- 增加use-create-keyword hook性能优化策略
+- 完善Hook性能优化工具链使用指导
+- 添加useMemoizedFn在多个Hook中的应用实例
 
 ## 目录
 1. [项目概述](#项目概述)
@@ -47,10 +53,11 @@
 8. [颜色管理与视觉设计](#颜色管理与视觉设计)
 9. [交互设计与用户体验](#交互设计与用户体验)
 10. [性能优化策略](#性能优化策略)
-11. [错误处理与调试](#错误处理与调试)
-12. [测试策略](#测试策略)
-13. [部署与构建](#部署与构建)
-14. [总结](#总结)
+11. [React Hook性能优化最佳实践](#react-hook性能优化最佳实践)
+12. [错误处理与调试](#错误处理与调试)
+13. [测试策略](#测试策略)
+14. [部署与构建](#部署与构建)
+15. [总结](#总结)
 
 ## 项目概述
 
@@ -545,6 +552,111 @@ end
 - [vite.config.ts: 1-44:1-44](file://vite.config.ts#L1-L44)
 - [src/utils/api.ts: 285-319:285-319](file://src/utils/api.ts#L285-L319)
 
+## React Hook性能优化最佳实践
+
+### useMemoizedFn性能优化
+
+项目广泛使用ahooks库中的useMemoizedFn来优化React Hook的性能，避免不必要的重新渲染：
+
+#### use-cookie Hook依赖数组优化
+
+use-cookie hook通过优化依赖数组，确保在必要时才重新执行effect：
+
+```mermaid
+graph LR
+A[useCookie Hook] --> B[依赖数组优化]
+B --> C[cookie]
+B --> D[popup]
+B --> E[setGlobalData]
+C --> F[状态变更触发]
+D --> F
+E --> F
+F --> G[避免重复渲染]
+```
+
+**图表来源**
+- [src/hooks/use-cookie/index.ts: 34](file://src/hooks/use-cookie/index.ts#L34)
+
+#### use-edit-keyword Hook性能优化
+
+use-edit-keyword hook使用useMemoizedFn包装事件处理器，显著提升性能：
+
+```mermaid
+sequenceDiagram
+participant Hook as useEditKeyword Hook
+participant Memo as useMemoizedFn
+participant Handler as 事件处理器
+participant Component as UI组件
+Hook->>Memo : 包装handDelete函数
+Memo->>Handler : useMemoizedFn(handDelete)
+Handler->>Component : 返回稳定函数引用
+Component->>Component : 避免重新渲染
+Note over Hook,Component : 键盘事件优化
+Hook->>Memo : 包装handleKeyDown函数
+Memo->>Handler : useMemoizedFn(handleKeyDown)
+Handler->>Component : 稳定的键盘事件处理器
+Component->>Component : 减少不必要的重渲染
+```
+
+**图表来源**
+- [src/hooks/use-edit-keyword/index.tsx: 20-30:20-30](file://src/hooks/use-edit-keyword/index.tsx#L20-L30)
+- [src/hooks/use-edit-keyword/index.tsx: 32-70:32-70](file://src/hooks/use-edit-keyword/index.tsx#L32-L70)
+
+#### use-create-keyword Hook批量优化
+
+use-create-keyword hook在多个方法中使用useMemoizedFn：
+
+```mermaid
+graph TB
+subgraph "use-create-keyword Hook优化"
+A[extractWithLocal] --> B[useMemoizedFn]
+C[extractWithAI] --> D[useMemoizedFn]
+E[processSingleFavorite] --> F[useMemoizedFn]
+G[handleCreate] --> H[useMemoizedFn]
+I[cancelCreate] --> J[useMemoizedFn]
+end
+subgraph "性能收益"
+K[减少函数创建] --> L[稳定引用]
+M[避免重渲染] --> N[提升性能]
+end
+B --> K
+D --> K
+F --> K
+H --> K
+J --> K
+K --> M
+L --> N
+```
+
+**图表来源**
+- [src/hooks/use-create-keyword/index.tsx: 40](file://src/hooks/use-create-keyword/index.tsx#L40)
+- [src/hooks/use-create-keyword/index.tsx: 107](file://src/hooks/use-create-keyword/index.tsx#L107)
+- [src/hooks/use-create-keyword/index.tsx: 174](file://src/hooks/use-create-keyword/index.tsx#L174)
+- [src/hooks/use-create-keyword/index.tsx: 191](file://src/hooks/use-create-keyword/index.tsx#L191)
+- [src/hooks/use-create-keyword/index.tsx: 286](file://src/hooks/use-create-keyword/index.tsx#L286)
+
+### 性能优化最佳实践
+
+#### Hook函数稳定性原则
+
+1. **事件处理器优化**：使用useMemoizedFn包装事件处理函数
+2. **计算函数优化**：对复杂计算使用useMemoizedFn
+3. **回调函数优化**：确保回调函数引用稳定
+4. **依赖数组优化**：精确控制useEffect依赖项
+
+#### 性能监控指标
+
+- **重渲染次数**：监控组件重渲染频率
+- **函数创建次数**：跟踪函数创建和销毁
+- **内存使用**：监控Hook内存占用
+- **渲染性能**：测量组件渲染时间
+
+**章节来源**
+- [src/hooks/use-cookie/index.ts: 1-40:1-40](file://src/hooks/use-cookie/index.ts#L1-L40)
+- [src/hooks/use-edit-keyword/index.tsx: 1-111:1-111](file://src/hooks/use-edit-keyword/index.tsx#L1-L111)
+- [src/hooks/use-create-keyword/index.tsx: 1-304:1-304](file://src/hooks/use-create-keyword/index.tsx#L1-L304)
+- [package.json: 40](file://package.json#L40)
+
 ## 错误处理与调试
 
 ### 错误处理机制
@@ -664,8 +776,9 @@ end
 4. **交互体验优秀**：完整的反馈系统和无障碍支持
 5. **状态管理优秀**：Zustand + Immer的组合实现高效的状态管理
 6. **性能优化到位**：多层次缓存和构建优化策略
-7. **开发体验良好**：完善的TypeScript支持和开发工具链
-8. **测试覆盖全面**：多层次的测试策略确保代码质量
+7. **Hook性能优化**：useMemoizedFn等工具的系统性应用
+8. **开发体验良好**：完善的TypeScript支持和开发工具链
+9. **测试覆盖全面**：多层次的测试策略确保代码质量
 
 ### 技术亮点
 
@@ -676,5 +789,6 @@ end
 - **Chrome扩展最佳实践**：符合Chrome Web Store规范
 - **OLED优化**：针对深色模式和OLED屏幕的专业优化
 - **无障碍设计**：完整的WCAG 2.1 AA标准支持
+- **Hook性能优化**：useMemoizedFn等工具的系统性应用
 
-这个项目为React应用开发提供了优秀的参考模板，展示了如何在实际项目中应用各种最佳实践和技术方案，特别是在样式系统、颜色管理和交互设计方面的专业实现。
+这个项目为React应用开发提供了优秀的参考模板，展示了如何在实际项目中应用各种最佳实践和技术方案，特别是在样式系统、颜色管理和交互设计方面的专业实现。新增的Hook性能优化章节进一步完善了项目的最佳实践体系，为开发者提供了实用的性能优化指导。

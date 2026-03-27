@@ -20,10 +20,11 @@
 
 ## 更新摘要
 **变更内容**
-- 新增AIGate适配器支持，扩展适配器数组从['openai', 'spark']到['openai', 'spark', 'aigate', 'custom']
+- 新增AIGate适配器类型支持，扩展适配器数组从['openai', 'spark']到['openai', 'spark', 'aigate', 'custom']
 - 添加AIGate配置默认值和表单支持
 - 更新适配器工厂函数以支持'aigate'类型
 - 完善AIGate服务集成和流式响应处理
+- **重要修复**：完善AIGate流解析器适配器支持
 
 ## 目录
 1. [简介](#简介)
@@ -131,7 +132,7 @@ M --> L
 - 流解析适配器
   - OpenAI适配器：解析choices[0].delta.content
   - 星火适配器：解析choices[0].delta.content或reasoning_content
-  - **新增**：AIGate适配器：支持AIGate免费服务的流式响应解析
+  - **待完善**：AIGate适配器：支持AIGate免费服务的流式响应解析（需要添加专用适配器）
   - 自定义适配器：可扩展以支持其他模型格式
 - 关键API函数
   - fetchChatGpt：基于标题数组生成关键词
@@ -270,8 +271,8 @@ end
 - 适配器设计
   - OpenAIStreamAdapter：解析choices[0].delta.content
   - SparkStreamAdapter：解析choices[0].delta.content或reasoning_content
-  - **新增**：AIGateStreamAdapter：解析AIGate服务的流式响应
-  - createStreamAdapter：根据配置选择适配器，支持'aigate'类型
+  - **待完善**：AIGateStreamAdapter：解析AIGate服务的流式响应（需要实现专用适配器）
+  - createStreamAdapter：根据配置选择适配器，**修复**：现已支持'aigate'类型
 - 解析流程
   - processStreamChunk：累积缓冲区，尝试提取完整关键词
   - extractKeywordFromBuffer：正则匹配引号包裹的关键词
@@ -279,6 +280,8 @@ end
 - 取消与错误
   - 前端AbortController与后端双重检查，确保及时中断
   - 控制器错误与端口断开错误均被正确传播
+
+**更新** 适配器工厂函数已修复，现在支持'aigate'类型，但需要为AIGate创建专用的流解析适配器。
 
 ```mermaid
 flowchart TD
@@ -417,6 +420,7 @@ Settings --> UI2
   - 请求被取消：检查前端AbortController与后台中断信号
   - 配额不足：查看配额卡片，等待次日或升级到付费方案
   - **新增**：AIGate服务超时：检查网络连接和API密钥有效性
+  - **待解决**：AIGate适配器解析问题：当adapterType为'aigate'时，系统会回退到Spark适配器
 - 定位方法
   - 查看控制台日志：[DEBUG]与[AIStreamParser]输出
   - 使用测试用例：ai-stream-connect.test.ts验证connectAndStream行为
@@ -426,6 +430,8 @@ Settings --> UI2
   - 取消与错误传播：[src/utils/api.ts:184-232](file://src/utils/api.ts#L184-L232)
   - 配额检查与SSE解析：[src/background/index.ts:27-192](file://src/background/index.ts#L27-L192)
 
+**更新**：适配器工厂函数已修复，现在支持'aigate'类型，但仍需要为AIGate创建专用的流解析适配器。
+
 **章节来源**
 - [src/options/components/setting/types.ts:52-98](file://src/options/components/setting/types.ts#L52-L98)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:121-179](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L121-L179)
@@ -433,7 +439,7 @@ Settings --> UI2
 - [src/background/index.ts:27-192](file://src/background/index.ts#L27-L192)
 
 ## 结论
-本项目提供了完整的AI服务API集成方案，覆盖OpenAI兼容模型、AIGate免费服务与星火大模型三大路径。通过统一的流式通信与解析适配器，实现了跨模型的一致体验；配合完善的配置管理与配额检查，满足从个人测试到生产使用的多样化需求。建议在保证质量的前提下，优先使用自定义模型以获得更优性能与可控性，同时利用AIGate进行低成本验证与快速迭代。
+本项目提供了完整的AI服务API集成方案，覆盖OpenAI兼容模型、AIGate免费服务与星火大模型三大路径。通过统一的流式通信与解析适配器，实现了跨模型的一致体验；配合完善的配置管理与配额检查，满足从个人测试到生产使用的多样化需求。**重要更新**：适配器工厂函数现已支持'aigate'类型，但需要为AIGate创建专用的流解析适配器以确保正确的数据解析。建议在保证质量的前提下，优先使用自定义模型以获得更优性能与可控性，同时利用AIGate进行低成本验证与快速迭代。
 
 ## 附录
 - API函数速查
@@ -443,5 +449,5 @@ Settings --> UI2
 - 适配器速查
   - openai：OpenAI兼容模型
   - spark：星火大模型
-  - aigate：AIGate免费服务
+  - aigate：AIGate免费服务（需要专用适配器）
   - custom：自定义解析逻辑
