@@ -9,6 +9,10 @@ Summary
   5. version timestamp follow the yyyy.MM.dd format
 ```
 
+## 1.2.1 [2025.04.14]
+
+- fix: bar-chart 柱状图圆角修复，解决底部被切掉的问题
+
 ## 1.2.0 [2025.04.14]
 
 - feat: AI 智能移动功能，支持根据视频内容自动分类到对应收藏夹
