@@ -1,7 +1,5 @@
 import React from 'react'
 import { useMemoizedFn } from 'ahooks'
-import { useGlobalConfig } from '@/store/global-data'
-import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -11,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import classNames from 'classnames'
 import { fetchAllFavoriteMedias } from '@/utils/api'
 import { FolderOpen, Video } from 'lucide-react'
+import { useFavoriteData } from '@/hooks'
 
 interface VideoItem {
   id: number
@@ -33,13 +32,7 @@ interface DragManagerProps {
 const DragManager: React.FC<DragManagerProps> = (props) => {
   const { className } = props
   const { toast } = useToast()
-
-  const { favoriteData } = useGlobalConfig(
-    useShallow((state) => ({
-      favoriteData: state.favoriteData,
-    })),
-  )
-
+  const { favoriteData, refresh: refreshFavData } = useFavoriteData()
   const [selectedFolderId, setSelectedFolderId] = React.useState<number | null>(null)
   const [videos, setVideos] = React.useState<VideoItem[]>([])
   const [selectedVideoIds, setSelectedVideoIds] = React.useState<Set<number>>(new Set())
@@ -189,6 +182,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
     // 刷新当前收藏夹
     if (successCount > 0) {
       loadVideos(selectedFolderId)
+      refreshFavData()
     }
   })
 
@@ -219,9 +213,9 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                 onDrop={(e) => handleDrop(e, folder.id)}
                 className={classNames(
                   'px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm',
-                  'border-2',
+                  'border',
                   {
-                    'bg-primary text-white border-[#00AEEC] shadow-md shadow-[#00AEEC]/30':
+                    'bg-[#00AEEC]/10 text-[#00AEEC] border-[#00AEEC]/40 shadow-sm':
                       selectedFolderId === folder.id,
                     'border-transparent hover:bg-[#00AEEC]/5 hover:border-[#00AEEC]/20':
                       selectedFolderId !== folder.id && dragOverFolderId !== folder.id,
@@ -234,7 +228,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
                   <span className="truncate font-medium">{folder.title}</span>
                   <span
                     className={classNames('text-xs px-1.5 py-0.5 rounded-full', {
-                      'bg-white/20': selectedFolderId === folder.id,
+                      'bg-[#00AEEC]/20 text-[#00AEEC]': selectedFolderId === folder.id,
                       'bg-[#00AEEC]/10 text-[#00AEEC]': selectedFolderId !== folder.id,
                     })}
                   >

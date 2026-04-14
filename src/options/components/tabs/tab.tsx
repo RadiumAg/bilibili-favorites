@@ -2,6 +2,7 @@ import React from 'react'
 import { TabProvide } from './provide'
 import { cn } from '@/lib/utils'
 import { setSearchParams } from '@/utils/search-params'
+import { useMount } from 'ahooks'
 
 type TabProps = React.PropsWithChildren<{
   title: string
@@ -27,7 +28,7 @@ const Tab: React.FC<TabProps> = (props) => {
     }
   }
 
-  React.useEffect(() => {
+  useMount(() => {
     if (defaultTab) {
       tabProvideData.dispatch?.((oldValue) => {
         return {
@@ -36,11 +37,10 @@ const Tab: React.FC<TabProps> = (props) => {
         }
       })
     }
-  }, [])
+  })
 
   return (
     <div
-      onClick={handleClick}
       className={cn(
         'text-lg',
         'px-3',
@@ -63,6 +63,7 @@ const Tab: React.FC<TabProps> = (props) => {
       aria-selected={tabProvideData.activeKey === keyValue}
       aria-label={title}
       tabIndex={0}
+      onClick={handleClick}
     >
       {title}
     </div>

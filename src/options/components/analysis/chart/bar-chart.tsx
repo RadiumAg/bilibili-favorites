@@ -70,17 +70,18 @@ export const BarChart: React.FC<BarChartProps> = ({
           data: data.map((item) => item.value),
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#83bff6' },
-              { offset: 0.5, color: '#188df0' },
-              { offset: 1, color: '#188df0' },
+              { offset: 0, color: '#5CC3F0' },
+              { offset: 0.5, color: '#00AEEC' },
+              { offset: 1, color: '#00AEEC' },
             ]),
+            borderRadius: [4, 4, 0, 0],
           },
           emphasis: {
             itemStyle: {
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: '#2378f7' },
-                { offset: 0.7, color: '#2378f7' },
-                { offset: 1, color: '#83bff6' },
+                { offset: 0, color: '#7DD3F7' },
+                { offset: 0.7, color: '#00AEEC' },
+                { offset: 1, color: '#0099D1' },
               ]),
             },
           },

@@ -15,6 +15,7 @@
 - [src/utils/api.ts](file://src/utils/api.ts)
 - [src/lib/utils.ts](file://src/lib/utils.ts)
 - [src/utils/log.ts](file://src/utils/log.ts)
+- [src/utils/promise.ts](file://src/utils/promise.ts)
 - [tailwind.config.js](file://tailwind.config.js)
 - [postcss.config.js](file://postcss.config.js)
 - [src/popup/index.css](file://src/popup/index.css)
@@ -31,16 +32,18 @@
 - [src/hooks/use-create-keyword/index.tsx](file://src/hooks/use-create-keyword/index.tsx)
 - [src/hooks/use-toast/index.ts](file://src/hooks/use-toast/index.ts)
 - [src/hooks/use-create-keyword-by-ai/index.tsx](file://src/hooks/use-create-keyword-by-ai/index.tsx)
+- [src/hooks/use-set-default-fav/index.tsx](file://src/hooks/use-set-default-fav/index.tsx)
+- [src/hooks/use-move/index.tsx](file://src/hooks/use-move/index.tsx)
+- [tests/use-move.test.tsx](file://tests/use-move.test.tsx)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 新增React Hook性能优化最佳实践章节
-- 更新use-cookie hook依赖数组优化相关内容
-- 新增use-edit-keyword hook使用useMemoizedFn提升性能的详细说明
-- 增加use-create-keyword hook性能优化策略
-- 完善Hook性能优化工具链使用指导
-- 添加useMemoizedFn在多个Hook中的应用实例
+- 新增useSetDefaultFav钩子的memoization依赖优化案例，展示正确的useMemo依赖数组配置
+- 新增useMove钩子的复杂状态管理最佳实践，包括异步操作和取消机制
+- 完善Hook性能优化工具链使用指导，涵盖useMemoizedFn、useMemo等工具的应用
+- 增加useMemo依赖数组优化的最佳实践指导
+- 新增复杂状态管理的Hook设计模式
 
 ## 目录
 1. [项目概述](#项目概述)
@@ -635,6 +638,147 @@ L --> N
 - [src/hooks/use-create-keyword/index.tsx: 191](file://src/hooks/use-create-keyword/index.tsx#L191)
 - [src/hooks/use-create-keyword/index.tsx: 286](file://src/hooks/use-create-keyword/index.tsx#L286)
 
+### 新增：useSetDefaultFav钩子的memoization依赖优化
+
+useSetDefaultFav钩子展示了正确的useMemo依赖数组配置最佳实践：
+
+#### 正确的useMemo依赖数组配置
+
+```mermaid
+graph TB
+subgraph "useSetDefaultFav Hook优化"
+A[pendingElement] --> B[空依赖数组 []]
+C[starElement] --> D[空依赖数组 []]
+E[handleClick] --> F[useMemoizedFn包装]
+G[handleMouseDown] --> H[useMemoizedFn包装]
+I[handleMouseUp] --> J[useMemoizedFn包装]
+end
+subgraph "依赖优化原则"
+K[简单元素创建] --> L[无需依赖]
+M[稳定函数引用] --> N[useMemoizedFn]
+O[避免重复渲染] --> P[性能提升]
+end
+B --> K
+D --> K
+F --> M
+H --> M
+J --> M
+K --> O
+L --> P
+M --> O
+N --> P
+```
+
+**图表来源**
+- [src/hooks/use-set-default-fav/index.tsx: 18-26:18-26](file://src/hooks/use-set-default-fav/index.tsx#L18-L26)
+- [src/hooks/use-set-default-fav/index.tsx: 27-39:27-39](file://src/hooks/use-set-default-fav/index.tsx#L27-L39)
+- [src/hooks/use-set-default-fav/index.tsx: 41-53:41-53](file://src/hooks/use-set-default-fav/index.tsx#L41-L53)
+
+#### useEffect依赖数组优化
+
+useSetDefaultFav中的useEffect展示了正确的依赖数组配置：
+
+```mermaid
+sequenceDiagram
+participant Effect as useEffect
+participant ClickTagId as clickTagId
+participant IsLongPress as isLongPress
+participant SetGlobalData as setGlobalData
+Effect->>ClickTagId : 监听状态变化
+Effect->>IsLongPress : 监听状态变化
+Effect->>SetGlobalData : 监听函数引用
+Note over Effect : SetGlobalData : 函数引用稳定
+Effect->>Effect : 条件执行动画
+Effect->>Effect : 更新defaultFavoriteId
+```
+
+**图表来源**
+- [src/hooks/use-set-default-fav/index.tsx: 100](file://src/hooks/use-set-default-fav/index.tsx#L100)
+
+### 新增：useMove钩子的复杂状态管理最佳实践
+
+useMove钩子展示了复杂异步操作和状态管理的最佳实践：
+
+#### 复杂状态管理模式
+
+```mermaid
+graph TB
+subgraph "useMove Hook状态管理"
+A[isLoading] --> B[加载状态]
+C[isFinished] --> D[完成状态]
+E[isCancelled] --> F[取消状态]
+G[cancelRef] --> H[取消标志]
+end
+subgraph "异步操作流程"
+I[handleMove] --> J[startMove]
+J --> K[fetchMove]
+K --> L[queryAndSendMessage]
+end
+subgraph "错误处理机制"
+M[try-catch] --> N[toast提示]
+O[finally] --> P[状态清理]
+end
+B --> I
+C --> I
+D --> I
+E --> I
+F --> I
+G --> I
+I --> M
+J --> O
+K --> O
+L --> O
+M --> P
+```
+
+**图表来源**
+- [src/hooks/use-move/index.tsx: 22-25:22-25](file://src/hooks/use-move/index.tsx#L22-L25)
+- [src/hooks/use-move/index.tsx: 27-33:27-33](file://src/hooks/use-move/index.tsx#L27-L33)
+- [src/hooks/use-move/index.tsx: 99-124:99-124](file://src/hooks/use-move/index.tsx#L99-L124)
+
+#### 取消操作实现
+
+```mermaid
+sequenceDiagram
+participant User as 用户
+participant CancelBtn as 取消按钮
+participant CancelRef as 取消标志
+participant Operation as 异步操作
+User->>CancelBtn : 点击取消
+CancelBtn->>CancelRef : 设置取消标志
+CancelRef->>Operation : 检查取消状态
+Operation->>Operation : 中断当前操作
+Operation->>User : 显示取消状态
+```
+
+**图表来源**
+- [src/hooks/use-move/index.tsx: 35-38:35-38](file://src/hooks/use-move/index.tsx#L35-L38)
+- [src/hooks/use-move/index.tsx: 62](file://src/hooks/use-move/index.tsx#L62)
+
+#### 加载状态管理
+
+```mermaid
+flowchart TD
+A[开始操作] --> B[设置isLoading=true]
+C[fetchAllFavoriteMedias] --> D[处理视频列表]
+E[循环处理关键词] --> F[循环处理视频]
+G[queryAndSendMessage] --> H[更新进度]
+I[检查取消状态] --> J{是否取消?}
+J --> |是| K[设置isLoading=false]
+J --> |否| L[继续处理]
+M[检查时间阈值] --> N{时间<1000ms?}
+N --> |是| O[sleep 1000ms]
+N --> |否| P[直接完成]
+K --> Q[设置isFinished=true]
+L --> E
+O --> Q
+P --> Q
+Q --> R[设置isLoading=false]
+```
+
+**图表来源**
+- [src/hooks/use-move/index.tsx: 100-114:100-114](file://src/hooks/use-move/index.tsx#L100-L114)
+
 ### 性能优化最佳实践
 
 #### Hook函数稳定性原则
@@ -643,6 +787,13 @@ L --> N
 2. **计算函数优化**：对复杂计算使用useMemoizedFn
 3. **回调函数优化**：确保回调函数引用稳定
 4. **依赖数组优化**：精确控制useEffect依赖项
+
+#### useMemo依赖数组优化原则
+
+1. **简单表达式优化**：对于简单的布尔、数字、字符串表达式，不要使用useMemo
+2. **复杂对象优化**：对于复杂对象或数组，使用useMemo进行缓存
+3. **函数引用优化**：使用useMemoizedFn确保函数引用稳定
+4. **依赖数组最小化**：只包含真正需要的依赖项
 
 #### 性能监控指标
 
@@ -655,6 +806,9 @@ L --> N
 - [src/hooks/use-cookie/index.ts: 1-40:1-40](file://src/hooks/use-cookie/index.ts#L1-L40)
 - [src/hooks/use-edit-keyword/index.tsx: 1-111:1-111](file://src/hooks/use-edit-keyword/index.tsx#L1-L111)
 - [src/hooks/use-create-keyword/index.tsx: 1-304:1-304](file://src/hooks/use-create-keyword/index.tsx#L1-L304)
+- [src/hooks/use-set-default-fav/index.tsx: 1-127:1-127](file://src/hooks/use-set-default-fav/index.tsx#L1-L127)
+- [src/hooks/use-move/index.tsx: 1-161:1-161](file://src/hooks/use-move/index.tsx#L1-L161)
+- [src/utils/promise.ts: 1-11:1-11](file://src/utils/promise.ts#L1-L11)
 - [package.json: 40](file://package.json#L40)
 
 ## 错误处理与调试
@@ -708,12 +862,18 @@ end
 subgraph "端到端测试"
 I[浏览器自动化测试] --> J[用户流程测试]
 end
+subgraph "Hook测试"
+K[useMove测试] --> L[状态管理测试]
+M[异步操作测试] --> N[取消机制测试]
+O[错误处理测试] --> P[边界情况测试]
+end
 ```
 
 **图表来源**
 - [tests/ai-stream-adapter.test.ts](file://tests/ai-stream-adapter.test.ts)
 - [tests/ai-stream-connect.test.ts](file://tests/ai-stream-connect.test.ts)
 - [tests/ai-stream-parser.test.ts](file://tests/ai-stream-parser.test.ts)
+- [tests/use-move.test.tsx: 107-607:107-607](file://tests/use-move.test.tsx#L107-L607)
 
 ### 测试配置
 
@@ -777,8 +937,9 @@ end
 5. **状态管理优秀**：Zustand + Immer的组合实现高效的状态管理
 6. **性能优化到位**：多层次缓存和构建优化策略
 7. **Hook性能优化**：useMemoizedFn等工具的系统性应用
-8. **开发体验良好**：完善的TypeScript支持和开发工具链
-9. **测试覆盖全面**：多层次的测试策略确保代码质量
+8. **复杂状态管理**：useMove等Hook展示复杂异步操作最佳实践
+9. **开发体验良好**：完善的TypeScript支持和开发工具链
+10. **测试覆盖全面**：多层次的测试策略确保代码质量
 
 ### 技术亮点
 
@@ -790,5 +951,7 @@ end
 - **OLED优化**：针对深色模式和OLED屏幕的专业优化
 - **无障碍设计**：完整的WCAG 2.1 AA标准支持
 - **Hook性能优化**：useMemoizedFn等工具的系统性应用
+- **复杂状态管理**：useMove展示异步操作和取消机制
+- **useMemo依赖优化**：正确的依赖数组配置最佳实践
 
-这个项目为React应用开发提供了优秀的参考模板，展示了如何在实际项目中应用各种最佳实践和技术方案，特别是在样式系统、颜色管理和交互设计方面的专业实现。新增的Hook性能优化章节进一步完善了项目的最佳实践体系，为开发者提供了实用的性能优化指导。
+这个项目为React应用开发提供了优秀的参考模板，展示了如何在实际项目中应用各种最佳实践和技术方案，特别是在样式系统、颜色管理和交互设计方面的专业实现。新增的Hook性能优化章节进一步完善了项目的最佳实践体系，为开发者提供了实用的性能优化指导，包括useSetDefaultFav的memoization依赖优化和useMove的复杂状态管理最佳实践。
