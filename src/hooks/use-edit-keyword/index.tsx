@@ -1,6 +1,7 @@
+import React from 'react'
+
 import { useGlobalConfig } from '@/store/global-data'
 import { useMemoizedFn } from 'ahooks'
-import React from 'react'
 import { v4 as uuid } from 'uuid'
 import { useShallow } from 'zustand/react/shallow'
 
@@ -24,7 +25,7 @@ const useEditKeyword = () => {
 
     if (targetKeyword == null) return
 
-    targetKeyword.value = targetKeyword?.value.filter((fav) => fav.id !== id)
+    targetKeyword.value = [...targetKeyword?.value.filter((fav) => fav.id !== id)]
 
     dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
   })
@@ -102,7 +103,7 @@ const useEditKeyword = () => {
         </span>
       )
     })
-  }, [currentFavoriteTag?.value, handDelete])
+  }, [currentFavoriteTag?.value?.length, handDelete])
 
   return { keyData: dataContext.keyword, tagElementArray, handleKeyDown }
 }
