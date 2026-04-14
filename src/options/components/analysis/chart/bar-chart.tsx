@@ -74,7 +74,7 @@ export const BarChart: React.FC<BarChartProps> = ({
               { offset: 0.5, color: '#00AEEC' },
               { offset: 1, color: '#00AEEC' },
             ]),
-            borderRadius: [4, 4, 0, 0],
+            borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 4, 4],
           },
           emphasis: {
             itemStyle: {
