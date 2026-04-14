@@ -152,8 +152,8 @@ const useMove = () => {
   )
 
   return {
-    handleMove,
     isLoadingElement,
+    handleMove,
   }
 }
 
