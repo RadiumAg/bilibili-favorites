@@ -58,11 +58,14 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
       )
     })
   }, [
-    clickTagId,
-    isLongPress,
     favoriteData,
     globalConfig.activeKey,
     globalConfig.defaultFavoriteId,
+    clickTagId,
+    pendingElement,
+    starElement,
+    handleMouseUp,
+    handleMouseDown,
   ])
 
   if (loading && favoriteData.length === 0) {
