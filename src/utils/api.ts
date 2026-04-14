@@ -280,6 +280,7 @@ const callAIGateAI = async (
  * 分页获取某个收藏夹的全部视频列表
  * @param mediaId 收藏夹 ID
  * @param pageSize 每页数量，默认 40（B 站最大值）
+ * @param expireTime 缓存过期时间，默认 10 分钟
  * @returns 该收藏夹下的全部视频
  */
 const fetchAllFavoriteMedias = async (
