@@ -12,15 +12,8 @@ type FavoriteTagProps = {
 
 const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   const { className } = props
-  const {
-    domRef,
-    clickTagId,
-    pendingElement,
-    isLongPress,
-    starElement,
-    handleMouseDown,
-    handleMouseUp,
-  } = useSetDefaultFav()
+  const { domRef, clickTagId, pendingElement, starElement, handleMouseDown, handleMouseUp } =
+    useSetDefaultFav()
   const { favoriteData, loading } = useFavoriteData()
   const globalConfig = useGlobalConfig(
     useShallow((state) => ({
