@@ -9,6 +9,15 @@ Summary
   5. version timestamp follow the yyyy.MM.dd format
 ```
 
+## 1.2.0 [2025.04.14]
+
+- feat: AI 智能移动功能，支持根据视频内容自动分类到对应收藏夹
+- feat: 新增 useMove Hook 的完整测试覆盖
+- update: drag-manager 文件夹选中状态样式优化，更柔和的专业设计
+- update: bar-chart 柱状图颜色统一为 B站品牌色渐变
+- update: AI 分类 Prompt 优化，强化 targetFavorite 必须在可用列表内的约束
+- update: 使用 useFavoriteData Hook 替代直接使用全局状态
+
 ## 1.1.4 [2025.02.05]
 
 - feat: 新增新手引导功能（Tour），首次打开时自动展示
