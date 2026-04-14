@@ -132,7 +132,7 @@ export const OptionsAnalysisTab: React.FC = () => {
         loadData()
       })
     }
-  }, [favoriteData])
+  }, [favoriteData, fetchAllMedias, loadData])
 
   return (
     <div className="w-full h-full bg-gray-50 p-6">
