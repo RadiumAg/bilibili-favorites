@@ -36,6 +36,9 @@
     "src",
     "tests/**/*.ts"
   ],
+  "exclude": [
+    "src/manifest.ts"
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"
