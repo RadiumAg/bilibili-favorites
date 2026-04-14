@@ -3,6 +3,8 @@ import lottie from 'lottie-web'
 import { useLongPress } from 'ahooks'
 import { useGlobalConfig } from '@/store/global-data'
 
+const starJson = new URL('@/assets/lottile/star.json', import.meta.url).href
+
 const useSetDefaultFav = () => {
   const delayNumber = 300
   const setGlobalData = useGlobalConfig((state) => state.setGlobalData)
@@ -12,7 +14,6 @@ const useSetDefaultFav = () => {
   const [starDomRef, setStarDomRef] = React.useState<HTMLDivElement | null>(null)
   const [clickTagId, setClickTagId] = React.useState<number | undefined>()
   const clickTagIdRef = React.useRef<number | undefined>(undefined)
-  const starJson = new URL('@/assets/lottile/star.json', import.meta.url).href
 
   const pendingElement = React.useMemo(
     () => (
@@ -96,7 +97,7 @@ const useSetDefaultFav = () => {
     }
 
     runProcess()
-  }, [clickTagId, isLongPress])
+  }, [clickTagId, isLongPress, setGlobalData])
 
   React.useEffect(() => {
     if (starDomRef == null) return
