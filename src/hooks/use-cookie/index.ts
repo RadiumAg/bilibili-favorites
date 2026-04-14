@@ -31,7 +31,7 @@ const useCookie = (popup: boolean) => {
     } else {
       setIsLogin(cookie !== null)
     }
-  }, [cookie])
+  }, [cookie, popup, setGlobalData])
 
   return { isLogin }
 }

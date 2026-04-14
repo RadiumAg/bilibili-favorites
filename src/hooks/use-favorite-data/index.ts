@@ -3,7 +3,7 @@ import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
-import { useMemoizedFn } from 'ahooks'
+import { useMemoizedFn, useMount } from 'ahooks'
 import type { DataContextType } from '@/utils/data-context'
 
 type FavoriteDataItem = DataContextType['favoriteData'][number]
@@ -51,11 +51,11 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
       })
   })
 
-  React.useEffect(() => {
+  useMount(() => {
     if (favoriteData == null || favoriteData.length === 0) {
       fetchFavoriteData()
     }
-  }, [])
+  })
 
   return { favoriteData, loading }
 }

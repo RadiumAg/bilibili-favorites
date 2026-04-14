@@ -285,7 +285,7 @@ const callAIGateAI = async (
 const fetchAllFavoriteMedias = async (
   mediaId: string,
   pageSize = 40,
-  expireTime = 2 * 60 * 1000,
+  expireTime = 10 * 60 * 1000,
 ): Promise<FavoriteMedia[]> => {
   const allMedias: FavoriteMedia[] = []
   let currentPage = 1

@@ -12,7 +12,11 @@ type StatsCardProps = {
 const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, subtitle, loading = false }) => {
   if (loading) {
     return (
-      <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+      <div
+        className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
+        aria-busy="true"
+        aria-label={`${title}加载中`}
+      >
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
           <div className="h-8 bg-gray-200 rounded w-1/2"></div>
@@ -25,9 +29,13 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, subtitle, loa
     <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-2">
         <div className="text-gray-600 text-sm font-medium">{title}</div>
-        <div className="text-blue-500">{icon}</div>
+        <div className="text-blue-500" aria-hidden="true">
+          {icon}
+        </div>
       </div>
-      <div className="text-2xl font-bold text-gray-900 mb-1">{value}</div>
+      <div className="text-2xl font-bold text-gray-900 mb-1" aria-label={`${title}: ${value}`}>
+        {value}
+      </div>
       {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
     </div>
   )

@@ -143,19 +143,19 @@ export const QuotaCard: React.FC<QuotaCardProps> = () => {
       {/* 状态指示器 */}
       <div className="flex items-center gap-4 pt-2">
         <div className="flex items-center gap-1">
-          <CheckCircle className="h-4 w-4 text-green-500" />
+          <CheckCircle className="h-4 w-4 text-green-500" aria-hidden="true" />
           <span className="text-sm">服务正常</span>
         </div>
         {quotaInfo.daily.remaining === 0 && (
           <div className="flex items-center gap-1">
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <AlertTriangle className="h-4 w-4 text-red-500" aria-hidden="true" />
             <span className="text-sm text-red-600">今日配额已用完</span>
           </div>
         )}
         {quotaInfo.daily.remaining > 0 &&
           quotaInfo.daily.remaining < quotaInfo.daily.limit * 0.2 && (
             <div className="flex items-center gap-1">
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertTriangle className="h-4 w-4 text-yellow-500" aria-hidden="true" />
               <span className="text-sm text-yellow-600">配额即将用完</span>
             </div>
           )}
@@ -171,7 +171,7 @@ export const QuotaCard: React.FC<QuotaCardProps> = () => {
     <Card className="mt-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Info className="h-5 w-5" />
+          <Info className="h-5 w-5" aria-hidden="true" />
           配额使用情况
           {lastCheckTime && (
             <span className="text-sm font-normal text-muted-foreground">
@@ -182,7 +182,13 @@ export const QuotaCard: React.FC<QuotaCardProps> = () => {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <Button type="button" onClick={handleCheckQuota} disabled={checkingQuota} variant="outline">
+        <Button
+          type="button"
+          onClick={handleCheckQuota}
+          disabled={checkingQuota}
+          variant="outline"
+          aria-label="检查配额"
+        >
           {checkingQuota ? '检查中...' : '检查配额'}
         </Button>
         {cardContentEle}

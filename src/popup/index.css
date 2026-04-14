@@ -1,9 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
-    /* 多巴胺配色 - Dopamine Color Scheme */
     --background: 270 100% 99%;
     --foreground: 270 50% 10%;
     --card: 0 0% 100%;
@@ -30,6 +30,7 @@
     --chart-5: 39 100% 50%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 270 30% 8%;
     --foreground: 0 0% 98%;
@@ -57,19 +58,43 @@
     --chart-5: 39 100% 55%;
   }
 }
+
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
 
-:root {
-  /* --primary: 196, 100%, 46%; */
+body {
+  width: fit-content;
+  height: fit-content;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8f0ff 0%, #fff0f8 50%, #f0ffff 100%);
+  font-family: 'PingFang SC,HarmonyOS_Medium,Helvetica Neue,Microsoft YaHei,sans-serif';
 }
 
-body {
-  font-family: 'PingFang SC,HarmonyOS_Medium,Helvetica Neue,Microsoft YaHei,sans-serif';
+::selection {
+  background: hsl(var(--primary) / 0.18);
+}
+
+:focus-visible {
+  outline: 2px solid hsl(var(--ring) / 0.5);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

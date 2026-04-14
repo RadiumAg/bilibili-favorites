@@ -81,3 +81,15 @@ body {
   background: linear-gradient(135deg, #f8f0ff 0%, #fff0f8 50%, #f0ffff 100%);
   font-family: 'PingFang SC,HarmonyOS_Medium,Helvetica Neue,Microsoft YaHei,sans-serif';
 }
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

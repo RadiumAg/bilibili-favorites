@@ -1,7 +1,9 @@
 import React from 'react'
 import lottie from 'lottie-web'
-import { useLongPress } from 'ahooks'
+import { useLongPress, useMemoizedFn } from 'ahooks'
 import { useGlobalConfig } from '@/store/global-data'
+
+const starJson = new URL('@/assets/lottile/star.json', import.meta.url).href
 
 const useSetDefaultFav = () => {
   const delayNumber = 300
@@ -12,7 +14,6 @@ const useSetDefaultFav = () => {
   const [starDomRef, setStarDomRef] = React.useState<HTMLDivElement | null>(null)
   const [clickTagId, setClickTagId] = React.useState<number | undefined>()
   const clickTagIdRef = React.useRef<number | undefined>(undefined)
-  const starJson = new URL('@/assets/lottile/star.json', import.meta.url).href
 
   const pendingElement = React.useMemo(
     () => (
@@ -37,19 +38,19 @@ const useSetDefaultFav = () => {
     [],
   )
 
-  const handleClick = (key: number) => {
+  const handleClick = useMemoizedFn((key: number) => {
     setGlobalData?.({ activeKey: key })
-  }
+  })
 
-  const handleMouseDown = (id: number) => {
+  const handleMouseDown = useMemoizedFn((id: number) => {
     setClickTagId(id)
     clickTagIdRef.current = id
-  }
+  })
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useMemoizedFn(() => {
     setClickTagId(undefined)
     clickTagIdRef.current = undefined
-  }
+  })
 
   useLongPress(
     () => {
@@ -96,7 +97,7 @@ const useSetDefaultFav = () => {
     }
 
     runProcess()
-  }, [clickTagId, isLongPress])
+  }, [clickTagId, isLongPress, setGlobalData])
 
   React.useEffect(() => {
     if (starDomRef == null) return

@@ -11,7 +11,7 @@ const Move: React.FC = () => {
       <Button
         onClick={handleMove}
         size="sm"
-        className="bg-b-primary hover:bg-b-primary hover:bg-opacity-50 p-1 h-6"
+        className="bg-b-primary hover:bg-b-primary-hover p-1 h-8 transition-colors duration-200"
       >
         通过关键字整理
         <Popover>
@@ -20,7 +20,8 @@ const Move: React.FC = () => {
               onClick={(event) => {
                 event.stopPropagation()
               }}
-              className="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs flex items-center justify-center cursor-pointer"
+              className="w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs flex items-center justify-center cursor-pointer transition-colors duration-200"
+              aria-label="帮助说明"
             >
               ?
             </button>

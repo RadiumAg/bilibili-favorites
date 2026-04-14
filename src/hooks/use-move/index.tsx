@@ -73,7 +73,7 @@ const useMove = () => {
       )) {
         if (cancelRef.current) return false
 
-        for (const keyValue of keywordInfo.value) {
+        for (const keyWordValue of keywordInfo.value) {
           if (cancelRef.current) return false
 
           const targetFavoriteTag = dataContext.favoriteData.find(
@@ -81,7 +81,7 @@ const useMove = () => {
           )
           if (targetFavoriteTag == null) continue
 
-          const keyword = keyValue.value.toLowerCase()
+          const keyword = keyWordValue.value.toLowerCase()
 
           for (const videoInfo of allDefaultFavoriteVideo) {
             if (cancelRef.current) return false
@@ -152,8 +152,8 @@ const useMove = () => {
   )
 
   return {
-    handleMove,
     isLoadingElement,
+    handleMove,
   }
 }
 

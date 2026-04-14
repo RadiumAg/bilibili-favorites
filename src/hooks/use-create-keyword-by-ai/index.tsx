@@ -154,7 +154,7 @@ const useCreateKeywordByAi = () => {
   }
 
   const loadingElement = isLoading && (
-    <div className="absolute w-full h-full top-0 left-0 bg-white bg-opacity-55 z-[999]">
+    <div className="absolute w-full h-full top-0 left-0 bg-white bg-opacity-55 z-40">
       <img
         alt="loading-img"
         className="left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%]  absolute mt-[-51px]"

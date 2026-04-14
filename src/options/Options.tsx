@@ -23,7 +23,8 @@ const Options: React.FC = () => {
         'flex-col',
         'rounded-sm',
         'bg-white',
-        'min-w-[786px]',
+        'min-w-0',
+        'md:min-w-[786px]',
         'relative',
         'max-w-screen-2xl',
       )}
