@@ -3,7 +3,7 @@ import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
-import { useMemoizedFn, useMount } from 'ahooks'
+import { useMemoizedFn, useMount, useToggle } from 'ahooks'
 import type { DataContextType } from '@/utils/data-context'
 
 type FavoriteDataItem = DataContextType['favoriteData'][number]
@@ -13,14 +13,7 @@ type GetAllFavoriteFlagRes = {
   data: { list: FavoriteDataItem[] }
 }
 
-type UseFavoriteDataReturn = {
-  favoriteData: FavoriteDataItem[]
-  loading: boolean
-}
-
-let favorIteData: FavoriteDataItem[] = []
-
-const useFavoriteData = (): UseFavoriteDataReturn => {
+const useFavoriteData = () => {
   const { favoriteData, setGlobalData } = useGlobalConfig(
     useShallow((state) => ({
       favoriteData: state.favoriteData,
@@ -29,12 +22,11 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
   )
   const [loading, setLoading] = React.useState(false)
 
-  const fetchFavoriteData = useMemoizedFn(async () => {
-    if (favorIteData && favoriteData.length > 0) {
-      setGlobalData({ favoriteData })
-      return
-    }
+  const refresh = useMemoizedFn(() => {
+    fetchFavoriteData()
+  })
 
+  const fetchFavoriteData = useMemoizedFn(async () => {
     setLoading(true)
 
     queryAndSendMessage<GetAllFavoriteFlagRes>({
@@ -42,8 +34,7 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
     })
       .then((response) => {
         const list = response.data?.list ?? []
-        setGlobalData({ favoriteData: list, defaultFavoriteId: list[0]?.id })
-        favorIteData = list
+        setGlobalData({ favoriteData: list })
         return list
       })
       .finally(() => {
@@ -57,7 +48,7 @@ const useFavoriteData = (): UseFavoriteDataReturn => {
     }
   })
 
-  return { favoriteData, loading }
+  return { favoriteData, loading, refresh }
 }
 
 export { useFavoriteData }

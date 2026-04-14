@@ -1,7 +1,5 @@
 import React from 'react'
 import { useMemoizedFn } from 'ahooks'
-import { useGlobalConfig } from '@/store/global-data'
-import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
 import { MessageEnum } from '@/utils/message'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -11,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import classNames from 'classnames'
 import { fetchAllFavoriteMedias } from '@/utils/api'
 import { FolderOpen, Video } from 'lucide-react'
+import { useFavoriteData } from '@/hooks'
 
 interface VideoItem {
   id: number
@@ -33,13 +32,7 @@ interface DragManagerProps {
 const DragManager: React.FC<DragManagerProps> = (props) => {
   const { className } = props
   const { toast } = useToast()
-
-  const { favoriteData } = useGlobalConfig(
-    useShallow((state) => ({
-      favoriteData: state.favoriteData,
-    })),
-  )
-
+  const { favoriteData, refresh: refreshFavData } = useFavoriteData()
   const [selectedFolderId, setSelectedFolderId] = React.useState<number | null>(null)
   const [videos, setVideos] = React.useState<VideoItem[]>([])
   const [selectedVideoIds, setSelectedVideoIds] = React.useState<Set<number>>(new Set())
@@ -189,6 +182,7 @@ const DragManager: React.FC<DragManagerProps> = (props) => {
     // 刷新当前收藏夹
     if (successCount > 0) {
       loadVideos(selectedFolderId)
+      refreshFavData()
     }
   })
 
