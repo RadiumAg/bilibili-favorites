@@ -103,7 +103,7 @@ const useEditKeyword = () => {
         </span>
       )
     })
-  }, [currentFavoriteTag?.value?.length, handDelete])
+  }, [currentFavoriteTag?.value, handDelete])
 
   return { keyData: dataContext.keyword, tagElementArray, handleKeyDown }
 }

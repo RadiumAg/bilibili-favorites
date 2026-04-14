@@ -167,7 +167,7 @@ export function addKeywordToGlobalData(options: StreamParserOptions, keyword: st
     // 检查关键词是否已存在，避免重复
     const exists = targetKeyword.value.some((k) => k.value === keyword)
     if (!exists) {
-      targetKeyword.value.push({ id: uuid(), value: keyword })
+      targetKeyword.value = [...targetKeyword.value, { id: uuid(), value: keyword }]
       setGlobalData({
         keyword: [...globalData.keyword],
       })
