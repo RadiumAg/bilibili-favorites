@@ -10,11 +10,21 @@
 - [tab.ts](file://src/utils/tab.ts)
 - [background/index.ts](file://src/background/index.ts)
 - [use-create-keyword/index.tsx](file://src/hooks/use-create-keyword/index.tsx)
-- [use-favorite-data/index.ts](file://src/hooks/use-favorite-data/index.ts)
+- [use-create-keyword-by-ai/ai-stream-parser.ts](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts)
 - [global-data.ts](file://src/store/global-data.ts)
 - [types.ts](file://src/options/components/setting/types.ts)
 - [util.ts](file://src/options/components/setting/util.ts)
+- [ai-stream-adapter.test.ts](file://tests/ai-stream-adapter.test.ts)
+- [ai-stream-parser.test.ts](file://tests/ai-stream-parser.test.ts)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 更新了缓存机制改进部分，新增IndexedDB管理器的详细说明
+- 增强了消息通信工具API的优化说明
+- 完善了AI流式通信的适配器机制和错误处理
+- 新增了AI流解析器的详细实现说明
+- 更新了配置模式和适配器的使用指南
 
 ## 目录
 1. [简介](#简介)
@@ -34,6 +44,7 @@
 - IndexedDB数据库管理API：提供缓存分析数据的初始化、读取、写入、删除与清空，以及过期检测。
 - 数据上下文管理API：DataContextType的数据结构与全局状态管理，包含收藏夹数据、AI配置、关键词等。
 - 消息通信工具API：queryAndSendMessage函数的消息传递协议、超时控制与错误处理。
+- AI流式通信与解析：支持多种AI模型的流式通信、适配器机制和增量解析。
 - 工具函数使用示例与最佳实践：性能优化与错误恢复策略。
 
 ## 项目结构
@@ -49,11 +60,11 @@ MSG["message.ts<br/>消息枚举"]
 TAB["tab.ts<br/>消息通信工具"]
 API["api.ts<br/>API封装与流式通信"]
 BG["background/index.ts<br/>后台AI服务"]
+ASP["ai-stream-parser.ts<br/>AI流解析器"]
 end
 subgraph "状态与Hooks"
 GLOB["global-data.ts<br/>Zustand全局状态"]
 HKW["use-create-keyword/index.tsx<br/>关键词创建Hook"]
-HKF["use-favorite-data/index.ts<br/>收藏夹数据Hook"]
 end
 subgraph "配置与UI"
 OPT_TYPES["options/components/setting/types.ts<br/>配置类型"]
@@ -61,20 +72,20 @@ OPT_UTIL["options/components/setting/util.ts<br/>适配器工具"]
 end
 HKW --> KE
 HKW --> API
+HKW --> ASP
 HKW --> GLOB
-HKF --> TAB
-HKF --> MSG
 API --> TAB
 API --> IDB
 API --> MSG
 BG --> MSG
 BG --> TAB
+BG --> ASP
 GLOB --> DC
 OPT_TYPES --> GLOB
 OPT_UTIL --> GLOB
 ```
 
-图表来源
+**图表来源**
 - [keyword-extractor.ts:1-197](file://src/utils/keyword-extractor.ts#L1-L197)
 - [indexed-db.ts:1-128](file://src/utils/indexed-db.ts#L1-L128)
 - [data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
@@ -82,23 +93,9 @@ OPT_UTIL --> GLOB
 - [tab.ts:1-93](file://src/utils/tab.ts#L1-L93)
 - [api.ts:1-339](file://src/utils/api.ts#L1-L339)
 - [background/index.ts:1-393](file://src/background/index.ts#L1-L393)
+- [use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
 - [global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
 - [use-create-keyword/index.tsx:1-304](file://src/hooks/use-create-keyword/index.tsx#L1-L304)
-- [use-favorite-data/index.ts:1-63](file://src/hooks/use-favorite-data/index.ts#L1-L63)
-- [types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
-- [util.ts:1-26](file://src/options/components/setting/util.ts#L1-L26)
-
-章节来源
-- [keyword-extractor.ts:1-197](file://src/utils/keyword-extractor.ts#L1-L197)
-- [indexed-db.ts:1-128](file://src/utils/indexed-db.ts#L1-L128)
-- [data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
-- [message.ts:1-20](file://src/utils/message.ts#L1-L20)
-- [tab.ts:1-93](file://src/utils/tab.ts#L1-L93)
-- [api.ts:1-339](file://src/utils/api.ts#L1-L339)
-- [background/index.ts:1-393](file://src/background/index.ts#L1-L393)
-- [global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
-- [use-create-keyword/index.tsx:1-304](file://src/hooks/use-create-keyword/index.tsx#L1-L304)
-- [use-favorite-data/index.ts:1-63](file://src/hooks/use-favorite-data/index.ts#L1-L63)
 - [types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
 - [util.ts:1-26](file://src/options/components/setting/util.ts#L1-L26)
 
@@ -107,19 +104,22 @@ OPT_UTIL --> GLOB
 - IndexedDB管理器：提供数据库初始化、对象存储创建、读写删清与过期检测。
 - 数据上下文：定义全局状态结构，包含收藏夹数据、AI配置、关键词等，并提供读写方法。
 - 消息通信：封装标签页查询与消息发送，支持超时控制与错误处理。
+- AI流式通信：支持多种AI模型的流式通信，包含配额检查和取消机制。
+- AI流解析器：提供适配器模式的流数据解析，支持多种AI模型格式。
 - API封装：封装收藏夹数据获取、AI流式通信、缓存读写等高层接口。
 - 后台AI服务：监听长连接，支持流式AI响应、配额检查与取消控制。
 
-章节来源
+**章节来源**
 - [keyword-extractor.ts:137-196](file://src/utils/keyword-extractor.ts#L137-L196)
 - [indexed-db.ts:15-124](file://src/utils/indexed-db.ts#L15-L124)
 - [data-context.ts:3-31](file://src/utils/data-context.ts#L3-L31)
 - [tab.ts:65-82](file://src/utils/tab.ts#L65-L82)
 - [api.ts:117-319](file://src/utils/api.ts#L117-L319)
 - [background/index.ts:315-392](file://src/background/index.ts#L315-L392)
+- [use-create-keyword-by-ai/ai-stream-parser.ts:26-93](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L26-L93)
 
 ## 架构总览
-整体架构围绕“工具层API + 状态与Hooks + 后台服务”的分层设计，前端通过消息通信与后台交互，后台负责AI流式响应与配额管理。
+整体架构围绕"工具层API + 状态与Hooks + 后台服务"的分层设计，前端通过消息通信与后台交互，后台负责AI流式响应与配额管理。
 
 ```mermaid
 sequenceDiagram
@@ -129,6 +129,7 @@ participant API as "api.ts"
 participant Tab as "tab.ts"
 participant BG as "background/index.ts"
 participant IDB as "indexed-db.ts"
+participant Parser as "ai-stream-parser.ts"
 UI->>Hook : 用户触发创建关键词
 Hook->>API : 调用fetchAllFavoriteMedias(收藏夹ID)
 API->>Tab : queryAndSendMessage(getFavoriteList)
@@ -136,15 +137,24 @@ Tab-->>API : 返回收藏夹媒体列表
 API->>IDB : 缓存媒体列表
 API-->>Hook : 返回媒体列表
 Hook->>Hook : 本地或AI提取关键词
-Hook-->>UI : 更新全局状态(keyword)
+alt AI模式
+Hook->>API : fetchChatGpt或callAIGateAI
+API->>BG : 建立长连接并发送消息
+BG->>BG : 流式处理AI响应
+BG-->>API : 发送chunk/done/error/aborted
+API-->>Hook : 可读流ReadableStream
+Hook->>Parser : 解析流数据
+Parser-->>Hook : 更新全局状态(keyword)
+end
 ```
 
-图表来源
+**图表来源**
 - [use-create-keyword/index.tsx:191-284](file://src/hooks/use-create-keyword/index.tsx#L191-L284)
 - [api.ts:285-319](file://src/utils/api.ts#L285-L319)
 - [tab.ts:65-82](file://src/utils/tab.ts#L65-L82)
 - [background/index.ts:334-349](file://src/background/index.ts#L334-L349)
 - [indexed-db.ts:45-81](file://src/utils/indexed-db.ts#L45-L81)
+- [use-create-keyword-by-ai/ai-stream-parser.ts:221-277](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L221-L277)
 
 ## 详细组件分析
 
@@ -163,7 +173,7 @@ Hook-->>UI : 更新全局状态(keyword)
   - 结合停用词表与业务需求调整minLength，避免过短无意义词。
   - 在批量处理时，建议先进行去重与清洗，再传入extractKeywords。
 
-章节来源
+**章节来源**
 - [keyword-extractor.ts:6-66](file://src/utils/keyword-extractor.ts#L6-L66)
 - [keyword-extractor.ts:137-196](file://src/utils/keyword-extractor.ts#L137-L196)
 
@@ -181,7 +191,7 @@ Sort --> Slice["截取前N个关键词"]
 Slice --> End(["结束"])
 ```
 
-图表来源
+**图表来源**
 - [keyword-extractor.ts:72-94](file://src/utils/keyword-extractor.ts#L72-L94)
 - [keyword-extractor.ts:158-186](file://src/utils/keyword-extractor.ts#L158-L186)
 
@@ -203,7 +213,7 @@ Slice --> End(["结束"])
   - 首次使用需等待init完成，后续操作自动复用连接。
   - 事务为只读或读写，确保一致性。
 
-章节来源
+**章节来源**
 - [indexed-db.ts:5-124](file://src/utils/indexed-db.ts#L5-L124)
 
 #### IndexedDB类图
@@ -226,7 +236,7 @@ class CacheData {
 IndexedDBManager --> CacheData : "读写"
 ```
 
-图表来源
+**图表来源**
 - [indexed-db.ts:15-124](file://src/utils/indexed-db.ts#L15-L124)
 
 ### 数据上下文管理API
@@ -243,7 +253,7 @@ IndexedDBManager --> CacheData : "读写"
   - 在组件中通过shallow选择器订阅必要字段，减少重渲染。
   - 更新全局状态时尽量合并写入，避免频繁触发订阅。
 
-章节来源
+**章节来源**
 - [data-context.ts:3-31](file://src/utils/data-context.ts#L3-L31)
 - [global-data.ts:6-25](file://src/store/global-data.ts#L6-L25)
 
@@ -273,7 +283,7 @@ class AIConfig {
 DataContextType --> AIConfig : "包含"
 ```
 
-图表来源
+**图表来源**
 - [data-context.ts:3-31](file://src/utils/data-context.ts#L3-L31)
 - [global-data.ts:6-25](file://src/store/global-data.ts#L6-L25)
 
@@ -291,7 +301,7 @@ DataContextType --> AIConfig : "包含"
   - 在调用前确保扩展已注入content script且标签页存在。
   - 对于长耗时操作，结合AbortController与后台取消机制。
 
-章节来源
+**章节来源**
 - [tab.ts:65-82](file://src/utils/tab.ts#L65-L82)
 - [tab.ts:37-57](file://src/utils/tab.ts#L37-L57)
 - [tab.ts:13-20](file://src/utils/tab.ts#L13-L20)
@@ -312,7 +322,7 @@ Tab-->>Caller : Promise.resolve(response)
 Note over Tab : 超时或runtime错误将reject
 ```
 
-图表来源
+**图表来源**
 - [tab.ts:65-82](file://src/utils/tab.ts#L65-L82)
 
 ### API封装与AI流式通信
@@ -328,7 +338,7 @@ Note over Tab : 超时或runtime错误将reject
   - 对于大量数据，合理设置expireTime，避免频繁网络请求。
   - 流式读取时注意处理done与error分支，及时释放资源。
 
-章节来源
+**章节来源**
 - [api.ts:117-319](file://src/utils/api.ts#L117-L319)
 - [background/index.ts:315-392](file://src/background/index.ts#L315-L392)
 
@@ -349,9 +359,61 @@ Port-->>API : onMessage回调
 API-->>UI : 可读流ReadableStream
 ```
 
-图表来源
+**图表来源**
 - [api.ts:180-232](file://src/utils/api.ts#L180-L232)
 - [background/index.ts:315-392](file://src/background/index.ts#L315-L392)
+
+### AI流解析器与适配器机制
+- AI流解析器
+  - 支持增量解析，通过缓冲区累积流数据并提取完整关键词。
+  - 提供processChunk、flush等方法处理流数据。
+  - 自动去重和格式验证，确保关键词质量。
+- 适配器模式
+  - SparkStreamAdapter：解析星火大模型的content和reasoning_content字段。
+  - OpenAIStreamAdapter：解析OpenAI兼容模型的content字段。
+  - createStreamAdapter：工厂函数创建对应适配器实例。
+- 错误处理
+  - 无效JSON自动跳过，不影响整体解析流程。
+  - 支持流中断和取消，及时清理资源。
+- 使用建议
+  - 根据AI模型选择合适的适配器。
+  - 合理设置缓冲区大小，平衡内存使用和解析效率。
+
+**章节来源**
+- [use-create-keyword-by-ai/ai-stream-parser.ts:26-93](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L26-L93)
+- [use-create-keyword-by-ai/ai-stream-parser.ts:95-277](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L95-L277)
+
+#### AI流解析器类图
+```mermaid
+classDiagram
+class AIStreamParser {
+-buffer : string
++processChunk(value) void
++getBuffer() string
++clearBuffer() void
++flush() void
+}
+class SparkStreamAdapter {
++parse(chunk) string
+}
+class OpenAIStreamAdapter {
++parse(chunk) string
+}
+class StreamParserOptions {
++favKey : string
++getGlobalData() DataContextType
++setGlobalData(data) void
++onKeywordExtracted(keyword) void
++adapter? : AIStreamAdapter
+}
+AIStreamParser --> StreamParserOptions : "使用"
+AIStreamParser --> SparkStreamAdapter : "适配器"
+AIStreamParser --> OpenAIStreamAdapter : "适配器"
+```
+
+**图表来源**
+- [use-create-keyword-by-ai/ai-stream-parser.ts:26-93](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L26-L93)
+- [use-create-keyword-by-ai/ai-stream-parser.ts:221-277](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L221-L277)
 
 ### 关键词创建Hook与最佳实践
 - useCreateKeyword
@@ -365,14 +427,15 @@ API-->>UI : 可读流ReadableStream
   - 错误恢复：捕获DOMException并区分用户取消与其他错误；对网络与AI服务异常进行降级处理。
   - UI反馈：使用toast提示进度与结果，避免阻塞用户操作。
 
-章节来源
+**章节来源**
 - [use-create-keyword/index.tsx:19-304](file://src/hooks/use-create-keyword/index.tsx#L19-L304)
 
 ## 依赖关系分析
 - 组件耦合
   - use-create-keyword依赖keyword-extractor、api、global-data与ai-stream解析器。
   - api依赖tab、indexed-db、message与background。
-  - background依赖message与tab。
+  - background依赖message、tab与ai-stream解析器。
+  - ai-stream解析器依赖data-context进行状态管理。
 - 外部依赖
   - IndexedDB浏览器原生API。
   - chrome.runtime与chrome.tabs扩展API。
@@ -385,22 +448,21 @@ graph LR
 HKW["use-create-keyword"] --> KE["keyword-extractor"]
 HKW --> API["api"]
 HKW --> GLOB["global-data"]
+HKW --> ASP["ai-stream-parser"]
 API --> TAB["tab"]
 API --> IDB["indexed-db"]
 API --> MSG["message"]
 BG["background"] --> MSG
 BG --> TAB
+BG --> ASP
+ASP --> DC["data-context"]
 ```
 
-图表来源
+**图表来源**
 - [use-create-keyword/index.tsx:1-304](file://src/hooks/use-create-keyword/index.tsx#L1-L304)
 - [api.ts:1-339](file://src/utils/api.ts#L1-L339)
 - [background/index.ts:1-393](file://src/background/index.ts#L1-L393)
-
-章节来源
-- [use-create-keyword/index.tsx:1-304](file://src/hooks/use-create-keyword/index.tsx#L1-L304)
-- [api.ts:1-339](file://src/utils/api.ts#L1-L339)
-- [background/index.ts:1-393](file://src/background/index.ts#L1-L393)
+- [use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
 
 ## 性能考虑
 - 关键词提取
@@ -415,6 +477,9 @@ BG --> TAB
 - 状态管理
   - 使用shallow选择器订阅必要字段，减少不必要的重渲染。
   - 合并多次更新，避免抖动。
+- AI流解析
+  - 适配器模式减少重复解析逻辑，提高解析效率。
+  - 缓冲区管理避免内存泄漏，支持大数据流处理。
 
 ## 故障排除指南
 - 消息通信超时
@@ -429,15 +494,19 @@ BG --> TAB
 - 全局状态未更新
   - 现象：UI未反映最新状态。
   - 排查：确认使用shallow选择器订阅，setGlobalData合并写入，避免直接修改引用。
+- AI流解析失败
+  - 现象：关键词提取不完整或格式错误。
+  - 排查：检查适配器类型是否正确，确认AI模型输出格式；查看解析器日志。
 
-章节来源
+**章节来源**
 - [tab.ts:42-56](file://src/utils/tab.ts#L42-L56)
 - [background/index.ts:182-191](file://src/background/index.ts#L182-L191)
 - [indexed-db.ts:73-80](file://src/utils/indexed-db.ts#L73-L80)
 - [global-data.ts:16-21](file://src/store/global-data.ts#L16-L21)
+- [use-create-keyword-by-ai/ai-stream-parser.ts:188-214](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L188-L214)
 
 ## 结论
-本工具API体系提供了从关键词提取、缓存管理到消息通信与AI流式处理的完整能力。通过合理的配置与最佳实践，可在保证性能的同时提升用户体验。建议在生产环境中持续监控AI配额与网络稳定性，并根据业务场景调整缓存策略与关键词提取参数。
+本工具API体系提供了从关键词提取、缓存管理到消息通信与AI流式处理的完整能力。通过合理的配置与最佳实践，可在保证性能的同时提升用户体验。建议在生产环境中持续监控AI配额与网络稳定性，并根据业务场景调整缓存策略与关键词提取参数。新的适配器机制和流解析器为多AI模型支持提供了良好的扩展性。
 
 ## 附录
 - 配置模式与适配器
@@ -451,9 +520,13 @@ BG --> TAB
 - IndexedDB缓存
   - 默认过期时间：24小时。
   - 对象存储：keyPath为key，索引为timestamp。
+- AI流解析
+  - 支持增量解析和自动去重。
+  - 提供完整的错误处理和资源管理。
 
-章节来源
+**章节来源**
 - [types.ts:30-99](file://src/options/components/setting/types.ts#L30-L99)
 - [util.ts:4-25](file://src/options/components/setting/util.ts#L4-L25)
 - [keyword-extractor.ts:139-145](file://src/utils/keyword-extractor.ts#L139-L145)
 - [indexed-db.ts:118-123](file://src/utils/indexed-db.ts#L118-L123)
+- [use-create-keyword-by-ai/ai-stream-parser.ts:121-179](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L121-L179)

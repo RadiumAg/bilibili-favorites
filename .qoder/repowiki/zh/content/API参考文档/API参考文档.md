@@ -86,7 +86,7 @@ API --> LOG
 - [manifest.ts:1-55](file://src/manifest.ts#L1-L55)
 - [background/index.ts:1-393](file://src/background/index.ts#L1-L393)
 - [contentScript/index.ts:1-55](file://src/contentScript/index.ts#L1-L55)
-- [utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
+- [utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
 - [utils/message.ts:1-20](file://src/utils/message.ts#L1-L20)
 - [utils/tab.ts:1-93](file://src/utils/tab.ts#L1-L93)
 - [utils/keyword-extractor.ts:1-197](file://src/utils/keyword-extractor.ts#L1-L197)
@@ -113,7 +113,7 @@ API --> LOG
 - [manifest.ts:39-46](file://src/manifest.ts#L39-L46)
 - [background/index.ts:315-392](file://src/background/index.ts#L315-L392)
 - [contentScript/index.ts:4-54](file://src/contentScript/index.ts#L4-L54)
-- [utils/api.ts:107-340](file://src/utils/api.ts#L107-L340)
+- [utils/api.ts:107-329](file://src/utils/api.ts#L107-L329)
 - [utils/message.ts:1-20](file://src/utils/message.ts#L1-L20)
 - [utils/keyword-extractor.ts:133-197](file://src/utils/keyword-extractor.ts#L133-L197)
 - [utils/indexed-db.ts:15-128](file://src/utils/indexed-db.ts#L15-L128)
@@ -124,7 +124,7 @@ API --> LOG
 - [store/global-data.ts:6-28](file://src/store/global-data.ts#L6-L28)
 
 ## 架构总览
-扩展采用"后台脚本+内容脚本+UI层"的三层架构。后台脚本负责与外部AI服务通信与配额管理；内容脚本负责与B站页面交互；UI层通过Zustand状态管理与工具模块协作完成业务流程。
+扩展采用“后台脚本+内容脚本+UI层”的三层架构。后台脚本负责与外部AI服务通信与配额管理；内容脚本负责与B站页面交互；UI层通过Zustand状态管理与工具模块协作完成业务流程。
 
 ```mermaid
 sequenceDiagram
@@ -175,7 +175,7 @@ CS-->>UI : 返回结果/错误码
   - getCookie、moveVideo、getFavoriteList、getAllFavoriteFlag
   - fetchChatGpt、fetchAIMove、checkAIGateQuota、callAIGateAI
 - 端口流式通信
-  - 后台建立名为"ai-stream"的端口，支持取消、done、error、aborted状态
+  - 后台建立名为“ai-stream”的端口，支持取消、done、error、aborted状态
   - 前端通过chrome.runtime.connect建立长连接，读取ReadableStream
 
 ```mermaid
@@ -352,34 +352,15 @@ Hook-->>UI : 展示结果与统计
 
 **图表来源**
 - [popup/components/ai-move/use-ai-move.tsx:214-307](file://src/popup/components/ai-move/use-ai-move.tsx#L214-L307)
-- [utils/api.ts:285-320](file://src/utils/api.ts#L285-L320)
+- [utils/api.ts:285-319](file://src/utils/api.ts#L285-L319)
 - [utils/api.ts:249-263](file://src/utils/api.ts#L249-L263)
 - [contentScript/index.ts:12-37](file://src/contentScript/index.ts#L12-L37)
 
 **章节来源**
 - [popup/components/ai-move/use-ai-move.tsx:214-307](file://src/popup/components/ai-move/use-ai-move.tsx#L214-L307)
-- [utils/api.ts:285-320](file://src/utils/api.ts#L285-L320)
+- [utils/api.ts:285-319](file://src/utils/api.ts#L285-L319)
 - [utils/api.ts:249-263](file://src/utils/api.ts#L249-L263)
 - [contentScript/index.ts:12-37](file://src/contentScript/index.ts#L12-L37)
-
-### 收藏夹数据获取API
-- fetchAllFavoriteMedias函数
-  - 功能：分页获取某个收藏夹的全部视频列表，并支持缓存控制
-  - 参数：
-    - mediaId: string - 收藏夹ID（必填）
-    - pageSize: number = 40 - 每页数量，默认40（B站最大值）
-    - expireTime: number = 600000 - 缓存过期时间（毫秒），默认10分钟
-  - 返回：Promise<FavoriteMedia[]> - 该收藏夹下的全部视频数组
-  - 缓存机制：使用IndexedDB进行本地缓存，键名为"favorite-all-{mediaId}"
-  - 过期策略：默认10分钟过期，可通过expireTime参数自定义
-  - 错误处理：当响应code不为0时抛出错误
-
-**更新** 添加了expireTime参数文档说明，明确了默认10分钟缓存过期策略
-
-**章节来源**
-- [utils/api.ts:279-320](file://src/utils/api.ts#L279-L320)
-- [utils/indexed-db.ts:115-123](file://src/utils/indexed-db.ts#L115-L123)
-- [popup/components/ai-move/use-ai-move.tsx:249-250](file://src/popup/components/ai-move/use-ai-move.tsx#L249-L250)
 
 ## 依赖关系分析
 - 外部依赖
@@ -408,7 +389,7 @@ API --> IDX["utils/indexed-db.ts"]
 **图表来源**
 - [background/index.ts:1-393](file://src/background/index.ts#L1-L393)
 - [contentScript/index.ts:1-55](file://src/contentScript/index.ts#L1-L55)
-- [utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
+- [utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
 - [utils/message.ts:1-20](file://src/utils/message.ts#L1-L20)
 - [hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
 - [store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
@@ -419,19 +400,17 @@ API --> IDX["utils/indexed-db.ts"]
 - [package.json:29-58](file://package.json#L29-L58)
 - [background/index.ts:1-393](file://src/background/index.ts#L1-L393)
 - [contentScript/index.ts:1-55](file://src/contentScript/index.ts#L1-L55)
-- [utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
+- [utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
 
 ## 性能考虑
 - 分页拉取：fetchAllFavoriteMedias默认每页40条，避免一次性请求过大
-- 缓存策略：IndexedDB缓存收藏夹数据，默认24小时过期，可通过expireTime参数自定义（默认10分钟）
+- 缓存策略：IndexedDB缓存收藏夹数据，默认24小时过期，减少重复请求
 - 流式处理：后台与前端均采用流式读取，降低内存占用
 - 取消控制：AbortController确保用户取消后及时中断请求
 - 请求节流：移动视频时sleep(100ms)，避免请求过快
 
-**更新** 缓存过期时间现在可以自定义，默认10分钟
-
 **章节来源**
-- [utils/api.ts:285-320](file://src/utils/api.ts#L285-L320)
+- [utils/api.ts:285-319](file://src/utils/api.ts#L285-L319)
 - [utils/indexed-db.ts:115-123](file://src/utils/indexed-db.ts#L115-L123)
 - [popup/components/ai-move/use-ai-move.tsx:196](file://src/popup/components/ai-move/use-ai-move.tsx#L196)
 
@@ -451,21 +430,15 @@ API --> IDX["utils/indexed-db.ts"]
 - 移动失败
   - 现象：返回错误码或移动异常
   - 处理：检查源收藏夹与目标收藏夹ID、CSRF与Cookie有效性
-- 缓存过期问题
-  - 现象：fetchAllFavoriteMedias返回过期数据
-  - 处理：调整expireTime参数或手动清理缓存
-
-**更新** 新增缓存过期问题的故障排除指南
 
 **章节来源**
 - [utils/tab.ts:37-82](file://src/utils/tab.ts#L37-L82)
 - [background/index.ts:27-91](file://src/background/index.ts#L27-L91)
 - [hooks/use-create-keyword-by-ai/ai-stream-parser.ts:26-93](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L26-L93)
 - [contentScript/index.ts:38-51](file://src/contentScript/index.ts#L38-L51)
-- [utils/api.ts:285-320](file://src/utils/api.ts#L285-L320)
 
 ## 结论
-本扩展通过清晰的模块划分与完善的工具链，实现了从B站收藏夹数据获取、AI关键词与分类分析到自动化移动的完整闭环。其消息通信、流式解析与缓存策略为大规模数据处理提供了可靠保障。新增的expireTime参数使得缓存策略更加灵活，开发者可以根据实际需求调整缓存过期时间，从而在数据新鲜度和性能之间找到最佳平衡点。
+本扩展通过清晰的模块划分与完善的工具链，实现了从B站收藏夹数据获取、AI关键词与分类分析到自动化移动的完整闭环。其消息通信、流式解析与缓存策略为大规模数据处理提供了可靠保障。建议在生产环境中结合错误监控与配额告警进一步提升稳定性。
 
 ## 附录
 - 配置模式与校验
@@ -475,16 +448,8 @@ API --> IDX["utils/indexed-db.ts"]
   - favoriteData、aiConfig、cookie、activeKey、defaultFavoriteId、keyword
 - 设备ID
   - 通过chrome.storage.local生成并缓存deviceId，用于AIGate配额绑定
-- 缓存配置
-  - 默认缓存过期时间：10分钟（600,000毫秒）
-  - 可通过expireTime参数自定义缓存过期时间
-  - 默认缓存容量：24小时（1,440,000毫秒）
-
-**更新** 新增缓存配置说明
 
 **章节来源**
 - [options/components/setting/types.ts:30-99](file://src/options/components/setting/types.ts#L30-L99)
 - [utils/data-context.ts:3-31](file://src/utils/data-context.ts#L3-L31)
 - [utils/tab.ts:84-92](file://src/utils/tab.ts#L84-L92)
-- [utils/api.ts:285-320](file://src/utils/api.ts#L285-L320)
-- [utils/indexed-db.ts:115-123](file://src/utils/indexed-db.ts#L115-L123)

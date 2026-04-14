@@ -16,15 +16,15 @@
 - [src/options/components/setting/components/free-quota-panel.tsx](file://src/options/components/setting/components/free-quota-panel.tsx)
 - [src/background/index.ts](file://src/background/index.ts)
 - [tests/ai-stream-adapter.test.ts](file://tests/ai-stream-adapter.test.ts)
+- [tests/ai-stream-parser.test.ts](file://tests/ai-stream-parser.test.ts)
 </cite>
 
 ## 更新摘要
 **变更内容**
-- 新增AIGate适配器类型支持，扩展适配器数组从['openai', 'spark']到['openai', 'spark', 'aigate', 'custom']
-- 添加AIGate配置默认值和表单支持
-- 更新适配器工厂函数以支持'aigate'类型
-- 完善AIGate服务集成和流式响应处理
-- **重要修复**：完善AIGate流解析器适配器支持
+- 新增AIGate免费适配器集成，支持免费AI模型服务
+- 完善实时配额管理与每日/每月/RPM监控
+- 增强自动配置切换与消息通信机制
+- 扩展适配器支持体系，新增aigate适配器类型
 
 ## 目录
 1. [简介](#简介)
@@ -40,20 +40,21 @@
 
 ## 简介
 本文件为浏览器扩展中的AI服务API综合文档，涵盖以下内容：
-- OpenAI兼容模型、AIGate免费服务与星火大模型的集成方式
-- fetchChatGpt与fetchAIMove函数的使用方法、参数配置与流式响应处理
-- AIGate免费AI服务的调用接口规范与使用限制
-- AI配置管理（API Key、BaseURL、模型选择、适配器类型、额外参数）
-- 流式处理机制（SSE连接建立、数据流解析、错误处理、连接取消）
-- 多服务商对比与迁移指南（性能、价格差异与使用建议）
+- **双提供商架构**：OpenAI兼容模型与AIGate免费服务的集成方式
+- **流式处理机制**：SSE连接建立、数据流解析、错误处理、连接取消
+- **配额管理系统**：实时配额检查、使用统计、限制控制
+- **消息通信**：chrome.runtime.connect端口通信与消息传递
+- **AI配置管理**：API Key配置、BaseURL设置、模型选择和额外参数传递
+- **适配器设计**：OpenAI、星火大模型、AIGate、自定义解析器的统一接口
+- **多服务商对比**：性能特点、价格差异与使用建议
 
 ## 项目结构
-本项目围绕"AI服务API"构建了清晰的分层：
-- 前端调用层：通过工具函数发起AI请求，并将请求封装为可读流
-- 流解析层：根据适配器解析不同模型的SSE/流式响应
-- 配置管理层：全局状态存储AI配置与收藏夹数据
-- 设置界面层：表单校验、配额查询与配置切换
-- 后台处理层：统一处理OpenAI流式请求与AIGate免费服务的SSE流
+本项目围绕"AI服务API"构建了清晰的分层架构：
+- **前端调用层**：通过工具函数发起AI请求，并将请求封装为可读流
+- **流解析层**：根据适配器解析不同模型的SSE/流式响应
+- **配置管理层**：全局状态存储AI配置与收藏夹数据
+- **设置界面层**：表单校验、配额查询与配置切换
+- **后台处理层**：统一处理OpenAI流式请求与AIGate免费服务的SSE流
 
 ```mermaid
 graph TB
@@ -93,60 +94,44 @@ M --> L
 
 **图表来源**
 - [src/hooks/use-create-keyword-by-ai/index.tsx:1-170](file://src/hooks/use-create-keyword-by-ai/index.tsx#L1-L170)
-- [src/popup/components/ai-move/use-ai-move.tsx:1-393](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L393)
-- [src/utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
+- [src/popup/components/ai-move/use-ai-move.tsx:1-396](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L396)
+- [src/utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
 - [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
 - [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
 - [src/options/components/setting/types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
 - [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
-- [src/options/components/setting/components/custom-config-form.tsx:1-149](file://src/options/components/setting/components/custom-config-form.tsx#L1-L149)
-- [src/options/components/setting/components/quota-card.tsx:1-192](file://src/options/components/setting/components/quota-card.tsx#L1-L192)
-- [src/options/components/setting/components/free-quota-panel.tsx:1-66](file://src/options/components/setting/components/free-quota-panel.tsx#L1-L66)
-- [src/background/index.ts:1-233](file://src/background/index.ts#L1-L233)
+- [src/options/components/setting/components/custom-config-form.tsx:1-150](file://src/options/components/setting/components/custom-config-form.tsx#L1-L150)
+- [src/options/components/setting/components/quota-card.tsx:1-199](file://src/options/components/setting/components/quota-card.tsx#L1-L199)
+- [src/options/components/setting/components/free-quota-panel.tsx:1-67](file://src/options/components/setting/components/free-quota-panel.tsx#L1-L67)
+- [src/background/index.ts:1-393](file://src/background/index.ts#L1-L393)
 - [src/utils/message.ts:1-20](file://src/utils/message.ts#L1-L20)
-
-**章节来源**
-- [src/utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
-- [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
-- [src/hooks/use-create-keyword-by-ai/index.tsx:1-170](file://src/hooks/use-create-keyword-by-ai/index.tsx#L1-L170)
-- [src/popup/components/ai-move/use-ai-move.tsx:1-393](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L393)
-- [src/utils/message.ts:1-20](file://src/utils/message.ts#L1-L20)
-- [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
-- [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
-- [src/options/components/setting/types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
-- [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
-- [src/options/components/setting/components/custom-config-form.tsx:1-149](file://src/options/components/setting/components/custom-config-form.tsx#L1-L149)
-- [src/options/components/setting/components/quota-card.tsx:1-192](file://src/options/components/setting/components/quota-card.tsx#L1-L192)
-- [src/options/components/setting/components/free-quota-panel.tsx:1-66](file://src/options/components/setting/components/free-quota-panel.tsx#L1-L66)
-- [src/background/index.ts:1-233](file://src/background/index.ts#L1-L233)
 
 ## 核心组件
-- AI配置类型与全局状态
+- **AI配置类型与全局状态**
   - 配置字段：API Key、BaseURL、模型、适配器、额外参数、AIGate用户标识、配置模式等
   - 存储位置：全局状态管理，持久化至Chrome Storage
-  - **新增**：适配器类型扩展为['openai', 'spark', 'aigate', 'custom']
-- 流式通信桥接
+- **流式通信桥接**
   - 通过chrome.runtime.connect建立端口，将后台流式响应转换为前端ReadableStream
   - 支持取消、错误、完成事件
-- 流解析适配器
+- **流解析适配器**
   - OpenAI适配器：解析choices[0].delta.content
   - 星火适配器：解析choices[0].delta.content或reasoning_content
-  - **待完善**：AIGate适配器：支持AIGate免费服务的流式响应解析（需要添加专用适配器）
+  - AIGate适配器：解析choices[0].delta.content（兼容OpenAI格式）
   - 自定义适配器：可扩展以支持其他模型格式
-- 关键API函数
+- **关键API函数**
   - fetchChatGpt：基于标题数组生成关键词
   - fetchAIMove：基于视频标题与收藏夹列表进行分类移动
-  - **新增**：callAIGateAI：调用AIGate免费服务（需检查配额）
+  - callAIGateAI：调用AIGate免费服务（需检查配额）
 
 **章节来源**
-- [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
+- [src/utils/data-context.ts:13-24](file://src/utils/data-context.ts#L13-L24)
 - [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
 - [src/utils/api.ts:176-277](file://src/utils/api.ts#L176-L277)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:27-93](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L27-L93)
 
 ## 架构总览
-整体架构采用"前端发起请求 → 后台统一处理 → 流式传输 → 前端解析"的模式，支持OpenAI兼容模型、AIGate免费服务与星火大模型三种路径。
+整体架构采用"前端发起请求 → 后台统一处理 → 流式传输 → 前端解析"的模式，支持OpenAI兼容模型与AIGate免费服务两种路径。
 
 ```mermaid
 sequenceDiagram
@@ -165,9 +150,6 @@ else 使用AIGate免费服务
 BG->>AG : POST /api/ai/chat/stream
 AG-->>BG : SSE流 chunk
 BG-->>API : port.postMessage(chunk/done/error/aborted)
-else 使用星火大模型
-BG->>BG : 使用内置适配器解析星火响应
-BG-->>API : port.postMessage(chunk/done/error/aborted)
 end
 API-->>UI : ReadableStream 可读流
 UI->>UI : 适配器解析流数据
@@ -181,13 +163,13 @@ UI->>UI : 适配器解析流数据
 ## 详细组件分析
 
 ### OpenAI集成与流式响应处理
-- 函数入口
+- **函数入口**
   - fetchChatGpt：接收标题数组与AI配置，返回可读流包装对象
   - fetchAIMove：接收视频列表与收藏夹标题，返回可读流包装对象
-- 流式通信机制
+- **流式通信机制**
   - 前端通过connectAndStream建立端口，监听chunk/done/error/aborted事件
   - 后台使用OpenAI SDK开启流式对话，逐块推送JSON数据
-- 错误与取消
+- **错误与取消**
   - 支持AbortController取消请求，后台检测中断并发送aborted
   - 端口断开时捕获lastError并转化为控制器错误
 
@@ -221,16 +203,17 @@ API-->>Hook : ReadableStream close
 - [tests/ai-stream-connect.test.ts:1-136](file://tests/ai-stream-connect.test.ts#L1-L136)
 
 ### AIGate免费AI服务
-- 调用方式
+- **调用方式**
   - callAIGateAI：接收messages数组，返回可读流包装对象
   - 后台先检查配额，再发起SSE请求，按行解析data:行
-- 配额管理
+- **配额管理**
   - 通过trpc/ai.getQuotaInfo检查日/月/RPM配额
   - 配额不足时拒绝请求；界面提供配额卡片与检查按钮
-- 使用限制
+- **使用限制**
   - 仅在配置模式为free时启用
   - 需要用户邮箱与API Key ID（来自设置表单）
-  - **新增**：AIGate服务使用lite模型，支持流式响应
+- **适配器支持**
+  - AIGate服务返回格式与OpenAI兼容，使用OpenAIStreamAdapter解析
 
 ```mermaid
 sequenceDiagram
@@ -263,25 +246,23 @@ end
 - [src/utils/api.ts:268-277](file://src/utils/api.ts#L268-L277)
 - [src/background/index.ts:27-91](file://src/background/index.ts#L27-L91)
 - [src/options/components/setting/types.ts:30-99](file://src/options/components/setting/types.ts#L30-L99)
-- [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
-- [src/options/components/setting/components/quota-card.tsx:1-192](file://src/options/components/setting/components/quota-card.tsx#L1-L192)
-- [src/options/components/setting/components/free-quota-panel.tsx:1-66](file://src/options/components/setting/components/free-quota-panel.tsx#L1-L66)
+- [src/options/components/setting/util.ts:1-26](file://src/options/components/setting/util.ts#L1-L26)
+- [src/options/components/setting/components/quota-card.tsx:1-101](file://src/options/components/setting/components/quota-card.tsx#L1-L101)
+- [src/options/components/setting/components/free-quota-panel.tsx:1-67](file://src/options/components/setting/components/free-quota-panel.tsx#L1-L67)
 
 ### 流式处理机制与解析
-- 适配器设计
+- **适配器设计**
   - OpenAIStreamAdapter：解析choices[0].delta.content
   - SparkStreamAdapter：解析choices[0].delta.content或reasoning_content
-  - **待完善**：AIGateStreamAdapter：解析AIGate服务的流式响应（需要实现专用适配器）
-  - createStreamAdapter：根据配置选择适配器，**修复**：现已支持'aigate'类型
-- 解析流程
+  - AIGateStreamAdapter：解析choices[0].delta.content（继承OpenAI格式）
+  - createStreamAdapter：根据配置选择适配器
+- **解析流程**
   - processStreamChunk：累积缓冲区，尝试提取完整关键词
   - extractKeywordFromBuffer：正则匹配引号包裹的关键词
   - addKeywordToGlobalData：去重并写入全局状态
-- 取消与错误
+- **取消与错误**
   - 前端AbortController与后端双重检查，确保及时中断
   - 控制器错误与端口断开错误均被正确传播
-
-**更新** 适配器工厂函数已修复，现在支持'aigate'类型，但需要为AIGate创建专用的流解析适配器。
 
 ```mermaid
 flowchart TD
@@ -311,7 +292,7 @@ Flush --> End(["结束"])
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:188-277](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L188-L277)
 
 ### AI配置管理
-- 配置项
+- **配置项**
   - key：API Key
   - baseUrl：可选的BaseURL（用于代理或自定义网关）
   - model：模型名称（如gpt-4、deepseek-chat等）
@@ -319,35 +300,31 @@ Flush --> End(["结束"])
   - adapter：适配器类型（openai/spark/aigate/custom）
   - aigateUserId/aigateApiKeyId：AIGate免费服务所需
   - configMode：配置模式（custom/free）
-- 表单校验
+- **表单校验**
   - custom模式：key、model、adapter必填
   - free模式：aigateUserId、aigateApiKeyId、model必填
-- 默认参数
+- **默认参数**
   - spark默认包含thinking禁用配置
   - openai默认空对象
-  - **新增**：aigate默认空对象，支持AIGate免费服务配置
+  - aigate默认空对象
 
 **章节来源**
 - [src/utils/data-context.ts:13-24](file://src/utils/data-context.ts#L13-L24)
 - [src/options/components/setting/types.ts:30-99](file://src/options/components/setting/types.ts#L30-L99)
-- [src/options/components/setting/util.ts:18-31](file://src/options/components/setting/util.ts#L18-L31)
-- [src/options/components/setting/components/custom-config-form.tsx:1-149](file://src/options/components/setting/components/custom-config-form.tsx#L1-L149)
+- [src/options/components/setting/util.ts:18-22](file://src/options/components/setting/util.ts#L18-L22)
+- [src/options/components/setting/components/custom-config-form.tsx:1-150](file://src/options/components/setting/components/custom-config-form.tsx#L1-L150)
 
 ### 多服务商对比与迁移指南
-- 服务商对比
-  - OpenAI兼容模型
+- **服务商对比**
+  - **OpenAI兼容模型**
     - 优点：生态成熟、能力稳定、支持流式
     - 缺点：付费使用，成本较高
     - 适用：对质量要求高、预算充足的场景
-  - AIGate免费服务
-    - 优点：无需付费、易上手、支持流式
+  - **AIGate免费服务**
+    - 优点：无需付费、易上手、实时配额管理
     - 限制：日配额有限、RPM限制、仅限lite模型
-    - 适用：轻量测试、小规模使用
-  - 星火大模型
-    - 优点：国内访问稳定、支持reasoning_content
-    - 限制：需要特定的适配器解析
-    - 适用：中文场景、需要推理过程的场景
-- 迁移建议
+    - 适用：轻量测试、小规模使用、预算有限场景
+- **迁移建议**
   - 从AIGate迁移到自定义模型：在设置中切换configMode为custom，填写key/model/baseUrl/extraParams
   - 参数迁移：将AIGate的messages结构映射为OpenAI兼容的消息格式
   - 适配器选择：若原AIGate返回格式与OpenAI兼容，可保持adapter为openai；否则使用spark或自定义
@@ -355,13 +332,13 @@ Flush --> End(["结束"])
 **章节来源**
 - [src/background/index.ts:27-91](file://src/background/index.ts#L27-L91)
 - [src/options/components/setting/types.ts:4-99](file://src/options/components/setting/types.ts#L4-L99)
-- [src/options/components/setting/util.ts:4-35](file://src/options/components/setting/util.ts#L4-L35)
+- [src/options/components/setting/util.ts:4-26](file://src/options/components/setting/util.ts#L4-L26)
 
 ## 依赖关系分析
-- 组件耦合
+- **组件耦合**
   - 前端组件依赖工具函数与全局状态，解耦良好
   - 流解析适配器与前端组件松耦合，通过接口抽象
-- 外部依赖
+- **外部依赖**
   - OpenAI SDK：用于流式对话
   - Chrome Runtime：用于端口通信与消息传递
   - 设置界面：Zod表单校验、UI组件库
@@ -382,55 +359,54 @@ Settings --> UI2
 
 **图表来源**
 - [src/hooks/use-create-keyword-by-ai/index.tsx:1-170](file://src/hooks/use-create-keyword-by-ai/index.tsx#L1-L170)
-- [src/popup/components/ai-move/use-ai-move.tsx:1-393](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L393)
-- [src/utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
+- [src/popup/components/ai-move/use-ai-move.tsx:1-396](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L396)
+- [src/utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
 - [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
 - [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
 - [src/options/components/setting/types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
-- [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
+- [src/options/components/setting/util.ts:1-26](file://src/options/components/setting/util.ts#L1-L26)
 
 **章节来源**
-- [src/utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
+- [src/utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
 - [src/hooks/use-create-keyword-by-ai/index.tsx:1-170](file://src/hooks/use-create-keyword-by-ai/index.tsx#L1-L170)
-- [src/popup/components/ai-move/use-ai-move.tsx:1-393](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L393)
+- [src/popup/components/ai-move/use-ai-move.tsx:1-396](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L396)
 - [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
 - [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
 - [src/options/components/setting/types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
-- [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
+- [src/options/components/setting/util.ts:1-26](file://src/options/components/setting/util.ts#L1-L26)
 
 ## 性能考虑
-- 流式读取
+- **流式读取**
   - 使用ReadableStream逐块读取，避免一次性加载大量数据
   - 适配器解析在前端进行，减少网络传输负担
-- 取消与中断
+- **取消与中断**
   - AbortController与后台双重检查，降低无效请求成本
-- 配额控制
+- **配额控制**
   - AIGate免费服务提供日/RPM配额，防止过度使用
-- 建议
+- **适配器优化**
+  - AIGate服务与OpenAI格式兼容，复用OpenAI适配器提升性能
+- **建议**
   - 对于大批量任务，优先使用自定义模型并合理设置extraParams
   - 在移动端或弱网环境下，优先使用AIGate免费服务进行快速验证
-  - **新增**：AIGate服务响应速度快，适合实时交互场景
 
 ## 故障排除指南
-- 常见问题
+- **常见问题**
   - 配置不完整：检查key/model/adapter（custom模式）或aigateUserId/aigateApiKeyId/model（free模式）
   - 流解析异常：确认adapter与模型格式一致，必要时使用自定义适配器
   - 请求被取消：检查前端AbortController与后台中断信号
   - 配额不足：查看配额卡片，等待次日或升级到付费方案
-  - **新增**：AIGate服务超时：检查网络连接和API密钥有效性
-  - **待解决**：AIGate适配器解析问题：当adapterType为'aigate'时，系统会回退到Spark适配器
-- 定位方法
+  - AIGate连接失败：检查apiKeyId配置与网络连接
+- **定位方法**
   - 查看控制台日志：[DEBUG]与[AIStreamParser]输出
-  - 使用测试用例：ai-stream-connect.test.ts验证connectAndStream行为
-- 相关源码定位
+  - 使用测试用例：ai-stream-adapter.test.ts验证适配器行为
+  - 检查配额API响应格式与解析逻辑
+- **相关源码定位**
   - 配置校验与提示：[src/options/components/setting/types.ts:52-98](file://src/options/components/setting/types.ts#L52-L98)
   - 流解析与去重：[src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:121-179](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L121-L179)
   - 取消与错误传播：[src/utils/api.ts:184-232](file://src/utils/api.ts#L184-L232)
   - 配额检查与SSE解析：[src/background/index.ts:27-192](file://src/background/index.ts#L27-L192)
-
-**更新**：适配器工厂函数已修复，现在支持'aigate'类型，但仍需要为AIGate创建专用的流解析适配器。
 
 **章节来源**
 - [src/options/components/setting/types.ts:52-98](file://src/options/components/setting/types.ts#L52-L98)
@@ -439,15 +415,25 @@ Settings --> UI2
 - [src/background/index.ts:27-192](file://src/background/index.ts#L27-L192)
 
 ## 结论
-本项目提供了完整的AI服务API集成方案，覆盖OpenAI兼容模型、AIGate免费服务与星火大模型三大路径。通过统一的流式通信与解析适配器，实现了跨模型的一致体验；配合完善的配置管理与配额检查，满足从个人测试到生产使用的多样化需求。**重要更新**：适配器工厂函数现已支持'aigate'类型，但需要为AIGate创建专用的流解析适配器以确保正确的数据解析。建议在保证质量的前提下，优先使用自定义模型以获得更优性能与可控性，同时利用AIGate进行低成本验证与快速迭代。
+本项目提供了完整的AI服务API集成方案，覆盖OpenAI兼容模型与AIGate免费服务两大路径。通过统一的流式通信与解析适配器，实现了跨模型的一致体验；配合完善的配置管理与配额检查，满足从个人测试到生产使用的多样化需求。新增的AIGate免费适配器集成了实时配额管理、每日/每月/RPM监控等功能，为用户提供了更加灵活和经济的AI服务选择。建议在保证质量的前提下，优先使用自定义模型以获得更优性能与可控性，同时利用AIGate进行低成本验证与快速迭代。
 
 ## 附录
-- API函数速查
+- **API函数速查**
   - fetchChatGpt：关键词生成
   - fetchAIMove：视频分类移动
   - callAIGateAI：免费服务调用
-- 适配器速查
+- **适配器速查**
   - openai：OpenAI兼容模型
   - spark：星火大模型
-  - aigate：AIGate免费服务（需要专用适配器）
+  - aigate：AIGate免费服务（兼容OpenAI格式）
   - custom：自定义解析逻辑
+- **消息类型**
+  - fetchChatGpt：关键词生成请求
+  - fetchAIMove：视频分类请求
+  - checkAIGateQuota：配额检查请求
+  - callAIGateAI：免费AI调用请求
+  - cancel：请求取消通知
+- **配额监控**
+  - 日配额：当日剩余请求次数
+  - RPM：每分钟请求限制
+  - 月配额：请求限制模式下无月配额概念
