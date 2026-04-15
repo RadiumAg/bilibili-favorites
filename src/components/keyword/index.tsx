@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 type KeywordProps = React.PropsWithChildren<{
   className?: string
 }>
-
+           
 const Keyword: React.FC<KeywordProps> = (props) => {
   const { className } = props
   const { tagElementArray, handleKeyDown } = useEditKeyword()
