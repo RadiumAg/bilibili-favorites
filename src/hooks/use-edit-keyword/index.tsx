@@ -1,6 +1,6 @@
+import React from 'react'
 import { useGlobalConfig } from '@/store/global-data'
 import { useMemoizedFn } from 'ahooks'
-import React from 'react'
 import { v4 as uuid } from 'uuid'
 import { useShallow } from 'zustand/react/shallow'
 
@@ -64,7 +64,9 @@ const useEditKeyword = () => {
       let targetkeyword = dataContext.keyword?.find(
         (key) => key.favoriteDataId === dataContext.activeKey,
       )
-      targetkeyword?.value.pop()
+      if(targetkeyword?.value == null) return
+
+      targetkeyword.value = [...targetkeyword?.value.slice(0, -1)]
       dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
     }
   })
