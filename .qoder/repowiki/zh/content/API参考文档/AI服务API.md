@@ -4,7 +4,7 @@
 **本文档引用的文件**
 - [src/utils/api.ts](file://src/utils/api.ts)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts)
-- [src/hooks/use-create-keyword-by-ai/index.tsx](file://src/hooks/use-create-keyword-by-ai/index.tsx)
+- [src/hooks/use-create-keyword/index.tsx](file://src/hooks/use-create-keyword/index.tsx)
 - [src/popup/components/ai-move/use-ai-move.tsx](file://src/popup/components/ai-move/use-ai-move.tsx)
 - [src/utils/message.ts](file://src/utils/message.ts)
 - [src/utils/data-context.ts](file://src/utils/data-context.ts)
@@ -15,16 +15,19 @@
 - [src/options/components/setting/components/quota-card.tsx](file://src/options/components/setting/components/quota-card.tsx)
 - [src/options/components/setting/components/free-quota-panel.tsx](file://src/options/components/setting/components/free-quota-panel.tsx)
 - [src/background/index.ts](file://src/background/index.ts)
-- [tests/ai-stream-adapter.test.ts](file://tests/ai-stream-adapter.test.ts)
+- [src/utils/keyword-extractor.ts](file://src/utils/keyword-extractor.ts)
+- [src/components/keyword-mode-selector/index.tsx](file://src/components/keyword-mode-selector/index.tsx)
+- [src/components/keyword/index.tsx](file://src/components/keyword/index.tsx)
+- [tests/ai-stream-parser.test.ts](file://tests/ai-stream-parser.test.ts)
+- [tests/use-move.test.tsx](file://tests/use-move.test.tsx)
 </cite>
 
 ## 更新摘要
 **变更内容**
-- 新增AIGate适配器类型支持，扩展适配器数组从['openai', 'spark']到['openai', 'spark', 'aigate', 'custom']
-- 添加AIGate配置默认值和表单支持
-- 更新适配器工厂函数以支持'aigate'类型
-- 完善AIGate服务集成和流式响应处理
-- **重要修复**：完善AIGate流解析器适配器支持
+- 更新AI关键词提取功能说明：移除AI智能关键词提取功能，保留本地关键词提取与AI智能移动功能
+- 更新适配器类型支持：从['openai', 'spark']扩展到['openai', 'spark', 'aigate', 'custom']
+- 完善AIGate服务集成：支持AIGate免费AI服务的流式响应处理
+- 更新配置管理：支持AIGate用户标识和配置模式切换
 
 ## 目录
 1. [简介](#简介)
@@ -47,6 +50,8 @@
 - 流式处理机制（SSE连接建立、数据流解析、错误处理、连接取消）
 - 多服务商对比与迁移指南（性能、价格差异与使用建议）
 
+**重要更新**：AI智能关键词提取功能已被移除，目前仅保留本地关键词提取与AI智能移动功能。
+
 ## 项目结构
 本项目围绕"AI服务API"构建了清晰的分层：
 - 前端调用层：通过工具函数发起AI请求，并将请求封装为可读流
@@ -58,47 +63,52 @@
 ```mermaid
 graph TB
 subgraph "前端"
-A["use-create-keyword-by-ai/index.tsx<br/>关键词生成流程"]
+A["hooks/use-create-keyword/index.tsx<br/>本地关键词提取流程"]
 B["popup/components/ai-move/use-ai-move.tsx<br/>AI移动分类流程"]
 C["utils/api.ts<br/>fetchChatGpt/fetchAIMove/callAIGateAI"]
 D["hooks/use-create-keyword-by-ai/ai-stream-parser.ts<br/>流解析适配器"]
+E["utils/keyword-extractor.ts<br/>本地TF-IDF算法"]
+F["components/keyword-mode-selector/index.tsx<br/>提取模式选择器"]
 end
 subgraph "配置与设置"
-E["store/global-data.ts<br/>全局状态"]
-F["utils/data-context.ts<br/>配置类型"]
-G["options/components/setting/types.ts<br/>表单类型/校验"]
-H["options/components/setting/util.ts<br/>适配器选项/默认参数"]
-I["options/components/setting/components/custom-config-form.tsx<br/>自定义配置表单"]
-J["options/components/setting/components/quota-card.tsx<br/>配额卡片"]
-K["options/components/setting/components/free-quota-panel.tsx<br/>免费配额面板"]
+G["store/global-data.ts<br/>全局状态"]
+H["utils/data-context.ts<br/>配置类型"]
+I["options/components/setting/types.ts<br/>表单类型/校验"]
+J["options/components/setting/util.ts<br/>适配器选项/默认参数"]
+K["options/components/setting/components/custom-config-form.tsx<br/>自定义配置表单"]
+L["options/components/setting/components/quota-card.tsx<br/>配额卡片"]
+M["options/components/setting/components/free-quota-panel.tsx<br/>免费配额面板"]
 end
 subgraph "后台"
-L["background/index.ts<br/>OpenAI流式处理/AIGate SSE"]
-M["utils/message.ts<br/>消息枚举"]
+N["background/index.ts<br/>OpenAI流式处理/AIGate SSE"]
+O["utils/message.ts<br/>消息枚举"]
 end
 A --> C
 B --> C
-C --> L
+C --> N
 D --> A
 D --> B
 E --> A
-E --> B
-F --> E
-G --> I
-H --> I
-J --> L
-K --> L
-M --> L
+G --> A
+G --> B
+H --> G
+I --> J
+K --> J
+L --> N
+M --> N
+O --> N
 ```
 
 **图表来源**
-- [src/hooks/use-create-keyword-by-ai/index.tsx:1-170](file://src/hooks/use-create-keyword-by-ai/index.tsx#L1-L170)
-- [src/popup/components/ai-move/use-ai-move.tsx:1-393](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L393)
-- [src/utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
+- [src/hooks/use-create-keyword/index.tsx:1-303](file://src/hooks/use-create-keyword/index.tsx#L1-L303)
+- [src/popup/components/ai-move/use-ai-move.tsx:1-396](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L396)
+- [src/utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
+- [src/utils/keyword-extractor.ts:1-197](file://src/utils/keyword-extractor.ts#L1-L197)
+- [src/components/keyword-mode-selector/index.tsx:1-49](file://src/components/keyword-mode-selector/index.tsx#L1-L49)
 - [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
 - [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
-- [src/options/components/setting/types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
+- [src/options/components/setting/types.ts:1-98](file://src/options/components/setting/types.ts#L1-L98)
 - [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
 - [src/options/components/setting/components/custom-config-form.tsx:1-149](file://src/options/components/setting/components/custom-config-form.tsx#L1-L149)
 - [src/options/components/setting/components/quota-card.tsx:1-192](file://src/options/components/setting/components/quota-card.tsx#L1-L192)
@@ -107,14 +117,14 @@ M --> L
 - [src/utils/message.ts:1-20](file://src/utils/message.ts#L1-L20)
 
 **章节来源**
-- [src/utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
+- [src/utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
-- [src/hooks/use-create-keyword-by-ai/index.tsx:1-170](file://src/hooks/use-create-keyword-by-ai/index.tsx#L1-L170)
-- [src/popup/components/ai-move/use-ai-move.tsx:1-393](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L393)
+- [src/hooks/use-create-keyword/index.tsx:1-303](file://src/hooks/use-create-keyword/index.tsx#L1-L303)
+- [src/popup/components/ai-move/use-ai-move.tsx:1-396](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L396)
 - [src/utils/message.ts:1-20](file://src/utils/message.ts#L1-L20)
 - [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
 - [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
-- [src/options/components/setting/types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
+- [src/options/components/setting/types.ts:1-98](file://src/options/components/setting/types.ts#L1-L98)
 - [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
 - [src/options/components/setting/components/custom-config-form.tsx:1-149](file://src/options/components/setting/components/custom-config-form.tsx#L1-L149)
 - [src/options/components/setting/components/quota-card.tsx:1-192](file://src/options/components/setting/components/quota-card.tsx#L1-L192)
@@ -125,7 +135,7 @@ M --> L
 - AI配置类型与全局状态
   - 配置字段：API Key、BaseURL、模型、适配器、额外参数、AIGate用户标识、配置模式等
   - 存储位置：全局状态管理，持久化至Chrome Storage
-  - **新增**：适配器类型扩展为['openai', 'spark', 'aigate', 'custom']
+  - **更新**：适配器类型扩展为['openai', 'spark', 'aigate', 'custom']
 - 流式通信桥接
   - 通过chrome.runtime.connect建立端口，将后台流式响应转换为前端ReadableStream
   - 支持取消、错误、完成事件
@@ -180,9 +190,38 @@ UI->>UI : 适配器解析流数据
 
 ## 详细组件分析
 
-### OpenAI集成与流式响应处理
+### 本地关键词提取功能
+- 功能概述
+  - 使用TF-IDF算法从视频标题中提取关键词
+  - 支持停用词过滤、词频统计和评分排序
+  - 提供快速提取和完整提取两种模式
+- 算法实现
+  - 中文分词：提取2-4字中文词组和英文单词
+  - TF-IDF计算：根据词频和逆文档频率计算关键词权重
+  - 停用词过滤：移除常见无意义词汇
+  - 结果排序：按权重降序排列，返回前N个关键词
+
+```mermaid
+flowchart TD
+Start(["开始"]) --> Tokenize["中文分词处理"]
+Tokenize --> TF["计算词频(TF)"]
+TF --> IDF["计算逆文档频率(IDF)"]
+IDF --> Score["计算TF-IDF权重"]
+Score --> Filter["过滤停用词和低分词"]
+Filter --> Sort["按权重降序排序"]
+Sort --> Limit["限制返回数量"]
+Limit --> End(["结束"])
+```
+
+**图表来源**
+- [src/utils/keyword-extractor.ts:137-187](file://src/utils/keyword-extractor.ts#L137-L187)
+
+**章节来源**
+- [src/utils/keyword-extractor.ts:1-197](file://src/utils/keyword-extractor.ts#L1-L197)
+- [src/hooks/use-create-keyword/index.tsx:40-74](file://src/hooks/use-create-keyword/index.tsx#L40-L74)
+
+### AI智能移动功能
 - 函数入口
-  - fetchChatGpt：接收标题数组与AI配置，返回可读流包装对象
   - fetchAIMove：接收视频列表与收藏夹标题，返回可读流包装对象
 - 流式通信机制
   - 前端通过connectAndStream建立端口，监听chunk/done/error/aborted事件
@@ -193,12 +232,12 @@ UI->>UI : 适配器解析流数据
 
 ```mermaid
 sequenceDiagram
-participant Hook as "use-create-keyword-by-ai/index.tsx"
+participant Hook as "use-ai-move.tsx"
 participant API as "utils/api.ts"
 participant BG as "background/index.ts"
 participant OA as "OpenAI SDK"
-Hook->>API : fetchChatGpt(titleArray, config)
-API->>BG : type=fetchChatGpt, data=config+titles
+Hook->>API : fetchAIMove(videos, favoriteTitles, config)
+API->>BG : type=fetchAIMove, data=config+videos
 BG->>OA : chat.completions.create({stream : true})
 loop 流式循环
 OA-->>BG : chunk
@@ -210,7 +249,7 @@ API-->>Hook : ReadableStream close
 ```
 
 **图表来源**
-- [src/hooks/use-create-keyword-by-ai/index.tsx:21-74](file://src/hooks/use-create-keyword-by-ai/index.tsx#L21-L74)
+- [src/popup/components/ai-move/use-ai-move.tsx:93-172](file://src/popup/components/ai-move/use-ai-move.tsx#L93-L172)
 - [src/utils/api.ts:234-247](file://src/utils/api.ts#L234-L247)
 - [src/background/index.ts:197-233](file://src/background/index.ts#L197-L233)
 
@@ -218,7 +257,7 @@ API-->>Hook : ReadableStream close
 - [src/utils/api.ts:234-247](file://src/utils/api.ts#L234-L247)
 - [src/utils/api.ts:176-232](file://src/utils/api.ts#L176-L232)
 - [src/background/index.ts:197-233](file://src/background/index.ts#L197-L233)
-- [tests/ai-stream-connect.test.ts:1-136](file://tests/ai-stream-connect.test.ts#L1-L136)
+- [tests/use-move.test.tsx:1-607](file://tests/use-move.test.tsx#L1-L607)
 
 ### AIGate免费AI服务
 - 调用方式
@@ -262,7 +301,7 @@ end
 **章节来源**
 - [src/utils/api.ts:268-277](file://src/utils/api.ts#L268-L277)
 - [src/background/index.ts:27-91](file://src/background/index.ts#L27-L91)
-- [src/options/components/setting/types.ts:30-99](file://src/options/components/setting/types.ts#L30-L99)
+- [src/options/components/setting/types.ts:30-98](file://src/options/components/setting/types.ts#L30-L98)
 - [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
 - [src/options/components/setting/components/quota-card.tsx:1-192](file://src/options/components/setting/components/quota-card.tsx#L1-L192)
 - [src/options/components/setting/components/free-quota-panel.tsx:1-66](file://src/options/components/setting/components/free-quota-panel.tsx#L1-L66)
@@ -329,7 +368,7 @@ Flush --> End(["结束"])
 
 **章节来源**
 - [src/utils/data-context.ts:13-24](file://src/utils/data-context.ts#L13-L24)
-- [src/options/components/setting/types.ts:30-99](file://src/options/components/setting/types.ts#L30-L99)
+- [src/options/components/setting/types.ts:30-98](file://src/options/components/setting/types.ts#L30-L98)
 - [src/options/components/setting/util.ts:18-31](file://src/options/components/setting/util.ts#L18-L31)
 - [src/options/components/setting/components/custom-config-form.tsx:1-149](file://src/options/components/setting/components/custom-config-form.tsx#L1-L149)
 
@@ -354,7 +393,7 @@ Flush --> End(["结束"])
 
 **章节来源**
 - [src/background/index.ts:27-91](file://src/background/index.ts#L27-L91)
-- [src/options/components/setting/types.ts:4-99](file://src/options/components/setting/types.ts#L4-L99)
+- [src/options/components/setting/types.ts:4-98](file://src/options/components/setting/types.ts#L4-L98)
 - [src/options/components/setting/util.ts:4-35](file://src/options/components/setting/util.ts#L4-L35)
 
 ## 依赖关系分析
@@ -368,11 +407,12 @@ Flush --> End(["结束"])
 
 ```mermaid
 graph LR
-UI1["use-create-keyword-by-ai/index.tsx"] --> API1["utils/api.ts"]
+UI1["hooks/use-create-keyword/index.tsx"] --> API1["utils/api.ts"]
 UI2["popup/components/ai-move/use-ai-move.tsx"] --> API1
 API1 --> BG1["background/index.ts"]
 Parser["ai-stream-parser.ts"] --> UI1
 Parser --> UI2
+Extractor["keyword-extractor.ts"] --> UI1
 Store["store/global-data.ts"] --> UI1
 Store --> UI2
 Types["utils/data-context.ts"] --> Store
@@ -381,23 +421,24 @@ Settings --> UI2
 ```
 
 **图表来源**
-- [src/hooks/use-create-keyword-by-ai/index.tsx:1-170](file://src/hooks/use-create-keyword-by-ai/index.tsx#L1-L170)
-- [src/popup/components/ai-move/use-ai-move.tsx:1-393](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L393)
-- [src/utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
+- [src/hooks/use-create-keyword/index.tsx:1-303](file://src/hooks/use-create-keyword/index.tsx#L1-L303)
+- [src/popup/components/ai-move/use-ai-move.tsx:1-396](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L396)
+- [src/utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
+- [src/utils/keyword-extractor.ts:1-197](file://src/utils/keyword-extractor.ts#L1-L197)
 - [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
 - [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
-- [src/options/components/setting/types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
+- [src/options/components/setting/types.ts:1-98](file://src/options/components/setting/types.ts#L1-L98)
 - [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
 
 **章节来源**
-- [src/utils/api.ts:1-339](file://src/utils/api.ts#L1-L339)
+- [src/utils/api.ts:1-340](file://src/utils/api.ts#L1-L340)
 - [src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:1-278](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L278)
-- [src/hooks/use-create-keyword-by-ai/index.tsx:1-170](file://src/hooks/use-create-keyword-by-ai/index.tsx#L1-L170)
-- [src/popup/components/ai-move/use-ai-move.tsx:1-393](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L393)
+- [src/hooks/use-create-keyword/index.tsx:1-303](file://src/hooks/use-create-keyword/index.tsx#L1-L303)
+- [src/popup/components/ai-move/use-ai-move.tsx:1-396](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L396)
 - [src/utils/data-context.ts:1-34](file://src/utils/data-context.ts#L1-L34)
 - [src/store/global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
-- [src/options/components/setting/types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
+- [src/options/components/setting/types.ts:1-98](file://src/options/components/setting/types.ts#L1-L98)
 - [src/options/components/setting/util.ts:1-35](file://src/options/components/setting/util.ts#L1-L35)
 
 ## 性能考虑
@@ -423,7 +464,7 @@ Settings --> UI2
   - **待解决**：AIGate适配器解析问题：当adapterType为'aigate'时，系统会回退到Spark适配器
 - 定位方法
   - 查看控制台日志：[DEBUG]与[AIStreamParser]输出
-  - 使用测试用例：ai-stream-connect.test.ts验证connectAndStream行为
+  - 使用测试用例：ai-stream-parser.test.ts验证connectAndStream行为
 - 相关源码定位
   - 配置校验与提示：[src/options/components/setting/types.ts:52-98](file://src/options/components/setting/types.ts#L52-L98)
   - 流解析与去重：[src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts:121-179](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L121-L179)
@@ -439,7 +480,7 @@ Settings --> UI2
 - [src/background/index.ts:27-192](file://src/background/index.ts#L27-L192)
 
 ## 结论
-本项目提供了完整的AI服务API集成方案，覆盖OpenAI兼容模型、AIGate免费服务与星火大模型三大路径。通过统一的流式通信与解析适配器，实现了跨模型的一致体验；配合完善的配置管理与配额检查，满足从个人测试到生产使用的多样化需求。**重要更新**：适配器工厂函数现已支持'aigate'类型，但需要为AIGate创建专用的流解析适配器以确保正确的数据解析。建议在保证质量的前提下，优先使用自定义模型以获得更优性能与可控性，同时利用AIGate进行低成本验证与快速迭代。
+本项目提供了完整的AI服务API集成方案，覆盖OpenAI兼容模型、AIGate免费服务与星火大模型三大路径。通过统一的流式通信与解析适配器，实现了跨模型的一致体验；配合完善的配置管理与配额检查，满足从个人测试到生产使用的多样化需求。**重要更新**：适配器工厂函数现已支持'aigate'类型，但需要为AIGate创建专用的流解析适配器以确保正确的数据解析。AI智能关键词提取功能已被移除，目前仅保留本地关键词提取与AI智能移动功能。建议在保证质量的前提下，优先使用自定义模型以获得更优性能与可控性，同时利用AIGate进行低成本验证与快速迭代。
 
 ## 附录
 - API函数速查
@@ -451,3 +492,7 @@ Settings --> UI2
   - spark：星火大模型
   - aigate：AIGate免费服务（需要专用适配器）
   - custom：自定义解析逻辑
+- 提取模式
+  - local：本地TF-IDF算法
+  - ai：AI智能关键词提取（已移除）
+  - manual：手动输入（已移除）
