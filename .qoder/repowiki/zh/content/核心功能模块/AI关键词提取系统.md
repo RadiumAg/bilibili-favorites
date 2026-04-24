@@ -19,18 +19,17 @@
 - [free-quota-panel.tsx](file://src/options/components/setting/components/free-quota-panel.tsx)
 - [config-mode-selector.tsx](file://src/options/components/setting/components/config-mode-selector.tsx)
 - [quota-card.tsx](file://src/options/components/setting/components/quota-card.tsx)
-- [ai-stream-parser.test.ts](file://tests/ai-stream-parser.test.ts)
+- [ai-stream-parser.test.ts](file://tests/ai-stream-adapter.test.ts)
 - [package.json](file://package.json)
 - [README.md](file://README.md)
 </cite>
 
 ## 更新摘要
 **变更内容**
-- AI关键词提取系统已完全移除，仅保留基础关键词管理功能
-- 删除了src/hooks/use-create-keyword-by-ai目录及其所有相关文件
-- 移除了AI流解析器、适配器支持和实时关键词提取功能
-- 保留了本地TF-IDF算法和基础关键词编辑功能
-- 更新了配置管理，移除了AI相关配置项
+- 新增Qwen和Kimi适配器支持，扩展AI模型适配器类型
+- 更新AI模型选择界面，支持更多AI服务商选择
+- 扩展适配器类型支持，包括qianwen和kimi类型
+- 保持原有AI流解析器和关键词管理功能不变
 
 ## 目录
 1. [简介](#简介)
@@ -52,8 +51,9 @@ AI关键词提取系统是一个基于Chrome扩展的智能工具，专门用于
 - **本地TF-IDF算法**：提供离线关键词提取能力
 - **基础关键词编辑**：提供可视化的关键词编辑界面
 - **配置管理模式**：支持自定义配置和免费额度配置
+- **多AI模型适配**：支持OpenAI、星火、通义千问、Kimi等多种AI模型
 
-**重要更新**：系统已完全移除AI关键词提取功能，目前仅保留基础关键词管理能力。
+**重要更新**：系统已新增Qwen和Kimi适配器支持，扩展了AI模型选择范围，同时保持原有的AI流解析器和关键词管理功能。
 
 系统采用模块化设计，通过Chrome扩展的消息传递机制实现前后端分离，确保良好的用户体验和性能表现。
 
@@ -126,6 +126,16 @@ end
 - **实时更新**：关键词变更立即反映到UI
 - **防重复机制**：自动检测并防止重复关键词
 
+### AI模型适配器组件
+
+AI模型适配器组件支持多种AI服务商的流式响应解析：
+
+- **星火大模型适配器**：支持讯飞星火大模型的SSE流解析
+- **OpenAI适配器**：支持OpenAI兼容模型的流式响应解析
+- **通义千问适配器**：支持通义千问模型的流式响应解析
+- **Kimi适配器**：支持Kimi模型的流式响应解析
+- **自定义适配器**：支持用户自定义AI模型的适配
+
 **章节来源**
 - [keyword-extractor.ts:1-197](file://src/utils/keyword-extractor.ts#L1-L197)
 - [use-edit-keyword/index.tsx:1-113](file://src/hooks/use-edit-keyword/index.tsx#L1-L113)
@@ -147,6 +157,7 @@ Hook[Hooks] --> EditKeyword[关键词编辑Hook]
 Hook --> SetDefaultFav[默认收藏夹设置Hook]
 Utils[工具函数] --> API[API封装]
 Utils --> Extractor[关键词提取器]
+Utils --> StreamParser[AI流解析器]
 end
 subgraph "状态管理层"
 Store[Zustand状态管理]
@@ -160,6 +171,8 @@ end
 subgraph "AI服务层"
 OpenAI[OpenAI API]
 Spark[星火大模型]
+Qwen[通义千问]
+Kimi[Kimi]
 Custom[自定义AI模型]
 end
 Popup --> Hook
@@ -252,6 +265,69 @@ KeywordManager --> Keyword : operates on
 - **实时更新**：关键词变更立即反映到UI
 - **防重复机制**：自动检测并防止重复关键词
 
+### AI模型适配器扩展
+
+系统新增了Qwen和Kimi适配器支持，扩展了AI模型适配能力：
+
+```mermaid
+classDiagram
+class AIStreamAdapter {
+<<interface>>
++parse(chunk : Uint8Array) string
+}
+class SparkStreamAdapter {
++parse(chunk : Uint8Array) string
+}
+class OpenAIStreamAdapter {
++parse(chunk : Uint8Array) string
+}
+class QwenStreamAdapter {
++parse(chunk : Uint8Array) string
+}
+class KimiStreamAdapter {
++parse(chunk : Uint8Array) string
+}
+class AdapterFactory {
++createStreamAdapter(adapterType : Adapter) AIStreamAdapter
+}
+AIStreamAdapter <|-- SparkStreamAdapter
+AIStreamAdapter <|-- OpenAIStreamAdapter
+AIStreamAdapter <|-- QwenStreamAdapter
+AIStreamAdapter <|-- KimiStreamAdapter
+AdapterFactory --> SparkStreamAdapter : creates
+AdapterFactory --> OpenAIStreamAdapter : creates
+AdapterFactory --> QwenStreamAdapter : creates
+AdapterFactory --> KimiStreamAdapter : creates
+```
+
+**图表来源**
+- [ai-stream-parser.ts:30-97](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L30-L97)
+
+#### 适配器类型支持
+
+系统支持的适配器类型包括：
+
+- **spark**：星火大模型适配器
+- **openai**：OpenAI兼容模型适配器
+- **custom**：自定义模型适配器
+- **qianwen**：通义千问模型适配器
+- **kimi**：Kimi模型适配器
+
+#### AI模型选择界面
+
+AI模型选择界面提供了直观的模型选择体验：
+
+- **通义千问**：支持通义千问模型的关键词提取
+- **Kimi**：支持Kimi模型的关键词提取
+- **星火大模型**：支持讯飞星火大模型的关键词提取
+- **OpenAI**：支持OpenAI兼容模型的关键词提取
+- **自定义**：支持用户自定义AI模型的关键词提取
+
+**章节来源**
+- [ai-stream-parser.ts:1-282](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L282)
+- [util.ts:1-46](file://src/options/components/setting/util.ts#L1-L46)
+- [types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
+
 ### use-set-default-fav钩子bug修复
 
 use-set-default-fav钩子是系统中重要的交互组件，经过修复后提升了系统稳定性：
@@ -303,7 +379,8 @@ end
 subgraph "AI模型适配器"
 OpenAI[OpenAI]
 Spark[星火大模型]
-AIGate[AIGate]
+Qwen[通义千问]
+Kimi[Kimi]
 Custom[自定义]
 end
 subgraph "参数配置"
@@ -316,9 +393,13 @@ AIGateApiKey[AIGate API Key]
 end
 Custom --> OpenAI
 Custom --> Spark
+Custom --> Qwen
+Custom --> Kimi
 Free --> AIGate
 OpenAI --> APIKey
 Spark --> APIKey
+Qwen --> APIKey
+Kimi --> APIKey
 AIGate --> AIGateUserId
 AIGate --> AIGateApiKey
 APIKey --> ExtraParams
@@ -419,6 +500,12 @@ Extension --> CRXJS
 - **组件卸载**：确保组件卸载时清理相关资源
 - **长按处理**：优化use-set-default-fav钩子的内存使用
 
+### AI适配器优化
+
+- **适配器复用**：同一适配器实例可在多次请求中复用
+- **流式解析**：实时解析AI响应，避免内存累积
+- **错误恢复**：适配器解析失败时自动降级处理
+
 ## 故障排除指南
 
 ### 常见问题及解决方案
@@ -440,6 +527,15 @@ Extension --> CRXJS
 2. 验证标签渲染和删除逻辑
 3. 确认组件状态同步
 4. 查看控制台是否有相关错误
+
+#### AI模型适配器问题
+
+**问题**：AI模型适配器解析失败
+**解决方案**：
+1. 检查AI模型响应格式是否符合预期
+2. 验证适配器类型选择是否正确
+3. 确认AI模型API配置是否正确
+4. 查看控制台是否有解析错误信息
 
 #### use-set-default-fav钩子问题
 
@@ -469,9 +565,10 @@ AI关键词提取系统是一个功能完整、架构清晰的Chrome扩展应用
 
 - **模块化设计**：各组件职责明确，便于维护和扩展
 - **本地算法**：提供离线关键词提取能力，保护用户隐私
+- **多AI模型支持**：新增Qwen和Kimi适配器，扩展AI模型选择范围
 - **稳定可靠**：经过bug修复和优化，系统更加稳定
 - **完整配置**：支持灵活的配置管理，适应不同使用场景
-- **简洁高效**：移除AI功能后，系统更加专注和高效
+- **简洁高效**：保持原有功能的同时，增强了AI模型适配能力
 
 系统通过合理的架构设计和优化策略，在保证功能完整性的同时，确保了良好的性能表现和用户体验。
 
@@ -482,10 +579,11 @@ AI关键词提取系统是一个功能完整、架构清晰的Chrome扩展应用
 #### 基本使用流程
 
 1. **配置AI参数**：在设置页面配置API Key和模型参数
-2. **选择收藏夹**：在关键词管理页面选择目标收藏夹
-3. **触发AI提取**：点击"AI提取关键词"按钮开始处理
-4. **编辑关键词**：在关键词列表中进行编辑和优化
-5. **应用关键词**：将关键词应用到收藏夹整理规则中
+2. **选择AI模型**：在AI模型选择界面选择合适的AI模型
+3. **选择收藏夹**：在关键词管理页面选择目标收藏夹
+4. **触发AI提取**：点击"AI提取关键词"按钮开始处理
+5. **编辑关键词**：在关键词列表中进行编辑和优化
+6. **应用关键词**：将关键词应用到收藏夹整理规则中
 
 #### 高级配置
 
@@ -503,3 +601,4 @@ AI关键词提取系统是一个功能完整、架构清晰的Chrome扩展应用
 - **监控性能**：关注系统性能指标，及时发现和解决问题
 - **利用免费服务**：优先使用AIGate免费额度，减少成本
 - **保持更新**：及时更新系统版本，享受最新功能和修复
+- **适配器选择**：根据具体需求选择最适合的AI模型适配器
