@@ -1,21 +1,31 @@
 import * as React from 'react'
 import { Adapter } from '@/utils/data-context'
 
-const adapterArray: [Adapter, Adapter, Adapter, Adapter] = ['openai', 'spark', 'aigate', 'custom']
+const adapterArray: [Adapter, Adapter, Adapter, Adapter, Adapter, Adapter] = [
+  'openai',
+  'spark',
+  'aigate',
+  'custom',
+  'qianwen',
+  'kimi',
+]
 
 const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode }[] = [
   {
     label: '星火大模型',
     value: 'spark',
-    help: '推荐当前星火大模型，有免费额度',
   },
   {
     label: 'OpenAi',
     value: 'openai',
   },
   {
-    label: 'AIGate',
-    value: 'aigate',
+    label: '通义千问',
+    value: 'qianwen',
+  },
+  {
+    label: 'Kimi',
+    value: 'kimi',
   },
   {
     label: '自定义',
@@ -28,6 +38,8 @@ const defaultExtraParams: Record<Adapter, Record<string, any>> = {
   openai: {},
   custom: {},
   aigate: {},
+  qianwen: {},
+  kimi: {},
 }
 
 export type { Adapter }
