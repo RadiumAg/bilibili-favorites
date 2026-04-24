@@ -12,20 +12,20 @@ const adapterArray: [Adapter, Adapter, Adapter, Adapter, Adapter, Adapter] = [
 
 const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode }[] = [
   {
-    label: '星火大模型',
-    value: 'spark',
-  },
-  {
-    label: 'OpenAi',
-    value: 'openai',
-  },
-  {
     label: '通义千问',
     value: 'qianwen',
   },
   {
     label: 'Kimi',
     value: 'kimi',
+  },
+  {
+    label: '星火大模型',
+    value: 'spark',
+  },
+  {
+    label: 'OpenAi',
+    value: 'openai',
   },
   {
     label: '自定义',
