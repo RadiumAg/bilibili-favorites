@@ -66,11 +66,8 @@ const Setting: React.FC = () => {
 
   React.useEffect(() => {
     if (globalData.aiConfig.adapter == null) return
-    const currentExtraParams = form.getValues('extraParams')
     const defaultParams = defaultExtraParams[globalData.aiConfig.adapter]
-    if (!currentExtraParams || currentExtraParams.trim() === '') {
-      form.setValue('extraParams', JSON.stringify(defaultParams))
-    }
+    form.setValue('extraParams', JSON.stringify(defaultParams))
   }, [form, globalData.aiConfig.adapter])
 
   return (

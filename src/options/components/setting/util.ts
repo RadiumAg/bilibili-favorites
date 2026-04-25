@@ -35,11 +35,17 @@ const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode 
 
 const defaultExtraParams: Record<Adapter, Record<string, any>> = {
   spark: { thinking: { type: 'disabled' } },
-  openai: {},
+  openai: {
+    chat_template_kwargs: { enable_thinking: false },
+  },
   custom: {},
   aigate: {},
-  qianwen: {},
-  kimi: {},
+  qianwen: {
+    chat_template_kwargs: { enable_thinking: false },
+  },
+  kimi: {
+    chat_template_kwargs: { enable_thinking: false },
+  },
 }
 
 export type { Adapter }

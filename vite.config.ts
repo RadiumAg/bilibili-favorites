@@ -34,9 +34,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       crx({ manifest }),
       react({
-        babel: {
-          plugins: ['babel-plugin-react-compiler'],
-        },
+        // 有点bug，先注释
+        // babel: {
+        //   plugins: ['babel-plugin-react-compiler'],
+        // },
       }),
     ],
   }

@@ -32,6 +32,9 @@ export const CustomConfigForm: React.FC<CustomConfigFormProps> = ({
   showApiKey,
   onToggleApiKeyVisibility,
 }) => {
+  const adapter = form.getValues('adapter')
+  const isExtraParamsDisabled = adapter !== 'custom'
+
   const adapterSelectItemEleArray = React.useMemo(() => {
     return selectItemsArray.map((adapterName, index) => {
       const { value, label, help } = adapterName
@@ -45,7 +48,7 @@ export const CustomConfigForm: React.FC<CustomConfigFormProps> = ({
         </SelectItem>
       )
     })
-  }, [selectItemsArray])
+  }, [])
 
   return (
     <>
@@ -133,16 +136,20 @@ export const CustomConfigForm: React.FC<CustomConfigFormProps> = ({
       <FormField
         control={form.control}
         name="extraParams"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Extra Params</FormLabel>
-            <FormControl>
-              <Textarea placeholder="输入其它参数，例如调整跳过思考过程" {...field} />
-            </FormControl>
-            <FormDescription>其它参数</FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
+        disabled={isExtraParamsDisabled}
+        render={({ field }) => {
+          console.log(isExtraParamsDisabled)
+          return (
+            <FormItem>
+              <FormLabel>Extra Params</FormLabel>
+              <FormControl>
+                <Textarea placeholder="输入其它参数，例如调整跳过思考过程" {...field} />
+              </FormControl>
+              <FormDescription>其它参数</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )
+        }}
       />
     </>
   )
