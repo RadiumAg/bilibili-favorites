@@ -18,22 +18,72 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Eye, EyeOff } from 'lucide-react'
-import { UseFormReturn } from 'react-hook-form'
-import { selectItemsArray } from '../util'
+import { Form, UseFormReturn } from 'react-hook-form'
+import { Adapter, defaultExtraParams, selectItemsArray } from '../util'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { useGlobalConfig } from '@/store/global-data'
+import { toast } from '@/hooks/use-toast'
+import { useShallow } from 'zustand/react/shallow'
+import type { ConfigMode, formSchema as formSchemaType } from '../types'
 
-interface CustomConfigFormProps {
-  form: UseFormReturn<any>
-  showApiKey: boolean
-  onToggleApiKeyVisibility: () => void
-}
-
-export const CustomConfigForm: React.FC<CustomConfigFormProps> = ({
-  form,
-  showApiKey,
-  onToggleApiKeyVisibility,
-}) => {
+export const CustomConfigForm: React.FC = () => {
+  const globalData = useGlobalConfig(
+    useShallow((state) => ({
+      aiConfig: state.aiConfig,
+      setGlobalData: state.setGlobalData,
+    })),
+  )
+  const [showApiKey, setShowApiKey] = React.useState(false)
+  const form = useForm<z.infer<typeof formSchemaType>>({
+    defaultValues: {
+      key: globalData.aiConfig.key || '',
+      baseUrl: globalData.aiConfig.baseUrl || '',
+      model: globalData.aiConfig.model || '',
+      extraParams: globalData.aiConfig.extraParams
+        ? JSON.stringify(globalData.aiConfig.extraParams)
+        : '',
+      adapter: globalData.aiConfig.adapter || 'spark',
+      aigateUserId: globalData.aiConfig.aigateUserId || '',
+      aigateApiKeyId: globalData.aiConfig.aigateApiKeyId || '',
+      configMode: globalData.aiConfig.configMode || 'custom',
+    },
+  })
   const adapter = form.getValues('adapter')
   const isExtraParamsDisabled = adapter !== 'custom'
+
+  const handleSubmit = (data: z.infer<typeof formSchemaType>) => {
+    try {
+      globalData.setGlobalData({
+        aiConfig: {
+          key: data.key,
+          model: data.model,
+          baseUrl: data.baseUrl,
+          extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
+          adapter: data.adapter as Adapter,
+          aigateUserId: data.aigateUserId,
+          aigateApiKeyId: data.aigateApiKeyId,
+          configMode: data.configMode as ConfigMode,
+        },
+      })
+    } catch (e) {
+      if (e instanceof Error) {
+        toast({
+          variant: 'destructive',
+          title: `哪里不对哦`,
+          description: e.message,
+        })
+      }
+    }
+
+    toast({ variant: 'default', title: 'ok没问题' })
+  }
+
+  React.useEffect(() => {
+    if (globalData.aiConfig.adapter == null) return
+    const defaultParams = defaultExtraParams[globalData.aiConfig.adapter]
+    form.setValue('extraParams', JSON.stringify(defaultParams))
+  }, [form, globalData.aiConfig.adapter])
 
   const adapterSelectItemEleArray = React.useMemo(() => {
     return selectItemsArray.map((adapterName, index) => {
@@ -51,7 +101,7 @@ export const CustomConfigForm: React.FC<CustomConfigFormProps> = ({
   }, [])
 
   return (
-    <>
+    <Form {...form} onChange={form.handleSubmit(handleSubmit)}>
       <FormField
         control={form.control}
         name="adapter"
@@ -100,7 +150,6 @@ export const CustomConfigForm: React.FC<CustomConfigFormProps> = ({
                 />
                 <button
                   type="button"
-                  onClick={onToggleApiKeyVisibility}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200 cursor-pointer"
                   aria-label={showApiKey ? '隐藏 API Key' : '显示 API Key'}
                 >
@@ -138,7 +187,6 @@ export const CustomConfigForm: React.FC<CustomConfigFormProps> = ({
         name="extraParams"
         disabled={isExtraParamsDisabled}
         render={({ field }) => {
-          console.log(isExtraParamsDisabled)
           return (
             <FormItem>
               <FormLabel>Extra Params</FormLabel>
@@ -151,6 +199,6 @@ export const CustomConfigForm: React.FC<CustomConfigFormProps> = ({
           )
         }}
       />
-    </>
+    </Form>
   )
 }
