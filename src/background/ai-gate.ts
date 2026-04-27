@@ -127,10 +127,26 @@ const callAIGateAI = async (
         userId,
         apiKeyId,
         request: {
-          model: 'qwen-turbo',
           temperature: 0,
-          messages,
           chat_template_kwargs: { enable_thinking: false },
+          messages: messages.map((message) => {
+            let type = ''
+            switch (message.type) {
+              case 'ai':
+              case 'system':
+                type = 'assistant'
+                break
+              case 'human':
+                type = 'user'
+                break
+              default:
+                type = 'user'
+            }
+            return {
+              role: type,
+              content: message.content,
+            }
+          }),
         },
       }),
     })
