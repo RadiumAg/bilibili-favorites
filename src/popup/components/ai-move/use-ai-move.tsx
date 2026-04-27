@@ -19,6 +19,7 @@ type AIMoveResult = {
   videoId: number
   videoTitle: string
   reason: string
+  isFallback?: boolean
 }
 
 const useAIMove = () => {
@@ -47,7 +48,9 @@ const useAIMove = () => {
   }, [dataContext.favoriteData])
 
   const analyzeVideosWithAI = useMemoizedFn(
-    async (videos: { id: number; title: string }[]): Promise<AIMoveResult[]> => {
+    async (
+      videos: { id: number; title: string }[],
+    ): Promise<{ results: AIMoveResult[]; fallbackItems: string[] }> => {
       const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
 
       // 根据 configMode 判断使用自定义还是内置 AI
@@ -90,7 +93,8 @@ const useAIMove = () => {
 
         const aiResults = JSON.parse(jsonMatch[0])
 
-        const results: AIMoveResult[] = videos
+        const fallbackItems: string[] = []
+        const results = videos
           .map((video) => {
             const aiResult = aiResults.find((r: any) => r.title === video.title)
             if (!aiResult) return null
@@ -98,6 +102,10 @@ const useAIMove = () => {
             const targetFavorite = dataContext.favoriteData.find(
               (fav) => fav.title === aiResult.targetFavorite,
             )
+            const isFallback = !targetFavorite
+            if (isFallback) {
+              fallbackItems.push(`${video.title} → AI建议"${aiResult.targetFavorite}"不在列表中`)
+            }
 
             return {
               title: aiResult.title,
@@ -105,11 +113,19 @@ const useAIMove = () => {
               videoId: video.id,
               videoTitle: video.title,
               reason: aiResult.reason,
+              isFallback,
             }
           })
-          .filter((r): r is AIMoveResult => r !== null)
+          .filter((r) => r !== null) as AIMoveResult[]
 
-        return results
+        if (fallbackItems.length > 0) {
+          console.warn(
+            '[AI Move] 以下视频的 targetFavorite 不在收藏夹列表中，已归到默认收藏夹:',
+            fallbackItems,
+          )
+        }
+
+        return { results, fallbackItems }
       } catch (error) {
         if (error instanceof AIError) {
           throw new AIError(`AI 分析失败: ${error.message}`, error.detail)
@@ -219,7 +235,7 @@ const useAIMove = () => {
         description: `正在分析 ${videos.length} 个视频...`,
       })
 
-      const results = await analyzeVideosWithAI(videos)
+      const { results, fallbackItems } = await analyzeVideosWithAI(videos)
 
       if (abortControllerRef.current?.signal.aborted) {
         throw new AIError('用户取消操作')
@@ -235,13 +251,20 @@ const useAIMove = () => {
 
       setMoveResults(movedResults)
 
-      // 统计成功/失败
+      // 统计成功/失败/兜底
       const successCount = movedResults.filter((r) => !r.title.startsWith('❌')).length
       const failCount = movedResults.length - successCount
+      const fallbackCount = movedResults.filter((r) => r.isFallback).length
+
+      const detail =
+        fallbackItems.length > 0
+          ? `以下 ${fallbackItems.length} 个视频因AI返回的收藏夹不在列表中，已归到默认收藏夹：\n${fallbackItems.join('\n')}`
+          : undefined
 
       toast({
         title: '整理完成',
-        description: `成功: ${successCount}, 失败: ${failCount}`,
+        description: `成功: ${successCount}, 失败: ${failCount}${fallbackCount > 0 ? `, 兜底: ${fallbackCount}` : ''}`,
+        detail,
       })
 
       await sleep(1000)

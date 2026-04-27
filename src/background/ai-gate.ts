@@ -7,7 +7,7 @@ import {
 import { getExtensionDeviceId } from '@/utils/tab'
 import { AIError } from '@/utils/error'
 
-const apiKeyId = 'key_1777274963739_cg5xe87j5g'
+const apiKeyId = 'key_1773224729422_glodcb9m00i'
 const freeApiUrl = import.meta.env.VITE_FREE_API
 
 /**
@@ -125,30 +125,13 @@ const callAIGateAI = async (
       },
       body: JSON.stringify({
         userId,
-        request: {
-          model: 'spark-x',
-          thinking: { type: 'disabled' },
-          messages: messages.map((message) => {
-            let type = ''
-            switch (message.type) {
-              case 'ai':
-              case 'system':
-                type = 'assistant'
-                break
-              case 'human':
-                type = 'user'
-                break
-              default:
-                type = 'user'
-            }
-            return {
-              role: type,
-              content: message.content,
-            }
-          }),
-          temperature: 0,
-        },
         apiKeyId,
+        request: {
+          model: 'qwen-turbo',
+          temperature: 0,
+          messages,
+          chat_template_kwargs: { enable_thinking: false },
+        },
       }),
     })
 
