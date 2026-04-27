@@ -231,11 +231,12 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
   }
 }
 
-const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
+const fetchChatGpt = async (titleArray: string[], config: AIConfig, useCustomAI: boolean) => {
   return connectAndStream({
     type: MessageEnum.fetchChatGpt,
     data: {
       titleArray,
+      useCustomAI,
       config: {
         apiKey: config.apiKey,
         baseURL: config.baseURL,
@@ -246,11 +247,17 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   })
 }
 
-const fetchAIMove = async (videos: AIMoveInput, favoriteTitles: string[], config: AIMoveConfig) => {
+const fetchAIMove = async (
+  videos: AIMoveInput,
+  favoriteTitles: string[],
+  config: AIMoveConfig,
+  useCustomAI: boolean,
+) => {
   return connectAndStream({
     type: MessageEnum.fetchAIMove,
     data: {
       videos,
+      useCustomAI,
       favoriteTitles,
       config: {
         apiKey: config.apiKey,
