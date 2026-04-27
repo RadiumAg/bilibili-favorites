@@ -129,7 +129,24 @@ const callAIGateAI = async (
         request: {
           model: 'qwen-turbo',
           temperature: 0,
-          messages,
+          messages: messages.map((message) => {
+            let type = ''
+            switch (message.type) {
+              case 'ai':
+              case 'system':
+                type = 'assistant'
+                break
+              case 'human':
+                type = 'user'
+                break
+              default:
+                type = 'user'
+            }
+            return {
+              role: type,
+              content: message.content,
+            }
+          }),
           chat_template_kwargs: { enable_thinking: false },
         },
       }),
@@ -172,14 +189,6 @@ const callAIGateAI = async (
           try {
             const dataStr = trimmedLine.substring(6) // 移除 "data: " 前缀
             const data = JSON.parse(dataStr)
-
-            // 检查是否有错误
-            if (data.code !== 0) {
-              const detail = data.message || 'API 返回错误'
-              port.postMessage({ type: 'error', content: detail })
-              throw new AIError('AIGate API 返回错误', detail)
-            }
-
             // 流式发送每个 chunk
             if (data.choices && data.choices[0]?.delta) {
               port.postMessage({ type: 'chunk', content: JSON.stringify(data) })
