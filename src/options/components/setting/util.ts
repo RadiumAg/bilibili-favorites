@@ -59,7 +59,10 @@ const defaultParams: Record<Adapter, z.infer<typeof formSchema>> = {
   kimi: {
     baseUrl: 'https://api.moonshot.ai/v1',
     extraParams: JSON.stringify({
-      chat_template_kwargs: { enable_thinking: false },
+      thinking: {
+        type: 'disabled',
+        keep: 'null',
+      },
     }),
   },
 }
