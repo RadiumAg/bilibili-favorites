@@ -9,6 +9,10 @@ Summary
   5. version timestamp follow the yyyy.MM.dd format
 ```
 
+## 1.2.5 [2025.04.27]
+
+- fix: 移除 ai-gate 中多余的流式错误检查代码
+
 ## 1.2.1 [2025.04.14]
 
 - fix: bar-chart 柱状图圆角修复，解决底部被切掉的问题
