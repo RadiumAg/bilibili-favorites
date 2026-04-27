@@ -2,34 +2,34 @@
 
 <cite>
 **本文档引用的文件**
-- [use-create-keyword-by-ai/ai-stream-parser.ts](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts)
-- [use-create-keyword/index.tsx](file://src/hooks/use-create-keyword/index.tsx)
-- [keyword-extractor.ts](file://src/utils/keyword-extractor.ts)
+- [ai-gate.ts](file://src/background/ai-gate.ts)
+- [utils.ts](file://src/background/utils.ts)
+- [index.ts](file://src/background/index.ts)
+- [ai-stream-parser.ts](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts)
+- [use-ai-move.tsx](file://src/popup/components/ai-move/use-ai-move.tsx)
 - [api.ts](file://src/utils/api.ts)
-- [background/index.ts](file://src/background/index.ts)
+- [message.ts](file://src/utils/message.ts)
 - [global-data.ts](file://src/store/global-data.ts)
-- [data-context.ts](file://src/utils/data-context.ts)
-- [setting/index.tsx](file://src/options/components/setting/index.tsx)
 - [types.ts](file://src/options/components/setting/types.ts)
 - [util.ts](file://src/options/components/setting/util.ts)
+- [keyword-extractor.ts](file://src/utils/keyword-extractor.ts)
 - [keyword/index.tsx](file://src/components/keyword/index.tsx)
 - [use-edit-keyword/index.tsx](file://src/hooks/use-edit-keyword/index.tsx)
-- [use-set-default-fav/index.tsx](file://src/hooks/use-set-default-fav/index.tsx)
-- [message.ts](file://src/utils/message.ts)
-- [free-quota-panel.tsx](file://src/options/components/setting/components/free-quota-panel.tsx)
-- [config-mode-selector.tsx](file://src/options/components/setting/components/config-mode-selector.tsx)
-- [quota-card.tsx](file://src/options/components/setting/components/quota-card.tsx)
-- [ai-stream-parser.test.ts](file://tests/ai-stream-adapter.test.ts)
+- [ai-stream-parser.test.ts](file://tests/ai-stream-parser.test.ts)
+- [ai-stream-adapter.test.ts](file://tests/ai-stream-adapter.test.ts)
+- [ai-stream-connect.test.ts](file://tests/ai-stream-connect.test.ts)
 - [package.json](file://package.json)
 - [README.md](file://README.md)
 </cite>
 
 ## 更新摘要
-**变更内容**
-- 新增Qwen和Kimi适配器支持，扩展AI模型适配器类型
-- 更新AI模型选择界面，支持更多AI服务商选择
-- 扩展适配器类型支持，包括qianwen和kimi类型
-- 保持原有AI流解析器和关键词管理功能不变
+**所做更改**
+- 新增多AI提供商集成支持（Qwen、Kimi、通义千问、GML）
+- 新增LangChain架构支持和消息模板系统
+- 新增AIGate免费AI服务集成和配额管理
+- 新增后台处理模块（ai-gate.ts）和AI工具集（utils.ts）
+- 更新AI流解析器以支持更多适配器类型
+- 新增AI移动分类功能和配额检查机制
 
 ## 目录
 1. [简介](#简介)
@@ -47,13 +47,12 @@
 
 AI关键词提取系统是一个基于Chrome扩展的智能工具，专门用于帮助用户高效管理和分析Bilibili收藏夹内容。该系统的核心功能包括：
 
+- **多AI提供商集成**：支持OpenAI、Qwen、Kimi、通义千问、GML等多种AI模型的流式响应处理
+- **LangChain架构支持**：基于LangChain的消息模板和流式处理机制
 - **智能关键词管理**：支持关键词的创建、编辑、删除和组织管理
 - **本地TF-IDF算法**：提供离线关键词提取能力
-- **基础关键词编辑**：提供可视化的关键词编辑界面
-- **配置管理模式**：支持自定义配置和免费额度配置
-- **多AI模型适配**：支持OpenAI、星火、通义千问、Kimi等多种AI模型
-
-**重要更新**：系统已新增Qwen和Kimi适配器支持，扩展了AI模型选择范围，同时保持原有的AI流解析器和关键词管理功能。
+- **实时流式处理**：支持SSE流式数据的实时解析和更新
+- **AIGate免费服务**：提供内置的免费AI配额管理和流式响应处理
 
 系统采用模块化设计，通过Chrome扩展的消息传递机制实现前后端分离，确保良好的用户体验和性能表现。
 
@@ -64,11 +63,11 @@ AI关键词提取系统是一个基于Chrome扩展的智能工具，专门用于
 ```mermaid
 graph TB
 subgraph "前端层"
-A[src/hooks/] --> A2[use-edit-keyword/]
-A --> A3[use-set-default-fav/]
+A[src/hooks/] --> A1[use-create-keyword-by-ai/]
+A --> A2[use-edit-keyword/]
 B[src/components/] --> B1[keyword/]
 C[src/options/] --> C1[components/setting/]
-D[src/popup/] --> D1[components/]
+D[src/popup/] --> D1[components/ai-move/]
 E[src/sidepanel/] --> E1[components/]
 end
 subgraph "工具层"
@@ -81,8 +80,10 @@ subgraph "状态管理"
 G[src/store/] --> G1[global-data.ts]
 G --> G2[chorme-storage-middleware.ts]
 end
-subgraph "后台服务"
+subgraph "后台服务层"
 H[src/background/] --> H1[index.ts]
+H --> H2[ai-gate.ts]
+H --> H3[utils.ts]
 end
 subgraph "测试层"
 I[tests/]
@@ -99,11 +100,38 @@ end
 
 ## 核心组件
 
+### LangChain消息模板系统
+
+系统集成了完整的LangChain消息模板系统，支持多种AI模型的标准化消息格式：
+
+- **关键词提取模板**：基于ChatPromptTemplate的系统提示和few-shot示例
+- **AI移动分类模板**：专门针对视频分类任务的消息模板
+- **标准化消息格式**：统一不同AI模型的消息结构
+- **动态参数注入**：支持运行时参数的动态替换
+
+### AIGate免费AI服务
+
+AIGate提供了完整的免费AI服务集成，包括：
+
+- **配额管理系统**：每日、每分钟请求配额检查
+- **SSE流式响应**：标准的SSE数据流处理
+- **错误处理机制**：完善的异常捕获和错误上报
+- **用户标识管理**：基于扩展设备ID的用户识别
+
+### AI流解析器组件
+
+AI流解析器是系统的核心组件，负责处理来自AI模型的流式响应数据。它实现了以下关键功能：
+
+- **多适配器支持**：支持OpenAI、星火、Qwen、Kimi等多种模型格式
+- **增量解析**：实时解析SSE流数据，支持关键词的渐进式提取
+- **缓冲区管理**：智能管理解析过程中的数据缓冲区
+- **错误处理**：完善的异常处理和数据验证机制
+
 ### 关键词管理组件
 
 关键词管理组件提供了完整的关键词生命周期管理：
 
-- **关键词创建**：支持通过本地TF-IDF算法自动提取和手动输入两种方式
+- **关键词创建**：支持通过AI自动提取和手动输入两种方式
 - **关键词编辑**：提供可视化的关键词编辑界面
 - **关键词删除**：支持单个和批量删除操作
 - **关键词组织**：按收藏夹进行关键词分类管理
@@ -117,29 +145,12 @@ end
 - **权重计算**：基于TF-IDF算法计算关键词重要性
 - **结果排序**：按权重对关键词进行排序和筛选
 
-### 关键词编辑组件
-
-关键词编辑组件提供了直观的操作体验：
-
-- **可视化标签**：以标签形式展示现有关键词
-- **键盘快捷键**：支持Enter创建、Backspace删除
-- **实时更新**：关键词变更立即反映到UI
-- **防重复机制**：自动检测并防止重复关键词
-
-### AI模型适配器组件
-
-AI模型适配器组件支持多种AI服务商的流式响应解析：
-
-- **星火大模型适配器**：支持讯飞星火大模型的SSE流解析
-- **OpenAI适配器**：支持OpenAI兼容模型的流式响应解析
-- **通义千问适配器**：支持通义千问模型的流式响应解析
-- **Kimi适配器**：支持Kimi模型的流式响应解析
-- **自定义适配器**：支持用户自定义AI模型的适配
-
 **章节来源**
+- [utils.ts:1-183](file://src/background/utils.ts#L1-L183)
+- [ai-gate.ts:1-209](file://src/background/ai-gate.ts#L1-L209)
+- [ai-stream-parser.ts:1-282](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L282)
 - [keyword-extractor.ts:1-197](file://src/utils/keyword-extractor.ts#L1-L197)
-- [use-edit-keyword/index.tsx:1-113](file://src/hooks/use-edit-keyword/index.tsx#L1-L113)
-- [use-set-default-fav/index.tsx:1-126](file://src/hooks/use-set-default-fav/index.tsx#L1-L126)
+- [use-edit-keyword/index.tsx:1-108](file://src/hooks/use-edit-keyword/index.tsx#L1-L108)
 
 ## 架构概览
 
@@ -153,11 +164,10 @@ UI --> SidePanel[侧边栏界面]
 UI --> Options[设置界面]
 end
 subgraph "业务逻辑层"
-Hook[Hooks] --> EditKeyword[关键词编辑Hook]
-Hook --> SetDefaultFav[默认收藏夹设置Hook]
+Hook[Hooks] --> CreateKeyword[关键词创建Hook]
+Hook --> EditKeyword[关键词编辑Hook]
 Utils[工具函数] --> API[API封装]
 Utils --> Extractor[关键词提取器]
-Utils --> StreamParser[AI流解析器]
 end
 subgraph "状态管理层"
 Store[Zustand状态管理]
@@ -166,14 +176,15 @@ end
 subgraph "后台服务层"
 Background[Background Script]
 Message[消息传递]
+Stream[流式处理]
 AIGate[AIGate免费服务]
+LangChain[LangChain工具集]
 end
 subgraph "AI服务层"
 OpenAI[OpenAI API]
-Spark[星火大模型]
 Qwen[通义千问]
 Kimi[Kimi]
-Custom[自定义AI模型]
+AIGateAPI[AIGate API]
 end
 Popup --> Hook
 SidePanel --> Hook
@@ -181,15 +192,234 @@ Options --> Store
 Hook --> Store
 Store --> Background
 Background --> Message
-Message --> AIGate
+Message --> Stream
+Stream --> AIGate
+Stream --> LangChain
+LangChain --> OpenAI
+LangChain --> Qwen
+LangChain --> Kimi
+AIGate --> AIGateAPI
 ```
 
 **图表来源**
-- [background/index.ts:1-393](file://src/background/index.ts#L1-L393)
-- [api.ts:1-340](file://src/utils/api.ts#L1-L340)
-- [global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
+- [index.ts:1-87](file://src/background/index.ts#L1-L87)
+- [api.ts:1-348](file://src/utils/api.ts#L1-L348)
+- [global-data.ts:1-30](file://src/store/global-data.ts#L1-L30)
 
 ## 详细组件分析
+
+### LangChain消息模板实现
+
+系统集成了完整的LangChain消息模板系统，实现了标准化的消息处理机制：
+
+```mermaid
+classDiagram
+class ChatPromptTemplate {
+<<interface>>
++fromMessages(messages) ChatPromptTemplate
++formatMessages(args) Promise~BaseMessageLike[]~
+}
+class KeywordExtractionPrompt {
+-systemPrompt : string
+-examples : Examples[]
++buildPrompt() ChatPromptTemplate
+}
+class AIMovePrompt {
+-systemPrompt : string
+-examples : Examples[]
++buildPrompt() ChatPromptTemplate
+}
+class BaseMessage {
+-role : string
+-content : string
+}
+class MessagesBuilder {
+-messages : BaseMessage[]
++addSystem(content) void
++addUser(content) void
++addAssistant(content) void
++build() BaseMessage[]
+}
+ChatPromptTemplate <|.. KeywordExtractionPrompt
+ChatPromptTemplate <|.. AIMovePrompt
+MessagesBuilder --> BaseMessage : creates
+KeywordExtractionPrompt --> BaseMessage : formats
+AIMovePrompt --> BaseMessage : formats
+```
+
+**图表来源**
+- [utils.ts:34-50](file://src/background/utils.ts#L34-L50)
+- [utils.ts:99-118](file://src/background/utils.ts#L99-L118)
+
+#### 消息模板构建流程
+
+系统通过以下流程构建标准化的消息模板：
+
+```mermaid
+sequenceDiagram
+participant Client as 客户端
+participant Builder as MessagesBuilder
+participant Template as ChatPromptTemplate
+participant Model as AI模型
+Client->>Builder : buildKeywordExtractionMessages(titles)
+Builder->>Template : fromMessages(systemPrompt, examples)
+Template->>Template : formatMessages({titles})
+Template-->>Builder : BaseMessage[]
+Builder-->>Client : 格式化后的消息数组
+Note over Builder,Model : 标准化消息格式，支持多AI提供商
+```
+
+**图表来源**
+- [utils.ts:46-50](file://src/background/utils.ts#L46-L50)
+- [utils.ts:111-118](file://src/background/utils.ts#L111-L118)
+
+**章节来源**
+- [utils.ts:1-183](file://src/background/utils.ts#L1-L183)
+
+### AIGate免费AI服务集成
+
+AIGate服务提供了完整的免费AI集成方案，包括配额管理和流式响应处理：
+
+```mermaid
+flowchart TD
+Start([开始AI请求]) --> CheckQuota[检查AIGate配额]
+CheckQuota --> HasQuota{配额充足?}
+HasQuota --> |否| ThrowError[抛出配额不足错误]
+HasQuota --> |是| CallAPI[调用AIGate API]
+CallAPI --> SSEStream[SSE流式响应]
+SSEStream --> ParseChunk[解析数据块]
+ParseChunk --> SendChunk[发送chunk到前端]
+SendChunk --> MoreData{还有数据?}
+MoreData --> |是| SSEStream
+MoreData --> |否| Done[发送done信号]
+ThrowError --> End([结束])
+Done --> End
+```
+
+**图表来源**
+- [ai-gate.ts:106-206](file://src/background/ai-gate.ts#L106-L206)
+
+#### 配额管理系统
+
+AIGate提供了完善的配额管理机制：
+
+- **每日配额**：基于请求次数的每日限制
+- **RPM限制**：每分钟请求频率限制
+- **用户标识**：基于扩展设备ID的用户识别
+- **实时检查**：请求前的配额状态检查
+
+**章节来源**
+- [ai-gate.ts:1-209](file://src/background/ai-gate.ts#L1-L209)
+
+### AI流解析器实现原理
+
+AI流解析器采用了适配器模式和流式处理技术，实现了对不同AI模型响应格式的统一处理：
+
+```mermaid
+classDiagram
+class AIStreamAdapter {
+<<interface>>
++parse(chunk : Uint8Array) string
+}
+class SparkStreamAdapter {
++parse(chunk : Uint8Array) string
+}
+class OpenAIStreamAdapter {
++parse(chunk : Uint8Array) string
+}
+class QwenStreamAdapter {
++parse(chunk : Uint8Array) string
+}
+class KimiStreamAdapter {
++parse(chunk : Uint8Array) string
+}
+class StreamParser {
+-buffer : string
+-adapter : AIStreamAdapter
++processChunk(value : Uint8Array) void
++getBuffer() string
++clearBuffer() void
++flush() void
+}
+class StreamParserOptions {
++favKey : string
++getGlobalData() DataContextType
++setGlobalData(data : Partial~DataContextType~) void
++onKeywordExtracted(keyword : string) void
++adapter : AIStreamAdapter
+}
+AIStreamAdapter <|.. SparkStreamAdapter
+AIStreamAdapter <|.. OpenAIStreamAdapter
+AIStreamAdapter <|.. QwenStreamAdapter
+AIStreamAdapter <|.. KimiStreamAdapter
+StreamParser --> AIStreamAdapter : uses
+StreamParser --> StreamParserOptions : configured by
+```
+
+**图表来源**
+- [ai-stream-parser.ts:26-97](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L26-L97)
+- [ai-stream-parser.ts:225-282](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L225-L282)
+
+#### 流式响应处理流程
+
+系统通过以下流程处理AI模型的流式响应：
+
+```mermaid
+sequenceDiagram
+participant Client as 客户端
+participant Parser as AI流解析器
+participant Adapter as 适配器
+participant AI as AI模型
+participant Store as 状态存储
+Client->>Parser : processChunk(Uint8Array)
+Parser->>Adapter : parse(chunk)
+Adapter->>Adapter : TextDecoder.decode()
+Adapter->>Adapter : JSON.parse()
+Adapter-->>Parser : content字符串
+Parser->>Parser : shouldSkipContent()
+Parser->>Parser : extractKeywordFromBuffer()
+Parser->>Store : addKeywordToGlobalData()
+Store-->>Client : 更新关键词列表
+Note over Parser,AI : 实时流式处理，支持增量解析
+```
+
+**图表来源**
+- [ai-stream-parser.ts:188-218](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L188-L218)
+- [ai-stream-parser.ts:231-250](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L231-L250)
+
+#### 关键词提取算法
+
+系统实现了高效的关键词提取算法，支持多种数据格式：
+
+```mermaid
+flowchart TD
+Start([开始解析]) --> Decode[解码流数据]
+Decode --> ParseJSON[解析JSON格式]
+ParseJSON --> ExtractContent{提取内容字段}
+ExtractContent --> |OpenAI/Qwen/Kimi| GetContent[获取choices.delta.content]
+ExtractContent --> |星火| GetReasoning[获取reasoning_content]
+GetContent --> SkipCheck[跳过内容检查]
+GetReasoning --> SkipCheck
+SkipCheck --> BufferAccumulate[缓冲区累积]
+BufferAccumulate --> ExtractKeyword[提取关键词]
+ExtractKeyword --> ValidateKeyword{验证关键词}
+ValidateKeyword --> |有效| AddToStore[添加到存储]
+ValidateKeyword --> |无效| ContinueParse[继续解析]
+AddToStore --> UpdateBuffer[更新缓冲区]
+UpdateBuffer --> ContinueParse
+ContinueParse --> MoreData{还有数据?}
+MoreData --> |是| Decode
+MoreData --> |否| Flush[刷新缓冲区]
+Flush --> End([结束])
+```
+
+**图表来源**
+- [ai-stream-parser.ts:121-149](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L121-L149)
+- [ai-stream-parser.ts:269-282](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L269-L282)
+
+**章节来源**
+- [ai-stream-parser.ts:1-282](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L282)
+- [ai-stream-parser.test.ts:1-243](file://tests/ai-stream-parser.test.ts#L1-L243)
 
 ### TF-IDF算法应用
 
@@ -265,106 +495,9 @@ KeywordManager --> Keyword : operates on
 - **实时更新**：关键词变更立即反映到UI
 - **防重复机制**：自动检测并防止重复关键词
 
-### AI模型适配器扩展
-
-系统新增了Qwen和Kimi适配器支持，扩展了AI模型适配能力：
-
-```mermaid
-classDiagram
-class AIStreamAdapter {
-<<interface>>
-+parse(chunk : Uint8Array) string
-}
-class SparkStreamAdapter {
-+parse(chunk : Uint8Array) string
-}
-class OpenAIStreamAdapter {
-+parse(chunk : Uint8Array) string
-}
-class QwenStreamAdapter {
-+parse(chunk : Uint8Array) string
-}
-class KimiStreamAdapter {
-+parse(chunk : Uint8Array) string
-}
-class AdapterFactory {
-+createStreamAdapter(adapterType : Adapter) AIStreamAdapter
-}
-AIStreamAdapter <|-- SparkStreamAdapter
-AIStreamAdapter <|-- OpenAIStreamAdapter
-AIStreamAdapter <|-- QwenStreamAdapter
-AIStreamAdapter <|-- KimiStreamAdapter
-AdapterFactory --> SparkStreamAdapter : creates
-AdapterFactory --> OpenAIStreamAdapter : creates
-AdapterFactory --> QwenStreamAdapter : creates
-AdapterFactory --> KimiStreamAdapter : creates
-```
-
-**图表来源**
-- [ai-stream-parser.ts:30-97](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L30-L97)
-
-#### 适配器类型支持
-
-系统支持的适配器类型包括：
-
-- **spark**：星火大模型适配器
-- **openai**：OpenAI兼容模型适配器
-- **custom**：自定义模型适配器
-- **qianwen**：通义千问模型适配器
-- **kimi**：Kimi模型适配器
-
-#### AI模型选择界面
-
-AI模型选择界面提供了直观的模型选择体验：
-
-- **通义千问**：支持通义千问模型的关键词提取
-- **Kimi**：支持Kimi模型的关键词提取
-- **星火大模型**：支持讯飞星火大模型的关键词提取
-- **OpenAI**：支持OpenAI兼容模型的关键词提取
-- **自定义**：支持用户自定义AI模型的关键词提取
-
 **章节来源**
-- [ai-stream-parser.ts:1-282](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L1-L282)
-- [util.ts:1-46](file://src/options/components/setting/util.ts#L1-L46)
-- [types.ts:1-99](file://src/options/components/setting/types.ts#L1-L99)
-
-### use-set-default-fav钩子bug修复
-
-use-set-default-fav钩子是系统中重要的交互组件，经过修复后提升了系统稳定性：
-
-```mermaid
-classDiagram
-class UseSetDefaultFav {
-+domRef : RefObject
-+isLongPress : boolean
-+clickTagId : number
-+pendingElement : JSX.Element
-+starElement : JSX.Element
-+handleClick(key) void
-+handleMouseDown(id) void
-+handleMouseUp() void
-+runProcess() void
-}
-class LongPressHandler {
-+delay : number
-+onLongPressEnd() void
-+onClick(event) void
-}
-UseSetDefaultFav --> LongPressHandler : uses
-```
-
-**图表来源**
-- [use-set-default-fav/index.tsx:8-126](file://src/hooks/use-set-default-fav/index.tsx#L8-L126)
-
-#### 修复的bug和改进
-
-- **状态同步问题**：修复了clickTagId和clickTagIdRef之间的状态不同步问题
-- **动画控制优化**：改进了长按动画的启动和停止逻辑
-- **内存泄漏防护**：确保组件卸载时正确清理定时器和事件监听器
-- **用户体验提升**：优化了长按触发的延迟和动画效果
-
-**章节来源**
-- [use-set-default-fav/index.tsx:1-126](file://src/hooks/use-set-default-fav/index.tsx#L1-L126)
+- [use-edit-keyword/index.tsx:1-108](file://src/hooks/use-edit-keyword/index.tsx#L1-L108)
+- [keyword/index.tsx:1-32](file://src/components/keyword/index.tsx#L1-L32)
 
 ### 配置管理功能
 
@@ -381,15 +514,14 @@ OpenAI[OpenAI]
 Spark[星火大模型]
 Qwen[通义千问]
 Kimi[Kimi]
-Custom[自定义]
+AIGate[AIGate]
 end
 subgraph "参数配置"
 APIKey[API Key]
 BaseURL[基础URL]
 Model[模型名称]
 ExtraParams[额外参数]
-AIGateUserId[AIGate用户ID]
-AIGateApiKey[AIGate API Key]
+Adapter[适配器类型]
 end
 Custom --> OpenAI
 Custom --> Spark
@@ -400,11 +532,9 @@ OpenAI --> APIKey
 Spark --> APIKey
 Qwen --> APIKey
 Kimi --> APIKey
-AIGate --> AIGateUserId
-AIGate --> AIGateApiKey
+AIGate --> APIKey
 APIKey --> ExtraParams
-AIGateUserId --> ExtraParams
-AIGateApiKey --> ExtraParams
+Adapter --> ExtraParams
 ```
 
 **图表来源**
@@ -425,6 +555,41 @@ AIGateApiKey --> ExtraParams
 - [types.ts:41-99](file://src/options/components/setting/types.ts#L41-L99)
 - [util.ts:18-22](file://src/options/components/setting/util.ts#L18-L22)
 
+### AI移动分类功能
+
+系统新增了AI移动分类功能，支持自动视频整理：
+
+```mermaid
+flowchart TD
+Input[输入视频列表] --> BuildPrompt[构建AI移动提示]
+BuildPrompt --> CallAI[调用AI模型]
+CallAI --> ParseResponse[解析JSON响应]
+ParseResponse --> ValidateResult{验证结果}
+ValidateResult --> |有效| MapToFavorites[映射到收藏夹]
+ValidateResult --> |无效| Fallback[使用默认收藏夹]
+MapToFavorites --> ExecuteMove[执行移动操作]
+Fallback --> ExecuteMove
+ExecuteMove --> UpdateUI[更新界面显示]
+UpdateUI --> Success[整理完成]
+```
+
+**图表来源**
+- [use-ai-move.tsx:50-139](file://src/popup/components/ai-move/use-ai-move.tsx#L50-L139)
+- [use-ai-move.tsx:141-292](file://src/popup/components/ai-move/use-ai-move.tsx#L141-L292)
+
+#### AI移动分类实现
+
+AI移动分类功能通过以下步骤实现：
+
+- **视频收集**：从默认收藏夹收集所有视频
+- **提示构建**：使用LangChain模板构建分类提示
+- **AI分析**：调用AI模型进行视频分类
+- **结果验证**：验证AI返回的收藏夹有效性
+- **批量移动**：执行视频移动操作
+
+**章节来源**
+- [use-ai-move.tsx:1-378](file://src/popup/components/ai-move/use-ai-move.tsx#L1-L378)
+
 ## 依赖关系分析
 
 系统采用模块化设计，各组件之间的依赖关系清晰明确：
@@ -434,9 +599,14 @@ graph TB
 subgraph "核心依赖"
 React[React 19.0.0]
 Zustand[Zustand 5.0.6]
-OpenAI[OpenAI 6.22.0]
+LangChain[LangChain Core]
 UUID[UUID 11.0.3]
-AIGate[AIGate SDK]
+Zod[Zod 3.0.0]
+end
+subgraph "AI模型SDK"
+OpenAI[OpenAI 6.22.0]
+DashScope[DashScope 2.0.0]
+Moonshot[Moonshot AI 1.0.0]
 end
 subgraph "UI组件库"
 RadixUI[Radix UI]
@@ -453,9 +623,10 @@ ChromeTypes[@types/chrome]
 CRXJS[CRXJS Vite Plugin]
 end
 React --> Zustand
+React --> LangChain
 React --> OpenAI
 React --> UUID
-React --> AIGate
+LangChain --> Zod
 UI --> RadixUI
 UI --> TailwindCSS
 UI --> Lucide
@@ -474,8 +645,10 @@ Extension --> CRXJS
 
 - **React 19.0.0**：提供现代化的组件开发体验
 - **Zustand 5.0.6**：轻量级状态管理解决方案
+- **LangChain Core**：提供消息模板和流式处理能力
 - **OpenAI 6.22.0**：官方OpenAI SDK，支持流式响应
-- **AIGate SDK**：新增的免费AI服务SDK
+- **DashScope**：通义千问官方SDK
+- **Moonshot**：Kimi官方SDK
 - **Radix UI**：高质量的无障碍UI组件库
 - **Tailwind CSS**：实用优先的CSS框架
 
@@ -486,29 +659,57 @@ Extension --> CRXJS
 
 系统在设计时充分考虑了性能优化：
 
+### 流式处理优化
+
+- **增量解析**：实时处理流数据，避免内存占用过高
+- **缓冲区管理**：智能管理解析缓冲区，支持断点续传
+- **并发控制**：限制同时进行的AI请求数量
+- **适配器复用**：避免频繁创建适配器实例
+
 ### 缓存策略
 
 - **数据缓存**：收藏夹数据缓存24小时，减少重复请求
 - **状态持久化**：使用Chrome Storage实现状态持久化
 - **索引数据库**：利用IndexedDB存储大量收藏夹数据
-- **配额缓存**：AIGate配额信息缓存，减少频繁检查
+- **配额缓存**：AIGate配额信息的短期缓存
 
 ### 内存管理
 
 - **垃圾回收**：及时释放不再使用的数据引用
 - **流式读取**：使用流式API避免大文件内存占用
 - **组件卸载**：确保组件卸载时清理相关资源
-- **长按处理**：优化use-set-default-fav钩子的内存使用
+- **适配器池化**：复用适配器实例减少内存分配
 
-### AI适配器优化
+### 多AI提供商优化
 
-- **适配器复用**：同一适配器实例可在多次请求中复用
-- **流式解析**：实时解析AI响应，避免内存累积
-- **错误恢复**：适配器解析失败时自动降级处理
+- **适配器选择**：根据AI模型类型选择最优解析器
+- **消息模板缓存**：缓存LangChain消息模板提升性能
+- **流式连接复用**：复用Chrome扩展端口连接
+- **配额预检查**：避免无效请求消耗配额
 
 ## 故障排除指南
 
 ### 常见问题及解决方案
+
+#### API配置问题
+
+**问题**：API Key配置无效
+**解决方案**：
+1. 检查API Key格式是否正确
+2. 确认模型名称是否支持
+3. 验证网络连接状态
+4. 查看浏览器控制台错误信息
+5. 检查AI提供商的可用性状态
+
+#### 流式响应处理问题
+
+**问题**：关键词提取不完整或延迟
+**解决方案**：
+1. 检查网络连接稳定性
+2. 验证AI模型响应格式
+3. 确认适配器配置正确
+4. 查看流式数据解析日志
+5. 检查AIGate配额状态
 
 #### 关键词管理问题
 
@@ -518,33 +719,17 @@ Extension --> CRXJS
 2. 确认关键词格式符合要求
 3. 验证收藏夹ID有效性
 4. 重启浏览器扩展
+5. 检查全局数据状态同步
 
-#### 关键词编辑问题
+#### AI移动分类问题
 
-**问题**：关键词编辑功能异常
+**问题**：AI移动功能无法正常工作
 **解决方案**：
-1. 检查键盘事件绑定是否正常
-2. 验证标签渲染和删除逻辑
-3. 确认组件状态同步
-4. 查看控制台是否有相关错误
-
-#### AI模型适配器问题
-
-**问题**：AI模型适配器解析失败
-**解决方案**：
-1. 检查AI模型响应格式是否符合预期
-2. 验证适配器类型选择是否正确
-3. 确认AI模型API配置是否正确
-4. 查看控制台是否有解析错误信息
-
-#### use-set-default-fav钩子问题
-
-**问题**：默认收藏夹设置功能异常
-**解决方案**：
-1. 检查长按触发是否正常
-2. 验证动画效果和状态同步
-3. 确认组件卸载时的资源清理
-4. 查看控制台是否有相关错误
+1. 检查默认收藏夹设置
+2. 验证AI配置的有效性
+3. 确认收藏夹列表加载完成
+4. 查看AI返回的分类结果
+5. 检查视频移动权限
 
 #### 性能问题
 
@@ -554,6 +739,17 @@ Extension --> CRXJS
 2. 检查扩展权限设置
 3. 减少同时进行的AI请求
 4. 升级到更高性能的设备
+5. 检查AIGate配额使用情况
+
+#### 配置模式切换问题
+
+**问题**：从免费模式切换到自定义模式失败
+**解决方案**：
+1. 确认自定义AI配置完整
+2. 验证API Key和模型名称
+3. 检查网络连接状态
+4. 查看配置验证错误信息
+5. 重新加载扩展页面
 
 **章节来源**
 - [background/index.ts:181-192](file://src/background/index.ts#L181-L192)
@@ -563,12 +759,14 @@ Extension --> CRXJS
 
 AI关键词提取系统是一个功能完整、架构清晰的Chrome扩展应用。系统的主要优势包括：
 
+- **多AI提供商支持**：支持OpenAI、Qwen、Kimi、通义千问等多种AI模型
+- **LangChain架构**：提供标准化的消息模板和流式处理能力
+- **AIGate免费服务**：内置免费AI配额管理和流式响应处理
 - **模块化设计**：各组件职责明确，便于维护和扩展
+- **流式处理**：支持实时AI响应处理，提供良好用户体验
 - **本地算法**：提供离线关键词提取能力，保护用户隐私
-- **多AI模型支持**：新增Qwen和Kimi适配器，扩展AI模型选择范围
-- **稳定可靠**：经过bug修复和优化，系统更加稳定
 - **完整配置**：支持灵活的配置管理，适应不同使用场景
-- **简洁高效**：保持原有功能的同时，增强了AI模型适配能力
+- **AI移动分类**：新增智能视频整理功能
 
 系统通过合理的架构设计和优化策略，在保证功能完整性的同时，确保了良好的性能表现和用户体验。
 
@@ -579,19 +777,18 @@ AI关键词提取系统是一个功能完整、架构清晰的Chrome扩展应用
 #### 基本使用流程
 
 1. **配置AI参数**：在设置页面配置API Key和模型参数
-2. **选择AI模型**：在AI模型选择界面选择合适的AI模型
-3. **选择收藏夹**：在关键词管理页面选择目标收藏夹
-4. **触发AI提取**：点击"AI提取关键词"按钮开始处理
-5. **编辑关键词**：在关键词列表中进行编辑和优化
-6. **应用关键词**：将关键词应用到收藏夹整理规则中
+2. **选择收藏夹**：在关键词管理页面选择目标收藏夹
+3. **触发AI提取**：点击"AI提取关键词"按钮开始处理
+4. **编辑关键词**：在关键词列表中进行编辑和优化
+5. **应用关键词**：将关键词应用到收藏夹整理规则中
 
 #### 高级配置
 
+- **多AI提供商**：通过适配器选择不同的AI模型
 - **自定义参数**：通过extraParams传递模型特定参数
-- **适配器选择**：根据AI模型选择合适的解析适配器
-- **配额管理**：监控和管理免费配额使用情况
+- **配额管理**：监控和管理AIGate免费配额使用情况
 - **批量操作**：支持对多个收藏夹进行批量关键词提取
-- **免费额度**：优先使用AIGate免费额度，降低成本
+- **AI移动分类**：使用AI自动整理视频到指定收藏夹
 
 ### 最佳实践
 
@@ -599,6 +796,5 @@ AI关键词提取系统是一个功能完整、架构清晰的Chrome扩展应用
 - **合理配置**：根据使用场景调整模型参数和阈值
 - **备份数据**：定期备份关键词配置和历史数据
 - **监控性能**：关注系统性能指标，及时发现和解决问题
-- **利用免费服务**：优先使用AIGate免费额度，减少成本
-- **保持更新**：及时更新系统版本，享受最新功能和修复
-- **适配器选择**：根据具体需求选择最适合的AI模型适配器
+- **配额管理**：合理使用AIGate免费配额，避免浪费
+- **多模型对比**：根据任务类型选择最适合的AI模型
