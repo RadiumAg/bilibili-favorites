@@ -85,7 +85,7 @@ const useAIMove = () => {
         console.log('[DEBUG] fullContent', fullContent)
         const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
         if (!jsonMatch) {
-          throw new AIError('AI 返回的数据格式错误，请重试', fullContent)
+          throw new AIError('AI 返回的数据格式错误，请重试', `返回数据：${fullContent}`)
         }
 
         const aiResults = JSON.parse(jsonMatch[0])
