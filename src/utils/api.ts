@@ -3,6 +3,7 @@ import { DataContextType } from './data-context'
 import { MessageEnum } from './message'
 import dbManager from './indexed-db'
 import { queryAndSendMessage } from './tab'
+import { AIError } from './error'
 
 type BResponse<T> = {
   code: number
@@ -202,7 +203,7 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
             port.disconnect()
             break
           case 'error':
-            controller.error(new Error(response.error))
+            controller.error(new AIError(response.error, response.detail))
             port.disconnect()
             break
           case 'aborted':
@@ -215,7 +216,7 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
       port.onDisconnect.addListener(() => {
         const lastError = chrome.runtime.lastError
         if (lastError && !isCancelled) {
-          controller.error(new Error(lastError.message))
+          controller.error(new AIError('连接已断开', lastError.message))
         }
       })
 
@@ -231,11 +232,12 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
   }
 }
 
-const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
+const fetchChatGpt = async (titleArray: string[], config: AIConfig, useCustomAI: boolean) => {
   return connectAndStream({
     type: MessageEnum.fetchChatGpt,
     data: {
       titleArray,
+      useCustomAI,
       config: {
         apiKey: config.apiKey,
         baseURL: config.baseURL,
@@ -246,11 +248,17 @@ const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   })
 }
 
-const fetchAIMove = async (videos: AIMoveInput, favoriteTitles: string[], config: AIMoveConfig) => {
+const fetchAIMove = async (
+  videos: AIMoveInput,
+  favoriteTitles: string[],
+  config: AIMoveConfig,
+  useCustomAI: boolean,
+) => {
   return connectAndStream({
     type: MessageEnum.fetchAIMove,
     data: {
       videos,
+      useCustomAI,
       favoriteTitles,
       config: {
         apiKey: config.apiKey,

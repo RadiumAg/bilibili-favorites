@@ -12,7 +12,7 @@ const DragManagerButton: FC = () => {
       <Button
         onClick={handleOpenDragManager}
         size="sm"
-        className="bg-b-primary hover:bg-b-primary-hover p-1 h-8 transition-colors duration-200"
+        className="bg-b-primary hover:bg-b-primary-hover h-7 transition-colors duration-200"
       >
         拖拽管理
         <Popover>
@@ -21,7 +21,7 @@ const DragManagerButton: FC = () => {
               onClick={(event) => {
                 event.stopPropagation()
               }}
-              className="w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs flex items-center justify-center cursor-pointer transition-colors duration-200"
+              className="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs flex items-center justify-center cursor-pointer transition-colors duration-200"
               aria-label="帮助说明"
             >
               ?
