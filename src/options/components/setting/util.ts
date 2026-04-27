@@ -39,7 +39,7 @@ const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode 
   },
 ]
 
-const defaultParams: Record<Adapter, z.infer<typeof formSchema>> = {
+const defaultParams: Record<Adapter, Omit<z.infer<typeof formSchema>, 'configMode'>> = {
   spark: {
     baseUrl: 'https://spark-api-open.xf-yun.com/v1/',
     extraParams: JSON.stringify({

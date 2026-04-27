@@ -102,7 +102,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
 
   /**
    * 使用 AI 提取关键词
-   * 优先使用 AIGate 免费额度，如果配置了自定义模型则使用自定义模型
+   * 根据 configMode 判断使用内置免费 AI 还是自定义模型
    */
   const extractWithAI = useMemoizedFn(async (favKey: string) => {
     const aiConfig = dataProvideData.aiConfig || {}
@@ -114,11 +114,11 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       throw new Error('没有找到视频标题')
     }
 
-    // 判断是否配置了自定义模型（有 API Key 和模型名称）
-    const hasCustomConfig = aiConfig.key && aiConfig.model
+    // 根据 configMode 判断使用自定义还是内置 AI
+    const useCustomAI = aiConfig.configMode === 'custom'
 
     let gptResult
-    if (hasCustomConfig) {
+    if (useCustomAI) {
       // 使用自定义模型
       gptResult = await fetchChatGpt(titleArray, {
         baseURL: aiConfig.baseUrl,

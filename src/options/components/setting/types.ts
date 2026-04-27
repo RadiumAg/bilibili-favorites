@@ -34,8 +34,11 @@ export const formSchema = z
     adapter: z.enum(adapterArray).optional(),
     aigateUserId: z.string().optional(),
     aigateApiKeyId: z.string().optional(),
+    configMode: z.enum(['custom', 'free']).optional().default('custom'),
   })
   .superRefine((data, ctx) => {
+    // 内置免费模式跳过自定义字段校验
+    if (data.configMode === 'free') return
     if (!data.key) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
