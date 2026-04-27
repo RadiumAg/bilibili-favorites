@@ -22,10 +22,6 @@ const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode 
     value: 'kimi',
   },
   {
-    label: '星火大模型',
-    value: 'spark',
-  },
-  {
     label: 'OpenAi',
     value: 'openai',
   },
@@ -37,6 +33,11 @@ const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode 
     label: '自定义',
     value: 'custom',
   },
+  // 目前优先适配主流大模型
+  // {
+  //   label: '星火大模型',
+  //   value: 'spark',
+  // },
 ]
 
 const defaultParams: Record<Adapter, Omit<z.infer<typeof formSchema>, 'configMode'>> = {
