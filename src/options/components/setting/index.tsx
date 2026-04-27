@@ -3,10 +3,9 @@ import React from 'react'
 import { ConfigModeSelector } from './components/config-mode-selector'
 import { CustomConfigForm } from './components/custom-config-form'
 import { QuotaCard } from './components/quota-card'
-import type { ConfigMode } from './types'
 
 const Setting: React.FC = () => {
-  const [configMode, setConfigMode] = React.useState<ConfigMode>('custom')
+  const [configMode, setConfigMode] = React.useState<'custom' | 'free'>('custom')
 
   return (
     <div className="space-y-8">

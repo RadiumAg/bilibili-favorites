@@ -25,16 +25,6 @@ export type QuotaCheckResult = {
   message: string
 }
 
-export type FormData = {
-  key: string
-  baseUrl: string
-  model: string
-  extraParams: string
-  adapter: Adapter
-  aigateUserId?: string
-  aigateApiKeyId?: string
-}
-
 export const formSchema = z
   .object({
     key: z.string().optional(),
