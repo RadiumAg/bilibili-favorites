@@ -1,5 +1,7 @@
 import * as React from 'react'
 import { Adapter } from '@/utils/data-context'
+import { formSchema } from './types'
+import { z } from 'zod'
 
 const adapterArray: [Adapter, Adapter, Adapter, Adapter, Adapter, Adapter] = [
   'openai',
@@ -33,20 +35,34 @@ const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode 
   },
 ]
 
-const defaultExtraParams: Record<Adapter, Record<string, any>> = {
-  spark: { thinking: { type: 'disabled' } },
+const defaultParams: Record<Adapter, z.infer<typeof formSchema>> = {
+  spark: {
+    baseUrl: 'https://spark-api-open.xf-yun.com/v1/',
+    extraParams: JSON.stringify({
+      thinking: { type: 'disabled' },
+    }),
+  },
   openai: {
-    chat_template_kwargs: { enable_thinking: false },
+    baseUrl: 'https://api.openai.com/v1',
+    extraParams: JSON.stringify({
+      chat_template_kwargs: { enable_thinking: false },
+    }),
   },
   custom: {},
   aigate: {},
   qianwen: {
-    chat_template_kwargs: { enable_thinking: false },
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    extraParams: JSON.stringify({
+      chat_template_kwargs: { enable_thinking: false },
+    }),
   },
   kimi: {
-    chat_template_kwargs: { enable_thinking: false },
+    baseUrl: 'https://api.moonshot.ai/v1',
+    extraParams: JSON.stringify({
+      chat_template_kwargs: { enable_thinking: false },
+    }),
   },
 }
 
 export type { Adapter }
-export { defaultExtraParams, adapterArray, selectItemsArray }
+export { defaultParams, adapterArray, selectItemsArray }

@@ -20,12 +20,15 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Eye, EyeOff } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { Adapter, defaultExtraParams, selectItemsArray } from '../util'
+import { Adapter, defaultParams, selectItemsArray } from '../util'
 import { z } from 'zod'
 import { useGlobalConfig } from '@/store/global-data'
 import { toast } from '@/hooks/use-toast'
 import { useShallow } from 'zustand/react/shallow'
-import type { ConfigMode, formSchema as formSchemaType } from '../types'
+import type { formSchema as formSchemaType } from '../types'
+import { useMemoizedFn } from 'ahooks'
+
+type FormData = z.infer<typeof formSchemaType>
 
 export const CustomConfigForm: React.FC = () => {
   const globalData = useGlobalConfig(
@@ -35,7 +38,7 @@ export const CustomConfigForm: React.FC = () => {
     })),
   )
   const [showApiKey, setShowApiKey] = React.useState(false)
-  const form = useForm<z.infer<typeof formSchemaType>>({
+  const form = useForm<FormData>({
     defaultValues: {
       key: globalData.aiConfig.key || '',
       baseUrl: globalData.aiConfig.baseUrl || '',
@@ -46,13 +49,12 @@ export const CustomConfigForm: React.FC = () => {
       adapter: globalData.aiConfig.adapter || 'spark',
       aigateUserId: globalData.aiConfig.aigateUserId || '',
       aigateApiKeyId: globalData.aiConfig.aigateApiKeyId || '',
-      configMode: globalData.aiConfig.configMode || 'custom',
     },
   })
   const adapter = form.getValues('adapter')
   const isExtraParamsDisabled = adapter !== 'custom'
 
-  const handleSubmit = (data: z.infer<typeof formSchemaType>) => {
+  const handleSubmit = useMemoizedFn((data: z.infer<typeof formSchemaType>) => {
     try {
       globalData.setGlobalData({
         aiConfig: {
@@ -63,7 +65,6 @@ export const CustomConfigForm: React.FC = () => {
           adapter: data.adapter as Adapter,
           aigateUserId: data.aigateUserId,
           aigateApiKeyId: data.aigateApiKeyId,
-          configMode: data.configMode as ConfigMode,
         },
       })
     } catch (e) {
@@ -77,13 +78,29 @@ export const CustomConfigForm: React.FC = () => {
     }
 
     toast({ variant: 'default', title: 'ok没问题' })
-  }
+  })
 
   React.useEffect(() => {
     if (globalData.aiConfig.adapter == null) return
-    const defaultParams = defaultExtraParams[globalData.aiConfig.adapter]
-    form.setValue('extraParams', JSON.stringify(defaultParams))
-    globalData.setGlobalData({ aiConfig: { ...globalData.aiConfig, extraParams: defaultParams } })
+    const defaultParamsValue = defaultParams[globalData.aiConfig.adapter]
+
+    for (const [key, value] of Object.entries(defaultParamsValue)) {
+      if (key === 'extraParams') {
+        form.setValue(key as any, value)
+      } else {
+        form.setValue(key as any, value)
+      }
+    }
+
+    globalData.setGlobalData({
+      aiConfig: {
+        ...globalData.aiConfig,
+        ...defaultParamsValue,
+        ...{
+          extraParams: JSON.parse(defaultParamsValue.extraParams || '{}'),
+        },
+      },
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalData.aiConfig.adapter])
 
@@ -156,6 +173,9 @@ export const CustomConfigForm: React.FC = () => {
                     {...field}
                   />
                   <button
+                    onClick={() => {
+                      setShowApiKey((oldValue) => !oldValue)
+                    }}
                     type="button"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200 cursor-pointer"
                     aria-label={showApiKey ? '隐藏 API Key' : '显示 API Key'}
