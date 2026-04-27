@@ -9,6 +9,17 @@ Summary
   5. version timestamp follow the yyyy.MM.dd format
 ```
 
+## 1.2.3 [2025.04.27]
+
+- feat: Toast 组件新增 detail 展开功能，支持查看详细错误信息
+- feat: AI 移动分类运行时兜底逻辑，越界 targetFavorite 自动归到默认收藏夹
+- update: AIError 错误类型全局标准化，统一 AI 调用错误处理与透传
+- update: AI 移动分类 Prompt 加固，强化 targetFavorite 必须在可用列表内的约束
+- update: AIGate 模型切换为 qwen-turbo，优化流式响应适配
+- update: Prompt 工程化拆分，系统指令与 Few-shot 示例解耦
+- update: 优化按钮和图标的高度及内边距
+- update: 更新字体系列，增加 Sora 字体支持
+
 ## 1.2.1 [2025.04.14]
 
 - fix: bar-chart 柱状图圆角修复，解决底部被切掉的问题
