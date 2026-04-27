@@ -6,7 +6,7 @@ import {
 } from '@langchain/core/messages'
 import { getExtensionDeviceId } from '@/utils/tab'
 
-const apiKeyId = 'key_1772769367541_uih3fdvuwf'
+const apiKeyId = 'key_1777274963739_cg5xe87j5g'
 const freeApiUrl = import.meta.env.VITE_FREE_API
 
 /**
@@ -125,7 +125,8 @@ const callAIGateAI = async (
       body: JSON.stringify({
         userId,
         request: {
-          model: 'lite',
+          model: 'spark-x',
+          thinking: { type: 'disabled' },
           messages: messages.map((message) => {
             let type = ''
             switch (message.type) {
