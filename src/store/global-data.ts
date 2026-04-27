@@ -11,7 +11,9 @@ const useGlobalConfig = create<DataContextType>()(
         favoriteData: [],
         cookie: undefined,
         activeKey: undefined,
-        aiConfig: {},
+        aiConfig: {
+          configMode: 'free',
+        },
         defaultFavoriteId: undefined,
         setGlobalData: (data: Partial<DataContextType>) => {
           return set(data)

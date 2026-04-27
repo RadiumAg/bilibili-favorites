@@ -94,12 +94,12 @@ ${favoriteTitles.map((title: string, idx: number) => `${idx + 1}. ${title}`).joi
     async (videos: { id: number; title: string }[]): Promise<AIMoveResult[]> => {
       const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
 
-      // 判断是否配置了自定义模型（有 API Key 和模型名称）
-      const hasCustomConfig = dataContext.aiConfig?.key && dataContext.aiConfig?.model
+      // 根据 configMode 判断使用自定义还是内置 AI
+      const useCustomAI = dataContext.aiConfig?.configMode === 'custom'
 
       try {
         let stream
-        if (hasCustomConfig) {
+        if (useCustomAI) {
           // 使用自定义模型
           const config = {
             apiKey: dataContext.aiConfig.key!,
@@ -215,14 +215,15 @@ ${favoriteTitles.map((title: string, idx: number) => `${idx + 1}. ${title}`).joi
 
   // 开始 AI 整理
   const handleAIMove = useMemoizedFn(async () => {
-    // 检查是否有可用配置（自定义配置或 AIGate 免费额度）
-    const hasCustomConfig = dataContext.aiConfig?.key && dataContext.aiConfig?.model
+    // 根据 configMode 检查是否有可用配置
+    const useCustomAI = dataContext.aiConfig?.configMode === 'custom'
+    const hasCustomKey = !!(dataContext.aiConfig?.key && dataContext.aiConfig?.model)
     const hasAIGate = true // AIGate 始终可用
 
-    if (!hasCustomConfig && !hasAIGate) {
+    if (!(useCustomAI ? hasCustomKey : hasAIGate)) {
       toast({
         title: '未配置 AI',
-        description: '请先在设置页面配置 AI 或使用免费额度',
+        description: '请先在设置页面配置 AI 或切换到免费额度',
         variant: 'destructive',
       })
       // 延迟跳转，让用户看到提示

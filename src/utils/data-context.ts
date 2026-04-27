@@ -19,6 +19,8 @@ type DataContextType = {
     // 新增 AIGate 配置字段
     aigateUserId?: string
     aigateApiKeyId?: string
+    // 配置模式：custom=自定义AI, free=内置免费AI
+    configMode?: 'custom' | 'free'
   }
   cookie: string | undefined
   activeKey: number | undefined
