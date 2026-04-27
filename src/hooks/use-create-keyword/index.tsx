@@ -1,5 +1,6 @@
 import React from 'react'
 import { toast } from '../use-toast'
+import { AIError } from '@/utils/error'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { quickExtractKeywords } from '@/utils/keyword-extractor'
@@ -133,7 +134,13 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw error
       }
-      throw error
+      if (error instanceof AIError) {
+        throw new AIError(`AI 提取关键词失败: ${error.message}`, error.detail)
+      }
+      if (error instanceof Error) {
+        throw new AIError(`AI 提取关键词失败: ${error.message}`)
+      }
+      throw new AIError('AI 提取关键词失败')
     }
   })
 
@@ -238,7 +245,14 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
           })
           return
         }
-        if (error instanceof Error) {
+        if (error instanceof AIError) {
+          toast({
+            variant: 'destructive',
+            title: '操作失败',
+            description: error.message,
+            detail: error.detail,
+          })
+        } else if (error instanceof Error) {
           toast({
             variant: 'destructive',
             title: '操作失败',

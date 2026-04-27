@@ -8,6 +8,7 @@ import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-
 import { useGlobalConfig } from '@/store/global-data'
 import { sleep } from '@/utils/promise'
 import { toast } from '@/hooks'
+import { AIError } from '@/utils/error'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
@@ -72,7 +73,7 @@ const useAIMove = () => {
           if (abortControllerRef.current?.signal.aborted) {
             reader.cancel()
             streamRef.current?.cancel()
-            throw new Error('用户取消操作')
+            throw new AIError('用户取消操作')
           }
 
           const { value, done } = await reader.read()
@@ -84,7 +85,7 @@ const useAIMove = () => {
         console.log('[DEBUG] fullContent', fullContent)
         const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
         if (!jsonMatch) {
-          throw new Error('AI 返回的数据格式错误')
+          throw new AIError('AI 返回的数据格式错误，请重试', fullContent)
         }
 
         const aiResults = JSON.parse(jsonMatch[0])
@@ -110,10 +111,13 @@ const useAIMove = () => {
 
         return results
       } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`AI 分析失败: ${error.message}`)
+        if (error instanceof AIError) {
+          throw new AIError(`AI 分析失败: ${error.message}`, error.detail)
         }
-        throw new Error('AI 分析失败')
+        if (error instanceof Error) {
+          throw new AIError(`AI 分析失败: ${error.message}`)
+        }
+        throw new AIError('AI 分析失败')
       }
     },
   )
@@ -218,7 +222,7 @@ const useAIMove = () => {
       const results = await analyzeVideosWithAI(videos)
 
       if (abortControllerRef.current?.signal.aborted) {
-        throw new Error('用户取消操作')
+        throw new AIError('用户取消操作')
       }
 
       toast({
@@ -243,7 +247,14 @@ const useAIMove = () => {
       await sleep(1000)
       setIsFinished(true)
     } catch (error) {
-      if (error instanceof Error) {
+      if (error instanceof AIError) {
+        toast({
+          title: '整理失败',
+          description: error.message,
+          detail: error.detail,
+          variant: 'destructive',
+        })
+      } else if (error instanceof Error) {
         toast({
           title: '整理失败',
           description: error.message,

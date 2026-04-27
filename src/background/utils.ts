@@ -1,6 +1,7 @@
 import { BaseMessageLike } from '@langchain/core/messages'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { ChatOpenAI } from '@langchain/openai'
+import { AIError } from '@/utils/error'
 
 /**
  * 关键词提取 Prompt 模板（LangChain ChatPromptTemplate）
@@ -140,8 +141,9 @@ const streamAIRequest = async (
       return
     }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const detail = error instanceof AIError ? error.detail : undefined
     console.error('AI request failed:', error)
-    port.postMessage({ type: 'error', error: errorMessage })
+    port.postMessage({ type: 'error', error: errorMessage, detail })
   }
 }
 

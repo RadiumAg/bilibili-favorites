@@ -5,6 +5,7 @@ import {
   MessageType,
 } from '@langchain/core/messages'
 import { getExtensionDeviceId } from '@/utils/tab'
+import { AIError } from '@/utils/error'
 
 const apiKeyId = 'key_1777274963739_cg5xe87j5g'
 const freeApiUrl = import.meta.env.VITE_FREE_API
@@ -113,7 +114,7 @@ const callAIGateAI = async (
     // 先检查配额
     const quotaCheck = await checkAIGateQuota()
     if (!quotaCheck.hasQuota) {
-      throw new Error('配额不足')
+      throw new AIError('配额不足', 'AIGate 每日请求配额已用完，请明日再试或切换到自定义 AI 配置')
     }
 
     // 调用 AIGate AI 接口（SSE 流式响应）
@@ -154,7 +155,7 @@ const callAIGateAI = async (
     // 解析 SSE 流式响应
     const reader = response.body?.getReader()
     if (!reader) {
-      throw new Error('无法读取响应流')
+      throw new AIError('无法读取响应流', '服务器未返回数据，请检查网络连接后重试')
     }
 
     const decoder = new TextDecoder()
@@ -191,9 +192,9 @@ const callAIGateAI = async (
 
             // 检查是否有错误
             if (data.code !== 0) {
-              const error = data.message || 'API 返回错误'
-              port.postMessage({ type: 'error', content: error })
-              throw new Error(error)
+              const detail = data.message || 'API 返回错误'
+              port.postMessage({ type: 'error', content: detail })
+              throw new AIError('AIGate API 返回错误', detail)
             }
 
             // 流式发送每个 chunk
@@ -215,8 +216,9 @@ const callAIGateAI = async (
       return
     }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const detail = error instanceof AIError ? error.detail : undefined
     console.error('AI request failed:', error)
-    port.postMessage({ type: 'error', error: errorMessage })
+    port.postMessage({ type: 'error', error: errorMessage, detail })
   }
 }
 

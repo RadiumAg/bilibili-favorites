@@ -1,4 +1,5 @@
 import { MessageEnum } from '@/utils/message'
+import { AIError } from '@/utils/error'
 import { buildKeywordExtractionMessages, buildAIMoveMessages, streamAIRequest } from './utils'
 import { callAIGateAI, checkAIGateQuota } from './ai-gate'
 
@@ -33,6 +34,7 @@ chrome.runtime.onConnect.addListener((port) => {
             port.postMessage({
               type: 'error',
               error: error instanceof Error ? error.message : 'AI 调用失败',
+              detail: error instanceof AIError ? error.detail : undefined,
             })
           })
         }
@@ -60,6 +62,7 @@ chrome.runtime.onConnect.addListener((port) => {
             port.postMessage({
               type: 'error',
               error: error instanceof Error ? error.message : '配额检查失败',
+              detail: error instanceof AIError ? error.detail : undefined,
             })
           })
         break
