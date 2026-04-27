@@ -46,7 +46,7 @@ export const CustomConfigForm: React.FC = () => {
       extraParams: globalData.aiConfig.extraParams
         ? JSON.stringify(globalData.aiConfig.extraParams)
         : '',
-      adapter: globalData.aiConfig.adapter || 'spark',
+      adapter: globalData.aiConfig.adapter || 'qianwen',
       aigateUserId: globalData.aiConfig.aigateUserId || '',
       aigateApiKeyId: globalData.aiConfig.aigateApiKeyId || '',
     },
@@ -58,13 +58,14 @@ export const CustomConfigForm: React.FC = () => {
     try {
       globalData.setGlobalData({
         aiConfig: {
+          ...globalData.aiConfig,
           key: data.key,
           model: data.model,
           baseUrl: data.baseUrl,
-          extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
           adapter: data.adapter as Adapter,
           aigateUserId: data.aigateUserId,
           aigateApiKeyId: data.aigateApiKeyId,
+          extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
         },
       })
     } catch (e) {
@@ -121,11 +122,7 @@ export const CustomConfigForm: React.FC = () => {
 
   return (
     <Form {...form}>
-      <form
-        {...form}
-        onChange={form.handleSubmit(handleSubmit)}
-        className="space-y-8 w-full md:w-[60%]"
-      >
+      <form onChange={form.handleSubmit(handleSubmit)} className="space-y-8 w-full md:w-[60%]">
         <FormField
           control={form.control}
           name="adapter"

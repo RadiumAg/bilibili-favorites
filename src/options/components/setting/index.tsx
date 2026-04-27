@@ -8,8 +8,9 @@ import { CustomConfigForm } from './components/custom-config-form'
 import { QuotaCard } from './components/quota-card'
 
 const Setting: React.FC = () => {
-  const { configMode, setGlobalData } = useGlobalConfig(
+  const { configMode, setGlobalData, getGlobalData } = useGlobalConfig(
     useShallow((state) => ({
+      getGlobalData: state.getGlobalData,
       configMode: state.aiConfig.configMode || 'free',
       setGlobalData: state.setGlobalData,
     })),
@@ -25,7 +26,8 @@ const Setting: React.FC = () => {
           checked={configMode === 'free'}
           onCheckedChange={(checked) => {
             const newMode = checked ? 'free' : 'custom'
-            setGlobalData({ aiConfig: { configMode: newMode } })
+            const globalData = getGlobalData()
+            setGlobalData({ aiConfig: { ...globalData.aiConfig, configMode: newMode } })
           }}
         />
         <Label htmlFor="free-mode" className="cursor-pointer text-sm font-medium">
