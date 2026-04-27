@@ -104,7 +104,11 @@ export const CustomConfigForm: React.FC = () => {
 
   return (
     <Form {...form}>
-      <form {...form} onChange={form.handleSubmit(handleSubmit)}>
+      <form
+        {...form}
+        onChange={form.handleSubmit(handleSubmit)}
+        className="space-y-8 w-full md:w-[60%]"
+      >
         <FormField
           control={form.control}
           name="adapter"
