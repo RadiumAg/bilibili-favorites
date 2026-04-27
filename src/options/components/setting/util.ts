@@ -30,6 +30,10 @@ const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode 
     value: 'openai',
   },
   {
+    label: 'GML',
+    value: 'gml',
+  },
+  {
     label: '自定义',
     value: 'custom',
   },
@@ -48,8 +52,6 @@ const defaultParams: Record<Adapter, z.infer<typeof formSchema>> = {
       chat_template_kwargs: { enable_thinking: false },
     }),
   },
-  custom: {},
-  aigate: {},
   qianwen: {
     baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     extraParams: JSON.stringify({
@@ -65,6 +67,16 @@ const defaultParams: Record<Adapter, z.infer<typeof formSchema>> = {
       },
     }),
   },
+  gml: {
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    extraParams: JSON.stringify({
+      thinking: {
+        type: 'disabled',
+      },
+    }),
+  },
+  custom: {},
+  aigate: {},
 }
 
 export type { Adapter }
