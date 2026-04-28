@@ -20,7 +20,7 @@ import { RefreshCwIcon } from 'lucide-react'
 import { useAnalysisData } from './use-analysis-data'
 import { useAnalysisWorker } from './use-analysis-worker'
 import { useAnalysisStats } from './use-analysis-stats'
-import { useFavoriteData } from '@/hooks'
+import { useFavoriteData, useBeforeUnload } from '@/hooks'
 import { Title } from '@/components'
 import loadingGif from '@/assets/loading.gif'
 
@@ -62,6 +62,9 @@ export const OptionsAnalysisTab: React.FC = () => {
     cookie,
     forceRefreshRef,
   })
+
+  // 数据分析进行中时，关闭窗口弹出确认提示
+  useBeforeUnload(dataLoading, '当前正在数据分析，确定要离开吗？')
 
   // 使用统计数据 hook
   const {
