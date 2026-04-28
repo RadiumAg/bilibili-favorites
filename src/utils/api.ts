@@ -304,8 +304,8 @@ const fetchAllFavoriteMedias = async (
   const mediaData = await dbManager.get(key)
   const isExpired = await dbManager.isExpired(key, expireTime)
   if (mediaData && !isExpired) return mediaData.data
-
   while (hasMore) {
+    await sleep(1000) // 防止触发b站api风控
     const response = await queryAndSendMessage<GetFavoriteListRes>({
       type: MessageEnum.getFavoriteList,
       data: { mediaId, pn: currentPage, ps: pageSize },
@@ -322,7 +322,6 @@ const fetchAllFavoriteMedias = async (
 
     hasMore = response.data.has_more
     currentPage++
-    await sleep(500) // 防止触发b站api风控
   }
 
   dbManager.set(key, allMedias)

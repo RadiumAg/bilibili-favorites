@@ -1,5 +1,6 @@
 import React from 'react'
 import * as echarts from 'echarts'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type ChartData = {
   name: string
@@ -102,6 +103,14 @@ export const BarChart: React.FC<BarChartProps> = ({
       chartInstance.current?.dispose()
     }
   }, [data, title, horizontal])
+
+  if (!data.length) {
+    return (
+      <div className={`w-full h-80 ${className}`}>
+        <Skeleton className="w-full h-full rounded-lg" />
+      </div>
+    )
+  }
 
   return <div ref={chartRef} className={`w-full h-80 ${className}`} />
 }

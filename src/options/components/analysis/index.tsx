@@ -16,7 +16,7 @@ import { DistributionChart } from './chart/distribution-chart'
 import { BarChart } from './chart/bar-chart'
 import { TrendChart } from './chart/trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
-import { RefreshCwIcon } from 'lucide-react'
+import { RefreshCwIcon, LoaderIcon } from 'lucide-react'
 import { useAnalysisData } from './use-analysis-data'
 import { useAnalysisWorker } from './use-analysis-worker'
 import { useAnalysisStats } from './use-analysis-stats'
@@ -54,6 +54,7 @@ export const OptionsAnalysisTab: React.FC = () => {
   const {
     allMedaisRef,
     loading: dataLoading,
+    fetchProgress,
     fetchAllMedias,
   } = useAnalysisData({
     favoriteData,
@@ -136,7 +137,7 @@ export const OptionsAnalysisTab: React.FC = () => {
   }, [favoriteData, fetchAllMedias, loadData])
 
   return (
-    <div className="w-full h-full  ">
+    <div className="w-full h-full relative">
       <div className="max-w-full">
         {/* 头部操作区 */}
         <div className="flex justify-between items-center mb-6">
@@ -171,6 +172,23 @@ export const OptionsAnalysisTab: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        {/* Loading 遮罩层 */}
+        {dataLoading && fetchProgress && (
+          <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl">
+            <div className="flex flex-col items-center gap-4">
+              <LoaderIcon className="w-10 h-10 text-[#00AEEC] animate-spin" />
+              <div className="text-center">
+                <p className="text-sm font-medium text-[#18191C]">
+                  正在分析第 {fetchProgress.current}/{fetchProgress.total} 个收藏夹
+                </p>
+                <p className="text-xs text-[#61666D] mt-1 max-w-[200px] truncate">
+                  {fetchProgress.currentTitle}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 统计卡片 */}
         <div className="mb-8">

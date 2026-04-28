@@ -268,10 +268,6 @@ const useAIMove = () => {
         detail,
       })
 
-      // 同步更新缓存：将视频从源收藏夹移动到各目标收藏夹缓存
-      const movedVideoIds = movedResults
-        .filter((r) => !r.title.startsWith('❌'))
-        .map((r) => r.videoId)
       const targetIds = [...new Set(movedResults.map((r) => r.targetFavoriteId))]
       targetIds.forEach((tarId) => {
         const idsToTarget = movedResults

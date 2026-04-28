@@ -1,5 +1,6 @@
 import React from 'react'
 import * as echarts from 'echarts'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type TrendData = {
   date: string
@@ -114,6 +115,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       chartInstance.current?.dispose()
     }
   }, [data, title, showCumulative])
+
+  if (!data.length) {
+    return (
+      <div className={`w-full h-80 ${className}`}>
+        <Skeleton className="w-full h-full rounded-lg" />
+      </div>
+    )
+  }
 
   return <div ref={chartRef} className={`w-full h-80 ${className}`} />
 }
