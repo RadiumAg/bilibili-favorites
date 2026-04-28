@@ -15,11 +15,11 @@ type CacheEntry = {
 
 const getCachedData = (mediaId: string): FavoriteMedia[] | null => {
   try {
-    const raw = sessionStorage.getItem(`${CACHE_PREFIX}${mediaId}`)
+    const raw = localStorage.getItem(`${CACHE_PREFIX}${mediaId}`)
     if (!raw) return null
     const entry: CacheEntry = JSON.parse(raw)
     if (Date.now() - entry.timestamp > CACHE_DURATION) {
-      sessionStorage.removeItem(`${CACHE_PREFIX}${mediaId}`)
+      localStorage.removeItem(`${CACHE_PREFIX}${mediaId}`)
       return null
     }
     return entry.data
@@ -31,29 +31,29 @@ const getCachedData = (mediaId: string): FavoriteMedia[] | null => {
 const setCachedData = (mediaId: string, data: FavoriteMedia[]) => {
   try {
     const entry: CacheEntry = { data, timestamp: Date.now() }
-    sessionStorage.setItem(`${CACHE_PREFIX}${mediaId}`, JSON.stringify(entry))
+    localStorage.setItem(`${CACHE_PREFIX}${mediaId}`, JSON.stringify(entry))
   } catch {
-    // sessionStorage 满了或其他异常，静默忽略
+    // localStorage 满了或其他异常，静默忽略
   }
 }
 
 /**
  * 收藏夹视频列表数据 Hook
- * 在 fetchAllFavoriteMedias 基础上增加 sessionStorage 会话级缓存 + 请求去重
+ * 在 fetchAllFavoriteMedias 基础上增加 localStorage 本地缓存 + 请求去重
  */
 const useFavoriteListData = () => {
   /**
    * 获取收藏夹视频列表（带缓存）
    * @param mediaId 收藏夹 ID
    * @param pageSize 每页数量
-   * @param expireTime IndexedDB 缓存过期时间（sessionStorage 缓存独立于此参数）
+   * @param expireTime IndexedDB 缓存过期时间（localStorage 缓存独立于此参数）
    */
   const fetchWithCache = async (
     mediaId: string,
     pageSize?: number,
     expireTime?: number,
   ): Promise<FavoriteMedia[]> => {
-    // 1. 检查 sessionStorage 缓存
+    // 1. 检查 localStorage 缓存
     const cached = getCachedData(mediaId)
     if (cached) return cached
 
@@ -63,7 +63,7 @@ const useFavoriteListData = () => {
     }
 
     // 3. 发起新请求
-    const request = fetchAllFavoriteMedias(mediaId, pageSize, expireTime)
+    const request = fetchAllFavoriteMedias(mediaId, pageSize, expireTime || 0)
       .then((data) => {
         setCachedData(mediaId, data)
         pendingRequests.delete(mediaId)
@@ -113,16 +113,16 @@ const useFavoriteListData = () => {
    */
   const invalidateCache = (mediaId?: string) => {
     if (mediaId) {
-      sessionStorage.removeItem(`${CACHE_PREFIX}${mediaId}`)
+      localStorage.removeItem(`${CACHE_PREFIX}${mediaId}`)
     } else {
       const keysToRemove: string[] = []
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i)
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
         if (key?.startsWith(CACHE_PREFIX)) {
           keysToRemove.push(key)
         }
       }
-      keysToRemove.forEach((key) => sessionStorage.removeItem(key))
+      keysToRemove.forEach((key) => localStorage.removeItem(key))
     }
   }
 
