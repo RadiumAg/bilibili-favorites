@@ -87,6 +87,10 @@ export function createStreamAdapter(adapterType: Adapter = 'spark'): AIStreamAda
     case 'custom':
       // 自定义适配器，可以扩展为从配置中读取自定义解析逻辑
       return new OpenAIStreamAdapter()
+    case 'qianwen':
+      return new OpenAIStreamAdapter()
+    case 'kimi':
+      return new OpenAIStreamAdapter()
     default:
       return new SparkStreamAdapter()
   }

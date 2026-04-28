@@ -1,5 +1,7 @@
 import React from 'react'
 import * as echarts from 'echarts'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useSize } from 'ahooks'
 
 type ChartData = {
   name: string
@@ -10,6 +12,7 @@ type ChartData = {
 type DistributionChartProps = {
   data: ChartData[]
   title: string
+  loading: boolean
   type?: 'pie' | 'doughnut'
   className?: string
 }
@@ -17,14 +20,17 @@ type DistributionChartProps = {
 export const DistributionChart: React.FC<DistributionChartProps> = ({
   data,
   title,
+  loading,
   type = 'pie',
   className = '',
 }) => {
   const chartRef = React.useRef<HTMLDivElement>(null)
   const chartInstance = React.useRef<any>(null)
 
+  const size = useSize(chartRef)
+
   React.useEffect(() => {
-    if (!chartRef.current || !data.length) return
+    if (!chartRef.current || !data.length || loading) return
 
     // 初始化图表
     chartInstance.current = echarts.init(chartRef.current)
@@ -86,7 +92,12 @@ export const DistributionChart: React.FC<DistributionChartProps> = ({
       window.removeEventListener('resize', handleResize)
       chartInstance.current?.dispose()
     }
-  }, [data, title, type])
+  }, [data, title, type, size, loading])
 
-  return <div ref={chartRef} className={`w-full h-80 ${className}`} />
+  return (
+    <div className={`relative w-full h-80 ${className}`}>
+      <div ref={chartRef} className="w-full h-full" />
+      {(loading || !data.length) && <Skeleton className="absolute inset-0 rounded-lg" />}
+    </div>
+  )
 }

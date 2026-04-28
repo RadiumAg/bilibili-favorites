@@ -12,12 +12,15 @@
 - [textarea.tsx](file://src/components/ui/textarea.tsx)
 - [toast.tsx](file://src/components/ui/toast.tsx)
 - [toaster.tsx](file://src/components/ui/toaster.tsx)
+- [alert.tsx](file://src/components/ui/alert.tsx)
+- [empty.tsx](file://src/components/ui/empty.tsx)
 - [form.tsx](file://src/components/ui/form.tsx)
 - [input.tsx](file://src/components/ui/input.tsx)
 - [popover.tsx](file://src/components/ui/popover.tsx)
 - [utils.ts](file://src/lib/utils.ts)
 - [index.tsx（选项页入口）](file://src/options/index.tsx)
 - [index.tsx（弹出页入口）](file://src/popup/index.tsx)
+- [title/index.tsx](file://src/components/title/index.tsx)
 - [package.json](file://package.json)
 </cite>
 
@@ -34,14 +37,14 @@
 10. [附录](#附录)
 
 ## 简介
-本文件系统化梳理了基于 Radix UI 构建的基础 UI 组件，覆盖 Button 按钮、Badge 徽章、Card 卡片、Label 标签、Progress 进度条、Skeleton 骨架屏、Slider 滑块、Textarea 文本域、Toast 提示等核心组件。文档从设计原则、可访问性、主题与响应式支持出发，结合源码实现细节，给出属性配置、事件处理、样式定制与无障碍特性的说明，并提供组合使用方法与最佳实践。
+本文件系统化梳理了基于 Radix UI 构建的基础 UI 组件，覆盖 Button 按钮、Badge 徽章、Card 卡片、Label 标签、Progress 进度条、Skeleton 骨架屏、Slider 滑块、Textarea 文本域、Toast 提示、Alert 警告提示、Empty 空状态处理、Title 标题显示等核心组件。文档从设计原则、可访问性、主题与响应式支持出发，结合源码实现细节，给出属性配置、事件处理、样式定制与无障碍特性的说明，并提供组合使用方法与最佳实践。
 
 ## 项目结构
-这些基础组件位于 src/components/ui 目录下，采用“按功能拆分”的模块化组织方式，每个组件独立封装，统一通过工具函数进行类名合并，便于主题与样式扩展。
+这些基础组件位于 src/components/ui 目录下，采用"按功能拆分"的模块化组织方式，每个组件独立封装，统一通过工具函数进行类名合并，便于主题与样式扩展。新增的 Alert、Empty、Title 组件进一步完善了通知、空状态和标题显示的标准化组件体系。
 
 ```mermaid
 graph TB
-subgraph "组件层"
+subgraph "基础UI组件"
 BTN["Button<br/>按钮"]
 BADGE["Badge<br/>徽章"]
 CARD["Card<br/>卡片"]
@@ -51,6 +54,9 @@ SKELE["Skeleton<br/>骨架屏"]
 SLIDER["Slider<br/>滑块"]
 TEXTAREA["Textarea<br/>文本域"]
 TOAST["Toast<br/>提示"]
+ALERT["Alert<br/>警告提示"]
+EMPTY["Empty<br/>空状态处理"]
+TITLE["Title<br/>标题显示"]
 end
 subgraph "工具层"
 UTILS["utils.ts<br/>cn 合并类名"]
@@ -68,9 +74,14 @@ SKELE --> UTILS
 SLIDER --> UTILS
 TEXTAREA --> UTILS
 TOAST --> UTILS
+ALERT --> UTILS
+EMPTY --> UTILS
 OPT --> TOAST
 POP --> TOAST
+OPT --> TITLE
 ```
+
+**更新** 新增 Alert、Empty、Title 三个基础UI组件，完善通知样式、空状态处理和标题显示功能
 
 图表来源
 - [button.tsx:1-51](file://src/components/ui/button.tsx#L1-L51)
@@ -82,6 +93,9 @@ POP --> TOAST
 - [slider.tsx:1-24](file://src/components/ui/slider.tsx#L1-L24)
 - [textarea.tsx:1-22](file://src/components/ui/textarea.tsx#L1-L22)
 - [toast.tsx:1-127](file://src/components/ui/toast.tsx#L1-L127)
+- [alert.tsx:1-60](file://src/components/ui/alert.tsx#L1-L60)
+- [empty.tsx:1-105](file://src/components/ui/empty.tsx#L1-L105)
+- [title/index.tsx:1-20](file://src/components/title/index.tsx#L1-L20)
 - [utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 - [index.tsx（选项页入口）:1-19](file://src/options/index.tsx#L1-L19)
 - [index.tsx（弹出页入口）:1-17](file://src/popup/index.tsx#L1-L17)
@@ -96,6 +110,9 @@ POP --> TOAST
 - [slider.tsx:1-24](file://src/components/ui/slider.tsx#L1-L24)
 - [textarea.tsx:1-22](file://src/components/ui/textarea.tsx#L1-L22)
 - [toast.tsx:1-127](file://src/components/ui/toast.tsx#L1-L127)
+- [alert.tsx:1-60](file://src/components/ui/alert.tsx#L1-L60)
+- [empty.tsx:1-105](file://src/components/ui/empty.tsx#L1-L105)
+- [title/index.tsx:1-20](file://src/components/title/index.tsx#L1-L20)
 - [utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 - [index.tsx（选项页入口）:1-19](file://src/options/index.tsx#L1-L19)
 - [index.tsx（弹出页入口）:1-17](file://src/popup/index.tsx#L1-L17)
@@ -110,6 +127,11 @@ POP --> TOAST
 - Slider：基于 Radix Slider，提供轨道与拇指样式。
 - Textarea：基于原生 textarea，内置通用样式与禁用态。
 - Toast：基于 Radix Toast 的通知系统，包含 Provider、Viewport、Toast、Title、Description、Close、Action 等子组件。
+- **Alert**：基于 class-variance-authority 的标准化警告提示组件，支持默认和破坏性两种变体，包含 Alert、AlertTitle、AlertDescription 三个子组件。
+- **Empty**：空状态处理组件，提供完整的空状态解决方案，包含 Empty、EmptyHeader、EmptyTitle、EmptyDescription、EmptyContent、EmptyMedia 六个子组件，支持默认和图标两种媒体变体。
+- **Title**：简化的标题显示组件，提供统一的标题和描述样式。
+
+**更新** 新增 Alert、Empty、Title 三个核心组件，完善通知样式、空状态处理和标题显示功能
 
 章节来源
 - [button.tsx:34-50](file://src/components/ui/button.tsx#L34-L50)
@@ -121,9 +143,12 @@ POP --> TOAST
 - [slider.tsx:6-20](file://src/components/ui/slider.tsx#L6-L20)
 - [textarea.tsx:5-18](file://src/components/ui/textarea.tsx#L5-L18)
 - [toast.tsx:10-126](file://src/components/ui/toast.tsx#L10-L126)
+- [alert.tsx:6-33](file://src/components/ui/alert.tsx#L6-L33)
+- [empty.tsx:5-59](file://src/components/ui/empty.tsx#L5-L59)
+- [title/index.tsx:3-17](file://src/components/title/index.tsx#L3-L17)
 
 ## 架构总览
-组件以“原子化 + 组合”方式构建，统一通过 cn 工具合并 Tailwind 类，确保主题一致性与可定制性。Toast 系统在应用入口中挂载 Toaster，形成全局通知能力。
+组件以"原子化 + 组合"方式构建，统一通过 cn 工具合并 Tailwind 类，确保主题一致性与可定制性。Toast 系统在应用入口中挂载 Toaster，形成全局通知能力。新增的 Alert 和 Empty 组件采用 class-variance-authority 管理变体，Title 组件提供简化的标题显示方案。
 
 ```mermaid
 sequenceDiagram
@@ -136,6 +161,8 @@ Toaster->>Provider : 初始化 Provider
 Provider->>Viewport : 渲染 Viewport
 Viewport-->>App : 全局通知区域就绪
 ```
+
+**更新** 架构图保持不变，但新增组件已集成到现有架构中
 
 图表来源
 - [index.tsx（选项页入口）:6-16](file://src/options/index.tsx#L6-L16)
@@ -390,15 +417,144 @@ Toast <|-- ToastAction
 - [toast.tsx:1-127](file://src/components/ui/toast.tsx#L1-L127)
 - [index.tsx（选项页入口）:6-16](file://src/options/index.tsx#L6-L16)
 
+### Alert 警告提示
+- 设计原则
+  - 基于 class-variance-authority 管理变体，提供标准化的警告提示样式
+  - 支持默认和破坏性两种变体，分别适用于一般提示和错误警告
+  - 内置角色属性，提升可访问性
+- 子组件
+  - Alert：主容器组件，支持 variant 属性
+  - AlertTitle：标题组件，提供语义化标题样式
+  - AlertDescription：描述组件，支持段落元素的样式继承
+- 关键属性
+  - Alert: variant（default/destructive），className（自定义类名）
+  - AlertTitle: className（自定义类名）
+  - AlertDescription: className（自定义类名）
+- 最佳实践
+  - 错误或危险操作使用 destructive 变体
+  - 与 Toast 组合使用，提供更丰富的用户反馈
+  - 与 Icon 组件配合，增强视觉提示效果
+
+```mermaid
+classDiagram
+class Alert {
++variant : "default|destructive"
++className : string
+}
+class AlertTitle {
++className : string
+}
+class AlertDescription {
++className : string
+}
+Alert <|-- AlertTitle
+Alert <|-- AlertDescription
+```
+
+**更新** 新增 Alert 组件分析，包含三个子组件的详细说明
+
+图表来源
+- [alert.tsx:22-57](file://src/components/ui/alert.tsx#L22-L57)
+
+章节来源
+- [alert.tsx:1-60](file://src/components/ui/alert.tsx#L1-L60)
+
+### Empty 空状态处理
+- 设计原则
+  - 提供完整的空状态解决方案，包含标题、描述、媒体和内容区域
+  - 支持默认和图标两种媒体变体，适应不同场景需求
+  - 响应式设计，适配移动端和桌面端
+- 子组件
+  - Empty：主容器组件，提供空状态的整体布局
+  - EmptyHeader：头部容器，用于组织标题和媒体区域
+  - EmptyTitle：标题组件，提供语义化标题样式
+  - EmptyDescription：描述组件，支持链接样式的文本
+  - EmptyContent：内容容器，用于放置操作按钮或其他内容
+  - EmptyMedia：媒体容器，支持图标展示
+- 关键属性
+  - Empty/EmptyHeader/EmptyTitle/EmptyDescription/EmptyContent/EmptyMedia：className（自定义类名）
+  - EmptyMedia：variant（default/icon）
+- 最佳实践
+  - 与 Button 组合使用，提供操作按钮引导用户
+  - 与 Icon 组件配合，增强视觉效果
+  - 在列表为空时使用，提供友好的用户体验
+
+```mermaid
+classDiagram
+class Empty {
++className : string
+}
+class EmptyHeader {
++className : string
+}
+class EmptyTitle {
++className : string
+}
+class EmptyDescription {
++className : string
+}
+class EmptyContent {
++className : string
+}
+class EmptyMedia {
++variant : "default|icon"
++className : string
+}
+Empty <|-- EmptyHeader
+EmptyHeader <|-- EmptyTitle
+EmptyHeader <|-- EmptyMedia
+Empty <|-- EmptyDescription
+Empty <|-- EmptyContent
+```
+
+**更新** 新增 Empty 组件分析，包含六个子组件的详细说明
+
+图表来源
+- [empty.tsx:5-104](file://src/components/ui/empty.tsx#L5-L104)
+
+章节来源
+- [empty.tsx:1-105](file://src/components/ui/empty.tsx#L1-L105)
+
+### Title 标题显示
+- 设计原则
+  - 提供简化的标题显示方案，专注于标题和描述的展示
+  - 统一的字体大小和颜色方案，确保视觉一致性
+- 关键属性
+  - title：标题文本（必需）
+  - desc：描述文本（可选）
+- 最佳实践
+  - 与 Card 组件配合使用，提供页面或区块的标题
+  - 在设置页面、分析页面等场景中提供清晰的标题层次
+  - 与 Breadcrumb 组件配合，形成完整的页面导航结构
+
+```mermaid
+classDiagram
+class Title {
++title : string
++desc : string
+}
+```
+
+**更新** 新增 Title 组件分析，提供简化的标题显示功能
+
+图表来源
+- [title/index.tsx:3-17](file://src/components/title/index.tsx#L3-L17)
+
+章节来源
+- [title/index.tsx:1-20](file://src/components/title/index.tsx#L1-L20)
+
 ## 依赖分析
 - 组件依赖
   - @radix-ui/react-*：Button/Label/Progress/Slider/Toast 等均基于 Radix UI 原子组件
-  - class-variance-authority：统一管理变体与尺寸
+  - class-variance-authority：统一管理变体与尺寸（Alert、Empty 组件）
   - lucide-react：提供图标（如 ToastClose 中的 X）
 - 工具依赖
   - clsx/tailwind-merge：类名合并与冲突修复
 - 应用集成
   - 选项页与弹出页入口均引入 Toaster，形成全局通知
+  - Title 组件在选项页的分析和设置页面中使用
+
+**更新** 依赖分析新增 class-variance-authority 对 Alert 和 Empty 组件的支持
 
 ```mermaid
 graph LR
@@ -413,6 +569,8 @@ PROG["Progress"] --> RADIX
 SLIDER["Slider"] --> RADIX
 TOAST["Toast"] --> RADIX
 TOAST --> LUCIDE
+ALERT["Alert"] --> CVA
+EMPTY["Empty"] --> CVA
 UTILS["utils.ts"] --> CLSX
 UTILS --> TWM
 ```
@@ -424,6 +582,8 @@ UTILS --> TWM
 - [progress.tsx:1-26](file://src/components/ui/progress.tsx#L1-L26)
 - [slider.tsx:1-24](file://src/components/ui/slider.tsx#L1-L24)
 - [toast.tsx:1-127](file://src/components/ui/toast.tsx#L1-L127)
+- [alert.tsx:1-60](file://src/components/ui/alert.tsx#L1-L60)
+- [empty.tsx:1-105](file://src/components/ui/empty.tsx#L1-L105)
 - [utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 
 章节来源
@@ -433,27 +593,43 @@ UTILS --> TWM
 - 渲染开销
   - 组件均为轻量封装，避免不必要的重渲染
   - 使用 asChild 时注意仅包裹可交互元素，减少 DOM 层级
+  - Alert 和 Empty 组件使用 class-variance-authority 管理变体，避免运行时条件判断
 - 动画与过渡
   - Toast 与 Progress 使用 CSS 动画，建议在低端设备上谨慎使用复杂动画
+  - Alert 组件的变体切换是静态的，不会产生额外的动画开销
 - 样式合并
   - 通过 cn 合并类名，避免重复样式导致的渲染抖动
+  - class-variance-authority 在编译时优化变体选择，减少运行时计算
+
+**更新** 性能考虑新增 Alert 和 Empty 组件的优化说明
 
 ## 故障排查指南
 - 可访问性问题
   - Label 未正确绑定控件：检查 htmlFor 是否与控件 id 对应
   - 进度条无语义：确保与屏幕阅读器友好的描述文本配合
+  - Alert 缺少角色属性：确认 Alert 组件已正确设置 role="alert"
 - 样式冲突
   - 多次传入 className 时，后传入的类名会覆盖同名 Tailwind 类；使用 twMerge 可避免冲突
+  - class-variance-authority 的变体类名优先级：确保自定义类名不会覆盖变体样式
 - 通知不显示
   - 确认应用入口已挂载 Toaster，且 Provider/Viewport 正常渲染
+- 空状态显示问题
+  - Empty 组件的媒体变体：确保 EmptyMedia 的 variant 参数正确传递
+  - Empty 组件的子组件顺序：确保 Header 包含在 Empty 容器内
+
+**更新** 故障排查指南新增 Alert、Empty、Title 组件的相关问题
 
 章节来源
 - [label.tsx:82-96](file://src/components/ui/label.tsx#L82-L96)
 - [toast.tsx:8-23](file://src/components/ui/toast.tsx#L8-L23)
 - [utils.ts:4-6](file://src/lib/utils.ts#L4-L6)
+- [alert.tsx:26-32](file://src/components/ui/alert.tsx#L26-L32)
+- [empty.tsx:50-58](file://src/components/ui/empty.tsx#L50-L58)
 
 ## 结论
-该套基础 UI 组件以 Radix UI 为核心，结合 class-variance-authority 与 Tailwind，实现了高可定制、强可访问、易组合的组件体系。通过统一的工具函数与清晰的子组件结构，开发者可以快速搭建一致的界面风格，并在需要时进行深度定制。
+该套基础 UI 组件以 Radix UI 为核心，结合 class-variance-authority 与 Tailwind，实现了高可定制、强可访问、易组合的组件体系。新增的 Alert、Empty、Title 组件进一步完善了通知样式、空状态处理和标题显示的标准化方案。通过统一的工具函数与清晰的子组件结构，开发者可以快速搭建一致的界面风格，并在需要时进行深度定制。
+
+**更新** 结论部分新增对新增组件的总结
 
 ## 附录
 
@@ -462,13 +638,24 @@ UTILS --> TWM
   - 使用 Form/FormField/FormItem/FormControl/FormControl/ FormLabel/FormDescription/FormMessage 构建完整表单，Label 与 Input/Textarea 配合，FormMessage 展示校验信息
 - 通知组合
   - 在应用入口挂载 Toaster，ToastViewport 控制位置与动画；根据场景选择 default 或 destructive 变体
+  - Alert 组件与 Toast 组合使用，提供多层次的用户反馈
 - 加载与进度
   - Skeleton 与 Progress 搭配：Skeleton 先显示，数据到达后切换为 Progress 并更新数值
 - 滑块与提示
   - Slider 与 Popover/Tooltip 组合，实时展示当前值
+- 空状态处理
+  - Empty 组件与 Button/Icon 组合，提供操作引导
+  - 在数据为空时使用 Empty 组件，提升用户体验
+- 标题显示
+  - Title 组件与 Card/Breadcrumb 组合，形成清晰的页面结构层次
+
+**更新** 附录部分新增 Alert、Empty、Title 组件的组合使用方法
 
 章节来源
 - [form.tsx:1-168](file://src/components/ui/form.tsx#L1-L168)
 - [input.tsx:1-23](file://src/components/ui/input.tsx#L1-L23)
 - [popover.tsx:1-33](file://src/components/ui/popover.tsx#L1-L33)
 - [index.tsx（选项页入口）:6-16](file://src/options/index.tsx#L6-L16)
+- [alert.tsx:22-57](file://src/components/ui/alert.tsx#L22-L57)
+- [empty.tsx:5-104](file://src/components/ui/empty.tsx#L5-L104)
+- [title/index.tsx:3-17](file://src/components/title/index.tsx#L3-L17)

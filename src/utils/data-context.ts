@@ -1,4 +1,4 @@
-type Adapter = 'spark' | 'openai' | 'custom' | 'aigate'
+type Adapter = 'spark' | 'openai' | 'custom' | 'aigate' | 'qianwen' | 'kimi' | 'gml'
 
 type DataContextType = {
   favoriteData: {
@@ -19,7 +19,7 @@ type DataContextType = {
     // 新增 AIGate 配置字段
     aigateUserId?: string
     aigateApiKeyId?: string
-    // 配置模式
+    // 配置模式：custom=自定义AI, free=内置免费AI
     configMode?: 'custom' | 'free'
   }
   cookie: string | undefined

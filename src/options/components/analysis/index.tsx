@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { toast } from '@/hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatsCards } from './stats-cards'
 import { DistributionChart } from './chart/distribution-chart'
@@ -16,11 +17,12 @@ import { BarChart } from './chart/bar-chart'
 import { TrendChart } from './chart/trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
 import { RefreshCwIcon } from 'lucide-react'
-import { toast } from '@/hooks'
 import { useAnalysisData } from './use-analysis-data'
 import { useAnalysisWorker } from './use-analysis-worker'
 import { useAnalysisStats } from './use-analysis-stats'
-import { useFavoriteData } from '@/hooks'
+import { useFavoriteData, useBeforeUnload } from '@/hooks'
+import { Title } from '@/components'
+import loadingGif from '@/assets/loading.gif'
 
 export const OptionsAnalysisTab: React.FC = () => {
   const { favoriteData } = useFavoriteData()
@@ -53,12 +55,16 @@ export const OptionsAnalysisTab: React.FC = () => {
   const {
     allMedaisRef,
     loading: dataLoading,
+    fetchProgress,
     fetchAllMedias,
   } = useAnalysisData({
     favoriteData,
     cookie,
     forceRefreshRef,
   })
+
+  // 数据分析进行中时，关闭窗口弹出确认提示
+  useBeforeUnload(dataLoading, '当前正在数据分析，确定要离开吗？')
 
   // 使用统计数据 hook
   const {
@@ -135,11 +141,11 @@ export const OptionsAnalysisTab: React.FC = () => {
   }, [favoriteData, fetchAllMedias, loadData])
 
   return (
-    <div className="w-full h-full bg-gray-50 p-6">
+    <div className="w-full h-full relative">
       <div className="max-w-full">
         {/* 头部操作区 */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900">收藏夹数据分析</h2>
+          <Title title="收藏夹数据分析" desc="默认24小时刷新，点击刷新强制刷新" />
           <div className="flex gap-2">
             <Select
               defaultValue={dateRange.current}
@@ -171,6 +177,23 @@ export const OptionsAnalysisTab: React.FC = () => {
           </div>
         </div>
 
+        {/* Loading 遮罩层 */}
+        {dataLoading && fetchProgress && (
+          <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl">
+            <div className="flex flex-col items-center gap-4">
+              <img alt="loading-gif" src={loadingGif} className="w-24 h-24" />
+              <div className="text-center">
+                <p className="text-sm font-medium text-[#18191C]">
+                  正在分析第 {fetchProgress.current}/{fetchProgress.total} 个收藏夹
+                </p>
+                <p className="text-xs text-[#61666D] mt-1 max-w-[200px] truncate">
+                  {fetchProgress.currentTitle}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 统计卡片 */}
         <div className="mb-8">
           <StatsCards data={statsData} loading={dataLoading} />
@@ -190,7 +213,12 @@ export const OptionsAnalysisTab: React.FC = () => {
                   <CardTitle>收藏夹视频数量分布</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <DistributionChart data={distributionData} title="收藏夹分布" type="pie" />
+                  <DistributionChart
+                    loading={dataLoading}
+                    data={distributionData}
+                    title="收藏夹分布"
+                    type="pie"
+                  />
                 </CardContent>
               </Card>
               <Card>
@@ -198,7 +226,12 @@ export const OptionsAnalysisTab: React.FC = () => {
                   <CardTitle>收藏夹视频数量排行</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BarChart data={distributionData} title="TOP 10 收藏夹" horizontal={true} />
+                  <BarChart
+                    loading={dataLoading}
+                    data={distributionData}
+                    title="TOP 10 收藏夹"
+                    horizontal={true}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -210,7 +243,12 @@ export const OptionsAnalysisTab: React.FC = () => {
                 <CardTitle>收藏趋势分析</CardTitle>
               </CardHeader>
               <CardContent>
-                <TrendChart data={trendData} title="每日收藏趋势" showCumulative={true} />
+                <TrendChart
+                  loading={dataLoading}
+                  data={trendData}
+                  title="每日收藏趋势"
+                  showCumulative={true}
+                />
               </CardContent>
             </Card>
           </TabsContent>

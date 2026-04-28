@@ -27,6 +27,12 @@ const simpleHash = (str: string): string => {
   return Math.abs(hash).toString(36)
 }
 
+export type FetchProgress = {
+  current: number
+  total: number
+  currentTitle: string
+}
+
 /**
  * 管理分析数据的获取和缓存
  */
@@ -35,6 +41,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
   const [allMedias, setAllMedias] = React.useState<FavoriteMedia[]>([])
   const allMedaisRef = React.useRef(allMedias)
   const [loading, setLoading] = React.useState(false)
+  const [fetchProgress, setFetchProgress] = React.useState<FetchProgress>()
 
   // 生成缓存键
   const getCacheKey = useMemoizedFn((): string => {
@@ -46,7 +53,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
     return `analysis-medias-${simpleHash(folderIds)}`
   })
 
-  const cacheKey = React.useMemo(() => getCacheKey(), [favoriteData])
+  const cacheKey = React.useMemo(() => getCacheKey(), [getCacheKey])
   // 获取所有收藏夹的媒体数据
   const fetchAllMedias = useMemoizedFn(async (): Promise<FavoriteMedia[]> => {
     if (!favoriteData.length || !cookie) return []
@@ -70,9 +77,12 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       // 缓存过期或强制刷新，重新获取数据
       console.log('[useAnalysisData] 从API获取数据')
       const allMedias: FavoriteMedia[] = []
+      const total = favoriteData.length
 
       // 遍历所有收藏夹，分页获取全部媒体数据
-      for (const folder of favoriteData) {
+      for (let i = 0; i < favoriteData.length; i++) {
+        const folder = favoriteData[i]
+        setFetchProgress({ current: i + 1, total, currentTitle: folder.title })
         try {
           // 立马过期，重新请求
           const medias = await fetchAllFavoriteMedias(folder.id.toString(), undefined, 0)
@@ -86,6 +96,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
           }
         }
       }
+      setFetchProgress(undefined)
       // 保存到缓存
       await dbManager.set(cacheKey, allMedias)
       setAllMedias(allMedias)
@@ -102,6 +113,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
   return {
     allMedias,
     loading,
+    fetchProgress,
     allMedaisRef,
     fetchAllMedias,
   }

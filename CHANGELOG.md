@@ -9,6 +9,19 @@ Summary
   5. version timestamp follow the yyyy.MM.dd format
 ```
 
+## 1.2.6 [2025.04.28]
+
+- feat: 分析页添加加载进度遮罩层，显示当前分析到第几个收藏夹
+- feat: 图表组件空数据时展示骨架屏，数据加载中覆盖 Loading 态
+- feat: 新增 useBeforeUnload Hook，数据分析进行中关闭窗口弹出确认提示
+- feat: Popup 弹窗新增刷新按钮
+- fix: 收藏夹列表缓存从 sessionStorage 改为 localStorage，跨会话持久化
+- update: Title/CardTitle 组件新增 desc 属性样式支持
+
+## 1.2.5 [2025.04.27]
+
+- fix: 移除 ai-gate 中多余的流式错误检查代码
+
 ## 1.2.1 [2025.04.14]
 
 - fix: bar-chart 柱状图圆角修复，解决底部被切掉的问题

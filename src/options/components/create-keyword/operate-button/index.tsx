@@ -5,7 +5,7 @@ import KeywordModeSelector from '@/components/keyword-mode-selector'
 import loadingImg from '@/assets/loading.gif'
 
 const OperateButton: React.FC = () => {
-  const { handleCreate, isLoading, currentMode, setCurrentMode, cancelCreate } = useCreateKeyword({
+  const { isLoading, currentMode, handleCreate, setCurrentMode, cancelCreate } = useCreateKeyword({
     mode: 'local', // 默认使用本地算法
   })
 

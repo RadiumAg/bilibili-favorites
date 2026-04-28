@@ -1,5 +1,6 @@
 import React from 'react'
 import { toast } from '../use-toast'
+import { AIError } from '@/utils/error'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { quickExtractKeywords } from '@/utils/keyword-extractor'
@@ -74,35 +75,8 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   })
 
   /**
-   * 构建关键词提取的 messages
-   */
-  const buildKeywordExtractionMessages = (titleArray: string[]) => {
-    const systemPrompt = `你是一个关键词提取专家。任务：从视频标题中提取搜索关键词。
-
-规则：
-1. 提取标题中的核心词汇和常见别称
-2. 包含缩写、全称、中英文等多种表达
-3. 去除无意义的修饰词（如"学习"、"教程"等）
-4. 只返回 JSON 数组格式，不要任何解释
-
-示例：
-输入：["TypeScript入门教程","大学英语四级备考"]
-输出：["typescript","ts","type script","大学英语","四级","cet4","英语四级"]`
-
-    return [
-      { role: 'system' as const, content: systemPrompt },
-      { role: 'user' as const, content: '["React Hooks详解","Python数据分析"]' },
-      {
-        role: 'assistant' as const,
-        content: '["react","hooks","react hooks","python","数据分析","data analysis"]',
-      },
-      { role: 'user' as const, content: JSON.stringify(titleArray) },
-    ]
-  }
-
-  /**
    * 使用 AI 提取关键词
-   * 优先使用 AIGate 免费额度，如果配置了自定义模型则使用自定义模型
+   * 根据 configMode 判断使用内置免费 AI 还是自定义模型
    */
   const extractWithAI = useMemoizedFn(async (favKey: string) => {
     const aiConfig = dataProvideData.aiConfig || {}
@@ -114,24 +88,20 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       throw new Error('没有找到视频标题')
     }
 
-    // 判断是否配置了自定义模型（有 API Key 和模型名称）
-    const hasCustomConfig = aiConfig.key && aiConfig.model
+    // 根据 configMode 判断使用自定义还是内置 AI
+    const useCustomAI = aiConfig.configMode === 'custom'
 
-    let gptResult
-    if (hasCustomConfig) {
-      // 使用自定义模型
-      gptResult = await fetchChatGpt(titleArray, {
+    // 使用自定义模型
+    const gptResult = await fetchChatGpt(
+      titleArray,
+      {
         baseURL: aiConfig.baseUrl,
         apiKey: aiConfig.key!,
         model: aiConfig.model!,
         extraParams: aiConfig?.extraParams,
-      })
-    } else {
-      // 使用 AIGate 免费额度
-      const messages = buildKeywordExtractionMessages(titleArray)
-      gptResult = await callAIGateAI(messages)
-    }
-
+      },
+      useCustomAI,
+    )
     const reader = gptResult.toReadableStream().getReader()
     const adapter = createStreamAdapter(aiConfig.adapter)
     const parser = createAIStreamParser({
@@ -164,7 +134,13 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw error
       }
-      throw error
+      if (error instanceof AIError) {
+        throw new AIError(`AI 提取关键词失败: ${error.message}`, error.detail)
+      }
+      if (error instanceof Error) {
+        throw new AIError(`AI 提取关键词失败: ${error.message}`)
+      }
+      throw new AIError('AI 提取关键词失败')
     }
   })
 
@@ -269,7 +245,14 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
           })
           return
         }
-        if (error instanceof Error) {
+        if (error instanceof AIError) {
+          toast({
+            variant: 'destructive',
+            title: '操作失败',
+            description: error.message,
+            detail: error.detail,
+          })
+        } else if (error instanceof Error) {
           toast({
             variant: 'destructive',
             title: '操作失败',

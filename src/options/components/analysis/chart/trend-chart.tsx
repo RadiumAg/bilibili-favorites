@@ -1,5 +1,7 @@
 import React from 'react'
 import * as echarts from 'echarts'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useSize } from 'ahooks'
 
 type TrendData = {
   date: string
@@ -10,6 +12,7 @@ type TrendData = {
 type TrendChartProps = {
   data: TrendData[]
   title: string
+  loading: boolean
   showCumulative?: boolean
   className?: string
 }
@@ -17,14 +20,16 @@ type TrendChartProps = {
 export const TrendChart: React.FC<TrendChartProps> = ({
   data,
   title,
+  loading,
   showCumulative = false,
   className = '',
 }) => {
   const chartRef = React.useRef<HTMLDivElement>(null)
   const chartInstance = React.useRef<any>(null)
+  const size = useSize(chartRef)
 
   React.useEffect(() => {
-    if (!chartRef.current || !data.length) return
+    if (!chartRef.current || !data.length || loading) return
 
     chartInstance.current = echarts.init(chartRef.current)
 
@@ -113,7 +118,12 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       window.removeEventListener('resize', handleResize)
       chartInstance.current?.dispose()
     }
-  }, [data, title, showCumulative])
+  }, [data, title, showCumulative, size, loading])
 
-  return <div ref={chartRef} className={`w-full h-80 ${className}`} />
+  return (
+    <div className={`relative w-full h-80 ${className}`}>
+      <div ref={chartRef} className="w-full h-full" />
+      {(loading || !data.length) && <Skeleton className="absolute inset-0 rounded-lg" />}
+    </div>
+  )
 }

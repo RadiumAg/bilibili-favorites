@@ -11,8 +11,9 @@ const AutoCreateKeyword: React.FC = () => {
 
   return (
     <Button
+      size="sm"
       onClick={handleClick}
-      className="bg-b-primary hover:bg-b-primary-hover p-1 h-8 transition-colors duration-200"
+      className="bg-b-primary hover:bg-b-primary-hover h-7 transition-colors duration-200"
     >
       自动创建关键字
     </Button>
