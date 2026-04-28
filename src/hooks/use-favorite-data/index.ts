@@ -13,6 +13,10 @@ type GetAllFavoriteFlagRes = {
   data: { list: FavoriteDataItem[] }
 }
 
+/**
+ * 获取收藏夹的元数据，不包括收藏夹里的视频信息
+ * @returns
+ */
 const useFavoriteData = () => {
   const { favoriteData, setGlobalData } = useGlobalConfig(
     useShallow((state) => ({

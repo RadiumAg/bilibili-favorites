@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import CustomModeSwitch from './custom-mode-switch'
 
 type ConfigMode = 'custom' | 'free'
 
@@ -15,6 +16,7 @@ export const ConfigModeSelector: React.FC<ConfigModeSelectorProps> = ({
   return (
     <div className="mb-6">
       <h3 className="text-lg font-semibold mb-4">AI 配置模式</h3>
+      <CustomModeSwitch />
       <div className="flex gap-4">
         <Button
           type="button"

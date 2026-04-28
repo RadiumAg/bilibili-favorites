@@ -4,6 +4,7 @@ import { MessageEnum } from './message'
 import dbManager from './indexed-db'
 import { queryAndSendMessage } from './tab'
 import { AIError } from './error'
+import { sleep } from './promise'
 
 type BResponse<T> = {
   code: number
@@ -321,6 +322,7 @@ const fetchAllFavoriteMedias = async (
 
     hasMore = response.data.has_more
     currentPage++
+    await sleep(500) // 防止触发b站api风控
   }
 
   dbManager.set(key, allMedias)
