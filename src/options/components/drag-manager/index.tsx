@@ -7,6 +7,7 @@ import classNames from 'classnames'
 import { useFavoriteData, useFavoriteListData } from '@/hooks'
 import FolderList from './folder-list'
 import VideoList from './video-list'
+import { sleep } from '@/utils/promise'
 
 interface VideoItem {
   id: number
@@ -157,6 +158,7 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
     if (successCount > 0) {
       moveVideosCache(selectedFolderId.toString(), targetFolderId.toString(), videoIds)
       loadVideos(selectedFolderId)
+      await sleep(1000) // 请求太快favdata会刷新不了
       refreshFavData()
     }
   })
