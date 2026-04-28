@@ -16,12 +16,13 @@ import { DistributionChart } from './chart/distribution-chart'
 import { BarChart } from './chart/bar-chart'
 import { TrendChart } from './chart/trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
-import { RefreshCwIcon, LoaderIcon } from 'lucide-react'
+import { RefreshCwIcon } from 'lucide-react'
 import { useAnalysisData } from './use-analysis-data'
 import { useAnalysisWorker } from './use-analysis-worker'
 import { useAnalysisStats } from './use-analysis-stats'
 import { useFavoriteData } from '@/hooks'
 import { Title } from '@/components'
+import loadingGif from '@/assets/loading.gif'
 
 export const OptionsAnalysisTab: React.FC = () => {
   const { favoriteData } = useFavoriteData()
@@ -177,7 +178,7 @@ export const OptionsAnalysisTab: React.FC = () => {
         {dataLoading && fetchProgress && (
           <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl">
             <div className="flex flex-col items-center gap-4">
-              <LoaderIcon className="w-10 h-10 text-[#00AEEC] animate-spin" />
+              <img alt="loading-gif" src={loadingGif} className="w-24 h-24" />
               <div className="text-center">
                 <p className="text-sm font-medium text-[#18191C]">
                   正在分析第 {fetchProgress.current}/{fetchProgress.total} 个收藏夹
@@ -209,7 +210,12 @@ export const OptionsAnalysisTab: React.FC = () => {
                   <CardTitle>收藏夹视频数量分布</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <DistributionChart data={distributionData} title="收藏夹分布" type="pie" />
+                  <DistributionChart
+                    loading={dataLoading}
+                    data={distributionData}
+                    title="收藏夹分布"
+                    type="pie"
+                  />
                 </CardContent>
               </Card>
               <Card>
@@ -217,7 +223,12 @@ export const OptionsAnalysisTab: React.FC = () => {
                   <CardTitle>收藏夹视频数量排行</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BarChart data={distributionData} title="TOP 10 收藏夹" horizontal={true} />
+                  <BarChart
+                    loading={dataLoading}
+                    data={distributionData}
+                    title="TOP 10 收藏夹"
+                    horizontal={true}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -229,7 +240,12 @@ export const OptionsAnalysisTab: React.FC = () => {
                 <CardTitle>收藏趋势分析</CardTitle>
               </CardHeader>
               <CardContent>
-                <TrendChart data={trendData} title="每日收藏趋势" showCumulative={true} />
+                <TrendChart
+                  loading={dataLoading}
+                  data={trendData}
+                  title="每日收藏趋势"
+                  showCumulative={true}
+                />
               </CardContent>
             </Card>
           </TabsContent>

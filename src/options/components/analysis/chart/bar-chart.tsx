@@ -1,6 +1,7 @@
 import React from 'react'
 import * as echarts from 'echarts'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useSize } from 'ahooks'
 
 type ChartData = {
   name: string
@@ -10,6 +11,7 @@ type ChartData = {
 type BarChartProps = {
   data: ChartData[]
   title: string
+  loading: boolean
   horizontal?: boolean
   className?: string
 }
@@ -17,14 +19,16 @@ type BarChartProps = {
 export const BarChart: React.FC<BarChartProps> = ({
   data,
   title,
+  loading,
   horizontal = false,
   className = '',
 }) => {
   const chartRef = React.useRef<HTMLDivElement>(null)
   const chartInstance = React.useRef<any>(null)
+  const size = useSize(chartRef)
 
   React.useEffect(() => {
-    if (!chartRef.current || !data.length) return
+    if (!chartRef.current || !data.length || loading) return
 
     chartInstance.current = echarts.init(chartRef.current)
 
@@ -102,15 +106,12 @@ export const BarChart: React.FC<BarChartProps> = ({
       window.removeEventListener('resize', handleResize)
       chartInstance.current?.dispose()
     }
-  }, [data, title, horizontal])
+  }, [data, title, horizontal, size, loading])
 
-  if (!data.length) {
-    return (
-      <div className={`w-full h-80 ${className}`}>
-        <Skeleton className="w-full h-full rounded-lg" />
-      </div>
-    )
-  }
-
-  return <div ref={chartRef} className={`w-full h-80 ${className}`} />
+  return (
+    <div className={`relative w-full h-80 ${className}`}>
+      <div ref={chartRef} className="w-full h-full" />
+      {(loading || !data.length) && <Skeleton className="absolute inset-0 rounded-lg" />}
+    </div>
+  )
 }
