@@ -1,5 +1,6 @@
 import React from 'react'
 import classNames from 'classnames'
+import { Check } from 'lucide-react'
 
 interface VideoCardProps {
   video: {
@@ -60,14 +61,22 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, selected, onClick, onDragS
       {/* 选中指示器 */}
       <div
         className={classNames(
-          'w-8 h-8 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all duration-200',
+          'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
+          'transition-all duration-200',
           {
-            'bg-[#00AEEC] text-white shadow-md shadow-[#00AEEC]/30': selected,
-            'border-2 border-gray-200 group-hover:border-[#00AEEC]/50': !selected,
+            'bg-[#00AEEC] text-white shadow-md shadow-[#00AEEC]/30 scale-100': selected,
+            'border-2 border-gray-200 group-hover:border-[#00AEEC]/50 scale-100': !selected,
           },
         )}
+        aria-hidden="true"
       >
-        {selected && '✓'}
+        <Check
+          className={classNames('w-4 h-4 transition-all duration-200', {
+            'opacity-100 scale-100': selected,
+            'opacity-0 scale-50': !selected,
+          })}
+          strokeWidth={3}
+        />
       </div>
     </div>
   )

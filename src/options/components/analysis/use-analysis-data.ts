@@ -46,7 +46,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
     return `analysis-medias-${simpleHash(folderIds)}`
   })
 
-  const cacheKey = React.useMemo(() => getCacheKey(), [favoriteData])
+  const cacheKey = React.useMemo(() => getCacheKey(), [getCacheKey])
   // 获取所有收藏夹的媒体数据
   const fetchAllMedias = useMemoizedFn(async (): Promise<FavoriteMedia[]> => {
     if (!favoriteData.length || !cookie) return []
