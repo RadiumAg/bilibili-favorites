@@ -1,0 +1,90 @@
+---
+title: 模型选择与推荐
+description: 扩展内置适配器一览与选型建议
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+扩展的 AI 能力基于 **OpenAI Chat Completion 兼容协议**，在 **自定义配置** 模式下，你可以在下拉框中选择以下 **5 种适配器**：
+
+- **通义千问（qianwen）**
+- **Kimi**
+- **OpenAI**
+- **GLM**
+- **自定义**
+
+此外，**免费额度** 模式下会自动使用扩展内置的 **AIGate** 共享配额，无需你选择模型。
+
+<Callout type="info">
+  **重要提示**：扩展的 `host_permissions` 仅放行 `openai.com`、`xf-yun.com` 与 `radiumg.top` 三个域名。若你选择的服务商域名不在其中，网络请求可能被浏览器阻止；此时请使用 **自定义** 适配器 + 你自有的代理（需将代理域名放到同样放行的域名下），或切换到 **免费额度** 模式。
+</Callout>
+
+## 内置适配器概览
+
+| 适配器 | 内置默认 Base URL | 额外参数（内置）|
+|--------|-------------------|-----------------|
+| 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | 关闭 `enable_thinking` |
+| Kimi | `https://api.moonshot.ai/v1` | 关闭 `thinking`（类型 `disabled`）|
+| OpenAI | `https://api.openai.com/v1` | 关闭 `enable_thinking` |
+| GLM | `https://open.bigmodel.cn/api/paas/v4` | 关闭 `thinking`（类型 `disabled`）|
+| 自定义 | 由你填写 | 你可以在 **Extra Params** 中自定义 JSON |
+
+<Callout type="info">
+  「内置」列表示当你在下拉中切换到该适配器时，扩展会自动把这些默认值填入表单；你仍然可以在 Base URL 输入框中覆写。
+</Callout>
+
+## 选型思路
+
+### 如果你不想申请任何 Key
+
+切到 **免费额度** 模式即可：
+
+- 使用扩展内置的 AIGate 共享配额；
+- 有日 / 月 / RPM 三档限流，配置页中可查看实时配额；
+- 日配额用完后可切回自定义模式或次日再试。
+
+### 如果你已有 API Key
+
+根据你 Key 所属的服务商选择对应的适配器即可：
+
+- 你有 **阿里云百炼 / DashScope** 的 Key → 选 **通义千问**；
+- 你有 **Moonshot / Kimi 开放平台** 的 Key → 选 **Kimi**；
+- 你有 **OpenAI** 的 Key → 选 **OpenAI**；
+- 你有 **智谱 AI（BigModel）** 的 Key → 选 **GLM**；
+- 以上之外（DeepSeek、自建代理等）→ 选 **自定义**，并手动填写 Base URL 与 Extra Params。
+
+### 选型的关键因素
+
+对于本扩展的典型负载 —— **视频标题分类 + 关键字提取** —— 选型时建议重点关注：
+
+- **中文理解能力**：视频标题绝大多数是中文，中文能力强的模型效果更好；
+- **响应速度**：AI 相关操作是交互式的，体感上越快越好；
+- **Token 成本**：AI 整理会把所有视频标题发给模型，若收藏数量大，成本差异显著；
+- **上下文长度**：默认场景 8K 基本够用；收藏数上千时建议选更长上下文的模型（如 Kimi 的 `moonshot-v1-32k`）。
+
+## 模型名称参考
+
+扩展的「模型」字段接收 **服务商支持的具体模型 ID**。下面给出几个常见示例（以服务商官方文档为准，会随服务商调整）：
+
+| 适配器 | 常见模型名 |
+|--------|------------|
+| 通义千问 | `qwen-plus`、`qwen-turbo`、`qwen-max` |
+| Kimi | `moonshot-v1-8k`、`moonshot-v1-32k` |
+| OpenAI | `gpt-4o-mini`、`gpt-4o` |
+| GLM | `glm-4-flash`、`glm-4-plus` |
+| 自定义 | 由你对接的后端决定 |
+
+<Callout type="warn">
+  模型名称与价格由服务商在其官方控制台统一管理，会随时间变化。请以 **服务商官方文档** 为准，本文档不承诺价格与可用性。
+</Callout>
+
+## 切换模型的影响
+
+- **关键字规则保留**：关键字数据独立于模型，切换模型不会丢失；
+- **Base URL / Extra Params 会被覆盖**：切换到某个内置适配器时，扩展会用该适配器的默认 Base URL 与 Extra Params 覆盖当前表单值；
+- **建议小范围试跑**：切换后先在一个视频不多的收藏夹试跑 AI 整理，验证效果再全量使用。
+
+## 相关文档
+
+- [API Key 配置](/docs/configuration/api-key) — 各服务商的接入步骤
+- [AI 智能分类](/docs/guide/ai-classification) — 模型在扩展中的实际使用方式

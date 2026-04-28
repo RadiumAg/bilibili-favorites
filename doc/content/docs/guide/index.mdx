@@ -1,0 +1,64 @@
+---
+title: 使用指南
+description: 按功能模块逐篇讲解扩展的所有核心能力
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import {
+  BarChart3,
+  Tags,
+  FolderKanban,
+  Sparkles,
+  MousePointer2,
+  PanelRight,
+} from 'lucide-react';
+
+本指南按功能模块组织，帮助你系统了解扩展的 **6 项核心能力**。每一篇文档都包含典型使用场景、操作步骤与实用技巧。
+
+## 功能总览
+
+<Cards>
+  <Card
+    icon={<BarChart3 />}
+    title="收藏夹分析"
+    href="/docs/guide/favorites-analysis"
+    description="查看分类分布、收藏趋势与最近 7 天统计。"
+  />
+  <Card
+    icon={<Tags />}
+    title="关键词管理"
+    href="/docs/guide/keyword-management"
+    description="为每个收藏夹配置关键词，决定整理时的归类逻辑。"
+  />
+  <Card
+    icon={<FolderKanban />}
+    title="批量整理"
+    href="/docs/guide/batch-organize"
+    description="按关键词规则一键将源收藏夹的视频分发到目标收藏夹。"
+  />
+  <Card
+    icon={<Sparkles />}
+    title="AI 智能分类"
+    href="/docs/guide/ai-classification"
+    description="接入 OpenAI 兼容模型，自动提取关键词与分类视频。"
+  />
+  <Card
+    icon={<MousePointer2 />}
+    title="可视化拖拽"
+    href="/docs/guide/drag-and-drop"
+    description="多选视频直接拖拽到目标收藏夹，所见即所得。"
+  />
+  <Card
+    icon={<PanelRight />}
+    title="侧边栏模式"
+    href="/docs/guide/side-panel"
+    description="在浏览器侧边栏常驻，边浏览边整理。"
+  />
+</Cards>
+
+## 推荐阅读顺序
+
+- **新用户**：建议先阅读 [收藏夹分析](/docs/guide/favorites-analysis) 了解数据全貌，再通过 [关键词管理](/docs/guide/keyword-management) 与 [批量整理](/docs/guide/batch-organize) 完成首次整理；
+- **想要自动化**：配置 [AI 智能分类](/docs/guide/ai-classification) 即可让扩展替你生成关键词；
+- **喜欢手感操作**：直接进入 [可视化拖拽](/docs/guide/drag-and-drop) 手动微调；
+- **日常使用**：推荐开启 [侧边栏模式](/docs/guide/side-panel)，获得最佳浏览体验。
