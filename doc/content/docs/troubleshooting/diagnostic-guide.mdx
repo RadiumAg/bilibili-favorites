@@ -1,0 +1,138 @@
+---
+title: 诊断信息收集指南
+description: 提交 Issue 或寻求帮助前，需要收集的信息与脱敏方法
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+当按照各个故障排除子页仍无法解决问题时，建议按本页收集诊断信息，便于在 Issue 中快速被定位。
+
+## 必要信息清单
+
+| 维度 | 示例 | 采集方式 |
+|------|------|----------|
+| 浏览器与版本 | `Chrome 126.0.6478.127 (Mac arm64)` | 地址栏输入 `chrome://version` |
+| 扩展版本 | `1.2.6` | `chrome://extensions/` 中找到本扩展 |
+| 操作系统 | `macOS 14.5 / Windows 11 23H2 / Ubuntu 22.04` | 系统关于页 |
+| 复现步骤 | 按顺序描述点击了什么、输入了什么 | 自己编写 |
+| 预期与实际 | 「预期移动 100 条，实际只移动了 30 条」| 自己编写 |
+| 控制台日志 | 弹窗 / 选项页 / B 站页面的 Console 报错 | 见下文 |
+| 网络请求日志 | 失败的接口、状态码、响应体 | 见下文 |
+| 截图或录屏 | 界面异常时 | 自己采集 |
+
+## 采集控制台日志
+
+扩展有 **三类控制台**，分别对应不同场景：
+
+<Steps>
+  <Step>
+    ### 弹窗 / 侧边栏 DevTools
+    右键扩展 **弹窗或侧边栏内部** → **检查**。Console 中会出现：
+
+    - `move video error ...`：移动单条视频失败的错误；
+    - `Move failed: ...`：AI 整理或拖拽中某条视频失败；
+    - `[DEBUG] fullContent ...`：AI 返回的原始内容（只在 AI 整理时出现）；
+    - `[AI Move] 以下视频的 targetFavorite 不在收藏夹列表中...`：AI 兜底统计。
+  </Step>
+  <Step>
+    ### 选项页 DevTools
+    在选项页（`chrome-extension://.../options.html`）的空白处右键 → **检查**。Console 包含 **可视化管理** 的日志，例如：
+
+    - `Move failed: ...`：拖拽单条视频失败；
+    - 关键字相关的操作日志。
+  </Step>
+  <Step>
+    ### Background Service Worker DevTools
+    地址栏输入 `chrome://extensions/` → 找到本扩展 → 点击 **「Service Worker」** 链接。Background 中会出现：
+
+    - 各种后台消息处理日志；
+    - AI 请求 / B 站接口请求的网络错误。
+  </Step>
+</Steps>
+
+## 采集网络请求日志
+
+<Steps>
+  <Step>
+    ### 打开 Network 面板
+    在对应 DevTools 中切换到 **Network**；若没有记录，建议勾选 **「Preserve log」** 后重新复现问题。
+  </Step>
+  <Step>
+    ### 过滤关键接口
+    - 问题涉及 **收藏操作** → 搜索 `api.bilibili.com`；
+    - 问题涉及 **AI 调用** → 按你所配置的 Base URL 搜索（如 `openai.com`、`dashscope.aliyuncs.com`、`moonshot.ai`、`bigmodel.cn` 等）。
+  </Step>
+  <Step>
+    ### 记录关键字段
+    选中失败的请求，记录：
+
+    - **URL**；
+    - **请求方法**；
+    - **状态码**；
+    - **响应体（Response 面板）**；
+
+    这些信息能直接定位是 **B 站接口异常** 还是 **AI 接口异常**。
+  </Step>
+</Steps>
+
+## 必须脱敏的信息
+
+<Callout type="warn" title="在贴出日志前，请务必抹去以下敏感字段">
+  - **API Key**：形如 `sk-***` 的字符串，日志或请求头里可能以 `Authorization: Bearer ...` 出现；
+  - **B 站 Cookie**：`SESSDATA`、`bili_jct`、`DedeUserID` 等；
+  - **uid、个人头像等 PII**：可用字符替换（如 `DedeUserID=xxxxxxx`）；
+  - **自建代理的内网 URL**：避免泄漏你的私有部署地址。
+</Callout>
+
+## 本地存储快速重置
+
+如果怀疑是本地缓存 / 配置损坏导致的问题，可以按 **影响范围从小到大** 依次重置：
+
+| 范围 | 操作 | 影响 |
+|------|------|------|
+| 视频列表缓存 | DevTools → Application → Local Storage → 删除 `fav-list-cache:*` | 下次打开时会重新拉取 |
+| 扩展全局配置 | DevTools → Application → Storage → Extension Storage | AI 配置、默认收藏夹等需要重填 |
+| 关键字规则 | DevTools → Application → IndexedDB | 全部关键字规则丢失，**慎重操作** |
+
+<Callout type="info">
+  重置之前，建议先把关键字规则手动复制到本地文本备份，避免重新配置耗时。
+</Callout>
+
+## 提交 Issue 的模板
+
+推荐使用下面的结构整理你的 Issue 内容：
+
+```md
+### 环境
+- 浏览器：Chrome 126.0.6478.127 (Mac arm64)
+- 扩展版本：1.2.6
+- 操作系统：macOS 14.5
+
+### 复现步骤
+1. 打开弹窗
+2. 点击「🤖 AI 整理」
+3. 首次点击后 5 秒内再次点击
+4. ……
+
+### 预期行为
+AI 返回每条视频的目标收藏夹，扩展按结果逐条移动。
+
+### 实际行为
+Toast 提示「AI 返回的数据格式错误，请重试」。
+
+### 控制台日志（已脱敏）
+```
+[DEBUG] fullContent ...
+```
+
+### 相关截图
+（如果有）
+```
+
+## 相关文档
+
+- [登录态相关问题](/docs/troubleshooting/login-issues)
+- [数据同步 / 缓存问题](/docs/troubleshooting/data-sync)
+- [批量操作失败](/docs/troubleshooting/batch-operation)
+- [AI 调用错误](/docs/troubleshooting/ai-errors)

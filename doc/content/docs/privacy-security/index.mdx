@@ -1,0 +1,62 @@
+---
+title: 隐私与安全
+description: 数据处理 / API Key 安全 / 账号安全的一站式说明
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { ShieldCheck, KeyRound, UserCheck } from 'lucide-react';
+
+## 核心承诺
+
+<Callout type="info" title="三条不可动摇的原则">
+  1. **数据留在本地**：收藏夹视频列表、关键字规则、AI 配置全部保存在你的浏览器中，扩展作者没有任何后台服务；
+  2. **AI 请求按需发送**：仅在你主动点击 AI 相关按钮时才会发起请求，且只发送 **视频标题 + 收藏夹名称**；
+  3. **最小权限原则**：扩展的权限清单只包含 `storage` / `tabs` / `sidePanel`，以及对少量 AI 域名的访问。
+</Callout>
+
+## 分模块阅读
+
+<Cards>
+  <Card
+    icon={<ShieldCheck />}
+    title="数据处理说明"
+    href="/docs/privacy-security/data-handling"
+    description="扩展收集、存储、传输了哪些数据，数据流向和可审计性。"
+  />
+  <Card
+    icon={<KeyRound />}
+    title="API Key 最佳实践"
+    href="/docs/privacy-security/api-key-best-practices"
+    description="安全地管理、轮换与撤销你的 AI API Key。"
+  />
+  <Card
+    icon={<UserCheck />}
+    title="账号安全"
+    href="/docs/privacy-security/account-safety"
+    description="登录态来源、Cookie 读取范围、账号共用风险与缓解方式。"
+  />
+</Cards>
+
+## Manifest 权限速览
+
+扩展在 `manifest.json` 中申请的全部权限如下，你可以在 `chrome://extensions/` → 扩展 **「详情」** 中随时复核：
+
+| 权限 | 作用 |
+|------|------|
+| `storage` | 保存扩展的全局配置（AI 模式、适配器、默认收藏夹等） |
+| `tabs` | 查询当前 B 站标签页，用于读取 Cookie 和触发消息通信 |
+| `sidePanel` | 以 Chrome 侧边栏形式呈现扩展界面 |
+| `host_permissions: api.openai.com` / `*.openai.com` | 调用 OpenAI 兼容接口 |
+| `host_permissions: spark-api.xf-yun.com` / `*.xf-yun.com` | 讯飞星火接口（adapter 预留） |
+| `host_permissions: *.radiumg.top` | AIGate 免费额度服务 |
+
+<Callout type="warn">
+  扩展 **不申请** `history` / `cookies`（全局）/ `bookmarks` / `downloads` / `<all_urls>` 等敏感权限。
+</Callout>
+
+## 相关文档
+
+- [数据处理说明](/docs/privacy-security/data-handling) — 数据流向与本地存储位置
+- [API Key 最佳实践](/docs/privacy-security/api-key-best-practices) — Key 的创建、轮换与撤销
+- [账号安全](/docs/privacy-security/account-safety) — 登录态与账号相关风险

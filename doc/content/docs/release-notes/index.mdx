@@ -1,0 +1,39 @@
+---
+title: 更新日志
+description: 版本发布历史与变更记录
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+本页汇总扩展的版本发布记录。点击任意版本号查看详细变更。
+
+## 最新版本
+
+<Cards>
+  <Card
+    title="v1.2.6（当前）"
+    href="/docs/release-notes/v1.2.6"
+    description="当前随 Chrome Web Store 发布的稳定版本。"
+  />
+</Cards>
+
+## 版本号约定
+
+扩展遵循 **语义化版本** 风格的 `MAJOR.MINOR.PATCH`：
+
+| 位段 | 含义 | 触发条件 |
+|------|------|---------|
+| `MAJOR` | 主版本 | 存在不兼容变更（如重新设计存储结构、移除核心功能） |
+| `MINOR` | 次版本 | 新增功能、新增 UI、新增适配器等向后兼容的变更 |
+| `PATCH` | 修订 | Bug 修复、文案调整、依赖升级等无功能变化 |
+
+## 如何查看当前已安装的版本
+
+<Callout type="info">
+  在 `chrome://extensions/` 中找到本扩展，版本号显示在扩展名称右侧（或点击「详情」查看完整信息）。也可以在扩展弹窗中通过「查看使用方式」右上角获取。
+</Callout>
+
+## 早期版本
+
+早期版本的变更详情暂未整理回灌到本文档站；如需完整历史，请参阅扩展 **源码仓库** 的 `CHANGELOG` / Releases 页面（若有）。

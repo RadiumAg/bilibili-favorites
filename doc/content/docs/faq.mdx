@@ -1,0 +1,109 @@
+---
+title: 常见问题
+description: 高频问题速查页，覆盖登录、整理、AI、数据同步等核心场景
+---
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+本页按照 **问题类型** 分组收集最常被问到的问题。若此处没有你的答案，请进入对应的 [故障排除](/docs/troubleshooting) 子页或 [注意事项](/docs/attention) 做深入排查。
+
+## 登录与权限
+
+<Accordions>
+  <Accordion title="为什么我打开扩展时看到「请检查是否在 b 站打开并登录了呢~~~」？">
+    扩展通过读取当前 B 站标签页 Cookie 中的 `DedeUserID` 判断登录态。出现这个提示意味着：要么你没打开任何 B 站标签页，要么 Cookie 已过期。**解决方式**：打开 `bilibili.com`、完成登录、刷新页面，然后重新唤起扩展。详见 [登录态相关问题](/docs/troubleshooting/login-issues)。
+  </Accordion>
+  <Accordion title="扩展会读取我的 B 站账号密码吗？">
+    不会。扩展**没有独立登录系统**，也**不弹登录窗口**。它只读取 Cookie 中的 `DedeUserID` 字段用于登录态判断，并在请求 B 站接口时沿用浏览器本身的 Cookie。详见 [账号安全](/docs/privacy-security/account-safety)。
+  </Accordion>
+  <Accordion title="扩展要求了哪些浏览器权限？">
+    `storage` / `tabs` / `sidePanel` 三项 + 三个 `host_permissions` 域名（openai.com / xf-yun.com / radiumg.top）。权限清单可以随时在 `chrome://extensions/` → 扩展「详情」中复核。详见 [隐私与安全总览](/docs/privacy-security)。
+  </Accordion>
+</Accordions>
+
+## 批量整理
+
+<Accordions>
+  <Accordion title="「通过关键字整理」和「🤖 AI 整理」有什么区别？">
+    两者入口都在弹窗/侧边栏底部，共用同一个默认收藏夹作为源：
+
+    - **通过关键字整理**：本地按关键字 **子串匹配**（大小写不敏感）把默认收藏夹的视频分发到目标收藏夹；**不调用 AI、不消耗 Token**；
+    - **🤖 AI 整理**：把视频标题发给 AI，让模型决定归属；**消耗 Token**，首次点击后 **5 秒内再次点击** 才会真正执行。
+
+    详见 [批量整理](/docs/guide/batch-organize) 与 [AI 智能分类](/docs/guide/ai-classification)。
+  </Accordion>
+  <Accordion title="为什么关键字匹配没命中某些视频？">
+    匹配规则是 **视频标题小写化后 `includes` 关键字小写化**。没命中通常因为：关键字过长 / 拼写有差异 / 标题里不包含该字符串。建议换用 **更短的核心词** 或改用 **AI 智能分类**。
+  </Accordion>
+  <Accordion title="AI 返回的目标收藏夹不在我的收藏夹列表里，会怎么样？">
+    扩展有 **兜底策略**：AI 建议的 `targetFavorite` 如果匹配不到任何实际收藏夹，视频会被归入 **默认收藏夹**，并在完成 Toast 的详情中列出被兜底的视频清单。你可以随后用 [可视化拖拽](/docs/guide/drag-and-drop) 手动归位。
+  </Accordion>
+  <Accordion title="可以撤销一次批量整理吗？">
+    **不能**。扩展没有内置「一键撤销」，已经成功调用 B 站移动接口的视频不会被自动退回。建议在大规模操作前用 **小范围测试收藏夹** 验证关键字规则或 AI 效果。
+  </Accordion>
+  <Accordion title="有没有「预览」功能？">
+    **没有**。「通过关键字整理」和「🤖 AI 整理」都不提供执行前预览。推荐的代替方案：先在 [关键字管理](/docs/guide/keyword-management) 中确认规则，再对一个小收藏夹试跑。
+  </Accordion>
+</Accordions>
+
+## AI 配置
+
+<Accordions>
+  <Accordion title="我必须配置 API Key 吗？">
+    不是必须。扩展提供两种模式：
+
+    - **自定义（custom）**：你填入自己的 API Key，使用通义千问 / Kimi / OpenAI / GLM / 自定义服务商；
+    - **免费额度（free）**：使用扩展内置的 AIGate 共享配额，**完全不需要 Key**，适合尝鲜或轻量使用。
+
+    详见 [API Key 配置](/docs/configuration/api-key)。
+  </Accordion>
+  <Accordion title="扩展支持哪些 AI 服务商？">
+    界面上可选的适配器：**通义千问 / Kimi / OpenAI / GML / 自定义**。每个适配器都预置了 **Base URL** 与 **Extra Params**。详见 [模型选择与推荐](/docs/configuration/model-selection)。
+  </Accordion>
+  <Accordion title="AI 会把我的收藏数据发到哪里？">
+    仅发送到你**在配置中明确指定的服务商**（custom 模式）或 AIGate 免费额度服务（free 模式）。扩展作者不运营任何中转服务器。详见 [数据处理说明](/docs/privacy-security/data-handling)。
+  </Accordion>
+  <Accordion title="为什么 AI 返回了「AI 返回的数据格式错误，请重试」？">
+    AI 的响应里扩展找不到合法的 `\[...\]` JSON 数组，常见原因：模型输出被截断、模型启用了思考模式前置了非 JSON 文本、或模型能力不足。详见 [AI 调用错误](/docs/troubleshooting/ai-errors)。
+  </Accordion>
+  <Accordion title="免费额度用完了会怎么样？">
+    会收到来自 AIGate 的配额相关错误（如 `quota exceeded`）。切换到 **自定义（custom）模式** 并填入自己的 Key 即可继续使用，或等待配额自然重置。配置页右侧有「检查配额」入口。
+  </Accordion>
+</Accordions>
+
+## 数据与缓存
+
+<Accordions>
+  <Accordion title="为什么我在 B 站新收藏的视频在扩展里看不到？">
+    扩展默认对收藏夹视频列表做 **localStorage 20 分钟 + IndexedDB 10 分钟** 的两层缓存。点击弹窗顶部的 **刷新** 按钮只会 reload 页面，不会清缓存。如果等不及，可在 DevTools → Application 删除 `fav-list-cache:*` 条目。详见 [数据同步 / 缓存问题](/docs/troubleshooting/data-sync)。
+  </Accordion>
+  <Accordion title="扩展在哪里保存数据？安全吗？">
+    三类本地存储：**Chrome Extension Storage**（全局配置、AI 配置、关键字规则）、**IndexedDB**（收藏夹视频详情缓存）、**localStorage**（视频列表二级缓存）。全部在你自己的浏览器里，扩展作者看不到。详见 [存储机制](/docs/advanced/data-storage)。
+  </Accordion>
+  <Accordion title="卸载扩展后我的数据会怎么样？">
+    Chrome Storage 数据会随扩展卸载被清除；IndexedDB 取决于浏览器实现，可能保留一段时间，可在 DevTools 中手动清理；B 站账号本身的 Cookie 与数据不受影响。
+  </Accordion>
+</Accordions>
+
+## 界面与交互
+
+<Accordions>
+  <Accordion title="扩展的选项页有哪些 Tab？">
+    共 4 个：**配置**、**关键字管理**、**可视化管理**、**收藏夹数据分析**。**不存在**独立的「整理收藏夹」Tab —— 批量整理入口在弹窗/侧边栏底部。
+  </Accordion>
+  <Accordion title="弹窗和侧边栏有什么区别？">
+    **代码一份，UI 相同**。侧边栏是 Chrome Manifest V3 的 `sidePanel`，适合需要同时浏览 B 站页面做长时间整理；弹窗适合快速进入做一次整理。详见 [侧边栏使用](/docs/guide/side-panel)。
+  </Accordion>
+  <Accordion title="可视化拖拽支持键盘快捷键吗？">
+    支持 **`Ctrl` / `⌘` + 点击** 多选、**`Shift` + 点击** 追加。**不支持** 上下键切换 / 空格键选中 / Esc 退出选中 等其它键盘快捷键。详见 [可视化拖拽](/docs/guide/drag-and-drop)。
+  </Accordion>
+</Accordions>
+
+## 还是没找到答案？
+
+<Callout type="info">
+  - 按问题类型查找：**[故障排除](/docs/troubleshooting)**；
+  - 红线提醒与前置条件：**[注意事项](/docs/attention)**；
+  - 数据相关的顾虑：**[隐私与安全](/docs/privacy-security)**。
+</Callout>
