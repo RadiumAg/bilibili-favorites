@@ -7,7 +7,7 @@ import { MessageEnum } from '@/utils/message'
 import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
 import { useGlobalConfig } from '@/store/global-data'
 import { sleep } from '@/utils/promise'
-import { toast } from '@/hooks'
+import { toast, useFavoriteListData } from '@/hooks'
 import { AIError } from '@/utils/error'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
@@ -23,6 +23,7 @@ type AIMoveResult = {
 }
 
 const useAIMove = () => {
+  const { moveVideosCache } = useFavoriteListData()
   const dataContext = useGlobalConfig(
     useShallow((state) => ({
       keyword: state.keyword,
@@ -265,6 +266,14 @@ const useAIMove = () => {
         title: '整理完成',
         description: `成功: ${successCount}, 失败: ${failCount}${fallbackCount > 0 ? `, 兜底: ${fallbackCount}` : ''}`,
         detail,
+      })
+
+      const targetIds = [...new Set(movedResults.map((r) => r.targetFavoriteId))]
+      targetIds.forEach((tarId) => {
+        const idsToTarget = movedResults
+          .filter((r) => r.targetFavoriteId === tarId && !r.title.startsWith('❌'))
+          .map((r) => r.videoId)
+        moveVideosCache(dataContext.defaultFavoriteId!.toString(), tarId.toString(), idsToTarget)
       })
 
       await sleep(1000)

@@ -4,6 +4,7 @@ import { MessageEnum } from './message'
 import dbManager from './indexed-db'
 import { queryAndSendMessage } from './tab'
 import { AIError } from './error'
+import { sleep } from './promise'
 
 type BResponse<T> = {
   code: number
@@ -303,8 +304,8 @@ const fetchAllFavoriteMedias = async (
   const mediaData = await dbManager.get(key)
   const isExpired = await dbManager.isExpired(key, expireTime)
   if (mediaData && !isExpired) return mediaData.data
-
   while (hasMore) {
+    await sleep(1000) // 防止触发b站api风控
     const response = await queryAndSendMessage<GetFavoriteListRes>({
       type: MessageEnum.getFavoriteList,
       data: { mediaId, pn: currentPage, ps: pageSize },

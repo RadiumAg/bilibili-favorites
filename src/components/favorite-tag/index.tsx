@@ -10,6 +10,11 @@ type FavoriteTagProps = {
   className?: string
 }
 
+/**
+ * 收藏夹标签组件
+ * @param props
+ * @returns
+ */
 const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   const { className } = props
   const { domRef, clickTagId, pendingElement, starElement, handleMouseDown, handleMouseUp } =
