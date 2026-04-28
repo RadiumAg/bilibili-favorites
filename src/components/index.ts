@@ -1,3 +1,5 @@
 export { default as Keyword } from './keyword'
+export { default as Title } from './title'
 export { default as FavoriteTag } from './favorite-tag'
+export { default as FinishedAnimate } from './finished-animate'
 export { default as KeywordModeSelector } from './keyword-mode-selector'

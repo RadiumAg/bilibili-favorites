@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { toast } from '@/hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatsCards } from './stats-cards'
 import { DistributionChart } from './chart/distribution-chart'
@@ -16,11 +17,11 @@ import { BarChart } from './chart/bar-chart'
 import { TrendChart } from './chart/trend-chart'
 import { useGlobalConfig } from '@/store/global-data'
 import { RefreshCwIcon } from 'lucide-react'
-import { toast } from '@/hooks'
 import { useAnalysisData } from './use-analysis-data'
 import { useAnalysisWorker } from './use-analysis-worker'
 import { useAnalysisStats } from './use-analysis-stats'
 import { useFavoriteData } from '@/hooks'
+import { Title } from '@/components'
 
 export const OptionsAnalysisTab: React.FC = () => {
   const { favoriteData } = useFavoriteData()
@@ -135,11 +136,11 @@ export const OptionsAnalysisTab: React.FC = () => {
   }, [favoriteData, fetchAllMedias, loadData])
 
   return (
-    <div className="w-full h-full bg-gray-50 p-6">
+    <div className="w-full h-full  ">
       <div className="max-w-full">
         {/* 头部操作区 */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900">收藏夹数据分析</h2>
+          <Title title="收藏夹数据分析" desc="默认24小时刷新，点击刷新强制刷新" />
           <div className="flex gap-2">
             <Select
               defaultValue={dateRange.current}

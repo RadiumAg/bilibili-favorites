@@ -63,7 +63,7 @@ const useFavoriteListData = () => {
     }
 
     // 3. 发起新请求
-    const request = fetchAllFavoriteMedias(mediaId, pageSize, expireTime || 0)
+    const request = fetchAllFavoriteMedias(mediaId, pageSize, expireTime)
       .then((data) => {
         setCachedData(mediaId, data)
         pendingRequests.delete(mediaId)
