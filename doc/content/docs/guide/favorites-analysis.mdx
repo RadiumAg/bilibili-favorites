@@ -1,0 +1,80 @@
+---
+title: 收藏夹分析
+description: 基于可视化图表深入洞察你的收藏偏好与近期动态
+---
+
+import Image from 'next/image';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+**收藏夹分析** 是扩展打开后的默认首屏，提供对你全部收藏内容的 **量化洞察**。
+
+<Image
+  src="/screenshots/fav-1.png"
+  alt="收藏夹分析 - 分类占比"
+  width={1600}
+  height={900}
+  className="rounded-lg border"
+/>
+
+## 你能看到什么
+
+- **分类占比饼图**：基于关键词规则计算的各分类视频占比，一眼看出收藏偏好；
+- **收藏趋势折线图**：按时间维度统计的收藏新增量，反映你的兴趣变化；
+- **最近 7 天统计**：近一周新增收藏的总量与分类明细；
+- **热门 UP 主 / 分区**：你最常收藏的 UP 主与 B 站官方分区分布。
+
+<Image
+  src="/screenshots/fav-2.png"
+  alt="收藏夹分析 - 趋势"
+  width={1600}
+  height={900}
+  className="rounded-lg border"
+/>
+
+## 使用步骤
+
+<Steps>
+  <Step>
+    ### 打开扩展
+    点击工具栏中的扩展图标；或右键 → **「在侧边栏中打开」** 获得更大的图表视野。
+  </Step>
+  <Step>
+    ### 等待数据加载
+    首次打开会自动拉取你的全部收藏数据并写入本地缓存（有效期 **24 小时**）。
+  </Step>
+  <Step>
+    ### 浏览可视化图表
+    切换饼图 / 折线图 / 榜单等视图，查看不同维度的数据。
+  </Step>
+  <Step>
+    ### 按需刷新
+    若近期有新收藏未显示，点击右上角 **「刷新」** 按钮强制更新。
+  </Step>
+</Steps>
+
+## 数据来源
+
+- **原始数据**：通过 Bilibili 官方 API 拉取，**不使用任何第三方数据源**；
+- **分类逻辑**：基于你在 [关键字管理](/docs/guide/keyword-management) 中维护的关键字规则；未命中任何规则的视频会被归入「未分类」。
+
+分类结果可随时在 [关键字管理](/docs/guide/keyword-management) 中手动微调，微调后图表会立即重新计算。
+
+## 常见疑问
+
+<Callout type="info">
+  **「为什么某些视频没有被归类？」**
+
+  这些视频的标题未命中任何关键字规则。你可以在 [关键字管理](/docs/guide/keyword-management) 中新增规则，或使用 [可视化拖拽](/docs/guide/drag-and-drop) 手动分类。
+</Callout>
+
+<Callout type="warn">
+  **「图表数据看起来不是最新的？」**
+
+  扩展会对收藏数据做本地缓存以减少对 Bilibili 接口的压力；请点击页面中的 **「刷新」** 按钮强制重新拉取。
+</Callout>
+
+## 相关文档
+
+- [关键字管理](/docs/guide/keyword-management) — 调整分类规则
+- [AI 智能分类](/docs/guide/ai-classification) — 用 AI 一次性把视频分发到对应收藏夹

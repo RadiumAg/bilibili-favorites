@@ -1,0 +1,11 @@
+{
+  "title": "隐私与安全",
+  "description": "数据处理、权限说明与最佳实践",
+  "icon": "ShieldCheck",
+  "pages": [
+    "index",
+    "data-handling",
+    "api-key-best-practices",
+    "account-safety"
+  ]
+}

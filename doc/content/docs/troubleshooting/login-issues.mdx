@@ -1,0 +1,66 @@
+---
+title: 登录态相关问题
+description: 扩展提示需要登录或无法读取收藏数据时的处理流程
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+## 常见现象
+
+打开扩展后，主界面被一张 **「请检查是否在 b 站打开并登录了呢~~~」** 的提示图覆盖，无法继续使用；或者收藏夹列表为空。
+
+## 背后原理
+
+扩展通过 **读取 B 站页面的 Cookie 中的 `DedeUserID`** 判断登录态：
+
+- 若能读到有效的 `DedeUserID`，视为已登录；
+- 若读取失败或值为空，视为未登录，显示遮罩提示。
+
+扩展 **不维护独立的登录会话**，也不会弹出登录窗口；整个识别过程依赖浏览器中正在打开的 B 站标签页。
+
+## 标准排查流程
+
+<Steps>
+  <Step>
+    ### 打开任意 B 站页面
+    在浏览器中新开标签页访问 [bilibili.com](https://www.bilibili.com)。仅打开扩展弹窗但没有 B 站标签时会一直报「未登录」。
+  </Step>
+  <Step>
+    ### 完成登录
+    若显示未登录，请扫码或使用账号密码完成登录；已登录可以直接进入下一步。
+  </Step>
+  <Step>
+    ### 刷新 B 站页面
+    按 `F5` 或 `Ctrl` / `⌘` + `R` 刷新当前标签页，确保 Cookie 被浏览器正确写入。
+  </Step>
+  <Step>
+    ### 重新唤起扩展
+    关闭扩展弹窗 / 侧边栏，然后再次点击扩展图标重新打开，扩展会再次尝试读取 Cookie。
+  </Step>
+  <Step>
+    ### 点击扩展顶部「刷新」按钮
+    仍未恢复时，点击弹窗右上角的刷新图标，会触发弹窗自身 reload，重新发起登录态检查。
+  </Step>
+</Steps>
+
+## 仍无法恢复时的进一步排查
+
+<Callout type="warn" title="按顺序依次尝试">
+  - **清除 B 站 Cookie 后重新登录**：在浏览器「站点权限」中清除 `bilibili.com` 的 Cookie，关闭标签页，再重新打开 B 站登录；
+  - **检查是否启用了第三方隐私保护插件**：某些强隐私保护插件（如严格模式下的广告拦截、Cookie 清理器）可能会提前清掉 `DedeUserID`；临时禁用该类插件再测试；
+  - **检查浏览器版本**：本扩展依赖 Chrome Manifest V3，建议使用 **Chrome 114+** 或等价 Chromium 内核浏览器；
+  - **切换账号时的遗留状态**：如果你刚在 B 站切换过账号，先关闭所有 B 站标签后再重新登录，避免扩展沿用旧 Cookie。
+</Callout>
+
+## 如何确认问题确实与登录态相关
+
+打开任意 B 站页面后按 `F12` 打开开发者工具 → **Application → Cookies → `https://www.bilibili.com`**，查看是否存在 **`DedeUserID`** 字段：
+
+- **存在且非空** → 登录态正常，问题不在这里，请参考 [数据同步 / 缓存问题](/docs/troubleshooting/data-sync) 或 [诊断信息收集](/docs/troubleshooting/diagnostic-guide)；
+- **不存在或为空** → 登录态缺失，请回到上方流程重新登录。
+
+## 相关文档
+
+- [批量操作失败](/docs/troubleshooting/batch-operation) — 排除登录态后依然报错的情况
+- [诊断信息收集指南](/docs/troubleshooting/diagnostic-guide) — 提交 Issue 前的信息整理

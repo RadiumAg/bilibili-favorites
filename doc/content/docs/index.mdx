@@ -1,0 +1,223 @@
+---
+title: 快速入门
+description: 5 分钟完成安装与首次使用，快速掌握 B 站收藏夹整理工具的核心能力
+---
+
+import Image from 'next/image';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import {
+  BarChart3,
+  FolderKanban,
+  MousePointer2,
+  PanelRight,
+  Sparkles,
+  Settings,
+} from 'lucide-react';
+
+<Image
+  src="/screenshots/product.png"
+  alt="B 站收藏夹整理工具产品预览"
+  width={1600}
+  height={900}
+  className="rounded-lg border"
+  priority
+/>
+
+## 概述
+
+**B 站收藏夹整理工具** 是一款面向 Bilibili 用户的 Chrome 扩展，专注解决收藏夹「堆积如山、难以检索、缺乏洞察」三大痛点。它结合 **本地算法** 与 **AI 大模型**，帮助你完成：
+
+<Cards>
+  <Card
+    icon={<BarChart3 />}
+    title="收藏内容分析"
+    description="可视化图表 + 最近 7 天统计，一眼看清收藏偏好与动态。"
+  />
+  <Card
+    icon={<FolderKanban />}
+    title="批量智能整理"
+    description="基于关键词规则，一键将默认收藏夹中的视频分发到对应收藏夹。"
+  />
+  <Card
+    icon={<MousePointer2 />}
+    title="可视化拖拽"
+    description="多选视频后直接拖拽到目标收藏夹，跨夹移动所见即所得。"
+  />
+  <Card
+    icon={<PanelRight />}
+    title="侧边栏常驻"
+    description="在浏览器侧边栏中常开，不被误点关闭，边浏览边整理。"
+  />
+  <Card
+    icon={<Sparkles />}
+    title="AI 关键词提取"
+    description="接入 OpenAI 兼容模型，自动从视频标题生成高质量分类关键词。"
+  />
+  <Card
+    icon={<Settings />}
+    title="灵活可配置"
+    description="自定义 API Key / 模型 / 关键词规则，支持星火等免费额度模型。"
+  />
+</Cards>
+
+<Callout type="info">
+  所有数据均存储在浏览器本地（**IndexedDB + Chrome Storage**），不会上传至任何第三方服务器。关于隐私与安全的详细说明，请查看 [注意事项](/docs/attention)。
+</Callout>
+
+## 环境要求
+
+在开始前，请确认你的环境满足以下条件：
+
+- **浏览器**：Chrome 114+ 或任意 Chromium 内核浏览器（Edge、Arc、Brave 等）；
+- **账号**：已注册并能正常登录的 Bilibili 账号；
+- **网络**：可正常访问 `bilibili.com`；若启用 AI 功能，还需可访问所选模型的 API 端点。
+
+## 安装
+
+推荐从 Chrome Web Store 一键安装；无法访问商店时可使用本地加载方式。
+
+<Tabs items={['Chrome Web Store（推荐）', '本地加载']}>
+  <Tab value="Chrome Web Store（推荐）">
+    <Steps>
+      <Step>
+        ### 打开商店页面
+        访问 [Chrome Web Store - B 站收藏夹整理工具](https://chromewebstore.google.com/detail/b%E7%AB%99%E6%94%B6%E8%97%8F%E5%A4%B9%E6%95%B4%E7%90%86%E5%B7%A5%E5%85%B7/kompiebhklojoioghbddednmmnebnkoc)。
+      </Step>
+      <Step>
+        ### 添加到 Chrome
+        点击 **「添加至 Chrome」** → **「添加扩展程序」** 完成安装。
+      </Step>
+      <Step>
+        ### 固定到工具栏
+        点击浏览器右上角的 🧩 拼图图标，将本扩展 **📌 固定** 到工具栏，方便后续快速唤起。
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab value="本地加载">
+    <Steps>
+      <Step>
+        ### 获取扩展包
+        下载最新版本的扩展压缩包，并解压到任意本地目录。
+      </Step>
+      <Step>
+        ### 进入扩展管理页
+        在地址栏输入 `chrome://extensions/` 并回车。
+      </Step>
+      <Step>
+        ### 开启开发者模式
+        打开页面右上角的 **「开发者模式」** 开关。
+      </Step>
+      <Step>
+        ### 加载扩展
+        点击 **「加载已解压的扩展程序」**，选择上一步解压出的文件夹即可完成加载。
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## 首次配置
+
+安装完成后，建议按以下顺序完成首次配置，以获得完整体验。
+
+<Steps>
+  <Step>
+    ### 保持 B 站登录态
+    在浏览器中打开任意 B 站页面并完成登录，保持至少一个标签页处于打开状态。扩展依赖该页面的登录态调用 Bilibili 官方 API。
+  </Step>
+  <Step>
+    ### （可选）配置 AI 模型
+    如需使用 **AI 整理** 与 **AI 关键字提取**，请进入扩展的 **选项页 → 配置** Tab，选择内置服务商（通义千问 / Kimi / OpenAI / GLM）或 **自定义**，填入 **API Key** 与 **模型名称**。
+
+    <Callout type="info">
+      若希望零成本体验，可在配置页顶部切换到 **「免费额度」** 模式，使用扩展内置的 AIGate 共享配额，无需申请任何 Key。
+    </Callout>
+  </Step>
+  <Step>
+    ### （可选）初始化关键字规则
+    进入 **选项页 → 关键字管理** Tab，选择某个收藏夹，在顶部的 **模式选择器** 中选 **「本地算法」**（TF-IDF，完全离线、免费）或 **「AI 智能」**，再点击 **「为选中创建」** / **「为所有创建」** 批量生成候选关键字，后续可人工微调。
+  </Step>
+</Steps>
+
+## 启动与基本使用
+
+完成安装与配置后，按下面的路径开始使用核心功能。
+
+<Steps>
+  <Step>
+    ### 唤起扩展
+    点击浏览器工具栏中的扩展图标即可打开弹窗；也可以右键图标选择 **「在侧边栏中打开」**，获得更大的操作空间与持久化显示。
+  </Step>
+  <Step>
+    ### 查看收藏分析
+    首次打开会自动拉取你的收藏数据并缓存 **24 小时**。在 **收藏夹分析** 页可查看：
+
+    - 各分类占比饼图；
+    - 收藏趋势折线图；
+    - 最近 7 天新增收藏统计。
+
+    点击 **「刷新」** 可强制重新拉取最新数据。
+  </Step>
+  <Step>
+    ### 一键批量整理
+    在 **弹窗（或侧边栏）底部** 有两个整理按钮：
+
+    - **通过关键字整理**：基于本地关键字规则把默认收藏夹的视频分发到各目标收藏夹，不消耗 AI Token；
+    - **🤖 AI 整理**：把视频标题发给 AI 智能分类（首次点击弹出 Token 消耗提醒，**5 秒内再次点击** 才会真正执行）。
+
+    执行过程中界面会显示遮罩与 loading，完成后 Toast 汇总 **成功 / 失败 / 兜底** 计数。
+  </Step>
+  <Step>
+    ### 可视化拖拽微调
+    进入 **选项页 → 可视化管理** Tab，左侧是收藏夹列表，右侧是当前收藏夹内的视频：
+
+    - 按住 `Ctrl`（macOS 为 `⌘`）+ 点击实现 **多选**；
+    - 使用右上角 **「全选」** 按钮快速选中全部；
+    - 选中后直接 **拖拽** 到左侧目标收藏夹完成移动；
+    - 操作完成后列表自动刷新，并 Toast 展示成功 / 失败数量。
+  </Step>
+</Steps>
+
+<Callout type="warn">
+  若扩展提示 **「需要登录」**，请先刷新任意一个 B 站页面后再重新唤起扩展。更多常见问题与故障排除见 [注意事项](/docs/attention)。
+</Callout>
+
+## 下一步
+
+根据你的角色与目标，推荐沿着以下路径继续阅读：
+
+<Cards>
+  <Card
+    title="📖 使用指南"
+    href="/docs/guide"
+    description="按功能模块逐篇讲解：分析 / 关键词 / 批量整理 / AI / 拖拽 / 侧边栏。"
+  />
+  <Card
+    title="⚙️ 配置与自定义"
+    href="/docs/configuration"
+    description="API Key、模型选择、关键词规则等个性化配置。"
+  />
+  <Card
+    title="⚠️ 注意事项"
+    href="/docs/attention"
+    description="使用前必读的红线提醒与前置条件。"
+  />
+  <Card
+    title="🔒 隐私与安全"
+    href="/docs/privacy-security"
+    description="数据处理、权限说明与安全最佳实践。"
+  />
+  <Card
+    title="🔧 故障排除"
+    href="/docs/troubleshooting"
+    description="遇到异常？按问题类型快速定位解决方案。"
+  />
+  <Card
+    title="❓ 常见问题"
+    href="/docs/faq"
+    description="高频问题速查页，覆盖登录、整理、AI、数据同步等核心疑问。"
+  />
+</Cards>
+

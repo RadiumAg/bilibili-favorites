@@ -1,0 +1,36 @@
+---
+title: 进阶主题
+description: 深入理解扩展内部的存储、缓存与算法原理
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { HardDrive, Timer, Sparkles } from 'lucide-react';
+
+本章节面向 **希望理解扩展内部机制** 的读者：运维自己的配置、排查疑难杂症、或基于源码做二次开发时，下面的内容会帮你建立准确心智模型。
+
+<Cards>
+  <Card
+    icon={<HardDrive />}
+    title="存储机制"
+    href="/docs/advanced/data-storage"
+    description="Chrome Storage / IndexedDB / localStorage 各自存什么、何时用哪一个。"
+  />
+  <Card
+    icon={<Timer />}
+    title="缓存策略"
+    href="/docs/advanced/cache-strategy"
+    description="IndexedDB 10 分钟 + localStorage 20 分钟两层缓存如何协作。"
+  />
+  <Card
+    icon={<Sparkles />}
+    title="TF-IDF 算法"
+    href="/docs/advanced/tf-idf-algorithm"
+    description="本地关键字提取是如何工作的，以及 ≤ 2 文档时的退化策略。"
+  />
+</Cards>
+
+## 阅读顺序建议
+
+- 如果你是 **普通用户**：先看 [缓存策略](/docs/advanced/cache-strategy)，它解释了"为什么点刷新还看到旧数据"；
+- 如果你是 **想配置更高级的 AI 流程**：看 [存储机制](/docs/advanced/data-storage)，了解 Extra Params 写到哪里、如何被读取；
+- 如果你是 **对关键字质量不满意**：看 [TF-IDF 算法](/docs/advanced/tf-idf-algorithm)，理解停用词表与分词规则后，你能更有针对性地调整你的收藏标题习惯。

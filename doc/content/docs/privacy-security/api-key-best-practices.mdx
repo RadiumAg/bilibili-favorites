@@ -1,0 +1,99 @@
+---
+title: API Key 最佳实践
+description: 安全地创建、存储、轮换与撤销 AI 服务商 API Key
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+## API Key 的本地存储
+
+在 **custom 模式** 下，你填入的 API Key 会被保存在 **扩展的 Chrome Storage** 中：
+
+- 仅你当前登录该浏览器的 Chrome 账号可以访问；
+- 未加密，但受浏览器的站点隔离机制保护，其他扩展与网站无法读取；
+- 会随 Chrome 同步到登录了同一账号的其他设备（若你启用了 Chrome Sync 并同步了扩展设置）。
+
+<Callout type="warn">
+  因为是 **明文存储**，请 **不要** 在公共电脑、多人共用账号或你无法完全掌控的浏览器上配置 API Key；需要临时用的时候，用完后到配置页把 Key 字段清空。
+</Callout>
+
+如果想避免在扩展里保存 Key，可以直接切换到 **「免费额度」** 模式，完全不用填 Key。
+
+## 申请新 Key 的建议
+
+<Steps>
+  <Step>
+    ### 专门为扩展申请独立的 Key
+    不要复用生产环境或其他工具共用的 Key。为扩展单独申请，便于精细化追踪与快速撤销。
+  </Step>
+  <Step>
+    ### 打开服务商的用量限制
+    大部分主流服务商都支持为单个 Key 设置 **每日 / 每月配额**。建议设置一个你能接受的上限，例如每月 5 美元，避免意外情况。
+  </Step>
+  <Step>
+    ### 给 Key 起易识别的名字
+    在服务商后台给 Key 命名为 `bilibili-favorites-extension` 之类，方便后期审计时区分。
+  </Step>
+  <Step>
+    ### 限定可用模型（如果服务商支持）
+    若服务商支持按模型做 Key 级限制，只开放你计划使用的模型。
+  </Step>
+</Steps>
+
+## 日常使用
+
+- **不要复制粘贴 Key 到任何其他地方**：包括聊天窗口、Issue 描述、截图；
+- **提交 Issue 时务必脱敏**：参考 [诊断信息收集指南](/docs/troubleshooting/diagnostic-guide) 的「必须脱敏的信息」清单；
+- **关注服务商的用量告警**：多数服务商支持配置用量告警邮件，建议开启。
+
+## 轮换 Key
+
+当满足以下任一条件时，建议立即 **生成新 Key + 撤销旧 Key**：
+
+- Key 不小心被截图或贴到外部；
+- 浏览器被其他人使用过；
+- Key 的用量突然异常升高；
+- 距离上次轮换已超过 3 个月（常规轮换）。
+
+轮换步骤：
+
+<Steps>
+  <Step>
+    ### 在服务商后台生成新 Key
+    保留旧 Key 以便过渡测试。
+  </Step>
+  <Step>
+    ### 在扩展配置页更新 Key
+    把新 Key 填入 **API Key** 字段；字段修改会 **自动保存**，无需点按钮。
+  </Step>
+  <Step>
+    ### 验证新 Key 可用
+    回到弹窗点击 **「🤖 AI 整理」**（或 AI 提取关键字），确认能正常调用。
+  </Step>
+  <Step>
+    ### 撤销旧 Key
+    回到服务商后台立即删除旧 Key，完成轮换。
+  </Step>
+</Steps>
+
+## 泄漏应急
+
+一旦怀疑 Key 已泄漏：
+
+1. **立即去服务商后台删除该 Key**（优先级最高）；
+2. 查看服务商后台的用量记录，确认是否有异常调用；
+3. 若有异常扣费，联系服务商客服；
+4. 在扩展中按「轮换」流程换上新 Key。
+
+## 与 Base URL / Extra Params 相关的风险
+
+- **Base URL 留空** 时扩展会使用内置的适配器默认地址，风险最低；
+- **自己填 Base URL** 时请务必使用 `https://` 且来源可信（避免中间人篡改请求）；
+- **Extra Params** 会被原样拼入请求 body；不要把 Key 之类的敏感信息写进去。
+
+## 相关文档
+
+- [API Key 配置](/docs/configuration/api-key) — 配置字段的具体含义
+- [数据处理说明](/docs/privacy-security/data-handling) — AI 请求实际发送的内容
+- [诊断信息收集指南](/docs/troubleshooting/diagnostic-guide) — 提交 Issue 前的脱敏清单

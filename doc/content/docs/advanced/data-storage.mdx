@@ -1,0 +1,80 @@
+---
+title: 存储机制
+description: Chrome Storage / IndexedDB / localStorage 分别存什么、何时使用
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+扩展的数据全部落在 **你的浏览器本地**，按照数据特性分布在三种存储介质中。本页给出每一类数据的精确落点。
+
+## 三种存储介质总览
+
+| 介质 | 读写 API | 容量上限 | 生命周期 | 典型用途 |
+|------|---------|---------|---------|---------|
+| **Chrome Extension Storage** | `chrome.storage.local` | 约 10MB（浏览器实现差异） | 卸载扩展时清除 | AI 配置等全局键值对 |
+| **IndexedDB** | `indexedDB` | 远大于 localStorage（通常 > 50MB） | 卸载扩展不一定立即清除 | 收藏夹视频详情缓存 |
+| **localStorage** | `window.localStorage` | 约 5MB | 扩展上下文下与扩展绑定 | 快速命中的视频列表缓存 |
+
+## 存储分布详表
+
+### 1. Chrome Extension Storage（扩展全局配置）
+
+保存扩展的**稳定配置项**，由 zustand `global-data` store 序列化写入：
+
+| 键 | 含义 |
+|-----|-----|
+| `aiConfig.configMode` | `custom` / `free` |
+| `aiConfig.adapter` | `openai` / `qianwen` / `kimi` / `gml` / `custom` / `aigate` / `spark` |
+| `aiConfig.key` | API Key（custom 模式） |
+| `aiConfig.baseUrl` | Base URL（可选，未填使用适配器默认值） |
+| `aiConfig.model` | 模型名称 |
+| `aiConfig.extraParams` | 拼入请求 body 的额外参数（JSON 字符串） |
+| `defaultFavoriteId` | 默认收藏夹 ID |
+| 关键字规则 | 所有收藏夹的关键字列表 |
+
+<Callout type="info">
+  Chrome Storage 会随 Chrome Sync（若已启用）同步到其他登录了相同账号的设备。若你不希望 API Key 被同步，请关闭 Chrome 账号同步，或使用「免费额度」模式避开 Key。
+</Callout>
+
+### 2. IndexedDB（收藏夹视频详情一级缓存）
+
+由 `src/utils/indexed-db.ts` 封装的 `dbManager` 负责读写。主要键：
+
+| 键 | 含义 | 默认过期时间 |
+|-----|-----|------------|
+| `favorite-all-<mediaId>` | 单个收藏夹的全部视频元信息（由 `fetchAllFavoriteMedias` 写入） | **10 分钟** |
+
+每条记录除了业务数据外还会携带写入时间戳，由 `dbManager.isExpired` 在读取时判断是否已过期。
+
+### 3. localStorage（收藏夹视频列表二级缓存）
+
+由 `useFavoriteListData` 维护，用于 **UI 层快速命中**：
+
+| 键前缀 | 含义 | 过期时间 |
+|---------|-----|---------|
+| `fav-list-cache:<mediaId>` | 单个收藏夹的视频列表快照 + `timestamp` | **20 分钟** |
+
+相关行为：
+
+- 读取时若命中且未过期 → 直接返回，不触网；
+- 读取时未命中 → 调用 `fetchAllFavoriteMedias`（会再走 IndexedDB 缓存），完成后把最新结果写回 localStorage；
+- 同一个 `mediaId` 的并发读取请求 **共享同一个 Promise**，避免重复网络调用。
+
+此外，**批量移动** 完成后（通过关键字 / AI / 拖拽），扩展会 **同步** 更新 localStorage 缓存 —— 把源收藏夹里被移走的视频从缓存中剔除，追加到目标收藏夹缓存（仅当目标缓存已存在时）。这就是"移动完立刻看得到变化"的原因。
+
+## 清理优先级
+
+当你想复位到"干净状态"时，按 **从小到大** 的影响面依次操作：
+
+1. **仅清 localStorage**：删除所有 `fav-list-cache:*` 条目 → 下次打开收藏夹会重新拉取；
+2. **清 IndexedDB**：删除扩展 IndexedDB 数据库 → 会强制触发 B 站接口请求；
+3. **清 Chrome Storage**：清除 AI 配置 / 关键字规则等，**损失较大，慎用**；
+4. **卸载并重装扩展**：上述全部会被重置。
+
+详细操作步骤见 [诊断信息收集指南](/docs/troubleshooting/diagnostic-guide) 中的「本地存储快速重置」。
+
+## 相关文档
+
+- [缓存策略](/docs/advanced/cache-strategy) — 两层缓存的时序与失效逻辑
+- [数据处理说明](/docs/privacy-security/data-handling) — 从隐私视角看每类数据的去向
+- [数据同步 / 缓存问题](/docs/troubleshooting/data-sync) — 缓存看起来不对时的排查
