@@ -1,0 +1,6 @@
+{
+  "title": "配置与自定义",
+  "description": "API Key、模型、关键词规则等个性化配置说明",
+  "icon": "Settings",
+  "pages": ["index", "api-key", "model-selection", "keyword-rules"]
+}

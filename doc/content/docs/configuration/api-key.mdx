@@ -1,0 +1,119 @@
+---
+title: API Key 配置
+description: 在扩展内选择 AI 服务商、填写模型与 API Key 的完整指引
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+扩展的 AI 能力基于 **OpenAI Chat Completion 兼容协议**，并在扩展内内置了对 **通义千问 / Kimi / OpenAI / GLM / 自定义** 五种服务商的适配。除此之外，还提供 **免费额度（AIGate）** 模式，开箱即用。
+
+## 两种配置模式
+
+在 **选项页 → 配置** Tab 中，你会看到顶部的模式切换：
+
+- **自定义配置**：使用你自己申请的 API Key；
+- **免费额度**：使用扩展内置的 AIGate 共享额度，无需申请任何 Key。
+
+两种模式可随时切换，互不影响。
+
+## 自定义配置（推荐）
+
+在「自定义配置」模式下，表单包含以下字段：
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| **AI 模型** | ✅ | 服务商适配器（通义千问 / Kimi / OpenAI / GLM / 自定义） |
+| **模型** | ✅ | 具体模型名称，如 `deepseek-chat`、`qwen-plus`、`moonshot-v1-8k` |
+| **API Key** | ✅ | 从服务商后台生成的密钥，输入框支持密文显示 |
+| **Base URL** | ⚪ | 可选，留空时使用所选服务商的官方地址 |
+| **Extra Params** | ⚪ | 仅在选择「自定义」适配器时可编辑的额外 JSON 参数 |
+
+<Callout type="info">
+  字段修改会 **自动保存**（表单 `onChange` 即触发写入），无需点击额外的保存按钮。
+</Callout>
+
+### 服务商内置默认地址
+
+当你在下拉中选择某个服务商后，Base URL 会自动填入官方默认值：
+
+| 适配器 | 默认 Base URL |
+|--------|---------------|
+| 通义千问（qianwen） | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| Kimi | `https://api.moonshot.ai/v1` |
+| OpenAI | `https://api.openai.com/v1` |
+| GLM | `https://open.bigmodel.cn/api/paas/v4` |
+| 自定义（custom） | （留空，由你填写） |
+
+<Callout type="info">
+  扩展当前实际注册的服务商白名单（`host_permissions`）仅放行 `openai.com`、`xf-yun.com` 与 `radiumg.top`。若你使用其他域名的代理，请通过「自定义」适配器并填写对应 Base URL。
+</Callout>
+
+### Extra Params 字段
+
+- 选择 **内置适配器** 时此字段为只读，内置值会用于关闭「思考模式」等优化；
+- 选择 **自定义** 适配器时可写入合法的 JSON 字符串，例如：
+
+```json
+{
+  "chat_template_kwargs": { "enable_thinking": false }
+}
+```
+
+## 完整配置流程
+
+<Steps>
+  <Step>
+    ### 打开配置页
+    右键扩展图标 → **「选项」**，或在弹窗中点击齿轮图标 → 进入 **「配置」** Tab。
+  </Step>
+  <Step>
+    ### 确认模式为「自定义配置」
+    顶部模式切换默认就是「自定义配置」；若被切到「免费额度」，点回「自定义配置」即可。
+  </Step>
+  <Step>
+    ### 选择 AI 模型
+    在 **「AI 模型」** 下拉中选择对应服务商。选择后 Base URL 会自动填充。
+  </Step>
+  <Step>
+    ### 填写模型名称
+    在 **「模型」** 输入框中填入服务商支持的具体模型 ID，例如：
+
+    - 通义千问：`qwen-plus` / `qwen-turbo`
+    - Kimi：`moonshot-v1-8k` / `moonshot-v1-32k`
+    - OpenAI：`gpt-4o-mini` / `gpt-4o`
+    - GLM：`glm-4-flash` / `glm-4-plus`
+    - 自定义：按你的代理后端配置填写
+  </Step>
+  <Step>
+    ### 填写 API Key
+    点击 API Key 输入框右侧的 👁 图标可在密文/明文之间切换，方便核对。
+  </Step>
+  <Step>
+    ### （可选）调整 Base URL
+    如果你使用自部署的代理或非默认区域的端点，可在 **「Base URL」** 中覆写。
+  </Step>
+</Steps>
+
+## 免费额度（AIGate）模式
+
+在配置页顶部切换到 **「免费额度」** 后，会显示 **配额使用情况** 卡片：
+
+- 进入该模式时会 **自动拉取一次配额**；
+- 可随时点击 **「检查配额」** 按钮手动刷新；
+- 展示维度：**每日请求配额**、**请求频率限制（RPM）** 与 **服务状态**。
+
+<Callout type="info">
+  免费额度是扩展内置的共享配额，不需要填写任何 API Key；日配额用完后会在卡片中显示警告，请切换到自定义模式或次日再试。
+</Callout>
+
+## 切换模式的影响
+
+- **关键字规则保留**：关键字及其映射存储在本地，不会因切换模式丢失；
+- **AI 调用路由不同**：`custom` 模式走你配置的服务商；`free` 模式走 AIGate；
+- **AI 整理行为一致**：不论哪种模式，点击「AI 整理」首次都会弹出 Token 消耗提醒 toast，**5 秒内再次点击** 才会真正执行。
+
+## 相关文档
+
+- [模型选择与推荐](/docs/configuration/model-selection) — 如何选对模型
+- [AI 智能分类](/docs/guide/ai-classification) — 模型在扩展中的使用方式

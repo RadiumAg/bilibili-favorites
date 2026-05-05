@@ -1,0 +1,78 @@
+---
+title: 账号安全
+description: 登录态来源、Cookie 读取范围与账号共用风险
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## 扩展如何识别登录态
+
+扩展没有独立的登录系统，它通过 **以下流程** 判断你是否已登录 B 站：
+
+1. 通过 `chrome.tabs` 找到当前处于激活状态的 B 站标签页；
+2. 向该标签页的 content script 发送消息，请求读取文档的 Cookie；
+3. 从返回的 Cookie 字符串中解析出 `DedeUserID` 字段；
+4. `DedeUserID` 有值 → 视为已登录；否则显示「请检查是否在 b 站打开并登录了呢~~~」遮罩。
+
+这个机制意味着：
+
+- **扩展永远不会弹出自己的登录窗口**，也不会发起任何登录请求；
+- **扩展不存储你的 B 站账号密码**；
+- 只要 B 站的 Cookie 过期，扩展就会自动回到「未登录」状态，不存在「扩展内残留旧登录态」的问题。
+
+## Cookie 的读取范围
+
+扩展读取的 Cookie 范围仅限 **B 站域名（`*.bilibili.com`）**；读取后：
+
+- **不写入 Chrome Storage**；
+- **不写入 IndexedDB** / localStorage；
+- 仅在内存中用作 B 站 API 请求的 `Cookie` 请求头。
+
+<Callout type="warn">
+  请 **不要** 在 Issue、日志、截图中贴出以下字段：`SESSDATA`、`bili_jct`、`DedeUserID`、`DedeUserID__ckMd5` 等，它们足以让他人以你的身份访问 B 站接口。
+</Callout>
+
+## 账号共用 / 多账号场景
+
+- **多账号快速切换**：扩展始终使用你 **当前激活标签页** 上那个账号的 Cookie。切换账号后，刷新 B 站页面 + 重新唤起扩展即可。
+- **家庭 / 办公室共用电脑**：账号共用意味着 Cookie 也被共用，此时扩展的操作等同于你本人在 B 站官网上操作。请按你原本的账号共用策略评估风险。
+- **没有自己标签页的场景**：若你所在的 B 站页面是被嵌入在 iframe 中（例如某些第三方工具），扩展可能无法读取到 Cookie；请直接打开 `bilibili.com`。
+
+## 扩展的操作边界
+
+扩展能代表你执行的操作 **仅限于 Bilibili 官方 API 所暴露的收藏类功能**：
+
+- 读取收藏夹列表与元信息；
+- 读取收藏夹内的视频列表；
+- 执行 **视频移动到另一个收藏夹**（调用 B 站官方 `POST https://api.bilibili.com/x/v3/fav/resource/move`，并携带 Cookie 中的 `bili_jct` 作为 CSRF token）。
+
+扩展 **不会** 执行以下操作：
+
+- 发送弹幕、评论、私信；
+- 投币、充电、点赞、关注；
+- 修改账号资料、绑定手机号、修改密码；
+- 发起登录、注销等任何账号生命周期操作。
+
+## 怀疑扩展被滥用时
+
+请按优先级依次处理：
+
+1. **在 `chrome://extensions/` 中暂时禁用扩展**，阻止进一步操作；
+2. **在 B 站「账号安全」中查看最近登录记录与异常操作**；
+3. 必要时修改 B 站账号密码，使旧 Cookie 失效；
+4. 排查浏览器中是否安装了其他可疑扩展（同样可以读取 Cookie 的扩展很多）；
+5. 完成排查后，再重新启用本扩展。
+
+## 卸载后的数据清理
+
+在 `chrome://extensions/` 中移除扩展时：
+
+- 扩展的 **Chrome Storage 数据会被清除**（含 AI 配置、默认收藏夹、适配器选择等）；
+- 扩展的 **IndexedDB 数据** 会被保留一段时间（取决于浏览器实现），可在 DevTools 中手动清理；
+- B 站账号本身的 Cookie **不受影响**，因为 Cookie 属于 B 站域名，不是扩展的私有数据。
+
+## 相关文档
+
+- [数据处理说明](/docs/privacy-security/data-handling) — 数据类型与存储位置
+- [API Key 最佳实践](/docs/privacy-security/api-key-best-practices)
+- [登录态相关问题](/docs/troubleshooting/login-issues) — 登录识别失败时的排查流程

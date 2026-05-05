@@ -1,0 +1,145 @@
+---
+title: 反馈与贡献
+description: 如何提交 Issue、PR 以及参与改进本扩展
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+感谢你愿意为扩展提反馈或贡献代码。本页汇总 **反馈渠道**、**Issue / PR 规范** 以及 **本地开发入门** 的要点。
+
+## 反馈渠道的选择
+
+按问题类型选择合适的反馈方式：
+
+| 你想做的事 | 推荐方式 |
+|-----------|---------|
+| 报告 Bug | 扩展源码仓库的 **Issues** |
+| 请求新功能 | 扩展源码仓库的 **Issues**（使用 feature request 标签） |
+| 提交代码修复 | 扩展源码仓库的 **Pull Request** |
+| 提问使用问题 | 先查 [常见问题](/docs/faq) 与 [故障排除](/docs/troubleshooting) |
+| 安全问题 | 走源码仓库的安全披露流程（或非公开渠道联系维护者） |
+
+<Callout type="info">
+  如果你不确定扩展的源码仓库地址，可以在 `chrome://extensions/` → 扩展「详情」的「主页」字段中找到；或查阅 Chrome Web Store 页面的开发者主页链接。
+</Callout>
+
+## 提交 Bug Issue 的规范
+
+### 标题
+
+用 **一句话概括现象**，建议格式：
+
+- `[Bug] 批量整理时部分视频提示"接口限流"`
+- `[Bug] 侧边栏打开后关键字列表为空`
+- `[Bug] 自定义 Base URL 填入后 AI 返回 Failed to fetch`
+
+### 正文模板
+
+```md
+### 环境
+- 浏览器：Chrome 126.0.6478.127 (Mac arm64)
+- 扩展版本：1.2.6
+- 操作系统：macOS 14.5
+
+### 复现步骤
+1. ...
+2. ...
+3. ...
+
+### 预期行为
+...
+
+### 实际行为
+...
+
+### 控制台日志（已脱敏）
+（参考《诊断信息收集指南》脱敏后粘贴）
+
+### 截图 / 录屏
+（如果有）
+```
+
+更详细的日志采集与脱敏步骤见 [诊断信息收集指南](/docs/troubleshooting/diagnostic-guide)。
+
+## 提交功能建议的规范
+
+建议在正文中覆盖：
+
+- **动机**：描述你遇到的真实场景，以及现有能力为何无法覆盖；
+- **期望行为**：具体的、可实施的描述（而非"希望更好用"）；
+- **替代方案**：如果你已有临时变通方式，请一并说明；
+- **影响面**：猜测一下可能受影响的模块或现有用户；
+- **是否愿意自行实现**：如果你愿意提 PR，请注明，维护者会优先评估。
+
+## 提交 Pull Request 的流程
+
+<Steps>
+  <Step>
+    ### 先开 Issue 对齐方向
+    非文案类的 PR，建议先开一个 Issue 描述你的思路，得到维护者「建议 PR」的答复再动手，避免大面积返工。
+  </Step>
+  <Step>
+    ### Fork 仓库并创建分支
+    分支命名建议使用 `feature/xxx`、`fix/xxx`、`docs/xxx` 前缀。
+  </Step>
+  <Step>
+    ### 本地开发
+    参考下方「本地开发入门」准备环境。
+  </Step>
+  <Step>
+    ### 保证自测通过
+    - 通过 TypeScript 类型检查；
+    - 通过仓库现有的 lint 配置；
+    - 新增或修改逻辑时，在 Chrome 里手动完整跑一遍相关链路。
+  </Step>
+  <Step>
+    ### 提 PR 并描述变更
+    PR 描述中至少包含：**变更内容**、**动机 / 关联 Issue**、**测试结果截图或录屏**、**是否有破坏性变更**。
+  </Step>
+</Steps>
+
+## 本地开发入门
+
+本扩展基于 **Vite + React + TypeScript + Chrome Manifest V3** 构建。关键目录：
+
+| 目录 | 作用 |
+|------|------|
+| `src/popup` | 弹窗 UI（与侧边栏共用） |
+| `src/options` | 选项页 UI（4 个 Tab） |
+| `src/background` | Service Worker（AI 请求、AIGate 配额等） |
+| `src/contentScript` | 注入 B 站页面，辅助 Cookie 与接口调用 |
+| `src/hooks` | 业务 Hook（如 `useCreateKeyword`、`useFavoriteListData`、`useMove`） |
+| `src/utils` | 工具库（`api.ts`、`keyword-extractor.ts`、`indexed-db.ts` 等） |
+| `src/manifest.ts` | 扩展 Manifest 声明（由 `@crxjs/vite-plugin` 生成） |
+
+常用命令（以 `package.json` 中的 script 为准）：
+
+- `npm run dev` / `pnpm dev` — 本地开发；
+- `npm run build` / `pnpm build` — 产出发布包；
+- `npm run lint` / `pnpm lint` — 静态检查。
+
+<Callout type="warn">
+  扩展在开发时需要作为 **未打包扩展** 加载到 Chrome：地址栏打开 `chrome://extensions/` → 开启开发者模式 → 「加载已解压的扩展」→ 选择构建产物目录。
+</Callout>
+
+## 代码风格
+
+- **React 组件**：统一使用 `const XXX: FC<Props> = (props) => { const { ... } = props; ... }` 的形式；
+- **TypeScript**：导出函数 / 组件必须显式类型；避免 `any`；
+- **命名**：组件 PascalCase、hook `useXxx`、工具函数动词开头；
+- **提交信息**：推荐 Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:`）。
+
+## 文档贡献
+
+本站文档使用 **Fumadocs + MDX** 构建（位于仓库 `doc/` 目录）。文档变更的 PR 不需要先开 Issue，直接按以下方式工作：
+
+- 文档在 `doc/content/docs/` 下，目录结构对应侧边栏；
+- 每个目录下的 `meta.json` 控制顺序与显示名；
+- 修改后运行 `cd doc && pnpm types:check` / `pnpm lint` 自检，再提交。
+
+## 相关文档
+
+- [常见问题](/docs/faq) — 提 Issue 前先查一查
+- [故障排除](/docs/troubleshooting) — 自助排障手册
+- [诊断信息收集指南](/docs/troubleshooting/diagnostic-guide) — 提 Issue 前的信息准备

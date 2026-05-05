@@ -1,0 +1,50 @@
+---
+title: 配置与自定义
+description: API Key、模型、关键词规则等个性化配置的总览
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { KeyRound, Cpu, Tags } from 'lucide-react';
+
+扩展的所有功能都可以通过 **配置页** 进行个性化调整。本章节从三个维度讲解如何配置：
+
+<Cards>
+  <Card
+    icon={<KeyRound />}
+    title="API Key 配置"
+    href="/docs/configuration/api-key"
+    description="接入 OpenAI 兼容服务商，填写 Base URL、API Key、模型名称。"
+  />
+  <Card
+    icon={<Cpu />}
+    title="模型选择与推荐"
+    href="/docs/configuration/model-selection"
+    description="不同模型的能力、费用与适用场景对比。"
+  />
+  <Card
+    icon={<Tags />}
+    title="关键字规则进阶"
+    href="/docs/configuration/keyword-rules"
+    description="高级匹配策略：同义词、优先级控制、误命中修正。"
+  />
+</Cards>
+
+## 配置入口
+
+所有配置项均集中在扩展的 **配置页**，访问方式：
+
+- 右键扩展图标 → **「选项」**；
+- 或点击扩展图标 → **「设置」** → **「配置」** 标签。
+
+## 配置项分层
+
+| 层级 | 作用域 | 典型配置 |
+|------|--------|----------|
+| **全局配置** | 整个扩展 | AI 模式（custom/free）、服务商适配器、API Key、模型、Base URL、Extra Params |
+| **收藏夹级** | 单个目标收藏夹 | 该收藏夹的关键字规则 |
+
+## 配置持久化
+
+- 全局配置（含 AI 相关字段）保存在 **Chrome Storage**，跨浏览器会话持久化；
+- 关键字规则等较大数据保存在 **IndexedDB**；
+- 关于本地数据的完整说明，请参考 **隐私与安全** 章节。

@@ -1,0 +1,95 @@
+---
+title: 数据处理说明
+description: 扩展收集、存储、传输的数据范围与数据流向
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+本页列出扩展处理的 **每一类数据**、**来源**、**存储位置** 与 **传输去向**，帮助你判断是否符合你对隐私的要求。
+
+## 数据总览
+
+| 数据类型 | 来源 | 存储位置 | 传输去向 |
+|----------|------|----------|----------|
+| B 站登录 Cookie（`DedeUserID` 等） | 当前 B 站标签页 | **不主动持久化**，仅在内存中用于接口调用 | 不外传 |
+| 收藏夹元信息（ID、标题、封面、UP 主等） | Bilibili 官方 API | IndexedDB（10 分钟）+ localStorage（20 分钟） | 不外传 |
+| 收藏夹视频列表（id / title / bvid / cover / upper / fav_time 等） | Bilibili 官方 API | IndexedDB + localStorage（同上） | **视频标题** 会在你点击 AI 按钮时发给 AI |
+| 关键字规则 | 用户手动输入或算法生成 | IndexedDB / 扩展 Storage | 不外传 |
+| AI 配置（模式 / 适配器 / Key / Base URL / Model / Extra Params） | 用户在配置页填入 | 扩展 Chrome Storage | 仅在 AI 请求时作为 Header / Body 发给你配置的服务商 |
+| 默认收藏夹 ID | 用户设置 | 扩展 Chrome Storage | 不外传 |
+
+## 详细数据流
+
+### 1. 登录态识别
+
+扩展通过 `chrome.tabs` + 消息通信从当前 B 站标签页读取 Cookie，**只取用其中的 `DedeUserID` 字段** 来判断是否已登录；完整 Cookie 字符串会被用于 B 站接口调用，但不会持久化到磁盘。
+
+### 2. 收藏夹数据拉取
+
+所有 B 站相关请求都通过 background service worker 发起，调用 **Bilibili 官方 API**，用于：
+
+- 拉取收藏夹列表与元信息；
+- 拉取单个收藏夹的视频列表（分页 40 条/页）；
+- 执行视频移动操作。
+
+扩展 **不访问** 以下数据：
+
+- 历史观看记录；
+- 私信 / 评论 / 动态；
+- 首页推荐 / 个人资料；
+- 弹幕 / 投币 / 三连。
+
+拉取到的数据会分两层缓存：
+
+- **IndexedDB**：默认 10 分钟过期，用于跨页面共享；
+- **localStorage**（`fav-list-cache:<id>`）：20 分钟过期，用于快速打开弹窗时的二级缓存。
+
+两份缓存都在 **本地浏览器** 中，可以随时在 DevTools 里审阅或清除。
+
+### 3. AI 请求发送的内容
+
+<Callout type="info" title="AI 请求的数据范围">
+  扩展的 AI 调用分两个场景，各自发送的内容如下：
+
+  - **AI 关键字提取 / AI 智能提取关键字**：仅发送 **一个 `titleArray`**（选中收藏夹内的 **视频标题** 列表）；
+  - **🤖 AI 整理**：发送 **视频的 `id + title`** 以及 **所有收藏夹的标题列表**（`favoriteTitles`），供 AI 判断每个视频应归入哪个收藏夹。
+</Callout>
+
+**不包含以下任何内容**：
+
+- UP 主 / 作者信息；
+- 视频封面、简介；
+- 播放 / 收藏 / 点赞等统计数据；
+- 你的 `DedeUserID` 或任何 B 站账号信息；
+- 扩展的安装 ID、浏览器指纹等。
+
+### 4. 请求去向
+
+AI 请求只会发送到 **你在配置中明确指定的服务商**：
+
+- **custom 模式**：请求发送到你填入的 `baseUrl`（留空则使用适配器的内置默认值）；
+- **free 模式**：请求发送到 AIGate 免费额度服务（域名为 `*.radiumg.top`）。
+
+扩展作者 **不经营任何中转服务器**；`custom` 模式下扩展作者不会看到请求内容，`free` 模式下请求会经过 AIGate 以便做配额统计与滥用防护。
+
+## 本地存储的可审计性
+
+你可以随时通过浏览器开发者工具验证上述声明：
+
+| 数据 | 查看路径 |
+|------|----------|
+| 扩展全局配置 | 扩展 DevTools → Application → Storage → Extension Storage |
+| 视频列表缓存（localStorage） | 扩展 DevTools → Application → Local Storage |
+| IndexedDB 缓存 | 扩展 DevTools → Application → IndexedDB |
+| B 站 Cookie | 任意 B 站页面 DevTools → Application → Cookies |
+
+## 数据导出与清除
+
+- **完整清除**：在 `chrome://extensions/` 中卸载扩展，Chrome 会连同 `storage` 一并清理；
+- **保留扩展但清空数据**：见 [诊断信息收集指南](/docs/troubleshooting/diagnostic-guide) 中的「本地存储快速重置」章节。
+
+## 相关文档
+
+- [API Key 最佳实践](/docs/privacy-security/api-key-best-practices)
+- [账号安全](/docs/privacy-security/account-safety)
+- [AI 智能分类](/docs/guide/ai-classification) — AI 整理功能的完整流程

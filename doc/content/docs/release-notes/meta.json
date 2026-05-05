@@ -1,0 +1,6 @@
+{
+  "title": "更新日志",
+  "description": "各版本变更记录",
+  "icon": "History",
+  "pages": ["index", "v1.2.6"]
+}

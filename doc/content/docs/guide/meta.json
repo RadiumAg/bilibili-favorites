@@ -1,0 +1,14 @@
+{
+  "title": "使用指南",
+  "description": "按功能模块逐篇讲解扩展的所有核心能力",
+  "icon": "BookOpen",
+  "pages": [
+    "index",
+    "favorites-analysis",
+    "keyword-management",
+    "batch-organize",
+    "ai-classification",
+    "drag-and-drop",
+    "side-panel"
+  ]
+}

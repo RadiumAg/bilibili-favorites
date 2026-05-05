@@ -1,0 +1,13 @@
+{
+  "title": "故障排除",
+  "description": "按问题类型分类的诊断与修复手册",
+  "icon": "Wrench",
+  "pages": [
+    "index",
+    "login-issues",
+    "data-sync",
+    "batch-operation",
+    "ai-errors",
+    "diagnostic-guide"
+  ]
+}

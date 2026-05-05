@@ -1,0 +1,76 @@
+---
+title: 缓存策略
+description: IndexedDB + localStorage 两层缓存如何协作降低 B 站接口压力
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+扩展对 B 站收藏夹视频列表做了 **两层缓存**，目标是 **减少对 B 站接口的请求频率**，同时保证 UI 打开足够快。本页完整列出缓存的读、写、失效与同步更新逻辑。
+
+## 两层缓存的位置
+
+| 层级 | 存储 | 默认过期 | 作用 |
+|------|------|---------|------|
+| **L1** | `localStorage[fav-list-cache:<id>]` | 20 分钟 | UI 直接消费；命中率最高 |
+| **L2** | `IndexedDB[favorite-all-<id>]` | 10 分钟 | L1 未命中时退而求其次；供 `fetchAllFavoriteMedias` 复用 |
+
+## 读取流程
+
+1. `useFavoriteListData.fetchWithCache(mediaId)` 被调用；
+2. 先查 **L1 localStorage**：若存在且 `Date.now() - timestamp <= 20 分钟`，直接返回；
+3. 查询 **进行中的请求表**：若同一 `mediaId` 已有在途 Promise，**直接复用**（请求去重）；
+4. 否则发起 `fetchAllFavoriteMedias(mediaId)`：
+   - 该函数内部先查 **L2 IndexedDB**：若存在且未超过 10 分钟，直接返回缓存；
+   - L2 未命中 → 按 **40 条/页** 分页拉取 B 站官方接口，**每页之间 `sleep(1000)`** 以规避 B 站风控；
+   - 全部页拉完后 `dbManager.set(key, allMedias)` 写入 L2；
+5. 拿到数据后写回 **L1 localStorage**，清理进行中请求表，返回结果。
+
+<Callout type="info">
+  当两层缓存都未过期时，界面切换几乎是"零网络"体验；当两层都过期时，拉取一个大收藏夹可能需要几秒到十几秒（受你的页数和每页之间的 sleep 限制）。
+</Callout>
+
+## 写入与失效
+
+### 缓存写入
+
+- **L2** 写入：每次完整拉完某个收藏夹的全部视频后写入；
+- **L1** 写入：`fetchWithCache` 拿到结果后写入；如果 `localStorage` 容量不足，写入失败会被静默忽略（不影响功能，只是下次会回到 L2 / 网络）。
+
+### 缓存失效
+
+| 触发 | L1 | L2 |
+|------|-----|-----|
+| 自然过期 | 读取时发现 `timestamp` 超过 20 分钟 → 删除并重拉 | 读取时 `dbManager.isExpired` 返回 true → 重拉 |
+| 手动调用 `invalidateCache(mediaId)` | 对应条目删除 | 不触发 |
+| 手动调用 `invalidateCache()`（无参） | 清空所有 `fav-list-cache:*` | 不触发 |
+| 用户在 DevTools 删 key | 对应条目消失 | 对应 DB 条目消失 |
+
+## 移动视频后的同步更新
+
+扩展不等缓存过期，也不重新请求，而是 **直接在内存里改缓存**：
+
+`moveVideosCache(srcMediaId, tarMediaId, videoIds)` 的行为：
+
+1. 从 **源收藏夹 L1 缓存** 里剔除被移走的 `videoIds`，写回 L1；
+2. 若 **目标收藏夹 L1 缓存** 存在，追加这些视频（去重）；若不存在，**不主动创建**。
+
+这使得：
+
+- 移动完立刻切回源收藏夹 → 看到视频不见了；
+- 移动完立刻切到目标收藏夹 → 如果之前打开过、缓存还在，看到视频已经出现；否则下次会重新拉取。
+
+## 调试建议
+
+如果你怀疑缓存行为异常，推荐以下步骤：
+
+<Callout type="warn" title="按影响面从小到大排查">
+  1. 先 **单独** 在 DevTools Application 面板看 `fav-list-cache:<目标收藏夹 ID>` 的 `timestamp`，判断是否真的过期；
+  2. 用 **控制台**执行 `localStorage.removeItem('fav-list-cache:<id>')`，再重新触发读取，观察网络面板是否开始请求；
+  3. 如果 L1 清了但界面仍显示旧数据，说明 **L2 IndexedDB** 也需要清除；
+  4. 若清了 L1 + L2 后仍是旧数据，极大概率是 B 站自身接口返回了缓存，刷新 B 站网页确认。
+</Callout>
+
+## 相关文档
+
+- [存储机制](/docs/advanced/data-storage) — 三种存储介质的分工
+- [数据同步 / 缓存问题](/docs/troubleshooting/data-sync) — 缓存相关问题的排查手册

@@ -1,0 +1,103 @@
+---
+title: AI 调用错误
+description: AI 整理 / AI 关键字提取过程中的典型报错与处理方法
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+本页覆盖与 **AI 相关** 的错误。非 AI 的批量失败请看 [批量操作失败](/docs/troubleshooting/batch-operation)。
+
+## AI 功能的两种模式
+
+扩展支持两种 AI 调用模式，**failure 表现方式会略有差异**：
+
+- **自定义配置（`custom`）**：走你配置的 `baseUrl` + `apiKey` + `model`；
+- **免费额度（`free`）**：走扩展内置的 AIGate 共享配额。
+
+在配置页顶部切换模式；两种模式下「🤖 AI 整理」按钮逻辑完全一致，只是底层请求路径不同。
+
+## 未配置 / 配置不完整
+
+<Callout type="warn">
+  点击「🤖 AI 整理」时，扩展会先校验当前模式的配置：
+
+  - **custom 模式**：校验 **`key` 和 `model` 是否都有值**；
+  - **free 模式**：视为始终可用。
+
+  校验失败时 Toast 标题 **「未配置 AI」**，描述 **「请先在设置页面配置 AI 或切换到免费额度」**，并在 **1.5 秒后** 自动打开选项页的配置 Tab。
+</Callout>
+
+处理办法：
+
+- 回到配置页，按 [API Key 配置](/docs/configuration/api-key) 填完 `AI 模型` / `模型` / `API Key` 三项；
+- 或者直接切到 **免费额度** 模式，跳过 Key 的准备步骤。
+
+## AI 返回的数据格式错误
+
+<Callout type="warn">
+  Toast 标题 **「整理失败」**，描述 **「AI 返回的数据格式错误，请重试」**，详情区会带上 AI 返回的原始文本。
+</Callout>
+
+扩展期望 AI 的响应中至少包含一段 `\[...\]` 形式的 JSON 数组；若匹配失败则进入这个分支。
+
+常见原因：
+
+- 模型输出夹杂了 Markdown 代码块包裹但解析逻辑无法识别；
+- 模型返回了自然语言解释，没有返回 JSON；
+- 模型被上游网关截断（例如命中 `max_tokens` 限制）；
+- 使用了思考模式（`thinking` / `reasoning`）导致内容前置了思考文本。
+
+排查建议：
+
+<Steps>
+  <Step>
+    ### 查看详情区的原始返回
+    Toast 详情里包含完整 AI 文本。若明显被截断（结尾停在一半），见下一步；若完全没有 JSON，见「换模型」。
+  </Step>
+  <Step>
+    ### 针对思考模式做降级
+    在配置页选择内置适配器时，扩展会自动把 `extraParams` 里的思考模式关闭；若你用的是 **自定义** 适配器，请手动在 `Extra Params` 中加入关闭思考的字段（如 `{"chat_template_kwargs":{"enable_thinking":false}}` 或 `{"thinking":{"type":"disabled"}}`），具体 key 取决于你对接的后端。
+  </Step>
+  <Step>
+    ### 换一个模型
+    重试仍失败时，切换到能力更强的模型（如 `qwen-plus` / `glm-4-plus` / `gpt-4o`），通常能解决。
+  </Step>
+</Steps>
+
+## 请求失败 / 网络错误
+
+典型表现：Toast 标题 **「整理失败」**，描述是底层请求抛出的错误信息。
+
+| 错误信息关键字 | 可能原因 | 解决方式 |
+|----------------|----------|----------|
+| `401` / `Unauthorized` | API Key 错误或已吊销 | 在服务商后台重新生成 Key 并更新配置 |
+| `403` / `Forbidden` | 模型无权限 / 地区限制 | 对照服务商文档确认模型可用性 |
+| `404` / `Not Found` | Base URL 拼写错误或少了 `/v1` | 回到配置页，重新选择适配器（会覆盖为官方默认 Base URL）|
+| `429` / `Rate limit` | 触发服务商限流 | 等待几分钟后重试，或升级套餐 |
+| `Network error` / `Failed to fetch` | 扩展无法访问 API 端点 | 见下方「host_permissions 相关」|
+
+### host_permissions 相关
+
+扩展 Manifest 中的 `host_permissions` 仅放行 **`openai.com` / `xf-yun.com` / `radiumg.top`** 三个域名。若你使用 **自定义** 适配器并填入其他域名（如 `api.deepseek.com`、`dashscope.aliyuncs.com`、`api.moonshot.ai`、`open.bigmodel.cn`）：
+
+- 扩展内置适配器实际通过 **background service worker 的 fetch** 调用；大部分情况下请求能正常发出；
+- 但若遇到浏览器或企业策略强制拦截，可能表现为 `Failed to fetch`；
+- 处理方法：在扩展详情页中检查网络请求日志；若确实被拦截，可考虑使用 **免费额度** 模式。
+
+## 用户取消
+
+遮罩层的 **「取消」** 按钮会：
+
+- 中止 AI 的流式读取；
+- 中止后续的移动接口调用；
+- Toast 提示 **「已取消」** / **「操作已取消」**。
+
+已经移动成功的视频 **不会被回滚**。
+
+## 相关文档
+
+- [API Key 配置](/docs/configuration/api-key) — 自定义配置与免费额度的详细配置
+- [模型选择与推荐](/docs/configuration/model-selection) — 各适配器与内置默认值
+- [批量操作失败](/docs/troubleshooting/batch-operation) — 非 AI 导致的移动失败
+- [诊断信息收集指南](/docs/troubleshooting/diagnostic-guide) — 准备 Issue 所需的日志

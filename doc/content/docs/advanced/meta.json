@@ -1,0 +1,6 @@
+{
+  "title": "进阶主题",
+  "description": "深入理解扩展内部的存储、缓存与算法原理",
+  "icon": "Brain",
+  "pages": ["index", "data-storage", "cache-strategy", "tf-idf-algorithm"]
+}

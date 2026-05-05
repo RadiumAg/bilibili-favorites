@@ -1,0 +1,54 @@
+---
+title: 故障排除
+description: 按问题类型分类的诊断与修复手册
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { LogIn, RefreshCw, FolderSync, Bot, Stethoscope } from 'lucide-react';
+
+当扩展出现异常时，请按照 **从简到繁** 的顺序排查：先定位问题类型，再进入对应的子页面按步骤处理。
+
+## 按类型快速定位
+
+<Cards>
+  <Card
+    icon={<LogIn />}
+    title="登录态相关问题"
+    href="/docs/troubleshooting/login-issues"
+    description="提示「请检查是否在 b 站打开并登录了呢」之类的现象。"
+  />
+  <Card
+    icon={<RefreshCw />}
+    title="数据同步 / 缓存问题"
+    href="/docs/troubleshooting/data-sync"
+    description="收藏夹数量或视频列表看起来不是最新的。"
+  />
+  <Card
+    icon={<FolderSync />}
+    title="批量操作失败"
+    href="/docs/troubleshooting/batch-operation"
+    description="通过关键字整理 / AI 整理 / 拖拽移动出错。"
+  />
+  <Card
+    icon={<Bot />}
+    title="AI 调用错误"
+    href="/docs/troubleshooting/ai-errors"
+    description="AI 分析失败、格式错误、被限流等。"
+  />
+  <Card
+    icon={<Stethoscope />}
+    title="诊断信息收集指南"
+    href="/docs/troubleshooting/diagnostic-guide"
+    description="提交 Issue 前需要收集的信息与脱敏方法。"
+  />
+</Cards>
+
+## 通用自检
+
+在进入任何具体子页面之前，请先完成以下三项通用自检 —— 它能解决约 60% 的偶发问题：
+
+1. **确认已在 B 站登录**：打开任意 `bilibili.com` 页面，确保账号已登录；
+2. **确认扩展是最新版**：在 `chrome://extensions/` 查看版本号，若不是 Chrome Web Store 的最新版本，先更新；
+3. **刷新 B 站页面 + 重新唤起扩展**：很多问题在 Cookie 重新建立连接后自动消失。
+
+若上述步骤无法解决，请按类型进入对应子页面继续排查。
