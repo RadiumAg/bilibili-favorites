@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Lightbulb, RotateCcw, Sparkles } from 'lucide-react'
 import type { PersonalityResult } from './use-personality-analysis'
+import { MbtiAvatar } from './mbti-avatar'
 
 type PersonalityResultViewProps = {
   result: PersonalityResult
@@ -28,15 +29,17 @@ export const PersonalityResultView: React.FC<PersonalityResultViewProps> = ({
       {/* MBTI 类型大卡 */}
       <Card className="border-2 border-[#00A1D6]">
         <CardContent className="pt-6">
-          <div className="text-center space-y-3">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#00A1D6]/10">
-              <Sparkles className="w-5 h-5 text-[#00A1D6]" />
-              <span className="text-3xl font-bold text-[#00A1D6] tracking-wider">
-                {result.type}
-              </span>
+          <div className="flex items-center gap-6">
+            <MbtiAvatar type={result.type} className="shrink-0" />
+            <div className="space-y-2 min-w-0">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-[#00A1D6] tracking-wider">
+                  {result.type}
+                </span>
+              </div>
+              <h3 className="text-xl font-semibold text-[#18191C]">{result.title}</h3>
+              <p className="text-sm text-[#61666D] leading-relaxed">{result.description}</p>
             </div>
-            <h3 className="text-xl font-semibold text-[#18191C]">{result.title}</h3>
-            <p className="text-[#61666D] max-w-lg mx-auto leading-relaxed">{result.description}</p>
           </div>
         </CardContent>
       </Card>
