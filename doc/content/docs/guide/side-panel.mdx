@@ -3,13 +3,13 @@ title: 侧边栏模式
 description: 在浏览器侧边栏（Chrome SidePanel）中常驻扩展，边浏览 B 站边整理
 ---
 
-import Image from 'next/image';
+import { DocImage } from '@/components/doc-image';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Steps, Step } from 'fumadocs-ui/components/steps';
 
 **侧边栏模式（SidePanel）** 是扩展的第二种打开方式，基于 **Chrome Manifest V3 的 `sidePanel` API** 实现，在选项页弹窗模式之外提供一个常驻视图。
 
-<Image
+<DocImage
   src="/screenshots/side-panel.png"
   alt="侧边栏模式"
   width={1600}

@@ -3,13 +3,13 @@ title: AI 智能分类
 description: 使用 AI 模型自动把「默认收藏夹」的视频归入各目标收藏夹
 ---
 
-import Image from 'next/image';
+import { DocImage } from '@/components/doc-image';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Steps, Step } from 'fumadocs-ui/components/steps';
 
 **AI 智能分类** 是扩展在弹窗/侧边栏底部提供的 **「🤖 AI 整理」** 按钮，利用大模型根据视频标题与收藏夹名称自动归类。
 
-<Image
+<DocImage
   src="/screenshots/ai-config.png"
   alt="AI 配置界面"
   width={1600}

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import Image from 'next/image'
+import { basePath } from '@/lib/shared'
 
 const features = [
   {
@@ -108,12 +108,11 @@ export default function HomePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {screenshots.map((s) => (
               <div key={s.src} className="overflow-hidden rounded-xl border bg-fd-card shadow-sm">
-                <Image
-                  src={s.src}
+                <img
+                  src={`${basePath}${s.src}`}
                   alt={s.alt}
-                  width={960}
-                  height={540}
                   className="w-full object-cover"
+                  loading="lazy"
                 />
               </div>
             ))}

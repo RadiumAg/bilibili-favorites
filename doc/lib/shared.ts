@@ -1,3 +1,5 @@
+export const basePath = '/bilibili-favorites'
+
 export const appName = 'B站收藏夹整理工具'
 export const docsRoute = '/docs'
 export const docsImageRoute = '/og/docs'
