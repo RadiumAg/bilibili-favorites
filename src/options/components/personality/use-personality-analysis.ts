@@ -108,7 +108,7 @@ export const usePersonalityAnalysis = (
       const config = {
         apiKey: aiConfig.key || '',
         baseURL: aiConfig.baseUrl || '',
-        model: aiConfig.model || '',
+        model: aiConfig.model,
         extraParams: aiConfig.extraParams,
       }
 
