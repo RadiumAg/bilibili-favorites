@@ -6,6 +6,7 @@ import OperateButton from './components/create-keyword/operate-button'
 import Setting from './components/setting'
 import { OptionsAnalysisTab } from './components/analysis'
 import DragManager from './components/drag-manager'
+import PersonalityAnalysis from './components/personality'
 import { LoginCheck } from '@/popup/components'
 import { useSearchParams } from '@/utils/search-params'
 
@@ -79,6 +80,16 @@ const Options: React.FC = () => {
         >
           <TabWrapper.Content>
             <OptionsAnalysisTab />
+          </TabWrapper.Content>
+        </TabWrapper.Tab>
+
+        <TabWrapper.Tab
+          title="性格分析"
+          keyValue="personality"
+          defaultTab={searchParams.get('tab') === 'personality'}
+        >
+          <TabWrapper.Content>
+            <PersonalityAnalysis />
           </TabWrapper.Content>
         </TabWrapper.Tab>
       </TabWrapper>

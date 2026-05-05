@@ -286,6 +286,38 @@ const callAIGateAI = async (
 }
 
 /**
+ * 性格分析摘要数据类型
+ */
+type PersonalitySummary = {
+  totalCount: number
+  folders: { title: string; count: number; topKeywords: string[] }[]
+  globalTopKeywords: string[]
+}
+
+/**
+ * 调用 AI 性格分析
+ */
+const fetchPersonalityAnalysis = async (
+  summary: PersonalitySummary,
+  config: AIConfig,
+  useCustomAI: boolean,
+) => {
+  return connectAndStream({
+    type: MessageEnum.fetchPersonalityAnalysis,
+    data: {
+      summary,
+      useCustomAI,
+      config: {
+        apiKey: config.apiKey,
+        baseURL: config.baseURL,
+        model: config.model,
+        extraParams: config.extraParams,
+      },
+    },
+  })
+}
+
+/**
  * 分页获取某个收藏夹的全部视频列表
  * @param mediaId 收藏夹 ID
  * @param pageSize 每页数量，默认 40（B 站最大值）
@@ -336,6 +368,7 @@ export {
   fetchAIMove,
   fetchAllFavoriteMedias,
   callAIGateAI,
+  fetchPersonalityAnalysis,
 }
 export type {
   FavoriteMedia,
@@ -345,4 +378,5 @@ export type {
   FavoriteMediaUGC,
   FavoriteDetailInfoUpper,
   AIConfig,
+  PersonalitySummary,
 }
