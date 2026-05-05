@@ -9,6 +9,17 @@ Summary
   5. version timestamp follow the yyyy.MM.dd format
 ```
 
+## 1.2.8 [2025.05.05]
+
+- feat: 新增收藏夹 MBTI 性格分析功能，支持 AIGate 免费额度和自定义 AI 双模式
+- feat: 性格分析结果展示 MBTI 类型、四维度进度条、兴趣标签云、个性化建议
+- feat: 性格分析结果图标本地化，使用 16personalities 官方头像 SVG
+- feat: GitHub Actions 自动构建发布文档站到 GitHub Pages
+- update: background 脚本 LangChain 规范化重构（ChatOpenAI + ChatPromptTemplate）
+- update: 自定义 AI 配置 extraParams 通过 modelKwargs 透传
+- fix: 推理模型流式响应 content 为空问题（过滤 reasoning_content）
+- fix: 自定义 AI 配置表单 disabled 不动态响应（getValues → watch）
+
 ## 1.2.6 [2025.04.28]
 
 - feat: 分析页添加加载进度遮罩层，显示当前分析到第几个收藏夹
