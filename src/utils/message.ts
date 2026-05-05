@@ -8,6 +8,8 @@ enum MessageEnum {
   // AIGate 相关消息
   checkAIGateQuota = 'checkAIGateQuota',
   callAIGateAI = 'callAIGateAI',
+  // 性格分析
+  fetchPersonalityAnalysis = 'fetchPersonalityAnalysis',
 }
 
 type Message<T = any> = {

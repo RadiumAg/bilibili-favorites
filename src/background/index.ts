@@ -1,6 +1,11 @@
 import { MessageEnum } from '@/utils/message'
 import { AIError } from '@/utils/error'
-import { buildKeywordExtractionMessages, buildAIMoveMessages, streamAIRequest } from './utils'
+import {
+  buildKeywordExtractionMessages,
+  buildAIMoveMessages,
+  buildPersonalityMessages,
+  streamAIRequest,
+} from './utils'
 import { callAIGateAI, checkAIGateQuota } from './ai-gate'
 
 // 使用 onConnect 监听长连接，支持流式传输
@@ -65,6 +70,24 @@ chrome.runtime.onConnect.addListener((port) => {
               detail: error instanceof AIError ? error.detail : undefined,
             })
           })
+        break
+      }
+
+      case MessageEnum.fetchPersonalityAnalysis: {
+        const { summary, config, useCustomAI } = message.data
+        const messages = await buildPersonalityMessages(summary)
+        currentAbortController = new AbortController()
+        if (useCustomAI) {
+          streamAIRequest(port, config, messages, currentAbortController)
+        } else {
+          callAIGateAI(port, messages, currentAbortController).catch((error) => {
+            port.postMessage({
+              type: 'error',
+              error: error instanceof Error ? error.message : 'AI 调用失败',
+              detail: error instanceof AIError ? error.detail : undefined,
+            })
+          })
+        }
         break
       }
 

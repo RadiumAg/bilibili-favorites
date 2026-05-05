@@ -179,4 +179,64 @@ const streamAIRequest = async (
   }
 }
 
-export { streamAIRequest, buildAIMoveMessages, buildKeywordExtractionMessages }
+/**
+ * MBTI 性格分析 - 系统 Prompt
+ */
+const PERSONALITY_SYSTEM_PROMPT = `你是一位资深的性格分析专家，擅长根据用户的收藏内容推断其 MBTI 性格倾向。
+
+### 任务
+根据用户B站收藏夹的数据（收藏夹名称、视频数量、高频关键词），推断其 MBTI 性格类型。
+
+### MBTI 四维度说明
+- EI 维度：E（外向）偏好社交/娱乐/流行内容，I（内向）偏好深度学习/独立探索/小众内容
+- SN 维度：S（感觉）偏好实用/具体/生活化内容，N（直觉）偏好抽象/理论/未来向内容
+- TF 维度：T（思考）偏好技术/逻辑/科学内容，F（情感）偏好艺术/情感/人文内容
+- JP 维度：J（判断）偏好系统化/有组织的收藏习惯，P（感知）偏好随性/多元化的收藏习惯
+
+### 输出要求
+只返回 JSON 格式，不要任何解释。严格按以下结构：
+{{
+  "type": "INTJ",
+  "title": "思辨型收藏家",
+  "description": "50-100字的性格描述",
+  "dimensions": {{
+    "EI": {{ "tendency": "I", "score": 72, "reason": "简短理由" }},
+    "SN": {{ "tendency": "N", "score": 65, "reason": "简短理由" }},
+    "TF": {{ "tendency": "T", "score": 80, "reason": "简短理由" }},
+    "JP": {{ "tendency": "J", "score": 55, "reason": "简短理由" }}
+  }},
+  "interests": ["兴趣1", "兴趣2", "兴趣3", "兴趣4", "兴趣5"],
+  "suggestions": ["建议1", "建议2", "建议3"]
+}}
+
+score 为 0-100 的整数，表示该维度的倾向程度（50为中立，越极端越明显）。
+interests 是基于收藏内容推测的兴趣领域。
+suggestions 是给用户的个性化建议。`
+
+/**
+ * MBTI 性格分析 Prompt 模板
+ */
+const personalityPrompt = ChatPromptTemplate.fromMessages([
+  ['system', PERSONALITY_SYSTEM_PROMPT],
+  ['user', '{summary}'],
+])
+
+/**
+ * 构建性格分析的 messages
+ */
+const buildPersonalityMessages = async (summary: {
+  totalCount: number
+  folders: { title: string; count: number; topKeywords: string[] }[]
+  globalTopKeywords: string[]
+}) => {
+  return personalityPrompt.formatMessages({
+    summary: JSON.stringify(summary, null, 2),
+  })
+}
+
+export {
+  streamAIRequest,
+  buildAIMoveMessages,
+  buildKeywordExtractionMessages,
+  buildPersonalityMessages,
+}

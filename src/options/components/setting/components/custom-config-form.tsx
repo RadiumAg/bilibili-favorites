@@ -37,6 +37,7 @@ export const CustomConfigForm: React.FC = () => {
       setGlobalData: state.setGlobalData,
     })),
   )
+  const oldAdapter = React.useRef(globalData.aiConfig.adapter)
   const [showApiKey, setShowApiKey] = React.useState(false)
   const form = useForm<FormData>({
     defaultValues: {
@@ -68,6 +69,7 @@ export const CustomConfigForm: React.FC = () => {
           extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
         },
       })
+      toast({ variant: 'default', title: 'ok没问题' })
     } catch (e) {
       if (e instanceof Error) {
         toast({
@@ -77,12 +79,15 @@ export const CustomConfigForm: React.FC = () => {
         })
       }
     }
-
-    toast({ variant: 'default', title: 'ok没问题' })
   })
 
   React.useEffect(() => {
     if (globalData.aiConfig.adapter == null) return
+    if (oldAdapter.current === globalData.aiConfig.adapter) {
+      oldAdapter.current = globalData.aiConfig.adapter
+      return
+    }
+
     const defaultParamsValue = defaultParams[globalData.aiConfig.adapter]
 
     for (const [key, value] of Object.entries(defaultParamsValue)) {
