@@ -54,7 +54,7 @@ const PersonalityAnalysis: React.FC = () => {
   if (result) {
     return (
       <div className="w-full h-full">
-        <div className="max-w-2xl mx-auto">
+        <div className="mx-auto">
           <PersonalityResultView
             result={result}
             onReset={() => {
@@ -69,7 +69,7 @@ const PersonalityAnalysis: React.FC = () => {
   // 空态 / 待分析
   return (
     <div className="w-full h-full">
-      <div className="max-w-2xl mx-auto">
+      <div className="mx-auto">
         <Title title="收藏夹性格分析" desc="基于你的 B 站收藏内容，AI 为你生成专属 MBTI 性格画像" />
 
         <Card className="mt-6">
