@@ -3,26 +3,20 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Title } from '@/components'
 import { useFavoriteData } from '@/hooks'
-import { useGlobalConfig } from '@/store/global-data'
-import { useAnalysisData } from '../analysis/use-analysis-data'
+import { useAnalysisDataContext } from '../analysis/analysis-data-context'
+import { AnalysisLoadingOverlay } from '../analysis/analysis-loading-overlay'
 import { usePersonalityAnalysis } from './use-personality-analysis'
 import { PersonalityResultView } from './personality-result'
 import { Sparkles, Loader2, AlertCircle } from 'lucide-react'
-import loadingGif from '@/assets/loading.gif'
 
 const PersonalityAnalysis: React.FC = () => {
   const { favoriteData } = useFavoriteData()
-  const cookie = useGlobalConfig((state) => state.cookie)
-  const forceRefreshRef = React.useRef(false)
   const {
     allMedias,
     loading: dataLoading,
+    fetchProgress,
     fetchAllMedias,
-  } = useAnalysisData({
-    favoriteData,
-    cookie,
-    forceRefreshRef,
-  })
+  } = useAnalysisDataContext()
 
   const {
     result,
@@ -43,10 +37,11 @@ const PersonalityAnalysis: React.FC = () => {
   // 数据加载中
   if (dataLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-        <img alt="loading" src={loadingGif} className="w-20 h-20" />
-        <p className="text-sm text-[#61666D]">正在加载收藏夹数据...</p>
-      </div>
+      <AnalysisLoadingOverlay
+        loading={dataLoading}
+        fetchProgress={fetchProgress}
+        mode="fullscreen"
+      />
     )
   }
 

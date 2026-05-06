@@ -9,93 +9,100 @@ import DragManager from './components/drag-manager'
 import PersonalityAnalysis from './components/personality'
 import { LoginCheck } from '@/popup/components'
 import { useSearchParams } from '@/utils/search-params'
+import {
+  AnalysisDataContext,
+  useAnalysisDataProvider,
+} from './components/analysis/analysis-data-context'
 
 const Options: React.FC = () => {
   const searchParams = useSearchParams()
+  const { value: analysisDataValue } = useAnalysisDataProvider()
 
   return (
-    <div
-      className={cn(
-        'flex',
-        'mt-[5%]',
-        'shadow-xl',
-        'min-h-[700px]',
-        'mx-auto',
-        'flex-col',
-        'rounded-sm',
-        'bg-white',
-        'min-w-0',
-        'md:min-w-[786px]',
-        'relative',
-        'max-w-screen-2xl',
-      )}
-    >
-      <TabWrapper>
-        <TabWrapper.Tab
-          title="配置"
-          keyValue="setting"
-          defaultTab={searchParams.get('tab') === 'setting'}
-        >
-          <TabWrapper.Content>
-            <Setting />
-          </TabWrapper.Content>
-        </TabWrapper.Tab>
+    <AnalysisDataContext.Provider value={analysisDataValue}>
+      <div
+        className={cn(
+          'flex',
+          'mt-[5%]',
+          'shadow-xl',
+          'min-h-[700px]',
+          'mx-auto',
+          'flex-col',
+          'rounded-sm',
+          'bg-white',
+          'min-w-0',
+          'md:min-w-[786px]',
+          'relative',
+          'max-w-screen-2xl',
+        )}
+      >
+        <TabWrapper>
+          <TabWrapper.Tab
+            title="配置"
+            keyValue="setting"
+            defaultTab={searchParams.get('tab') === 'setting'}
+          >
+            <TabWrapper.Content>
+              <Setting />
+            </TabWrapper.Content>
+          </TabWrapper.Tab>
 
-        <TabWrapper.Tab
-          title="关键字管理"
-          keyValue="keyword-manager"
-          defaultTab={searchParams.get('tab') === 'keyword-manager' || !searchParams.get('tab')}
-        >
-          <TabWrapper.Content>
-            <div className="mb-2 flex items-center">
-              <OperateButton />
-            </div>
-
-            <div className="flex gap-x-2 h-[700px]">
-              <div className="w-1/2 h-full">
-                <FavoriteTag className="h-full" />
+          <TabWrapper.Tab
+            title="关键字管理"
+            keyValue="keyword-manager"
+            defaultTab={searchParams.get('tab') === 'keyword-manager' || !searchParams.get('tab')}
+          >
+            <TabWrapper.Content>
+              <div className="mb-2 flex items-center">
+                <OperateButton />
               </div>
 
-              <div className="w-1/2 h-full">
-                <Keyword className="h-full" />
+              <div className="flex gap-x-2 h-[700px]">
+                <div className="w-1/2 h-full">
+                  <FavoriteTag className="h-full" />
+                </div>
+
+                <div className="w-1/2 h-full">
+                  <Keyword className="h-full" />
+                </div>
               </div>
-            </div>
-          </TabWrapper.Content>
-        </TabWrapper.Tab>
+            </TabWrapper.Content>
+          </TabWrapper.Tab>
 
-        <TabWrapper.Tab
-          title="可视化管理"
-          keyValue="drag-manager"
-          defaultTab={searchParams.get('tab') === 'drag-manager'}
-        >
-          <TabWrapper.Content>
-            <DragManager />
-          </TabWrapper.Content>
-        </TabWrapper.Tab>
+          <TabWrapper.Tab
+            title="可视化管理"
+            keyValue="drag-manager"
+            defaultTab={searchParams.get('tab') === 'drag-manager'}
+          >
+            <TabWrapper.Content>
+              <DragManager />
+            </TabWrapper.Content>
+          </TabWrapper.Tab>
 
-        <TabWrapper.Tab
-          title="收藏夹数据分析"
-          keyValue="analysis"
-          defaultTab={searchParams.get('tab') === 'analysis'}
-        >
-          <TabWrapper.Content>
-            <OptionsAnalysisTab />
-          </TabWrapper.Content>
-        </TabWrapper.Tab>
+          <TabWrapper.Tab
+            title="收藏夹数据分析"
+            keyValue="analysis"
+            defaultTab={searchParams.get('tab') === 'analysis'}
+          >
+            <TabWrapper.Content>
+              <OptionsAnalysisTab />
+            </TabWrapper.Content>
+          </TabWrapper.Tab>
 
-        <TabWrapper.Tab
-          title="性格分析"
-          keyValue="personality"
-          defaultTab={searchParams.get('tab') === 'personality'}
-        >
-          <TabWrapper.Content>
-            <PersonalityAnalysis />
-          </TabWrapper.Content>
-        </TabWrapper.Tab>
-      </TabWrapper>
+          <TabWrapper.Tab
+            title="性格分析"
+            keyValue="personality"
+            defaultTab={searchParams.get('tab') === 'personality'}
+          >
+            <TabWrapper.Content>
+              <PersonalityAnalysis />
+            </TabWrapper.Content>
+          </TabWrapper.Tab>
+        </TabWrapper>
 
-      <LoginCheck popup={false} />
-    </div>
+        <LoginCheck popup={false} />
+      </div>
+    </AnalysisDataContext.Provider>
   )
 }
 

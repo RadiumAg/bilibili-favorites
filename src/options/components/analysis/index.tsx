@@ -15,22 +15,27 @@ import { StatsCards } from './stats-cards'
 import { DistributionChart } from './chart/distribution-chart'
 import { BarChart } from './chart/bar-chart'
 import { TrendChart } from './chart/trend-chart'
-import { useGlobalConfig } from '@/store/global-data'
 import { RefreshCwIcon } from 'lucide-react'
-import { useAnalysisData } from './use-analysis-data'
 import { useAnalysisWorker } from './use-analysis-worker'
 import { useAnalysisStats } from './use-analysis-stats'
-import { useFavoriteData, useBeforeUnload } from '@/hooks'
+import { useBeforeUnload, useFavoriteData } from '@/hooks'
 import { Title } from '@/components'
-import loadingGif from '@/assets/loading.gif'
+import { useAnalysisDataContext } from './analysis-data-context'
+import { AnalysisLoadingOverlay } from './analysis-loading-overlay'
 
 export const OptionsAnalysisTab: React.FC = () => {
   const { favoriteData } = useFavoriteData()
-  const cookie = useGlobalConfig((state) => state.cookie)
-  const forceRefreshRef = React.useRef(false)
   const dateRange = React.useRef<string>('30d')
   const [refreshing, setRefreshing] = React.useState(false)
-  // 使用 Worker hook
+
+  // 从共享 Context 获取分析数据
+  const {
+    allMedaisRef,
+    loading: dataLoading,
+    fetchProgress,
+    fetchAllMedias,
+    forceRefreshRef,
+  } = useAnalysisDataContext()
   const { postMessage: postWorkerMessage } = useAnalysisWorker({
     onMessage: useMemoizedFn((type: string, data: any) => {
       console.log('[DEBUG] Message', type, data)
@@ -49,18 +54,6 @@ export const OptionsAnalysisTab: React.FC = () => {
           console.warn('[OptionsAnalysisTab] Unknown worker message type:', type)
       }
     }),
-  })
-
-  // 使用数据获取 hook
-  const {
-    allMedaisRef,
-    loading: dataLoading,
-    fetchProgress,
-    fetchAllMedias,
-  } = useAnalysisData({
-    favoriteData,
-    cookie,
-    forceRefreshRef,
   })
 
   // 数据分析进行中时，关闭窗口弹出确认提示
@@ -178,21 +171,7 @@ export const OptionsAnalysisTab: React.FC = () => {
         </div>
 
         {/* Loading 遮罩层 */}
-        {dataLoading && fetchProgress && (
-          <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl">
-            <div className="flex flex-col items-center gap-4">
-              <img alt="loading-gif" src={loadingGif} className="w-24 h-24" />
-              <div className="text-center">
-                <p className="text-sm font-medium text-[#18191C]">
-                  正在分析第 {fetchProgress.current}/{fetchProgress.total} 个收藏夹
-                </p>
-                <p className="text-xs text-[#61666D] mt-1 max-w-[200px] truncate">
-                  {fetchProgress.currentTitle}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        <AnalysisLoadingOverlay loading={dataLoading} fetchProgress={fetchProgress} />
 
         {/* 统计卡片 */}
         <div className="mb-8">
