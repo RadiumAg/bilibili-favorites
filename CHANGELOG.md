@@ -9,6 +9,14 @@ Summary
   5. version timestamp follow the yyyy.MM.dd format
 ```
 
+## 1.2.9 [2025.05.06]
+
+- feat: 新增性格分析文档页（personality-analysis.mdx），含 MBTI 画像、AI 模式、常见疑问
+- feat: Options 页面添加收藏夹分析数据共享上下文（AnalysisDataContext），分析页与性格分析页共享数据
+- update: Options 页面布局优化，mt-[5%] 改为 my-[5%] 垂直居中
+- fix: 防止收藏夹数据重复请求（hasFetch 模块级去重）
+- update: 分析数据 Context 移除不必要的 useMemo，简化代码
+
 ## 1.2.8 [2025.05.05]
 
 - feat: 新增收藏夹 MBTI 性格分析功能，支持 AIGate 免费额度和自定义 AI 双模式
