@@ -5,6 +5,7 @@
   "pages": [
     "index",
     "favorites-analysis",
+    "personality-analysis",
     "keyword-management",
     "batch-organize",
     "ai-classification",
