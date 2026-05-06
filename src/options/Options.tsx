@@ -23,7 +23,7 @@ const Options: React.FC = () => {
       <div
         className={cn(
           'flex',
-          'mt-[5%]',
+          'my-[5%]',
           'shadow-xl',
           'min-h-[700px]',
           'mx-auto',
