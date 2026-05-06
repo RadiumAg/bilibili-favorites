@@ -13,6 +13,8 @@ type GetAllFavoriteFlagRes = {
   data: { list: FavoriteDataItem[] }
 }
 
+let hasFetch = false // 防止重复请求
+
 /**
  * 获取收藏夹的元数据，不包括收藏夹里的视频信息
  * @returns
@@ -47,7 +49,9 @@ const useFavoriteData = () => {
   })
 
   useMount(() => {
+    if (hasFetch) return
     if (favoriteData == null || favoriteData.length === 0) {
+      hasFetch = true
       fetchFavoriteData()
     }
   })
