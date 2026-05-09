@@ -36,13 +36,7 @@ const PersonalityAnalysis: React.FC = () => {
 
   // 数据加载中
   if (dataLoading) {
-    return (
-      <AnalysisLoadingOverlay
-        loading={dataLoading}
-        fetchProgress={fetchProgress}
-        mode="fullscreen"
-      />
-    )
+    return <AnalysisLoadingOverlay loading={dataLoading} fetchProgress={fetchProgress} />
   }
 
   // 有结果：展示
