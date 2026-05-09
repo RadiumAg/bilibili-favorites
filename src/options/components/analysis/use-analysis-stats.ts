@@ -39,6 +39,19 @@ type TrendData = {
   cumulative: number
 }
 
+type HeatmapData = {
+  date: string
+  count: number
+  dayOfWeek: number
+}
+
+type RelationNode = { name: string; value: number }
+type RelationLink = { source: string; target: string; value: number }
+type RelationData = {
+  nodes: RelationNode[]
+  links: RelationLink[]
+}
+
 type UseAnalysisStatsProps = {
   favoriteData: FavoriteFolder[]
   allMedaisRef: React.RefObject<FavoriteMedia[]>
@@ -55,6 +68,8 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
   const [statsData, setStatsData] = React.useState<StatsData>() // 头部数据
   const [distributionData, setDistributionData] = React.useState<DistributionData[]>([]) // 收藏夹视频数量分布
   const [trendData, setTrendDataState] = React.useState<TrendData[]>([]) // 收藏趋势分析
+  const [heatmapData, setHeatmapData] = React.useState<HeatmapData[]>([]) // 热力图数据
+  const [relationData, setRelationData] = React.useState<RelationData>({ nodes: [], links: [] }) // 关系图数据
 
   // 设置趋势数据并缓存
   const setTrendData = useMemoizedFn(async (data: TrendData[]) => {
@@ -152,14 +167,42 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
     })
   })
 
+  // 生成热力图数据
+  const generateHeatmapData = useMemoizedFn(() => {
+    const allMedias = allMedaisRef.current
+    if (allMedias.length > 0) {
+      postWorkerMessage({
+        type: 'calculateHeatmap',
+        data: { medias: allMedias, days: 30 },
+      })
+    }
+  })
+
+  // 生成关系图数据
+  const generateRelationData = useMemoizedFn(() => {
+    const allMedias = allMedaisRef.current
+    if (allMedias.length > 0 && favoriteData.length > 0) {
+      postWorkerMessage({
+        type: 'calculateFolderRelations',
+        data: { medias: allMedias, favoriteData },
+      })
+    }
+  })
+
   return {
     statsData,
     distributionData,
     trendData,
+    heatmapData,
+    relationData,
+    setHeatmapData,
+    setRelationData,
     generateTrendData,
     calculateStats,
     calculateDistribution,
     setTrendData,
     updateRecentCount,
+    generateHeatmapData,
+    generateRelationData,
   }
 }

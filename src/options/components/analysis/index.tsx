@@ -15,6 +15,8 @@ import { StatsCards } from './stats-cards'
 import { DistributionChart } from './chart/distribution-chart'
 import { BarChart } from './chart/bar-chart'
 import { TrendChart } from './chart/trend-chart'
+import { HeatmapChart } from './chart/heatmap-chart'
+import { FolderRelationChart } from './chart/folder-relation-chart'
 import { RefreshCwIcon } from 'lucide-react'
 import { useAnalysisWorker } from './use-analysis-worker'
 import { useAnalysisStats } from './use-analysis-stats'
@@ -50,6 +52,16 @@ export const OptionsAnalysisTab: React.FC = () => {
           setTrendData(data)
           break
 
+        case 'calculateHeatmap':
+          // 更新热力图数据
+          setHeatmapData(data)
+          break
+
+        case 'calculateFolderRelations':
+          // 更新关系图数据
+          setRelationData(data)
+          break
+
         default:
           console.warn('[OptionsAnalysisTab] Unknown worker message type:', type)
       }
@@ -64,11 +76,17 @@ export const OptionsAnalysisTab: React.FC = () => {
     statsData,
     distributionData,
     trendData,
+    heatmapData,
+    relationData,
+    setHeatmapData,
+    setRelationData,
     generateTrendData,
     calculateStats,
     calculateDistribution,
     setTrendData,
     updateRecentCount,
+    generateHeatmapData,
+    generateRelationData,
   } = useAnalysisStats({
     favoriteData,
     allMedaisRef,
@@ -90,6 +108,9 @@ export const OptionsAnalysisTab: React.FC = () => {
         type: 'calculateRecentFavorites',
         data: { medias: allMedias, days: '7' },
       })
+      // 生成热力图和关系图数据
+      generateHeatmapData()
+      generateRelationData()
       // 使用 Worker 计算最近收藏数量
     } catch (error) {
       toast({
@@ -180,9 +201,10 @@ export const OptionsAnalysisTab: React.FC = () => {
 
         {/* 图表区域 */}
         <Tabs defaultValue="distribution" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="distribution">收藏分布</TabsTrigger>
             <TabsTrigger value="trend">收藏趋势</TabsTrigger>
+            <TabsTrigger value="insights">收藏洞察</TabsTrigger>
           </TabsList>
 
           <TabsContent value="distribution" className="space-y-6">
@@ -230,6 +252,28 @@ export const OptionsAnalysisTab: React.FC = () => {
                 />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="insights" className="space-y-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>30 天收藏热力图</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <HeatmapChart loading={dataLoading} data={heatmapData} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>收藏夹关系图</CardTitle>
+                  <p className="text-sm text-[#61666D]">基于共同 UP 主关联</p>
+                </CardHeader>
+                <CardContent>
+                  <FolderRelationChart loading={dataLoading} data={relationData} />
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
