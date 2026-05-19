@@ -38,9 +38,9 @@ const PersonalityAnalysis: React.FC = () => {
   if (dataLoading) {
     return (
       <AnalysisLoadingOverlay
+        mode="fullscreen"
         loading={dataLoading}
         fetchProgress={fetchProgress}
-        mode="fullscreen"
       />
     )
   }

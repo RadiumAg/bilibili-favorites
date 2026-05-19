@@ -3,6 +3,7 @@ import { useMemoizedFn } from 'ahooks'
 import { type FavoriteMedia } from '@/utils/api'
 import dbManager from '@/utils/indexed-db'
 import { WorkerMessage } from './use-analysis-worker'
+import { type FolderMediasMap } from './use-analysis-data'
 
 type FavoriteFolder = {
   id: number
@@ -39,9 +40,23 @@ type TrendData = {
   cumulative: number
 }
 
+type HeatmapData = {
+  date: string
+  count: number
+  dayOfWeek: number
+}
+
+type RelationNode = { name: string; value: number }
+type RelationLink = { source: string; target: string; value: number }
+type RelationData = {
+  nodes: RelationNode[]
+  links: RelationLink[]
+}
+
 type UseAnalysisStatsProps = {
   favoriteData: FavoriteFolder[]
   allMedaisRef: React.RefObject<FavoriteMedia[]>
+  folderMediasMapRef: React.RefObject<FolderMediasMap>
   dateRange: React.RefObject<string>
   forceRefreshRef: React.RefObject<boolean>
   postWorkerMessage: (message: WorkerMessage) => void
@@ -51,10 +66,19 @@ type UseAnalysisStatsProps = {
  * 计算和管理分析统计数据
  */
 export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
-  const { favoriteData, dateRange, forceRefreshRef, allMedaisRef, postWorkerMessage } = props
+  const {
+    favoriteData,
+    dateRange,
+    forceRefreshRef,
+    allMedaisRef,
+    folderMediasMapRef,
+    postWorkerMessage,
+  } = props
   const [statsData, setStatsData] = React.useState<StatsData>() // 头部数据
   const [distributionData, setDistributionData] = React.useState<DistributionData[]>([]) // 收藏夹视频数量分布
   const [trendData, setTrendDataState] = React.useState<TrendData[]>([]) // 收藏趋势分析
+  const [heatmapData, setHeatmapData] = React.useState<HeatmapData[]>([]) // 热力图数据
+  const [relationData, setRelationData] = React.useState<RelationData>({ nodes: [], links: [] }) // 关系图数据
 
   // 设置趋势数据并缓存
   const setTrendData = useMemoizedFn(async (data: TrendData[]) => {
@@ -152,14 +176,42 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
     })
   })
 
+  // 生成热力图数据
+  const generateHeatmapData = useMemoizedFn(() => {
+    const allMedias = allMedaisRef.current
+    if (allMedias.length > 0) {
+      postWorkerMessage({
+        type: 'calculateHeatmap',
+        data: { medias: allMedias, days: 30 },
+      })
+    }
+  })
+
+  // 生成关系图数据
+  const generateRelationData = useMemoizedFn(() => {
+    const folderMediasMap = folderMediasMapRef.current
+    if (Object.keys(folderMediasMap).length > 0 && favoriteData.length > 0) {
+      postWorkerMessage({
+        type: 'calculateFolderRelations',
+        data: { folderMediasMap, favoriteData },
+      })
+    }
+  })
+
   return {
     statsData,
     distributionData,
     trendData,
+    heatmapData,
+    relationData,
+    setHeatmapData,
+    setRelationData,
     generateTrendData,
     calculateStats,
     calculateDistribution,
     setTrendData,
     updateRecentCount,
+    generateHeatmapData,
+    generateRelationData,
   }
 }

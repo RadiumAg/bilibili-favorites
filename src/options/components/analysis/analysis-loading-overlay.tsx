@@ -41,14 +41,10 @@ const AnalysisLoadingOverlay: React.FC<AnalysisLoadingOverlayProps> = ({
       </div>
     </div>
   )
-
   if (mode === 'fullscreen') {
-    return (
-      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-        <img alt="loading" src={loadingGif} className="w-20 h-20" />
-        <p className="text-sm text-[#61666D]">{progressText}</p>
-      </div>
-    )
+    return React.cloneElement(content, {
+      className: 'flex flex-col items-center justify-center gap-4 h-[700px]',
+    })
   }
 
   return (

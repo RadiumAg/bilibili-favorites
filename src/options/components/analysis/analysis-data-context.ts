@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAnalysisData, type FetchProgress } from './use-analysis-data'
+import { useAnalysisData, type FetchProgress, type FolderMediasMap } from './use-analysis-data'
 import { useFavoriteData } from '@/hooks'
 import { useGlobalConfig } from '@/store/global-data'
 import { type FavoriteMedia } from '@/utils/api'
@@ -7,6 +7,7 @@ import { type FavoriteMedia } from '@/utils/api'
 type AnalysisDataContextType = {
   allMedias: FavoriteMedia[]
   allMedaisRef: React.RefObject<FavoriteMedia[]>
+  folderMediasMapRef: React.RefObject<FolderMediasMap>
   loading: boolean
   fetchProgress?: FetchProgress
   fetchAllMedias: () => Promise<FavoriteMedia[]>
@@ -23,22 +24,24 @@ export const useAnalysisDataProvider = () => {
   const cookie = useGlobalConfig((state) => state.cookie)
   const forceRefreshRef = React.useRef(false)
 
-  const { allMedias, loading, fetchProgress, allMedaisRef, fetchAllMedias } = useAnalysisData({
-    favoriteData,
-    cookie,
-    forceRefreshRef,
-  })
+  const { allMedias, loading, fetchProgress, allMedaisRef, folderMediasMapRef, fetchAllMedias } =
+    useAnalysisData({
+      favoriteData,
+      cookie,
+      forceRefreshRef,
+    })
 
   const valueMemo = React.useMemo(() => {
     return {
       allMedias,
       allMedaisRef,
+      folderMediasMapRef,
       loading,
       fetchProgress,
       forceRefreshRef,
       fetchAllMedias,
     }
-  }, [allMedaisRef, allMedias, fetchAllMedias, fetchProgress, loading])
+  }, [allMedaisRef, allMedias, folderMediasMapRef, fetchAllMedias, fetchProgress, loading])
 
   return {
     value: valueMemo,
