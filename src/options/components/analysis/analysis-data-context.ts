@@ -24,11 +24,12 @@ export const useAnalysisDataProvider = () => {
   const cookie = useGlobalConfig((state) => state.cookie)
   const forceRefreshRef = React.useRef(false)
 
-  const { allMedias, loading, fetchProgress, allMedaisRef, folderMediasMapRef, fetchAllMedias } = useAnalysisData({
-    favoriteData,
-    cookie,
-    forceRefreshRef,
-  })
+  const { allMedias, loading, fetchProgress, allMedaisRef, folderMediasMapRef, fetchAllMedias } =
+    useAnalysisData({
+      favoriteData,
+      cookie,
+      forceRefreshRef,
+    })
 
   const valueMemo = React.useMemo(() => {
     return {

@@ -66,7 +66,14 @@ type UseAnalysisStatsProps = {
  * 计算和管理分析统计数据
  */
 export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
-  const { favoriteData, dateRange, forceRefreshRef, allMedaisRef, folderMediasMapRef, postWorkerMessage } = props
+  const {
+    favoriteData,
+    dateRange,
+    forceRefreshRef,
+    allMedaisRef,
+    folderMediasMapRef,
+    postWorkerMessage,
+  } = props
   const [statsData, setStatsData] = React.useState<StatsData>() // 头部数据
   const [distributionData, setDistributionData] = React.useState<DistributionData[]>([]) // 收藏夹视频数量分布
   const [trendData, setTrendDataState] = React.useState<TrendData[]>([]) // 收藏趋势分析

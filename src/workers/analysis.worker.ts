@@ -176,7 +176,11 @@ function calculateFolderRelations(
 
   // 只保留有视频的收藏夹，最多 15 个节点
   const activeFolders = favoriteData
-    .filter((f) => folderUpperSets.has(f.id.toString()) && (folderUpperSets.get(f.id.toString())?.size ?? 0) > 0)
+    .filter(
+      (f) =>
+        folderUpperSets.has(f.id.toString()) &&
+        (folderUpperSets.get(f.id.toString())?.size ?? 0) > 0,
+    )
     .slice(0, 15)
 
   const nodes = activeFolders.map((f) => ({
