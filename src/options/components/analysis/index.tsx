@@ -29,6 +29,11 @@ export const OptionsAnalysisTab: React.FC = () => {
   const { favoriteData } = useFavoriteData()
   const dateRange = React.useRef<string>('30d')
   const [refreshing, setRefreshing] = React.useState(false)
+  const [selectedEdge, setSelectedEdge] = React.useState<{
+    source: string
+    target: string
+    commonUppers: Array<{ mid: number; name: string }>
+  } | null>(null)
 
   // 从共享 Context 获取分析数据
   const {
@@ -269,10 +274,45 @@ export const OptionsAnalysisTab: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>收藏夹关系图</CardTitle>
-                  <p className="text-sm text-[#61666D]">基于共同 UP 主关联</p>
+                  <p className="text-sm text-[#61666D]">基于共同 UP 主关联，点击连线查看详情</p>
                 </CardHeader>
                 <CardContent>
-                  <FolderRelationChart loading={dataLoading} data={relationData} />
+                  <FolderRelationChart
+                    loading={dataLoading}
+                    data={relationData}
+                    onEdgeClick={setSelectedEdge}
+                  />
+                  {selectedEdge && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-sm font-medium">
+                          {selectedEdge.source} ↔ {selectedEdge.target}
+                        </h4>
+                        <button
+                          onClick={() => setSelectedEdge(null)}
+                          className="text-gray-400 hover:text-gray-600 text-sm"
+                        >
+                          关闭
+                        </button>
+                      </div>
+                      <p className="text-xs text-[#61666D] mb-2">
+                        共同 UP 主 ({selectedEdge.commonUppers.length})
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedEdge.commonUppers.map((upper) => (
+                          <a
+                            key={upper.mid}
+                            href={`https://space.bilibili.com/${upper.mid}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 bg-white rounded-full border text-xs text-gray-700 hover:border-[#00AEEC] hover:text-[#00AEEC] transition-colors"
+                          >
+                            {upper.name}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

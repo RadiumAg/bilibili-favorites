@@ -47,7 +47,12 @@ type HeatmapData = {
 }
 
 type RelationNode = { name: string; value: number }
-type RelationLink = { source: string; target: string; value: number }
+type RelationLink = {
+  source: string
+  target: string
+  value: number
+  commonUppers: Array<{ mid: number; name: string }>
+}
 type RelationData = {
   nodes: RelationNode[]
   links: RelationLink[]
