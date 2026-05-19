@@ -86,6 +86,138 @@ function calculateDailyFavorites(
   return data
 }
 
+type FavoriteFolder = {
+  id: number
+  fid: number
+  title: string
+  media_count: number
+}
+
+/**
+ * 计算热力图数据（最近 N 天按天统计）
+ */
+function calculateHeatmapData(
+  medias: FavoriteMedia[],
+  days: number,
+): Array<{ date: string; count: number; dayOfWeek: number }> {
+  if (!medias.length) return []
+
+  const now = new Date()
+  const data: Array<{ date: string; count: number; dayOfWeek: number }> = []
+  const dailyMap = new Map<string, { count: number; dayOfWeek: number }>()
+
+  // 初始化所有日期
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now)
+    date.setDate(date.getDate() - i)
+    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+    dailyMap.set(dateStr, { count: 0, dayOfWeek: date.getDay() })
+  }
+
+  // 统计每天收藏数量
+  medias.forEach((media) => {
+    const favDate = new Date(media.fav_time * 1000)
+    const dateStr = `${favDate.getMonth() + 1}/${favDate.getDate()}`
+    const entry = dailyMap.get(dateStr)
+    if (entry) {
+      entry.count += 1
+    }
+  })
+
+  // 构建结果
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now)
+    date.setDate(date.getDate() - i)
+    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+    const entry = dailyMap.get(dateStr)!
+    data.push({
+      date: dateStr,
+      count: entry.count,
+      dayOfWeek: entry.dayOfWeek,
+    })
+  }
+
+  return data
+}
+
+/**
+ * 计算收藏夹关系数据（基于共同 UP 主）
+ * @param folderMediasMap 每个收藏夹的视频列表（key 为 folderId）
+ * @param favoriteData 收藏夹元数据
+ */
+function calculateFolderRelations(
+  folderMediasMap: Record<string, FavoriteMedia[]>,
+  favoriteData: FavoriteFolder[],
+): {
+  nodes: Array<{ name: string; value: number }>
+  links: Array<{ source: string; target: string; value: number }>
+} {
+  if (!Object.keys(folderMediasMap).length || !favoriteData.length) return { nodes: [], links: [] }
+
+  // 构建每个收藏夹的 UP 主 mid 集合
+  const folderUpperSets = new Map<string, Set<number>>()
+  const folderTitleMap = new Map<string, string>()
+
+  favoriteData.forEach((folder) => {
+    const folderId = folder.id.toString()
+    folderTitleMap.set(folderId, folder.title)
+
+    const medias = folderMediasMap[folderId]
+    if (medias && medias.length > 0) {
+      const upperSet = new Set<number>()
+      medias.forEach((media) => {
+        if (media.upper && media.upper.mid) {
+          upperSet.add(media.upper.mid)
+        }
+      })
+      folderUpperSets.set(folderId, upperSet)
+    }
+  })
+
+  // 只保留有视频的收藏夹，最多 15 个节点
+  const activeFolders = favoriteData
+    .filter(
+      (f) =>
+        folderUpperSets.has(f.id.toString()) &&
+        (folderUpperSets.get(f.id.toString())?.size ?? 0) > 0,
+    )
+    .slice(0, 15)
+
+  const nodes = activeFolders.map((f) => ({
+    name: f.title,
+    value: folderMediasMap[f.id.toString()]?.length ?? f.media_count,
+  }))
+
+  // 计算任意两个收藏夹的共同 UP 主数量
+  const links: Array<{ source: string; target: string; value: number }> = []
+
+  for (let i = 0; i < activeFolders.length; i++) {
+    for (let j = i + 1; j < activeFolders.length; j++) {
+      const setA = folderUpperSets.get(activeFolders[i].id.toString())!
+      const setB = folderUpperSets.get(activeFolders[j].id.toString())!
+
+      // 计算交集大小
+      let commonCount = 0
+      const smaller = setA.size < setB.size ? setA : setB
+      const larger = setA.size < setB.size ? setB : setA
+      for (const mid of smaller) {
+        if (larger.has(mid)) commonCount++
+      }
+
+      // 只保留共同 UP 主 >= 2 的边，避免图表过于密集
+      if (commonCount >= 2) {
+        links.push({
+          source: activeFolders[i].title,
+          target: activeFolders[j].title,
+          value: commonCount,
+        })
+      }
+    }
+  }
+
+  return { nodes, links }
+}
+
 // 监听主线程消息
 self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
   const { type, data } = event.data
@@ -110,6 +242,20 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
       case 'calculateTrend': {
         const { medias, days } = data
         result = calculateDailyFavorites(medias, days)
+        break
+      }
+
+      // 计算热力图数据
+      case 'calculateHeatmap': {
+        const { medias, days } = data
+        result = calculateHeatmapData(medias, days)
+        break
+      }
+
+      // 计算收藏夹关系
+      case 'calculateFolderRelations': {
+        const { folderMediasMap, favoriteData } = data
+        result = calculateFolderRelations(folderMediasMap, favoriteData)
         break
       }
 

@@ -33,6 +33,8 @@ export type FetchProgress = {
   currentTitle: string
 }
 
+export type FolderMediasMap = Record<string, FavoriteMedia[]>
+
 /**
  * 管理分析数据的获取和缓存
  */
@@ -40,6 +42,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
   const { favoriteData, forceRefreshRef, cookie } = props
   const [allMedias, setAllMedias] = React.useState<FavoriteMedia[]>([])
   const allMedaisRef = React.useRef(allMedias)
+  const folderMediasMapRef = React.useRef<FolderMediasMap>({})
   const [loading, setLoading] = React.useState(false)
   const [fetchProgress, setFetchProgress] = React.useState<FetchProgress>()
 
@@ -54,6 +57,8 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
   })
 
   const cacheKey = React.useMemo(() => getCacheKey(), [getCacheKey])
+  const folderMapCacheKey = React.useMemo(() => `${cacheKey}-folder-map`, [cacheKey])
+
   // 获取所有收藏夹的媒体数据
   const fetchAllMedias = useMemoizedFn(async (): Promise<FavoriteMedia[]> => {
     if (!favoriteData.length || !cookie) return []
@@ -68,6 +73,11 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
             console.log('[useAnalysisData] 使用缓存数据')
             setAllMedias(cached.data)
             allMedaisRef.current = cached.data
+            // 同时恢复 folderMediasMap 缓存
+            const cachedMap = await dbManager.get(folderMapCacheKey)
+            if (cachedMap && cachedMap.data) {
+              folderMediasMapRef.current = cachedMap.data
+            }
             setLoading(false)
             return cached.data
           }
@@ -77,6 +87,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       // 缓存过期或强制刷新，重新获取数据
       console.log('[useAnalysisData] 从API获取数据')
       const allMedias: FavoriteMedia[] = []
+      const folderMap: FolderMediasMap = {}
       const total = favoriteData.length
 
       // 遍历所有收藏夹，分页获取全部媒体数据
@@ -87,6 +98,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
           // 立马过期，重新请求
           const medias = await fetchAllFavoriteMedias(folder.id.toString(), undefined, 0)
           allMedias.push(...medias)
+          folderMap[folder.id.toString()] = medias
         } catch (error) {
           console.error(`Failed to fetch medias for folder ${folder.id}:`, error)
           if (error instanceof Error && error.message.includes('message port closed')) {
@@ -99,8 +111,10 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       setFetchProgress(undefined)
       // 保存到缓存
       await dbManager.set(cacheKey, allMedias)
+      await dbManager.set(folderMapCacheKey, folderMap)
       setAllMedias(allMedias)
       allMedaisRef.current = allMedias
+      folderMediasMapRef.current = folderMap
       setLoading(false)
       return allMedias
     } catch (error) {
@@ -115,6 +129,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
     loading,
     fetchProgress,
     allMedaisRef,
+    folderMediasMapRef,
     fetchAllMedias,
   }
 }
