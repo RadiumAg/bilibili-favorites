@@ -16,6 +16,8 @@ interface VideoItem {
   bvid?: string
 }
 
+const API_PAGE_SIZE = 40
+
 interface DragManagerProps {
   className?: string
 }
@@ -23,30 +25,37 @@ interface DragManagerProps {
 const DragManager: React.FC<DragManagerProps> = ({ className }) => {
   const { toast } = useToast()
   const { favoriteData, refresh: refreshFavData } = useFavoriteData()
-  const { fetchWithCache, moveVideosCache } = useFavoriteListData()
+  const { fetchPageWithCache, invalidatePageCache } = useFavoriteListData()
 
   const [selectedFolderId, setSelectedFolderId] = React.useState<number | null>(null)
   const [videos, setVideos] = React.useState<VideoItem[]>([])
+  const [currentPage, setCurrentPage] = React.useState(0)
+  const [hasMore, setHasMore] = React.useState(false)
+  const [loadingMore, setLoadingMore] = React.useState(false)
   const [selectedVideoIds, setSelectedVideoIds] = React.useState<Set<number>>(new Set())
   const [loading, setLoading] = React.useState(false)
   const [moving, setMoving] = React.useState(false)
   const [dragOverFolderId, setDragOverFolderId] = React.useState<number | null>(null)
   const [initialized, setInitialized] = React.useState(false)
 
-  // 加载收藏夹视频
+  // 当前收藏夹元数据（用于显示总数量）
+  const selectedFolder = favoriteData.find((f) => f.id === selectedFolderId)
+  const totalCount = selectedFolder?.media_count
+
+  // 加载收藏夹视频（仅加载第 1 页，即时响应）
   const loadVideos = useMemoizedFn(async (folderId: number) => {
     setLoading(true)
     setSelectedVideoIds(new Set())
+    setVideos([])
     try {
-      const medias = await fetchWithCache(folderId.toString(), undefined, 0)
-      setVideos(
-        medias.map((m) => ({
-          id: m.id,
-          title: m.title,
-          cover: m.cover,
-          bvid: m.bvid,
-        })),
+      const { medias, hasMore: more } = await fetchPageWithCache(
+        folderId.toString(),
+        1,
+        API_PAGE_SIZE,
       )
+      setVideos(medias.map((m) => ({ id: m.id, title: m.title, cover: m.cover, bvid: m.bvid })))
+      setCurrentPage(1)
+      setHasMore(more)
     } catch (error) {
       toast({
         title: '加载失败',
@@ -54,8 +63,37 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
         variant: 'destructive',
       })
       setVideos([])
+      setHasMore(false)
     } finally {
       setLoading(false)
+    }
+  })
+
+  // 加载下一页
+  const handleLoadMore = useMemoizedFn(async () => {
+    if (loadingMore || !hasMore || selectedFolderId === null) return
+    setLoadingMore(true)
+    try {
+      const nextPage = currentPage + 1
+      const { medias, hasMore: more } = await fetchPageWithCache(
+        selectedFolderId.toString(),
+        nextPage,
+        API_PAGE_SIZE,
+      )
+      setVideos((prev) => [
+        ...prev,
+        ...medias.map((m) => ({ id: m.id, title: m.title, cover: m.cover, bvid: m.bvid })),
+      ])
+      setCurrentPage(nextPage)
+      setHasMore(more)
+    } catch (error) {
+      toast({
+        title: '加载失败',
+        description: error instanceof Error ? error.message : '获取视频列表失败',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoadingMore(false)
     }
   })
 
@@ -85,7 +123,7 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
     })
   })
 
-  // 全选/取消全选
+  // 全选/取消全选（基于已加载的视频）
   const toggleSelectAll = useMemoizedFn(() => {
     if (selectedVideoIds.size === videos.length) {
       setSelectedVideoIds(new Set())
@@ -156,7 +194,8 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
     toast({ title: '移动完成', description: `成功: ${successCount}, 失败: ${failCount}` })
 
     if (successCount > 0) {
-      moveVideosCache(selectedFolderId.toString(), targetFolderId.toString(), videoIds)
+      invalidatePageCache(selectedFolderId.toString())
+      invalidatePageCache(targetFolderId.toString())
       loadVideos(selectedFolderId)
       await sleep(1000) // 请求太快favdata会刷新不了
       refreshFavData()
@@ -184,13 +223,17 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
       />
       <VideoList
         videos={videos}
+        totalCount={totalCount}
         selectedVideoIds={selectedVideoIds}
         selectedFolderId={selectedFolderId}
         loading={loading}
         moving={moving}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
         onToggleVideo={toggleVideoSelection}
         onToggleSelectAll={toggleSelectAll}
         onDragStart={handleDragStart}
+        onLoadMore={handleLoadMore}
       />
     </div>
   )

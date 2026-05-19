@@ -1,10 +1,9 @@
 import React from 'react'
 import { useMemoizedFn } from 'ahooks'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import classNames from 'classnames'
-import { FolderOpen, Video, Lightbulb } from 'lucide-react'
+import { FolderOpen, Video, Lightbulb, Loader2 } from 'lucide-react'
 import VideoCard from './video-card'
 
 interface VideoItem {
@@ -16,26 +15,43 @@ interface VideoItem {
 
 interface VideoListProps {
   videos: VideoItem[]
+  totalCount?: number
   selectedVideoIds: Set<number>
   selectedFolderId: number | null
   loading: boolean
   moving: boolean
+  hasMore?: boolean
+  loadingMore?: boolean
   onToggleVideo: (videoId: number, event: React.MouseEvent) => void
   onToggleSelectAll: () => void
   onDragStart: (event: React.DragEvent, videoId: number) => void
+  onLoadMore?: () => void
 }
 
 const VideoList: React.FC<VideoListProps> = ({
   videos,
+  totalCount,
   selectedVideoIds,
   selectedFolderId,
   loading,
   moving,
+  hasMore = false,
+  loadingMore = false,
   onToggleVideo,
   onToggleSelectAll,
   onDragStart,
+  onLoadMore,
 }) => {
+  const displayTotal = totalCount ?? videos.length
+  // isAllSelected 基于已加载的视频判断，不受 totalCount 影响
   const isAllSelected = videos.length > 0 && selectedVideoIds.size === videos.length
+
+  const handleScroll = useMemoizedFn((e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    if (scrollHeight - scrollTop - clientHeight < 120 && hasMore && !loadingMore) {
+      onLoadMore?.()
+    }
+  })
 
   return (
     <div className="flex-1 flex flex-col border border-[#00AEEC]/20 rounded-xl overflow-hidden shadow-sm bg-white relative">
@@ -46,12 +62,12 @@ const VideoList: React.FC<VideoListProps> = ({
           <span>视频列表</span>
           {selectedFolderId && (
             <span className="ml-2 text-white/80 text-xs">
-              ({videos.length} 个视频, 已选
+              ({displayTotal} 个视频, 已选
               <span className="text-white font-bold">{selectedVideoIds.size}</span> 个)
             </span>
           )}
         </div>
-        {videos.length > 0 && (
+        {displayTotal > 0 && (
           <Button
             size="sm"
             variant="outline"
@@ -65,7 +81,7 @@ const VideoList: React.FC<VideoListProps> = ({
       </div>
 
       {/* 内容区 */}
-      <ScrollArea className="flex-1 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto scrollbar-thin" onScroll={handleScroll}>
         {!selectedFolderId ? (
           <EmptyState
             icon={<FolderOpen className="w-10 h-10 text-gray-300" />}
@@ -89,12 +105,24 @@ const VideoList: React.FC<VideoListProps> = ({
                 onDragStart={onDragStart}
               />
             ))}
+            {/* 加载更多状态 */}
+            {loadingMore && (
+              <div className="flex items-center justify-center py-3 text-[#00AEEC] text-xs gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>加载更多...</span>
+              </div>
+            )}
+            {!hasMore && videos.length > 0 && (
+              <div className="text-center py-3 text-xs text-gray-400">
+                已加载全部 {displayTotal} 个视频
+              </div>
+            )}
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       {/* 底部提示 */}
-      {selectedFolderId && videos.length > 0 && <BottomHint />}
+      {selectedFolderId && displayTotal > 0 && !loading && <BottomHint />}
 
       {/* 移动中遮罩 */}
       {moving && <MovingOverlay />}

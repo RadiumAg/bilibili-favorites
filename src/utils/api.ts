@@ -318,6 +318,31 @@ const fetchPersonalityAnalysis = async (
 }
 
 /**
+ * 获取某个收藏夹指定页的视频列表（单页，不循环）
+ * @param mediaId 收藏夹 ID
+ * @param page 页码（从 1 开始）
+ * @param pageSize 每页数量，最大 40（B 站限制）
+ * @returns 当前页视频列表及是否有下一页
+ */
+const fetchFavoritePage = async (
+  mediaId: string,
+  page: number,
+  pageSize = 40,
+): Promise<{ medias: FavoriteMedia[]; hasMore: boolean }> => {
+  const response = await queryAndSendMessage<GetFavoriteListRes>({
+    type: MessageEnum.getFavoriteList,
+    data: { mediaId, pn: page, ps: pageSize },
+  })
+  if (response.code !== 0) {
+    throw new Error(response.message || '获取收藏夹数据失败')
+  }
+  return {
+    medias: response.data.medias || [],
+    hasMore: response.data.has_more,
+  }
+}
+
+/**
  * 分页获取某个收藏夹的全部视频列表
  * @param mediaId 收藏夹 ID
  * @param pageSize 每页数量，默认 40（B 站最大值）
@@ -366,6 +391,7 @@ export {
   moveFavorite,
   fetchChatGpt,
   fetchAIMove,
+  fetchFavoritePage,
   fetchAllFavoriteMedias,
   callAIGateAI,
   fetchPersonalityAnalysis,
