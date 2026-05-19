@@ -142,50 +142,76 @@ function calculateHeatmapData(
 
 /**
  * 计算收藏夹关系数据（基于共同 UP 主）
+ * @param folderMediasMap 每个收藏夹的视频列表（key 为 folderId）
+ * @param favoriteData 收藏夹元数据
  */
 function calculateFolderRelations(
-  medias: FavoriteMedia[],
+  folderMediasMap: Record<string, FavoriteMedia[]>,
   favoriteData: FavoriteFolder[],
 ): {
   nodes: Array<{ name: string; value: number }>
   links: Array<{ source: string; target: string; value: number }>
 } {
-  if (!medias.length || !favoriteData.length) return { nodes: [], links: [] }
+  if (!Object.keys(folderMediasMap).length || !favoriteData.length) return { nodes: [], links: [] }
 
-  // 按收藏夹分组，收集每个收藏夹的 UP 主 mid 集合
-  const folderUpperMap = new Map<number, Set<number>>()
-  const folderTitleMap = new Map<number, string>()
-  const folderCountMap = new Map<number, number>()
+  // 构建每个收藏夹的 UP 主 mid 集合
+  const folderUpperSets = new Map<string, Set<number>>()
+  const folderTitleMap = new Map<string, string>()
 
   favoriteData.forEach((folder) => {
-    folderUpperMap.set(folder.id, new Set())
-    folderTitleMap.set(folder.id, folder.title)
-    folderCountMap.set(folder.id, folder.media_count)
+    const folderId = folder.id.toString()
+    folderTitleMap.set(folderId, folder.title)
+
+    const medias = folderMediasMap[folderId]
+    if (medias && medias.length > 0) {
+      const upperSet = new Set<number>()
+      medias.forEach((media) => {
+        if (media.upper && media.upper.mid) {
+          upperSet.add(media.upper.mid)
+        }
+      })
+      folderUpperSets.set(folderId, upperSet)
+    }
   })
 
-  // 遍历所有视频，按收藏夹收集 UP 主
-  medias.forEach((media) => {
-    // medias 中不包含文件夹 ID，需要通过 fav_time 关联
-    // 实际上 medias 是全量所有视频，需要通过其他方式关联
-    // 这里我们简化处理：假设 medias 已经是全部视频，通过 upper.mid 统计
-  })
+  // 只保留有视频的收藏夹，最多 15 个节点
+  const activeFolders = favoriteData
+    .filter((f) => folderUpperSets.has(f.id.toString()) && (folderUpperSets.get(f.id.toString())?.size ?? 0) > 0)
+    .slice(0, 15)
 
-  // 由于 medias 是全量数据不包含 folder_id，我们改用另一种方式：
-  // 按 upper.mid 分组统计，再根据收藏夹的 mid 推断关联
-  // 但这样不够准确，我们改为：如果两个收藏夹有大量相同的 UP 主视频，则认为有关联
+  const nodes = activeFolders.map((f) => ({
+    name: f.title,
+    value: folderMediasMap[f.id.toString()]?.length ?? f.media_count,
+  }))
 
-  // 简化方案：直接用 favoriteData 的 media_count 做节点，无边显示
-  const nodes = favoriteData
-    .filter((f) => f.media_count > 0)
-    .map((f) => ({
-      name: f.title,
-      value: f.media_count,
-    }))
-    .slice(0, 15) // 最多显示 15 个节点
+  // 计算任意两个收藏夹的共同 UP 主数量
+  const links: Array<{ source: string; target: string; value: number }> = []
 
-  // 由于 medias 不包含 folder_id，无法准确计算收藏夹间的 UP 主交集
-  // 返回空 links，图表会显示"暂无关联"
-  return { nodes, links: [] }
+  for (let i = 0; i < activeFolders.length; i++) {
+    for (let j = i + 1; j < activeFolders.length; j++) {
+      const setA = folderUpperSets.get(activeFolders[i].id.toString())!
+      const setB = folderUpperSets.get(activeFolders[j].id.toString())!
+
+      // 计算交集大小
+      let commonCount = 0
+      const smaller = setA.size < setB.size ? setA : setB
+      const larger = setA.size < setB.size ? setB : setA
+      for (const mid of smaller) {
+        if (larger.has(mid)) commonCount++
+      }
+
+      // 只保留共同 UP 主 >= 2 的边，避免图表过于密集
+      if (commonCount >= 2) {
+        links.push({
+          source: activeFolders[i].title,
+          target: activeFolders[j].title,
+          value: commonCount,
+        })
+      }
+    }
+  }
+
+  return { nodes, links }
 }
 
 // 监听主线程消息
@@ -224,8 +250,8 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
 
       // 计算收藏夹关系
       case 'calculateFolderRelations': {
-        const { medias, favoriteData } = data
-        result = calculateFolderRelations(medias, favoriteData)
+        const { folderMediasMap, favoriteData } = data
+        result = calculateFolderRelations(folderMediasMap, favoriteData)
         break
       }
 

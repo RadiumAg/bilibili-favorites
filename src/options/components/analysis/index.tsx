@@ -33,6 +33,7 @@ export const OptionsAnalysisTab: React.FC = () => {
   // 从共享 Context 获取分析数据
   const {
     allMedaisRef,
+    folderMediasMapRef,
     loading: dataLoading,
     fetchProgress,
     fetchAllMedias,
@@ -90,6 +91,7 @@ export const OptionsAnalysisTab: React.FC = () => {
   } = useAnalysisStats({
     favoriteData,
     allMedaisRef,
+    folderMediasMapRef,
     dateRange,
     forceRefreshRef,
     postWorkerMessage,
