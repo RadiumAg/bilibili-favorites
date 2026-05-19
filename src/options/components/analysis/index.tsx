@@ -265,7 +265,7 @@ export const OptionsAnalysisTab: React.FC = () => {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>30 天收藏热力图</CardTitle>
+                  <CardTitle>年度收藏热力图</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <HeatmapChart loading={dataLoading} data={heatmapData} />

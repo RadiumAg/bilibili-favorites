@@ -187,7 +187,7 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
     if (allMedias.length > 0) {
       postWorkerMessage({
         type: 'calculateHeatmap',
-        data: { medias: allMedias, days: 30 },
+        data: { medias: allMedias, days: 365 },
       })
     }
   })
