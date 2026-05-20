@@ -95,8 +95,11 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
         const folder = favoriteData[i]
         setFetchProgress({ current: i + 1, total, currentTitle: folder.title })
         try {
-          // 立马过期，重新请求
-          const medias = await fetchAllFavoriteMedias(folder.id.toString(), undefined, 0)
+          // 立马过期，重新请求；传入 media_count 以启用缓存智能判断
+          const medias = await fetchAllFavoriteMedias(folder.id.toString(), {
+            expireTime: 0,
+            mediaCount: folder.media_count,
+          })
           allMedias.push(...medias)
           folderMap[folder.id.toString()] = medias
         } catch (error) {

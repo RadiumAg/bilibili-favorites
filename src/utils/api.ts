@@ -375,24 +375,81 @@ const fetchFavoritePage = async (
 }
 
 /**
+ * 获取全量收藏夹数据的进度回调
+ */
+type FetchAllProgress = {
+  /** 已加载的视频数量 */
+  loaded: number
+  /** 收藏夹总视频数量（通过 mediaCount 传入时可用，否则为 undefined） */
+  total?: number
+  /** 当前请求页码 */
+  currentPage: number
+}
+
+type FetchAllFavoriteMediasOptions = {
+  /** 每页数量，默认 40（B 站最大值） */
+  pageSize?: number
+  /** 缓存过期时间，默认 10 分钟 */
+  expireTime?: number
+  /**
+   * 收藏夹的视频总数（来自 getAllFavoriteFlag 的 media_count 字段）
+   * 传入后可实现：1) 进度条显示总数 2) 缓存智能判断——数量未变则跳过请求
+   */
+  mediaCount?: number
+  /** 进度回调，每加载完一页后触发 */
+  onProgress?: (progress: FetchAllProgress) => void
+}
+
+/**
  * 分页获取某个收藏夹的全部视频列表
  * @param mediaId 收藏夹 ID
- * @param pageSize 每页数量，默认 40（B 站最大值）
- * @param expireTime 缓存过期时间，默认 10 分钟
+ * @param options 配置选项（pageSize / expireTime / mediaCount / onProgress）
  * @returns 该收藏夹下的全部视频
  */
 const fetchAllFavoriteMedias = async (
   mediaId: string,
-  pageSize = 40,
-  expireTime = 10 * 60 * 1000,
+  pageSizeOrOptions?: number | FetchAllFavoriteMediasOptions,
+  legacyExpireTime?: number,
 ): Promise<FavoriteMedia[]> => {
+  // 兼容旧的调用方式：fetchAllFavoriteMedias(mediaId, pageSize, expireTime)
+  let pageSize = 40
+  let expireTime = 10 * 60 * 1000
+  let mediaCount: number | undefined
+  let onProgress: ((progress: FetchAllProgress) => void) | undefined
+
+  if (typeof pageSizeOrOptions === 'object' && pageSizeOrOptions !== null) {
+    pageSize = pageSizeOrOptions.pageSize ?? 40
+    expireTime = pageSizeOrOptions.expireTime ?? 10 * 60 * 1000
+    mediaCount = pageSizeOrOptions.mediaCount
+    onProgress = pageSizeOrOptions.onProgress
+  } else if (typeof pageSizeOrOptions === 'number') {
+    pageSize = pageSizeOrOptions
+    expireTime = legacyExpireTime ?? 10 * 60 * 1000
+  }
+
   const allMedias: FavoriteMedia[] = []
   let currentPage = 1
   let hasMore = true
   const key = `favorite-all-${mediaId}`
   const mediaData = await dbManager.get(key)
   const isExpired = await dbManager.isExpired(key, expireTime)
-  if (mediaData && !isExpired) return mediaData.data
+
+  // 缓存命中判断：时间未过期直接返回；时间过期但 mediaCount 未变也返回缓存
+  if (mediaData) {
+    if (!isExpired) return mediaData.data
+    if (
+      mediaCount !== undefined &&
+      Array.isArray(mediaData.data) &&
+      mediaData.data.length === mediaCount
+    ) {
+      // 视频数量未变，延长缓存有效期
+      console.log(
+        `[fetchAllFavoriteMedias] 视频数量未变 (${mediaCount})，复用缓存 (${mediaId})`,
+      )
+      dbManager.set(key, mediaData.data)
+      return mediaData.data
+    }
+  }
 
   // 尝试从分页缓存拼装（如用户最近在拖拽管理器中浏览过该收藏夹，则无需任何网络请求）
   const fromPageCache = tryAssembleFromPageCache(mediaId, pageSize)
@@ -419,6 +476,13 @@ const fetchAllFavoriteMedias = async (
     }
 
     hasMore = response.data.has_more
+
+    onProgress?.({
+      loaded: allMedias.length,
+      total: mediaCount,
+      currentPage,
+    })
+
     currentPage++
   }
 
@@ -446,4 +510,5 @@ export type {
   FavoriteDetailInfoUpper,
   AIConfig,
   PersonalitySummary,
+  FetchAllProgress,
 }
