@@ -28,6 +28,10 @@ const AnalysisLoadingOverlay: React.FC<AnalysisLoadingOverlayProps> = ({
     ? `正在分析第 ${fetchProgress.current}/${fetchProgress.total} 个收藏夹`
     : (tip ?? '正在加载收藏夹数据...')
 
+  const videoProgressText = fetchProgress?.videoTotal
+    ? `已分析 ${fetchProgress.videoLoaded}/${fetchProgress.videoTotal} 个视频`
+    : null
+
   const content = (
     <div className="flex flex-col items-center gap-4">
       <img alt="loading" src={loadingGif} className="w-24 h-24" />
@@ -36,6 +40,11 @@ const AnalysisLoadingOverlay: React.FC<AnalysisLoadingOverlayProps> = ({
         {fetchProgress && (
           <p className="text-xs text-[#61666D] mt-1 max-w-[200px] truncate">
             {fetchProgress.currentTitle}
+          </p>
+        )}
+        {videoProgressText && (
+          <p className="text-xs text-[#61666D] mt-1">
+            {videoProgressText}
           </p>
         )}
       </div>
