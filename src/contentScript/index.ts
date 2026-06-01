@@ -1,5 +1,29 @@
 import { getAllFavoriteFlag, getFavoriteList, moveFavorite } from '@/utils/api'
 import { Message, MessageEnum } from '@/utils/message'
+import { DesktopPet } from '@/components/desktop-pet'
+import ReactDOM from 'react-dom/client'
+import React from 'react'
+
+/** 注入桌宠到页面 */
+function mountDesktopPet() {
+  // 避免重复注入
+  if (document.getElementById('bilibili-favorites-pet')) return
+
+  const container = document.createElement('div')
+  container.id = 'bilibili-favorites-pet'
+  container.style.cssText = 'position:fixed;bottom:0;right:0;z-index:2147483647;pointer-events:none;'
+  document.body.appendChild(container)
+
+  const root = ReactDOM.createRoot(container)
+  root.render(React.createElement(DesktopPet))
+}
+
+// 页面加载完成后注入桌宠
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  mountDesktopPet()
+} else {
+  window.addEventListener('DOMContentLoaded', mountDesktopPet)
+}
 
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
   switch (message.type) {

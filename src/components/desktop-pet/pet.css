@@ -1,0 +1,135 @@
+/* 桌宠容器 */
+.bili-pet-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  transition: transform 0.2s ease;
+}
+
+.bili-pet-container:active {
+  cursor: grabbing;
+}
+
+.bili-pet-container.bili-pet-dragging {
+  transition: none;
+}
+
+/* 像素角色 */
+.bili-pet-sprite {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* 状态动画 */
+
+/* 呼吸 - idle */
+@keyframes bili-pet-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* 挥手 - wave */
+@keyframes bili-pet-wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  75% { transform: rotate(-15deg); }
+}
+
+/* 跳跃 - happy */
+@keyframes bili-pet-hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-12px) scale(1.05); }
+  50% { transform: translateY(-16px) scale(1.1); }
+  80% { transform: translateY(-4px) scale(1); }
+}
+
+/* 左右摇晃 - walk */
+@keyframes bili-pet-walk {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(3px) rotate(3deg); }
+  75% { transform: translateX(-3px) rotate(-3deg); }
+}
+
+/* 睡觉呼吸 - sleep */
+@keyframes bili-pet-sleep {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(-1px); opacity: 0.85; }
+}
+
+/* Z 字符飘出 */
+@keyframes bili-pet-z-float {
+  0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
+  100% { opacity: 0; transform: translate(10px, -20px) scale(1.2); }
+}
+
+/* 星星冒出 */
+@keyframes bili-pet-star-pop {
+  0% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0.8) rotate(360deg) translateY(-10px); }
+}
+
+/* 对话气泡 */
+@keyframes bili-pet-bubble-in {
+  0% { opacity: 0; transform: translateY(5px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.bili-pet-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #374151;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: bili-pet-bubble-in 0.2s ease-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bili-pet-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: white;
+}
+
+/* 各状态动画类 */
+.bili-pet-mood-idle .bili-pet-body {
+  animation: bili-pet-breathe 3s ease-in-out infinite;
+}
+
+.bili-pet-mood-wave .bili-pet-body {
+  animation: bili-pet-wave 0.8s ease-in-out infinite;
+}
+
+.bili-pet-mood-happy .bili-pet-body {
+  animation: bili-pet-hop 0.6s ease-in-out;
+}
+
+.bili-pet-mood-walk .bili-pet-body {
+  animation: bili-pet-walk 0.4s ease-in-out infinite;
+}
+
+.bili-pet-mood-sleep .bili-pet-body {
+  animation: bili-pet-sleep 3s ease-in-out infinite;
+}
+
+/* 点击反馈 */
+.bili-pet-container:active .bili-pet-body {
+  transform: scale(0.92);
+}
