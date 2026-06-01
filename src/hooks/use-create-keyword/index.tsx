@@ -39,7 +39,10 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
    * 使用本地算法提取关键词
    */
   const extractWithLocal = useMemoizedFn(async (favKey: string) => {
-    const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey)
+    const mediaCount = dataProvideData.favoriteData?.find(
+      (f) => f.id === Number(favKey),
+    )?.media_count
+    const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey, { mediaCount })
     const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
 
     if (titleArray == null || titleArray.length === 0) {
@@ -81,7 +84,10 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   const extractWithAI = useMemoizedFn(async (favKey: string) => {
     const aiConfig = dataProvideData.aiConfig || {}
 
-    const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey)
+    const mediaCount = dataProvideData.favoriteData?.find(
+      (f) => f.id === Number(favKey),
+    )?.media_count
+    const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey, { mediaCount })
     const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
 
     if (titleArray == null || titleArray.length === 0) {

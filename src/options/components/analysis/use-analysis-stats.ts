@@ -47,7 +47,12 @@ type HeatmapData = {
 }
 
 type RelationNode = { name: string; value: number }
-type RelationLink = { source: string; target: string; value: number }
+type RelationLink = {
+  source: string
+  target: string
+  value: number
+  commonUppers: Array<{ mid: number; name: string }>
+}
 type RelationData = {
   nodes: RelationNode[]
   links: RelationLink[]
@@ -182,7 +187,7 @@ export const useAnalysisStats = (props: UseAnalysisStatsProps) => {
     if (allMedias.length > 0) {
       postWorkerMessage({
         type: 'calculateHeatmap',
-        data: { medias: allMedias, days: 30 },
+        data: { medias: allMedias, days: 365 },
       })
     }
   })

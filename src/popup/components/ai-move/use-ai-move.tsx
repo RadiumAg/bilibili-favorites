@@ -219,7 +219,12 @@ const useAIMove = () => {
 
     try {
       // 获取默认收藏夹的所有视频（自动分页）
-      const videos = await fetchAllFavoriteMedias(dataContext.defaultFavoriteId.toString())
+      const defaultFav = dataContext.favoriteData?.find(
+        (f) => f.id === dataContext.defaultFavoriteId,
+      )
+      const videos = await fetchAllFavoriteMedias(dataContext.defaultFavoriteId.toString(), {
+        mediaCount: defaultFav?.media_count,
+      })
 
       if (videos?.length === 0) {
         toast({

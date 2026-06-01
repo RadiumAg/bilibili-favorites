@@ -150,17 +150,21 @@ function calculateFolderRelations(
   favoriteData: FavoriteFolder[],
 ): {
   nodes: Array<{ name: string; value: number }>
-  links: Array<{ source: string; target: string; value: number }>
+  links: Array<{
+    source: string
+    target: string
+    value: number
+    commonUppers: Array<{ mid: number; name: string }>
+  }>
 } {
   if (!Object.keys(folderMediasMap).length || !favoriteData.length) return { nodes: [], links: [] }
 
-  // 构建每个收藏夹的 UP 主 mid 集合
+  // 构建每个收藏夹的 UP 主 mid 集合，以及 mid -> name 映射
   const folderUpperSets = new Map<string, Set<number>>()
-  const folderTitleMap = new Map<string, string>()
+  const midToName = new Map<number, string>()
 
   favoriteData.forEach((folder) => {
     const folderId = folder.id.toString()
-    folderTitleMap.set(folderId, folder.title)
 
     const medias = folderMediasMap[folderId]
     if (medias && medias.length > 0) {
@@ -168,6 +172,9 @@ function calculateFolderRelations(
       medias.forEach((media) => {
         if (media.upper && media.upper.mid) {
           upperSet.add(media.upper.mid)
+          if (media.upper.name) {
+            midToName.set(media.upper.mid, media.upper.name)
+          }
         }
       })
       folderUpperSets.set(folderId, upperSet)
@@ -188,28 +195,36 @@ function calculateFolderRelations(
     value: folderMediasMap[f.id.toString()]?.length ?? f.media_count,
   }))
 
-  // 计算任意两个收藏夹的共同 UP 主数量
-  const links: Array<{ source: string; target: string; value: number }> = []
+  // 计算任意两个收藏夹的共同 UP 主
+  const links: Array<{
+    source: string
+    target: string
+    value: number
+    commonUppers: Array<{ mid: number; name: string }>
+  }> = []
 
   for (let i = 0; i < activeFolders.length; i++) {
     for (let j = i + 1; j < activeFolders.length; j++) {
       const setA = folderUpperSets.get(activeFolders[i].id.toString())!
       const setB = folderUpperSets.get(activeFolders[j].id.toString())!
 
-      // 计算交集大小
-      let commonCount = 0
+      // 计算交集并收集共同 UP 主信息
+      const commonUppers: Array<{ mid: number; name: string }> = []
       const smaller = setA.size < setB.size ? setA : setB
       const larger = setA.size < setB.size ? setB : setA
       for (const mid of smaller) {
-        if (larger.has(mid)) commonCount++
+        if (larger.has(mid)) {
+          commonUppers.push({ mid, name: midToName.get(mid) ?? String(mid) })
+        }
       }
 
       // 只保留共同 UP 主 >= 2 的边，避免图表过于密集
-      if (commonCount >= 2) {
+      if (commonUppers.length >= 2) {
         links.push({
           source: activeFolders[i].title,
           target: activeFolders[j].title,
-          value: commonCount,
+          value: commonUppers.length,
+          commonUppers,
         })
       }
     }

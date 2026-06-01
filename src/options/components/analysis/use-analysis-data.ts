@@ -31,6 +31,8 @@ export type FetchProgress = {
   current: number
   total: number
   currentTitle: string
+  videoLoaded: number
+  videoTotal?: number
 }
 
 export type FolderMediasMap = Record<string, FavoriteMedia[]>
@@ -93,10 +95,22 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
       // 遍历所有收藏夹，分页获取全部媒体数据
       for (let i = 0; i < favoriteData.length; i++) {
         const folder = favoriteData[i]
-        setFetchProgress({ current: i + 1, total, currentTitle: folder.title })
+        setFetchProgress({ current: i + 1, total, currentTitle: folder.title, videoLoaded: 0, videoTotal: folder.media_count })
         try {
-          // 立马过期，重新请求
-          const medias = await fetchAllFavoriteMedias(folder.id.toString(), undefined, 0)
+          // 立马过期，重新请求；传入 media_count 以启用缓存智能判断
+          const medias = await fetchAllFavoriteMedias(folder.id.toString(), {
+            expireTime: 0,
+            mediaCount: folder.media_count,
+            onProgress: (progress) => {
+              setFetchProgress({
+                current: i + 1,
+                total,
+                currentTitle: folder.title,
+                videoLoaded: progress.loaded,
+                videoTotal: progress.total,
+              })
+            },
+          })
           allMedias.push(...medias)
           folderMap[folder.id.toString()] = medias
         } catch (error) {

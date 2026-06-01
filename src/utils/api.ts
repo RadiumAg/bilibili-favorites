@@ -317,25 +317,148 @@ const fetchPersonalityAnalysis = async (
   })
 }
 
+/** 分页缓存配置（与 use-favorite-list-data 中保持一致） */
+const PAGE_CACHE_PREFIX = 'fav-page:'
+const PAGE_CACHE_DURATION = 20 * 60 * 1000
+
+type _PageCacheEntry = {
+  medias: FavoriteMedia[]
+  hasMore: boolean
+  timestamp: number
+}
+
+/**
+ * 尝试从分页缓存拼装收藏夹全量数据
+ * 若该收藏夹的所有页均已被缓存（如用户先在拖拽管理器页面浏览过），则返回拼装结果否则返回 null
+ */
+const tryAssembleFromPageCache = (mediaId: string, pageSize: number): FavoriteMedia[] | null => {
+  try {
+    const assembled: FavoriteMedia[] = []
+    let page = 1
+    while (true) {
+      const raw = localStorage.getItem(`${PAGE_CACHE_PREFIX}${mediaId}:${page}:${pageSize}`)
+      if (!raw) return null // 某页未命中，无法完整拼装
+      const entry: _PageCacheEntry = JSON.parse(raw)
+      if (Date.now() - entry.timestamp > PAGE_CACHE_DURATION) return null // 分页缓存已过期
+      assembled.push(...entry.medias)
+      if (!entry.hasMore) return assembled // 所有页均已命中，拼装完成
+      page++
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 获取某个收藏夹指定页的视频列表（单页，不循环）
+ * @param mediaId 收藏夹 ID
+ * @param page 页码（从 1 开始）
+ * @param pageSize 每页数量，最大 40（B 站限制）
+ * @returns 当前页视频列表及是否有下一页
+ */
+const fetchFavoritePage = async (
+  mediaId: string,
+  page: number,
+  pageSize = 40,
+): Promise<{ medias: FavoriteMedia[]; hasMore: boolean }> => {
+  const response = await queryAndSendMessage<GetFavoriteListRes>({
+    type: MessageEnum.getFavoriteList,
+    data: { mediaId, pn: page, ps: pageSize },
+  })
+  if (response.code !== 0) {
+    throw new Error(response.message || '获取收藏夹数据失败')
+  }
+  return {
+    medias: response.data.medias || [],
+    hasMore: response.data.has_more,
+  }
+}
+
+/**
+ * 获取全量收藏夹数据的进度回调
+ */
+type FetchAllProgress = {
+  /** 已加载的视频数量 */
+  loaded: number
+  /** 收藏夹总视频数量（通过 mediaCount 传入时可用，否则为 undefined） */
+  total?: number
+  /** 当前请求页码 */
+  currentPage: number
+}
+
+type FetchAllFavoriteMediasOptions = {
+  /** 每页数量，默认 40（B 站最大值） */
+  pageSize?: number
+  /** 缓存过期时间，默认 10 分钟 */
+  expireTime?: number
+  /**
+   * 收藏夹的视频总数（来自 getAllFavoriteFlag 的 media_count 字段）
+   * 传入后可实现：1) 进度条显示总数 2) 缓存智能判断——数量未变则跳过请求
+   */
+  mediaCount?: number
+  /** 进度回调，每加载完一页后触发 */
+  onProgress?: (progress: FetchAllProgress) => void
+}
+
 /**
  * 分页获取某个收藏夹的全部视频列表
  * @param mediaId 收藏夹 ID
- * @param pageSize 每页数量，默认 40（B 站最大值）
- * @param expireTime 缓存过期时间，默认 10 分钟
+ * @param options 配置选项（pageSize / expireTime / mediaCount / onProgress）
  * @returns 该收藏夹下的全部视频
  */
 const fetchAllFavoriteMedias = async (
   mediaId: string,
-  pageSize = 40,
-  expireTime = 10 * 60 * 1000,
+  pageSizeOrOptions?: number | FetchAllFavoriteMediasOptions,
+  legacyExpireTime?: number,
 ): Promise<FavoriteMedia[]> => {
+  // 兼容旧的调用方式：fetchAllFavoriteMedias(mediaId, pageSize, expireTime)
+  let pageSize = 40
+  let expireTime = 10 * 60 * 1000
+  let mediaCount: number | undefined
+  let onProgress: ((progress: FetchAllProgress) => void) | undefined
+
+  if (typeof pageSizeOrOptions === 'object' && pageSizeOrOptions !== null) {
+    pageSize = pageSizeOrOptions.pageSize ?? 40
+    expireTime = pageSizeOrOptions.expireTime ?? 10 * 60 * 1000
+    mediaCount = pageSizeOrOptions.mediaCount
+    onProgress = pageSizeOrOptions.onProgress
+  } else if (typeof pageSizeOrOptions === 'number') {
+    pageSize = pageSizeOrOptions
+    expireTime = legacyExpireTime ?? 10 * 60 * 1000
+  }
+
   const allMedias: FavoriteMedia[] = []
   let currentPage = 1
   let hasMore = true
   const key = `favorite-all-${mediaId}`
   const mediaData = await dbManager.get(key)
   const isExpired = await dbManager.isExpired(key, expireTime)
-  if (mediaData && !isExpired) return mediaData.data
+
+  // 缓存命中判断：时间未过期直接返回；时间过期但 mediaCount 未变也返回缓存
+  if (mediaData) {
+    if (!isExpired) return mediaData.data
+    if (
+      mediaCount !== undefined &&
+      Array.isArray(mediaData.data) &&
+      mediaData.data.length === mediaCount
+    ) {
+      // 视频数量未变，延长缓存有效期
+      console.log(
+        `[fetchAllFavoriteMedias] 视频数量未变 (${mediaCount})，复用缓存 (${mediaId})`,
+      )
+      dbManager.set(key, mediaData.data)
+      return mediaData.data
+    }
+  }
+
+  // 尝试从分页缓存拼装（如用户最近在拖拽管理器中浏览过该收藏夹，则无需任何网络请求）
+  const fromPageCache = tryAssembleFromPageCache(mediaId, pageSize)
+  if (fromPageCache) {
+    console.log(`[fetchAllFavoriteMedias] 命中分页缓存，无需请求 API (${mediaId})`)
+    dbManager.set(key, fromPageCache)
+    return fromPageCache
+  }
+
   while (hasMore) {
     await sleep(1000) // 防止触发b站api风控
     const response = await queryAndSendMessage<GetFavoriteListRes>({
@@ -353,6 +476,13 @@ const fetchAllFavoriteMedias = async (
     }
 
     hasMore = response.data.has_more
+
+    onProgress?.({
+      loaded: allMedias.length,
+      total: mediaCount,
+      currentPage,
+    })
+
     currentPage++
   }
 
@@ -366,6 +496,7 @@ export {
   moveFavorite,
   fetchChatGpt,
   fetchAIMove,
+  fetchFavoritePage,
   fetchAllFavoriteMedias,
   callAIGateAI,
   fetchPersonalityAnalysis,
@@ -379,4 +510,5 @@ export type {
   FavoriteDetailInfoUpper,
   AIConfig,
   PersonalitySummary,
+  FetchAllProgress,
 }

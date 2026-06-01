@@ -62,8 +62,12 @@ const useMove = () => {
       if (cancelRef.current) return false
       if (dataContext.defaultFavoriteId == null) return false
 
+      const defaultFav = dataContext.favoriteData?.find(
+        (f) => f.id === dataContext.defaultFavoriteId,
+      )
       const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(
         dataContext.defaultFavoriteId?.toString(),
+        { mediaCount: defaultFav?.media_count },
       )
 
       if (allDefaultFavoriteVideo == null) return false
