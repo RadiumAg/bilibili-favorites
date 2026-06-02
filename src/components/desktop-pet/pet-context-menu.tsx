@@ -7,9 +7,9 @@ interface PetContextMenuProps {
 }
 
 const MENU_ITEMS = [
-  { id: 'organize', label: '🔑 关键字整理', action: 'open_popup' },
-  { id: 'ai-organize', label: '🤖 AI 整理', action: 'open_popup_ai' },
-  { id: 'analysis', label: '📊 数据分析', action: 'open_options_analysis' },
+  { id: 'organize', label: '🔑 关键字整理', action: 'open_sidepanel' },
+  { id: 'ai-organize', label: '🤖 AI 整理', action: 'open_sidepanel' },
+  { id: 'analysis', label: '📊 数据分析', action: 'open_options' },
   { id: 'settings', label: '⚙️ 设置', action: 'open_options' },
 ] as const
 
@@ -17,20 +17,7 @@ type MenuAction = (typeof MENU_ITEMS)[number]['action']
 
 function executeAction(action: MenuAction) {
   try {
-    switch (action) {
-      case 'open_popup':
-        chrome?.runtime?.sendMessage({ type: 'open_popup' })
-        break
-      case 'open_popup_ai':
-        chrome?.runtime?.sendMessage({ type: 'open_popup_ai' })
-        break
-      case 'open_options_analysis':
-        chrome?.runtime?.openOptionsPage?.()
-        break
-      case 'open_options':
-        chrome?.runtime?.openOptionsPage?.()
-        break
-    }
+    chrome?.runtime?.sendMessage({ type: action })
   } catch {
     // ignore
   }
