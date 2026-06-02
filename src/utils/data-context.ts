@@ -26,6 +26,7 @@ type DataContextType = {
   activeKey: number | undefined
   defaultFavoriteId: number | undefined
   keyword: { value: { id: string; value: string }[]; favoriteDataId: number }[]
+  petEnabled: boolean
   setGlobalData: (data: Partial<DataContextType>) => void
   getGlobalData: () => DataContextType
 }

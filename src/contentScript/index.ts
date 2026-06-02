@@ -1,5 +1,56 @@
 import { getAllFavoriteFlag, getFavoriteList, moveFavorite } from '@/utils/api'
 import { Message, MessageEnum } from '@/utils/message'
+import { DesktopPet } from '@/components/desktop-pet'
+import ReactDOM from 'react-dom/client'
+import React from 'react'
+
+const PET_CONTAINER_ID = 'bilibili-favorites-pet'
+
+function mountDesktopPet() {
+  if (document.getElementById(PET_CONTAINER_ID)) return
+
+  const container = document.createElement('div')
+  container.id = PET_CONTAINER_ID
+  container.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;'
+  document.body.appendChild(container)
+
+  const root = ReactDOM.createRoot(container)
+  root.render(React.createElement(DesktopPet))
+}
+
+function unmountDesktopPet() {
+  const container = document.getElementById(PET_CONTAINER_ID)
+  if (container) {
+    container.remove()
+  }
+}
+
+function initDesktopPet() {
+  try {
+    chrome?.storage?.local?.get(['petEnabled'], (result) => {
+      const enabled = result.petEnabled !== false
+      if (enabled) mountDesktopPet()
+    })
+
+    chrome?.storage?.onChanged?.addListener((changes) => {
+      if (changes.petEnabled) {
+        if (changes.petEnabled.newValue === false) {
+          unmountDesktopPet()
+        } else {
+          mountDesktopPet()
+        }
+      }
+    })
+  } catch {
+    mountDesktopPet()
+  }
+}
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  initDesktopPet()
+} else {
+  window.addEventListener('DOMContentLoaded', initDesktopPet)
+}
 
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
   switch (message.type) {
