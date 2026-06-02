@@ -108,7 +108,71 @@
   border-top-color: white;
 }
 
-/* 各状态动画类 */
+/* ===== 新增动画 ===== */
+
+/* 生气颤抖 - angry */
+@keyframes bili-pet-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  10% { transform: translateX(-3px) rotate(-2deg); }
+  20% { transform: translateX(3px) rotate(2deg); }
+  30% { transform: translateX(-3px) rotate(-2deg); }
+  40% { transform: translateX(3px) rotate(2deg); }
+  50% { transform: translateX(-2px) rotate(-1deg); }
+  60% { transform: translateX(2px) rotate(1deg); }
+  70% { transform: translateX(-2px) rotate(-1deg); }
+  80% { transform: translateX(2px) rotate(1deg); }
+  90% { transform: translateX(-1px) rotate(0deg); }
+}
+
+/* 跳舞 - dancing */
+@keyframes bili-pet-dance {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  15% { transform: translateY(-10px) rotate(10deg) scale(1.05); }
+  30% { transform: translateY(0) rotate(-10deg) scale(1); }
+  45% { transform: translateY(-12px) rotate(8deg) scale(1.08); }
+  60% { transform: translateY(0) rotate(-8deg) scale(1); }
+  75% { transform: translateY(-8px) rotate(5deg) scale(1.05); }
+  90% { transform: translateY(-2px) rotate(-3deg) scale(1.02); }
+}
+
+/* 接礼物 - gift */
+@keyframes bili-pet-catch {
+  0% { transform: translateY(0) scale(1); }
+  20% { transform: translateY(-8px) scale(1.1); }
+  40% { transform: translateY(0) scale(0.95); }
+  60% { transform: translateY(-4px) scale(1.05); }
+  80% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* 烟花粒子飞出 */
+@keyframes bili-pet-firework {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  50% { opacity: 1; transform: translate(var(--fw-x, 5px), -20px) scale(1.5); }
+  100% { opacity: 0; transform: translate(var(--fw-x, 10px), -35px) scale(0.5); }
+}
+
+/* 怒气符号脉冲 */
+@keyframes bili-pet-anger-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.8; }
+}
+
+/* 博士帽光效 */
+@keyframes bili-pet-glow {
+  0%, 100% { opacity: 0.6; transform: translateY(0) scale(0.8); }
+  50% { opacity: 1; transform: translateY(-3px) scale(1.2); }
+}
+
+/* 进化星星绽放 */
+@keyframes bili-pet-evolve-spark {
+  0% { opacity: 1; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.5) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0.5) rotate(360deg) translateY(-15px); }
+}
+
+/* ===== 各状态动画类 ===== */
+
 .bili-pet-mood-idle .bili-pet-body {
   animation: bili-pet-breathe 3s ease-in-out infinite;
 }
@@ -127,6 +191,22 @@
 
 .bili-pet-mood-sleep .bili-pet-body {
   animation: bili-pet-sleep 3s ease-in-out infinite;
+}
+
+.bili-pet-mood-angry .bili-pet-body {
+  animation: bili-pet-shake 0.5s ease-in-out infinite;
+}
+
+.bili-pet-mood-dancing .bili-pet-body {
+  animation: bili-pet-dance 1s ease-in-out infinite;
+}
+
+.bili-pet-mood-gift .bili-pet-body {
+  animation: bili-pet-catch 0.8s ease-in-out;
+}
+
+.bili-pet-mood-smart .bili-pet-body {
+  animation: bili-pet-breathe 2s ease-in-out infinite;
 }
 
 /* 点击反馈 */

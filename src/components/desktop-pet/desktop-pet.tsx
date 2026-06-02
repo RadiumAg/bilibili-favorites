@@ -1,35 +1,64 @@
 import React from 'react'
-import { PetSprite, HappyStars, SleepZzz } from './pet-sprites'
+import {
+  PetSprite,
+  HappyStars,
+  SleepZzz,
+  FireworkParticles,
+  AngerMark,
+  SmartGlow,
+  EvolveSpark,
+} from './pet-sprites'
 import { PetBubble } from './pet-bubble'
 import { usePetState } from './use-pet-state'
 import { usePetDrag } from './use-pet-drag'
 import { PetMoodEngine } from './pet-mood-engine'
+import type { PetGrowthData } from './pet-config'
+import { DEFAULT_GROWTH } from './pet-config'
 import './pet.css'
 
 /**
  * B 站页面桌宠组件
- * - 浮动在页面右下角
- * - 可拖拽移动
+ * - 浮动在页面右下角，可拖拽移动
  * - 根据用户行为改变心情和动画
+ * - 支持成长系统（连续整理解锁皮肤）
  */
 const DesktopPetInner: React.FC = () => {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const { mood, dialogue, setMood } = usePetState()
   const { position, isDragging } = usePetDrag(containerRef)
+  const [growth, setGrowth] = React.useState<PetGrowthData>({ ...DEFAULT_GROWTH })
+  const [showEvolveSpark, setShowEvolveSpark] = React.useState(false)
+  const engineRef = React.useRef<PetMoodEngine | null>(null)
+  const prevSkinLevelRef = React.useRef(0)
 
-  // 初始化状态感知引擎
+  const handleGrowthChange = React.useCallback((newGrowth: PetGrowthData) => {
+    setGrowth((prev) => {
+      if (newGrowth.skinLevel > prev.skinLevel) {
+        setShowEvolveSpark(true)
+        setTimeout(() => setShowEvolveSpark(false), 1500)
+      }
+      return newGrowth
+    })
+  }, [])
+
   React.useEffect(() => {
-    const engine = new PetMoodEngine(setMood)
+    const engine = new PetMoodEngine(setMood, handleGrowthChange)
+    engineRef.current = engine
     engine.start()
+    prevSkinLevelRef.current = engine.getGrowth().skinLevel
+    setGrowth(engine.getGrowth())
     return () => engine.stop()
-  }, [setMood])
+  }, [setMood, handleGrowthChange])
 
-  // 点击桌宠 → happy
   const handleClick = React.useCallback(() => {
-    if (!isDragging) {
+    if (isDragging) return
+    // sleep 状态下点击 → 唤醒
+    if (mood === 'sleep') {
+      engineRef.current?.triggerWakeUp()
+    } else {
       setMood('happy')
     }
-  }, [isDragging, setMood])
+  }, [isDragging, mood, setMood])
 
   const moodClass = `bili-pet-mood-${mood}`
 
@@ -44,25 +73,22 @@ const DesktopPetInner: React.FC = () => {
       }}
       onClick={handleClick}
     >
-      {/* 对话气泡 */}
       <PetBubble text={dialogue} />
 
-      {/* 角色容器 */}
       <div className="relative bili-pet-body">
-        {/* happy 状态星星 */}
         {mood === 'happy' && <HappyStars />}
-
-        {/* sleep 状态 Z 字符 */}
         {mood === 'sleep' && <SleepZzz />}
+        {mood === 'angry' && <AngerMark />}
+        {mood === 'dancing' && <FireworkParticles />}
+        {mood === 'smart' && <SmartGlow />}
+        {showEvolveSpark && <EvolveSpark />}
 
-        {/* 像素角色 */}
-        <PetSprite mood={mood} />
+        <PetSprite mood={mood} skinLevel={growth.skinLevel} />
       </div>
     </div>
   )
 }
 
-/** 桌宠入口组件（带错误边界） */
 const DesktopPet: React.FC = () => {
   return <DesktopPetInner />
 }
