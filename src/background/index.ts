@@ -8,22 +8,6 @@ import {
 } from './utils'
 import { callAIGateAI, checkAIGateQuota } from './ai-gate'
 
-// 处理来自 content script 的简单消息（页面跳转等）
-chrome.runtime.onMessage.addListener((message, sender) => {
-  switch (message?.type) {
-    case 'open_options':
-      chrome.runtime.openOptionsPage()
-      break
-    case 'open_sidepanel': {
-      const windowId = sender.tab?.windowId
-      if (windowId !== undefined) {
-        chrome.sidePanel.open({ windowId })
-      }
-      break
-    }
-  }
-})
-
 // 使用 onConnect 监听长连接，支持流式传输
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'ai-stream') return

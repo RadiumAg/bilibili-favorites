@@ -7,20 +7,14 @@ interface PetContextMenuProps {
 }
 
 const MENU_ITEMS = [
-  { id: 'organize', label: '🔑 关键字整理', action: 'open_sidepanel' },
-  { id: 'ai-organize', label: '🤖 AI 整理', action: 'open_sidepanel' },
-  { id: 'analysis', label: '📊 数据分析', action: 'open_options' },
-  { id: 'settings', label: '⚙️ 设置', action: 'open_options' },
+  { id: 'organize', label: '🔑 关键字整理', tab: 'keyword-manager' },
+  { id: 'ai-organize', label: '🤖 AI 整理', tab: 'keyword-manager' },
+  { id: 'analysis', label: '📊 数据分析', tab: 'analysis' },
+  { id: 'settings', label: '⚙️ 设置', tab: 'setting' },
 ] as const
 
-type MenuAction = (typeof MENU_ITEMS)[number]['action']
-
-function executeAction(action: MenuAction) {
-  try {
-    chrome?.runtime?.sendMessage({ type: action })
-  } catch {
-    // ignore
-  }
+function executeAction(tab: string) {
+  window.open(chrome.runtime.getURL(`options.html?tab=${tab}`), '_blank')
 }
 
 const PetContextMenu: React.FC<PetContextMenuProps> = (props) => {
@@ -51,7 +45,7 @@ const PetContextMenu: React.FC<PetContextMenuProps> = (props) => {
           key={item.id}
           className="bili-pet-menu-item"
           onClick={() => {
-            executeAction(item.action)
+            executeAction(item.tab)
             onClose()
           }}
         >
