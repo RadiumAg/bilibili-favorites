@@ -4,13 +4,13 @@ import { DesktopPet } from '@/components/desktop-pet'
 import ReactDOM from 'react-dom/client'
 import React from 'react'
 
-/** 注入桌宠到页面 */
+const PET_CONTAINER_ID = 'bilibili-favorites-pet'
+
 function mountDesktopPet() {
-  // 避免重复注入
-  if (document.getElementById('bilibili-favorites-pet')) return
+  if (document.getElementById(PET_CONTAINER_ID)) return
 
   const container = document.createElement('div')
-  container.id = 'bilibili-favorites-pet'
+  container.id = PET_CONTAINER_ID
   container.style.cssText = 'position:fixed;bottom:0;right:0;z-index:2147483647;pointer-events:none;'
   document.body.appendChild(container)
 
@@ -18,11 +18,38 @@ function mountDesktopPet() {
   root.render(React.createElement(DesktopPet))
 }
 
-// 页面加载完成后注入桌宠
+function unmountDesktopPet() {
+  const container = document.getElementById(PET_CONTAINER_ID)
+  if (container) {
+    container.remove()
+  }
+}
+
+function initDesktopPet() {
+  try {
+    chrome?.storage?.local?.get(['petEnabled'], (result) => {
+      const enabled = result.petEnabled !== false
+      if (enabled) mountDesktopPet()
+    })
+
+    chrome?.storage?.onChanged?.addListener((changes) => {
+      if (changes.petEnabled) {
+        if (changes.petEnabled.newValue === false) {
+          unmountDesktopPet()
+        } else {
+          mountDesktopPet()
+        }
+      }
+    })
+  } catch {
+    mountDesktopPet()
+  }
+}
+
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  mountDesktopPet()
+  initDesktopPet()
 } else {
-  window.addEventListener('DOMContentLoaded', mountDesktopPet)
+  window.addEventListener('DOMContentLoaded', initDesktopPet)
 }
 
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
