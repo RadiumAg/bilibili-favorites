@@ -11,7 +11,7 @@ function mountDesktopPet() {
 
   const container = document.createElement('div')
   container.id = PET_CONTAINER_ID
-  container.style.cssText = 'position:fixed;bottom:0;right:0;z-index:2147483647;pointer-events:none;'
+  container.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;'
   document.body.appendChild(container)
 
   const root = ReactDOM.createRoot(container)

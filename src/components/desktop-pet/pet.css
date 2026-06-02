@@ -218,6 +218,7 @@
 .bili-pet-context-menu {
   position: fixed;
   z-index: 2147483647;
+  pointer-events: auto;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
