@@ -80,27 +80,29 @@ export const DEFAULT_GROWTH: PetGrowthData = {
 
 /** 对话气泡文案 */
 export const PET_DIALOGUES: Record<PetMood, string[]> = {
-  happy: ['收藏成功！', '这个视频不错~', '又多了个收藏！', '好东西！'],
-  idle: ['你在吗？', '好无聊啊...', '要不要整理下收藏夹？'],
-  wave: ['你好呀！', '欢迎回来~', '今天想整理收藏夹吗？'],
-  walk: ['散步中~', '让我逛逛...', '看看有什么好视频~'],
-  sleep: ['zzZ...', 'zzZ...', ''],
-  sit: ['看分析中...', '数据好多呀', '认真分析中~'],
-  angry: ['好乱啊！快整理一下！', '堆积了好多视频...', '该整理了！😤', '再不整理我要生气了！'],
-  dancing: ['整理完成！太棒了~🎉', '收藏夹干净啦！', '好开心！跳个舞~', '完美！继续保持！'],
-  gift: ['哇！新收藏！🎁', '接住了！', '又有好东西了~', '收到礼物啦！'],
-  smart: ['分析完成！🧠', '数据洞察已生成~', '让我看看结果...', '博士帽戴好了！'],
+  happy: ['收藏成功！📺', '好片子！已收录~', '又多了个收藏！', '信号满格！'],
+  idle: ['待机中...', '调频调频~', '要不要整理下收藏夹？'],
+  wave: ['嗨！欢迎收看~', '开机成功！📺', '今天想整理收藏夹吗？'],
+  walk: ['换台中~', '频道切换...', '扫描好视频中~'],
+  sleep: ['zzZ...', '已关机...', ''],
+  sit: ['播报分析中...', '数据频道~', '认真读取中~'],
+  angry: ['信号过载！快整理！📺💢', '频道太多了...', '存储快满了！😤', '再不整理要死机了！'],
+  dancing: ['整理完成！📺🎉', '频道清爽啦！', '开心到天线转圈~', '完美！继续保持！'],
+  gift: ['收到新频道！🎁', '天线接收成功！', '又有好节目了~', '新信号已接收！'],
+  smart: ['分析播报完成！🧠', '数据频道已生成~', '智能模式启动...', '博士频道上线！'],
 }
 
 /** 像素尺寸 */
 export const PET_SIZE = 48
 export const PIXEL_SCALE = 3
 
-/** 皮肤配色方案（随 skinLevel 解锁） */
+/** 皮肤配色方案 — 小电视外壳进化（随 skinLevel 解锁）
+ *  body = shell 主色, bodyDark = shellDark, foot = 底座
+ */
 export const SKIN_COLORS = [
-  { body: '#FFD93D', bodyDark: '#F0C418', foot: '#E8A317' },
-  { body: '#FF9ECD', bodyDark: '#E87FB3', foot: '#D06A9C' },
+  { body: '#E8E8E8', bodyDark: '#C0C0C0', foot: '#A0A0A0' },
+  { body: '#FFB6C1', bodyDark: '#E8969E', foot: '#D07880' },
   { body: '#87CEEB', bodyDark: '#6BB5D6', foot: '#5A9EC0' },
-  { body: '#98FB98', bodyDark: '#7FE07F', foot: '#6BC56B' },
-  { body: '#DDA0DD', bodyDark: '#C88DC8', foot: '#B07AB0' },
+  { body: '#C8F7C5', bodyDark: '#A3D9A0', foot: '#85BB82' },
+  { body: '#E8D5F5', bodyDark: '#C8B0D9', foot: '#A890BC' },
 ] as const
