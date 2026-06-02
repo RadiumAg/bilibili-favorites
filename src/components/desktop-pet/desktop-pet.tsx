@@ -73,9 +73,9 @@ const DesktopPetInner: React.FC = () => {
       }}
       onClick={handleClick}
     >
-      <PetBubble text={dialogue} />
-
       <div className="relative bili-pet-body">
+        <PetBubble text={dialogue} />
+
         {mood === 'happy' && <HappyStars />}
         {mood === 'sleep' && <SleepZzz />}
         {mood === 'angry' && <AngerMark />}

@@ -1,14 +1,14 @@
 /* 桌宠容器 */
 .bili-pet-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
   z-index: 2147483647;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
   transition: transform 0.2s ease;
+  width: fit-content;
+  height: fit-content;
 }
 
 .bili-pet-container:active {
@@ -85,7 +85,7 @@
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   padding: 4px 10px;
   background: white;
   border: 1px solid #e5e7eb;
