@@ -1,4 +1,5 @@
 import React from 'react'
+import { useMemoizedFn } from 'ahooks'
 import {
   PetSprite,
   HappyStars,
@@ -26,12 +27,14 @@ const DesktopPetInner: React.FC = () => {
   const [showEvolveSpark, setShowEvolveSpark] = React.useState(false)
   const [isHovered, setIsHovered] = React.useState(false)
   const [contextMenu, setContextMenu] = React.useState<{ visible: boolean; x: number; y: number }>({
-    visible: false, x: 0, y: 0,
+    visible: false,
+    x: 0,
+    y: 0,
   })
   const engineRef = React.useRef<PetMoodEngine | null>(null)
   const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleGrowthChange = React.useCallback((newGrowth: PetGrowthData) => {
+  const handleGrowthChange = useMemoizedFn((newGrowth: PetGrowthData) => {
     setGrowth((prev) => {
       if (newGrowth.skinLevel > prev.skinLevel) {
         setShowEvolveSpark(true)
@@ -39,7 +42,7 @@ const DesktopPetInner: React.FC = () => {
       }
       return newGrowth
     })
-  }, [])
+  })
 
   React.useEffect(() => {
     const engine = new PetMoodEngine(setMood, handleGrowthChange)
@@ -49,38 +52,38 @@ const DesktopPetInner: React.FC = () => {
     return () => engine.stop()
   }, [setMood, handleGrowthChange])
 
-  const handleClick = React.useCallback(() => {
+  const handleClick = useMemoizedFn(() => {
     if (isDragging) return
     if (mood === 'sleep') {
       engineRef.current?.triggerWakeUp()
     } else {
       setMood('happy')
     }
-  }, [isDragging, mood, setMood])
+  })
 
-  const handleContextMenu = React.useCallback((event: React.MouseEvent) => {
+  const handleContextMenu = useMemoizedFn((event: React.MouseEvent) => {
     event.preventDefault()
     event.stopPropagation()
     setContextMenu({ visible: true, x: event.clientX, y: event.clientY })
     setIsHovered(false)
-  }, [])
+  })
 
-  const handleCloseMenu = React.useCallback(() => {
+  const handleCloseMenu = useMemoizedFn(() => {
     setContextMenu((prev) => ({ ...prev, visible: false }))
-  }, [])
+  })
 
-  const handleMouseEnter = React.useCallback(() => {
+  const handleMouseEnter = useMemoizedFn(() => {
     if (contextMenu.visible) return
     hoverTimerRef.current = setTimeout(() => setIsHovered(true), 500)
-  }, [contextMenu.visible])
+  })
 
-  const handleMouseLeave = React.useCallback(() => {
+  const handleMouseLeave = useMemoizedFn(() => {
     if (hoverTimerRef.current) {
       clearTimeout(hoverTimerRef.current)
       hoverTimerRef.current = null
     }
     setIsHovered(false)
-  }, [])
+  })
 
   React.useEffect(() => {
     return () => {

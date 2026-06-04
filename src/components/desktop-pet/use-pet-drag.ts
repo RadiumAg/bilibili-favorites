@@ -1,4 +1,5 @@
 import React from 'react'
+import { useMemoizedFn } from 'ahooks'
 
 const POSITION_KEY = 'bili-pet-position'
 
@@ -37,13 +38,13 @@ export function usePetDrag(containerRef: React.RefObject<HTMLDivElement | null>)
     }
   }, [])
 
-  const savePosition = React.useCallback((pos: Position) => {
+  const savePosition = useMemoizedFn((pos: Position) => {
     try {
       chrome?.storage?.local?.set({ [POSITION_KEY]: pos })
     } catch {
       // ignore
     }
-  }, [])
+  })
 
   React.useEffect(() => {
     const el = containerRef.current
