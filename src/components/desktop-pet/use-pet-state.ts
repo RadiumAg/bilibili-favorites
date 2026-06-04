@@ -1,4 +1,5 @@
 import React from 'react'
+import { useMemoizedFn } from 'ahooks'
 import type { PetMood } from './pet-config'
 import { MOOD_PRIORITY, MOOD_DURATION, PET_DIALOGUES } from './pet-config'
 
@@ -40,33 +41,28 @@ export function usePetState() {
     }
   }, [])
 
-  const setMood = React.useCallback((newMood: PetMood, force = false) => {
+  const setMood = useMemoizedFn((newMood: PetMood, force = false) => {
     setMoodState((current) => {
       const currentPriority = MOOD_PRIORITY[current]
       const newPriority = MOOD_PRIORITY[newMood]
 
-      // 新心情优先级必须更高，或者强制设置
       if (!force && newPriority < currentPriority) {
         return current
       }
 
-      // 清除旧定时器
       if (timerRef.current) {
         clearTimeout(timerRef.current)
         timerRef.current = null
       }
 
-      // 设置新对话
       setDialogue(randomDialogue(newMood))
 
-      // 持久化
       try {
         chrome?.storage?.local?.set({ [STORAGE_KEY]: newMood })
       } catch {
         // ignore
       }
 
-      // 如果有持续时间限制，设置回落定时器
       const duration = MOOD_DURATION[newMood]
       if (duration > 0) {
         timerRef.current = setTimeout(() => {
@@ -82,7 +78,7 @@ export function usePetState() {
 
       return newMood
     })
-  }, [])
+  })
 
   React.useEffect(() => {
     return () => {
