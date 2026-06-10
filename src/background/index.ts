@@ -19,21 +19,6 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   }
 })
 
-chrome.contextMenus?.create({
-  id: 'open-popup',
-  title: '打开 Popup',
-  contexts: ['action'],
-})
-
-chrome.contextMenus?.onClicked.addListener((info) => {
-  if (info.menuItemId === 'open-popup') {
-    chrome.action.setPopup({ popup: 'popup.html' })
-    chrome.action.openPopup().finally(() => {
-      chrome.action.setPopup({ popup: '' })
-    })
-  }
-})
-
 // 使用 onConnect 监听长连接，支持流式传输
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'ai-stream') return
