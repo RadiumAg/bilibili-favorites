@@ -28,7 +28,7 @@ function unmountDesktopPet() {
 function initDesktopPet() {
   try {
     chrome?.storage?.local?.get(['petEnabled'], (result) => {
-      const enabled = result.petEnabled !== false
+      const enabled = result.petEnabled === true
       if (enabled) mountDesktopPet()
     })
 
