@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Settings, HelpCircle, RefreshCwIcon } from 'lucide-react'
 import Tourist, { TouristRef, useTourist } from './components/tourist'
 import { cn } from '@/lib/utils'
+import { ButtonGroup } from '@/components/ui/button-group'
 
 interface PopupProps {
   isSidePanel?: boolean
@@ -78,10 +79,12 @@ const Popup: React.FC<PopupProps> = (props) => {
         </div>
       </div>
 
-      <div className="flex items-center mt-2 gap-1 w-full flex-wrap" data-tour="actions">
-        <Move />
-        <AutoCreateKeyword />
+      <div className="flex items-center mt-2 gap-2 w-full flex-wrap" data-tour="actions">
         <AIMove />
+        <ButtonGroup>
+          <Move />
+          <AutoCreateKeyword />
+        </ButtonGroup>
         <DragManagerButton />
       </div>
 

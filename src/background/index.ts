@@ -8,6 +8,32 @@ import {
 } from './utils'
 import { callAIGateAI, checkAIGateQuota } from './ai-gate'
 
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message?.type === 'open_sidepanel') {
+    const windowId = sender.tab?.windowId
+    if (windowId !== undefined) {
+      chrome.sidePanel.open({ windowId })
+    }
+  }
+})
+
+chrome.contextMenus?.create({
+  id: 'open-popup',
+  title: '打开 Popup',
+  contexts: ['action'],
+})
+
+chrome.contextMenus?.onClicked.addListener((info) => {
+  if (info.menuItemId === 'open-popup') {
+    chrome.action.setPopup({ popup: 'popup.html' })
+    chrome.action.openPopup().finally(() => {
+      chrome.action.setPopup({ popup: '' })
+    })
+  }
+})
+
 // 使用 onConnect 监听长连接，支持流式传输
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'ai-stream') return

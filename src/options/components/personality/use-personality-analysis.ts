@@ -6,6 +6,7 @@ import { useGlobalConfig } from '@/store/global-data'
 import { quickExtractKeywords } from '@/utils/keyword-extractor'
 import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
 import dbManager from '@/utils/indexed-db'
+import { parseAIJSON } from '@/utils/parse-ai-json'
 
 /** MBTI 维度结果 */
 type DimensionResult = {
@@ -164,10 +165,7 @@ export const usePersonalityAnalysis = (
 const parsePersonalityJSON = (text: string): PersonalityResult | null => {
   try {
     // 尝试提取 ```json ... ``` 包裹的内容
-    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-    const jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim()
-
-    const parsed = JSON.parse(jsonStr)
+    const parsed = parseAIJSON(text)
 
     // 基本校验
     if (parsed.type && parsed.dimensions && parsed.description) {

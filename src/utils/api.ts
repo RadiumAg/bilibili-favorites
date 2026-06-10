@@ -215,8 +215,13 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
       })
 
       port.onDisconnect.addListener(() => {
+        if (isCancelled) {
+          // 用户取消，正常关闭 stream
+          controller.close()
+          return
+        }
         const lastError = chrome.runtime.lastError
-        if (lastError && !isCancelled) {
+        if (lastError) {
           controller.error(new AIError('连接已断开', lastError.message))
         }
       })
@@ -443,9 +448,7 @@ const fetchAllFavoriteMedias = async (
       mediaData.data.length === mediaCount
     ) {
       // 视频数量未变，延长缓存有效期
-      console.log(
-        `[fetchAllFavoriteMedias] 视频数量未变 (${mediaCount})，复用缓存 (${mediaId})`,
-      )
+      console.log(`[fetchAllFavoriteMedias] 视频数量未变 (${mediaCount})，复用缓存 (${mediaId})`)
       dbManager.set(key, mediaData.data)
       return mediaData.data
     }

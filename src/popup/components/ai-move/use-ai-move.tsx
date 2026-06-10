@@ -9,12 +9,15 @@ import { useGlobalConfig } from '@/store/global-data'
 import { sleep } from '@/utils/promise'
 import { toast, useFavoriteListData } from '@/hooks'
 import { AIError } from '@/utils/error'
+import { parseAIJSON } from '@/utils/parse-ai-json'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
 
+type AIMoveStatus = 'success' | 'failed' | 'skipped'
+
 type AIMoveResult = {
-  title: string
+  status: AIMoveStatus
   targetFavoriteId: number
   videoId: number
   videoTitle: string
@@ -37,8 +40,10 @@ const useAIMove = () => {
   const [isLoading, setIsLoading] = React.useState(false)
   const [moveResults, setMoveResults] = React.useState<AIMoveResult[]>([])
   const [isProcessing, setIsProcessing] = React.useState(false)
+  const [progress, setProgress] = React.useState({ current: 0, total: 0, currentTitle: '' })
   const abortControllerRef = React.useRef<AbortController | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
+  const isFinishedRef = React.useRef(false)
 
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
@@ -48,138 +53,97 @@ const useAIMove = () => {
     return map
   }, [dataContext.favoriteData])
 
-  const analyzeVideosWithAI = useMemoizedFn(
-    async (
-      videos: { id: number; title: string }[],
-    ): Promise<{ results: AIMoveResult[]; fallbackItems: string[] }> => {
-      const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
+  const resolveAIResult = useMemoizedFn(
+    (aiResult: any, videos: { id: number; title: string }[]): AIMoveResult | null => {
+      const video = videos.find((v) => v.title === aiResult.title)
+      if (!video) return null
 
-      // 根据 configMode 判断使用自定义还是内置 AI
-      const useCustomAI = dataContext.aiConfig?.configMode === 'custom'
+      const targetFavorite = dataContext.favoriteData.find(
+        (fav) => fav.title === aiResult.targetFavorite,
+      )
+      const isFallback = !targetFavorite
 
-      try {
-        // 使用自定义模型
-        const config = {
-          apiKey: dataContext.aiConfig.key!,
-          baseURL: dataContext.aiConfig.baseUrl!,
-          model: dataContext.aiConfig.model!,
-          extraParams: dataContext.aiConfig.extraParams || {},
-        }
-        const stream = await fetchAIMove(videos, favoriteTitles, config, useCustomAI)
-        streamRef.current = stream
-        // 使用流适配器从每个 chunk 中提取纯内容文本
-        let fullContent = ''
-        const reader = stream.toReadableStream().getReader()
-        const adapter = createStreamAdapter(dataContext.aiConfig.adapter)
-
-        while (true) {
-          // 检查是否已取消
-          if (abortControllerRef.current?.signal.aborted) {
-            reader.cancel()
-            streamRef.current?.cancel()
-            throw new AIError('用户取消操作')
-          }
-
-          const { value, done } = await reader.read()
-          if (done) break
-          const content = adapter.parse(value)
-          fullContent += content
-        }
-        streamRef.current = null
-        console.log('[DEBUG] fullContent', fullContent)
-        const jsonMatch = fullContent.match(/\[[\s\S]*\]/)
-        if (!jsonMatch) {
-          throw new AIError('AI 返回的数据格式错误，请重试', `返回数据：${fullContent}`)
-        }
-
-        const aiResults = JSON.parse(jsonMatch[0])
-
-        const fallbackItems: string[] = []
-        const results = videos
-          .map((video) => {
-            const aiResult = aiResults.find((r: any) => r.title === video.title)
-            if (!aiResult) return null
-
-            const targetFavorite = dataContext.favoriteData.find(
-              (fav) => fav.title === aiResult.targetFavorite,
-            )
-            const isFallback = !targetFavorite
-            if (isFallback) {
-              fallbackItems.push(`${video.title} → AI建议"${aiResult.targetFavorite}"不在列表中`)
-            }
-
-            return {
-              title: aiResult.title,
-              targetFavoriteId: targetFavorite?.id || dataContext.defaultFavoriteId!,
-              videoId: video.id,
-              videoTitle: video.title,
-              reason: aiResult.reason,
-              isFallback,
-            }
-          })
-          .filter((r) => r !== null) as AIMoveResult[]
-
-        if (fallbackItems.length > 0) {
-          console.warn(
-            '[AI Move] 以下视频的 targetFavorite 不在收藏夹列表中，已归到默认收藏夹:',
-            fallbackItems,
-          )
-        }
-
-        return { results, fallbackItems }
-      } catch (error) {
-        if (error instanceof AIError) {
-          throw new AIError(`AI 分析失败: ${error.message}`, error.detail)
-        }
-        if (error instanceof Error) {
-          throw new AIError(`AI 分析失败: ${error.message}`)
-        }
-        throw new AIError('AI 分析失败')
+      return {
+        status: 'success' as AIMoveStatus,
+        targetFavoriteId: targetFavorite?.id || dataContext.defaultFavoriteId!,
+        videoId: video.id,
+        videoTitle: video.title,
+        reason: aiResult.reason,
+        isFallback,
       }
     },
   )
 
-  const executeMove = useMemoizedFn(async (results: AIMoveResult[]) => {
-    if (dataContext.defaultFavoriteId == null) return
+  const moveOneVideo = useMemoizedFn(async (result: AIMoveResult): Promise<AIMoveResult> => {
+    if (dataContext.defaultFavoriteId == null) return result
 
-    const resultsWithMove: AIMoveResult[] = []
-
-    for (const result of results) {
-      try {
-        await queryAndSendMessage({
-          type: MessageEnum.moveVideo,
-          data: {
-            srcMediaId: dataContext.defaultFavoriteId,
-            tarMediaId: result.targetFavoriteId,
-            videoId: result.videoId,
-          },
-        })
-
-        resultsWithMove.push({
-          ...result,
-          title: result.videoTitle,
-          targetFavoriteId: result.targetFavoriteId,
+    try {
+      await queryAndSendMessage({
+        type: MessageEnum.moveVideo,
+        data: {
+          srcMediaId: dataContext.defaultFavoriteId,
+          tarMediaId: result.targetFavoriteId,
           videoId: result.videoId,
-          videoTitle: result.videoTitle,
-          reason: result.reason,
-        })
-
-        await sleep(100) // 避免请求过快
-      } catch (error) {
-        console.error('Move failed:', error)
-        resultsWithMove.push({
-          ...result,
-          title: `❌ ${result.videoTitle}`,
-          targetFavoriteId: result.targetFavoriteId,
-          videoId: result.videoId,
-          videoTitle: result.videoTitle,
-          reason: '移动失败',
-        })
-      }
+        },
+      })
+      return { ...result, status: 'success' as AIMoveStatus }
+    } catch (error) {
+      console.error('Move failed:', error)
+      return { ...result, status: 'failed' as AIMoveStatus, reason: '移动失败' }
     }
-
-    return resultsWithMove
   })
+
+  /**
+   * 从流式文本中增量提取完整的 JSON 对象
+   * AI 返回格式: [{...}, {...}, ...]，逐字符检测花括号配对
+   */
+  const extractCompleteObjects = useMemoizedFn(
+    (buffer: string): { objects: any[]; remaining: string } => {
+      const objects: any[] = []
+      let depth = 0
+      let inString = false
+      let escape = false
+      let objectStart = -1
+
+      for (let i = 0; i < buffer.length; i++) {
+        const ch = buffer[i]
+
+        if (escape) {
+          escape = false
+          continue
+        }
+        if (ch === '\\' && inString) {
+          escape = true
+          continue
+        }
+        if (ch === '"') {
+          inString = !inString
+          continue
+        }
+        if (inString) continue
+
+        if (ch === '{') {
+          if (depth === 0) objectStart = i
+          depth++
+        } else if (ch === '}') {
+          depth--
+          if (depth === 0 && objectStart !== -1) {
+            const jsonStr = buffer.slice(objectStart, i + 1)
+            try {
+              objects.push(JSON.parse(jsonStr))
+            } catch {
+              // 解析失败则跳过
+            }
+            objectStart = -1
+          }
+        }
+      }
+
+      // 返回未完成部分
+      const remaining = objectStart !== -1 ? buffer.slice(objectStart) : ''
+      return { objects, remaining }
+    },
+  )
 
   // 开始 AI 整理
   const handleAIMove = useMemoizedFn(async () => {
@@ -212,13 +176,14 @@ const useAIMove = () => {
 
     setIsLoading(true)
     setIsFinished(false)
+    isFinishedRef.current = false
     setMoveResults([])
     setIsProcessing(true)
+    setProgress({ current: 0, total: 0, currentTitle: '' })
 
     abortControllerRef.current = new AbortController()
 
     try {
-      // 获取默认收藏夹的所有视频（自动分页）
       const defaultFav = dataContext.favoriteData?.find(
         (f) => f.id === dataContext.defaultFavoriteId,
       )
@@ -236,52 +201,116 @@ const useAIMove = () => {
         return
       }
 
-      toast({
-        title: 'AI 分析中',
-        description: `正在分析 ${videos.length} 个视频...`,
-      })
+      setProgress({ current: 0, total: videos.length, currentTitle: '' })
 
-      const { results, fallbackItems } = await analyzeVideosWithAI(videos)
+      const allResults: AIMoveResult[] = []
+      const fallbackItems: string[] = []
 
-      if (abortControllerRef.current?.signal.aborted) {
-        throw new AIError('用户取消操作')
+      // 一次性发送所有视频，流式增量解析返回的 JSON 数组
+      const useCustomAI = dataContext.aiConfig?.configMode === 'custom'
+      const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
+      const config = {
+        apiKey: dataContext.aiConfig.key!,
+        baseURL: dataContext.aiConfig.baseUrl!,
+        model: dataContext.aiConfig.model!,
+        extraParams: dataContext.aiConfig.extraParams || {},
       }
 
-      toast({
-        title: '开始移动',
-        description: `正在移动 ${results.length} 个视频...`,
-      })
+      const stream = await fetchAIMove(videos, favoriteTitles, config, useCustomAI)
+      streamRef.current = stream
+      const reader = stream.toReadableStream().getReader()
+      const adapter = createStreamAdapter(dataContext.aiConfig.adapter)
 
-      const movedResults = await executeMove(results)
-      if (!movedResults) return
+      let buffer = ''
+      let processedCount = 0
 
-      setMoveResults(movedResults)
+      while (true) {
+        if (abortControllerRef.current?.signal.aborted) {
+          reader.cancel()
+          streamRef.current?.cancel()
+          throw new AIError('用户取消操作')
+        }
 
-      // 统计成功/失败/兜底
-      const successCount = movedResults.filter((r) => !r.title.startsWith('❌')).length
-      const failCount = movedResults.length - successCount
-      const fallbackCount = movedResults.filter((r) => r.isFallback).length
+        const { value, done } = await reader.read()
+        if (done) break
 
-      const detail =
-        fallbackItems.length > 0
-          ? `以下 ${fallbackItems.length} 个视频因AI返回的收藏夹不在列表中，已归到默认收藏夹：\n${fallbackItems.join('\n')}`
-          : undefined
+        buffer += adapter.parse(value)
+        const { objects, remaining } = extractCompleteObjects(buffer)
+        buffer = remaining
+
+        console.log('[DEBUG] extractCompleteObjects', objects, remaining)
+
+        for (const aiObj of objects) {
+          processedCount++
+          const result = resolveAIResult(aiObj, videos)
+          if (!result) continue
+
+          setProgress({
+            current: processedCount,
+            total: videos.length,
+            currentTitle: result.videoTitle,
+          })
+
+          if (result.isFallback) {
+            fallbackItems.push(`${result.videoTitle} → AI建议的收藏夹不在列表中`)
+          }
+
+          const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
+          if (needsMove) {
+            const movedResult = await moveOneVideo(result)
+            allResults.push(movedResult)
+            moveVideosCache(
+              dataContext.defaultFavoriteId!.toString(),
+              movedResult.targetFavoriteId.toString(),
+              [movedResult.videoId],
+            )
+          } else {
+            allResults.push({ ...result, status: 'skipped' })
+          }
+          setMoveResults([...allResults])
+          await sleep(100)
+        }
+      }
+      streamRef.current = null
+
+      // 处理 buffer 中可能残留的最后一个对象
+      if (buffer.trim()) {
+        try {
+          const lastObjects = parseAIJSON<any[]>(`[${buffer}]`)
+          for (const aiObj of lastObjects) {
+            const result = resolveAIResult(aiObj, videos)
+            if (!result) continue
+            processedCount++
+            const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
+            if (needsMove) {
+              const movedResult = await moveOneVideo(result)
+              allResults.push(movedResult)
+            } else {
+              allResults.push({ ...result, status: 'skipped' })
+            }
+          }
+          setMoveResults([...allResults])
+        } catch {
+          console.warn('[AI Move] 残留 buffer 解析失败:', buffer)
+        }
+      }
+
+      const successCount = allResults.filter((r) => r.status === 'success').length
+      const failCount = allResults.filter((r) => r.status === 'failed').length
+      const skippedCount = allResults.filter((r) => r.status === 'skipped').length
+      const fallbackCount = allResults.filter((r) => r.isFallback).length
 
       toast({
         title: '整理完成',
-        description: `成功: ${successCount}, 失败: ${failCount}${fallbackCount > 0 ? `, 兜底: ${fallbackCount}` : ''}`,
-        detail,
-      })
-
-      const targetIds = [...new Set(movedResults.map((r) => r.targetFavoriteId))]
-      targetIds.forEach((tarId) => {
-        const idsToTarget = movedResults
-          .filter((r) => r.targetFavoriteId === tarId && !r.title.startsWith('❌'))
-          .map((r) => r.videoId)
-        moveVideosCache(dataContext.defaultFavoriteId!.toString(), tarId.toString(), idsToTarget)
+        description: `成功: ${successCount}, 跳过: ${skippedCount}, 失败: ${failCount}${fallbackCount > 0 ? `, 兜底: ${fallbackCount}` : ''}`,
+        detail:
+          fallbackItems.length > 0
+            ? `以下视频因AI返回的收藏夹不在列表中，已归到默认收藏夹：\n${fallbackItems.join('\n')}`
+            : undefined,
       })
 
       await sleep(1000)
+      isFinishedRef.current = true
       setIsFinished(true)
     } catch (error) {
       if (error instanceof AIError) {
@@ -299,7 +328,9 @@ const useAIMove = () => {
         })
       }
     } finally {
-      setIsLoading(false)
+      if (!isFinishedRef.current) {
+        setIsLoading(false)
+      }
       setIsProcessing(false)
       abortControllerRef.current = null
     }
@@ -329,28 +360,78 @@ const useAIMove = () => {
     >
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
         {!isFinished ? (
-          <>
-            <div className="flex flex-col items-center">
-              <img alt="loading-gif" src={loadingGif} className="w-24 h-24 mb-4" />
-              {isProcessing && moveResults.length === 0 && (
-                <>
-                  <p className="text-lg font-semibold mb-2">AI 分析中...</p>
-                  <p className="text-sm text-gray-500">请稍候，正在智能分类视频</p>
-                </>
-              )}
-              {moveResults.length > 0 && (
-                <>
-                  <p className="text-lg font-semibold mb-2">移动中...</p>
-                  <p className="text-sm text-gray-500">
-                    已处理 {moveResults.length}/{moveResults.length} 个视频
-                  </p>
-                </>
-              )}
-              <Button onClick={cancelMove} variant="outline" className="mt-4">
-                取消
-              </Button>
-            </div>
-          </>
+          <div className="flex flex-col items-center">
+            <img alt="loading-gif" src={loadingGif} className="w-24 h-24 mb-4" />
+            {isProcessing && (
+              <>
+                {progress.total === 0 ? (
+                  <p className="text-lg font-semibold mb-2">正在获取收藏夹视频...</p>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold mb-2">
+                      正在处理 ({progress.current}/{progress.total})
+                    </p>
+                    {progress.currentTitle && (
+                      <p
+                        className="text-sm text-gray-500 mb-1 max-w-xs truncate"
+                        title={progress.currentTitle}
+                      >
+                        {progress.currentTitle}
+                      </p>
+                    )}
+                    {progress.total > 0 && (
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2 mb-1">
+                        <div
+                          className="bg-b-primary h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                        />
+                      </div>
+                    )}
+                    {moveResults.length > 0 && (
+                      <div className="w-full mt-2">
+                        <p className="text-xs text-gray-400 mb-1">已完成 {moveResults.length} 个</p>
+                        <div className="max-h-32 w-full overflow-y-auto overscroll-contain rounded-md border border-gray-100 scrollbar-thin">
+                          <div className="w-full text-xs space-y-0.5 p-1">
+                            {moveResults.map((r, i) => (
+                              <div
+                                key={i}
+                                className="flex items-center gap-1 text-gray-500 py-0.5 px-1 rounded hover:bg-gray-50 transition-colors duration-100"
+                              >
+                                <span
+                                  className={
+                                    r.status === 'failed'
+                                      ? 'text-red-500'
+                                      : r.status === 'skipped'
+                                        ? 'text-gray-400'
+                                        : 'text-green-600'
+                                  }
+                                >
+                                  {r.status === 'failed' ? '✗' : r.status === 'skipped' ? '-' : '✓'}
+                                </span>
+                                <span className="truncate flex-1" title={r.videoTitle}>
+                                  {r.videoTitle}
+                                </span>
+                                <span className="text-gray-400 shrink-0">
+                                  {r.status === 'skipped'
+                                    ? '未移动'
+                                    : r.status === 'failed'
+                                      ? r.reason
+                                      : `${favoriteMap.get(dataContext.defaultFavoriteId!) || '默认'} → ${favoriteMap.get(r.targetFavoriteId) || '未知'}`}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+            <Button onClick={cancelMove} variant="outline" className="mt-4">
+              取消
+            </Button>
+          </div>
         ) : (
           <div className="flex flex-col items-center">
             <Finished
@@ -358,24 +439,50 @@ const useAIMove = () => {
               height={150}
               width={150}
               title="AI 整理完成！"
-              onFinished={() => {
-                setIsFinished(false)
-                setIsLoading(false)
-              }}
             />
             <div className="mt-4 w-full">
               <p className="text-sm font-semibold mb-2">移动结果：</p>
-              <div className="max-h-40 overflow-y-auto text-xs space-y-1">
-                {moveResults.map((result: AIMoveResult, idx: number) => (
-                  <div key={idx} className="border-b py-1">
-                    <span className="font-medium">{result.title}</span>
-                    <span className="text-gray-500 ml-2">
-                      → {favoriteMap.get(result.targetFavoriteId)}
-                    </span>
-                  </div>
-                ))}
+              <div className="max-h-40 overflow-y-auto overscroll-contain rounded-md border border-gray-100 text-xs scrollbar-thin">
+                <div className="space-y-0.5 p-1">
+                  {moveResults.map((result: AIMoveResult, idx: number) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-1 py-0.5 px-1 rounded hover:bg-gray-50 transition-colors duration-100"
+                    >
+                      <span
+                        className={
+                          result.status === 'failed'
+                            ? 'text-red-500'
+                            : result.status === 'skipped'
+                              ? 'text-gray-400'
+                              : 'text-green-600'
+                        }
+                      >
+                        {result.status === 'failed' ? '✗' : result.status === 'skipped' ? '-' : '✓'}
+                      </span>
+                      <span className="font-medium truncate">{result.videoTitle}</span>
+                      <span className="text-gray-500 ml-auto shrink-0">
+                        {result.status === 'skipped'
+                          ? '未移动'
+                          : result.status === 'failed'
+                            ? result.reason
+                            : `→ ${favoriteMap.get(result.targetFavoriteId) || '未知'}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+            <Button
+              onClick={() => {
+                setIsFinished(false)
+                setIsLoading(false)
+              }}
+              variant="outline"
+              className="mt-4"
+            >
+              关闭
+            </Button>
           </div>
         )}
       </div>
