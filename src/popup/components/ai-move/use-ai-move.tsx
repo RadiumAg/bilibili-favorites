@@ -9,7 +9,7 @@ import { useGlobalConfig } from '@/store/global-data'
 import { sleep } from '@/utils/promise'
 import { toast, useFavoriteListData } from '@/hooks'
 import { AIError } from '@/utils/error'
-import { jsonrepair } from 'jsonrepair'
+import { parseAIJSON } from '@/utils/parse-ai-json'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
@@ -90,7 +90,7 @@ const useAIMove = () => {
         console.log('[DEBUG] fullContent', fullContent)
         let aiResults: any[]
         try {
-          aiResults = JSON.parse(jsonrepair(fullContent))
+          aiResults = parseAIJSON(fullContent)
         } catch {
           throw new AIError('AI 返回的数据格式错误，请重试', `返回数据：${fullContent}`)
         }
