@@ -7,7 +7,7 @@ const Move: React.FC = () => {
   const { handleMove, isLoadingElement } = useMove()
 
   return (
-    <div className="flex items-center gap-1">
+    <>
       <Button
         onClick={handleMove}
         size="sm"
@@ -35,7 +35,7 @@ const Move: React.FC = () => {
       </Button>
 
       {isLoadingElement}
-    </div>
+    </>
   )
 }
 

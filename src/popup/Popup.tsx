@@ -84,10 +84,8 @@ const Popup: React.FC<PopupProps> = (props) => {
           <Move />
           <AutoCreateKeyword />
         </ButtonGroup>
-        <ButtonGroup>
-          <AIMove />
-          <DragManagerButton />
-        </ButtonGroup>
+        <AIMove />
+        <DragManagerButton />
       </div>
 
       <LoginCheck />

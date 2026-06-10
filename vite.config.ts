@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
         plugins: [
           terser({
             compress: {
-              drop_console: true, // 去除 console.log
+              drop_console: mode !== 'development', // dev 模式保留 console.log
             },
           }),
         ],
