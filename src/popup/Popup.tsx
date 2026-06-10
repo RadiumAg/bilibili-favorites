@@ -3,7 +3,7 @@ import { FavoriteTag, Keyword } from '@/components'
 import { Button } from '@/components/ui/button'
 import { Move, LoginCheck, AutoCreateKeyword, AIMove, DragManagerButton } from './components'
 import { Toaster } from '@/components/ui/toaster'
-import { Settings, HelpCircle, RefreshCwIcon } from 'lucide-react'
+import { Settings, HelpCircle, RefreshCwIcon, Github } from 'lucide-react'
 import Tourist, { TouristRef, useTourist } from './components/tourist'
 import { cn } from '@/lib/utils'
 import { ButtonGroup } from '@/components/ui/button-group'
@@ -18,6 +18,10 @@ const Popup: React.FC<PopupProps> = (props) => {
 
   const handleOpenSettings = () => {
     window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
+  }
+
+  const handleOpenGitHub = () => {
+    window.open('https://github.com/RadiumAg/bilibili-favorites', '_blank')
   }
 
   const handleRefresh = () => {
@@ -65,6 +69,16 @@ const Popup: React.FC<PopupProps> = (props) => {
               aria-label="打开设置页面"
             >
               <Settings className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <Button
+              onClick={handleOpenGitHub}
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-b-text-primary hover:bg-b-primary hover:bg-opacity-20 transition-colors duration-200"
+              title="GitHub"
+              aria-label="GitHub"
+            >
+              <Github className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </h3>
