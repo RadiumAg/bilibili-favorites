@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { Skeleton } from '@/components/ui/skeleton'
 
 type HeatmapData = {
@@ -39,6 +40,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({ data, loading, class
     date: string
     count: number
     dayOfWeek: number
+    overflowTop?: boolean
   } | null>(null)
 
   React.useEffect(() => {
@@ -158,16 +160,23 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({ data, loading, class
                           className="cursor-pointer"
                           onMouseEnter={(e) => {
                             const rect = (e.target as SVGRectElement).getBoundingClientRect()
-                            const container = containerRef.current?.getBoundingClientRect()
-                            if (container) {
-                              setTooltip({
-                                x: rect.left - container.left + CELL_SIZE / 2,
-                                y: rect.top - container.top - 8,
-                                date: item.date,
-                                count: item.count,
-                                dayOfWeek: item.dayOfWeek,
-                              })
-                            }
+
+                            // 使用视口坐标，通过 portal 渲染不受父容器 overflow 影响
+                            let x = rect.left + CELL_SIZE / 2
+                            const cellTop = rect.top
+
+                            // 检测是否会溢出视口顶部（tooltip 高度约 50px）
+                            const tooltipHeight = 50
+                            const overflowTop = cellTop - tooltipHeight - 8 < 0
+
+                            setTooltip({
+                              x,
+                              y: overflowTop ? rect.bottom + 8 : cellTop - 8,
+                              date: item.date,
+                              count: item.count,
+                              dayOfWeek: item.dayOfWeek,
+                              overflowTop,
+                            })
                           }}
                         />
                       )),
@@ -178,23 +187,25 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({ data, loading, class
             </svg>
           </div>
 
-          {/* Tooltip */}
-          {tooltip && (
-            <div
-              className="absolute pointer-events-none bg-white border rounded-lg shadow-lg px-3 py-2 text-xs z-50"
-              style={{
-                left: tooltip.x,
-                top: tooltip.y,
-                transform: 'translate(-50%, -100%)',
-              }}
-            >
-              <div className="font-medium">{tooltip.date}</div>
-              <div className="text-gray-500">
-                {['周日', '周一', '周二', '周三', '周四', '周五', '周六'][tooltip.dayOfWeek]} · 收藏:{' '}
-                {tooltip.count}
-              </div>
-            </div>
-          )}
+          {/* Tooltip - 使用 portal 渲染到 body，避免被父容器裁剪 */}
+          {tooltip &&
+            createPortal(
+              <div
+                className="fixed pointer-events-none bg-white border rounded-lg shadow-lg px-3 py-2 text-xs z-[9999]"
+                style={{
+                  left: tooltip.x,
+                  top: tooltip.y,
+                  transform: tooltip.overflowTop ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
+                }}
+              >
+                <div className="font-medium">{tooltip.date}</div>
+                <div className="text-gray-500">
+                  {['周日', '周一', '周二', '周三', '周四', '周五', '周六'][tooltip.dayOfWeek]} · 收藏:{' '}
+                  {tooltip.count}
+                </div>
+              </div>,
+              document.body,
+            )}
 
           {/* 图例 */}
           <div className="flex items-center justify-end gap-1 text-xs text-gray-500 mt-2 pr-2">
