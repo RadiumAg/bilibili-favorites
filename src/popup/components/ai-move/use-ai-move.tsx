@@ -14,8 +14,10 @@ import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
 
+type AIMoveStatus = 'success' | 'failed' | 'skipped'
+
 type AIMoveResult = {
-  title: string
+  status: AIMoveStatus
   targetFavoriteId: number
   videoId: number
   videoTitle: string
@@ -97,7 +99,7 @@ const useAIMove = () => {
       const isFallback = !targetFavorite
 
       return {
-        title: aiResult.title,
+        status: 'success' as AIMoveStatus,
         targetFavoriteId: targetFavorite?.id || dataContext.defaultFavoriteId!,
         videoId: video.id,
         videoTitle: video.title,
@@ -119,10 +121,10 @@ const useAIMove = () => {
           videoId: result.videoId,
         },
       })
-      return { ...result, title: result.videoTitle }
+      return { ...result, status: 'success' as AIMoveStatus }
     } catch (error) {
       console.error('Move failed:', error)
-      return { ...result, title: `❌ ${result.videoTitle}`, reason: '移动失败' }
+      return { ...result, status: 'failed' as AIMoveStatus, reason: '移动失败' }
     }
   })
 
@@ -200,21 +202,25 @@ const useAIMove = () => {
             if (result.isFallback) {
               fallbackItems.push(`${video.title} → AI建议的收藏夹不在列表中`)
             }
-            const movedResult = await moveOneVideo(result)
-            allResults.push(movedResult)
+            const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
+            if (needsMove) {
+              const movedResult = await moveOneVideo(result)
+              allResults.push(movedResult)
+              moveVideosCache(
+                dataContext.defaultFavoriteId!.toString(),
+                movedResult.targetFavoriteId.toString(),
+                [movedResult.videoId],
+              )
+            } else {
+              allResults.push({ ...result, status: 'skipped' })
+            }
             setMoveResults([...allResults])
-
-            moveVideosCache(
-              dataContext.defaultFavoriteId!.toString(),
-              movedResult.targetFavoriteId.toString(),
-              [movedResult.videoId],
-            )
           }
         } catch (error) {
           if (error instanceof AIError && error.message === '用户取消操作') throw error
           console.error(`[AI Move] 处理视频 "${video.title}" 失败:`, error)
           allResults.push({
-            title: `❌ ${video.title}`,
+            status: 'failed',
             targetFavoriteId: dataContext.defaultFavoriteId!,
             videoId: video.id,
             videoTitle: video.title,
@@ -226,13 +232,14 @@ const useAIMove = () => {
         await sleep(100)
       }
 
-      const successCount = allResults.filter((r) => !r.title.startsWith('❌')).length
-      const failCount = allResults.length - successCount
+      const successCount = allResults.filter((r) => r.status === 'success').length
+      const failCount = allResults.filter((r) => r.status === 'failed').length
+      const skippedCount = allResults.filter((r) => r.status === 'skipped').length
       const fallbackCount = allResults.filter((r) => r.isFallback).length
 
       toast({
         title: '整理完成',
-        description: `成功: ${successCount}, 失败: ${failCount}${fallbackCount > 0 ? `, 兜底: ${fallbackCount}` : ''}`,
+        description: `成功: ${successCount}, 跳过: ${skippedCount}, 失败: ${failCount}${fallbackCount > 0 ? `, 兜底: ${fallbackCount}` : ''}`,
         detail:
           fallbackItems.length > 0
             ? `以下视频因AI返回的收藏夹不在列表中，已归到默认收藏夹：\n${fallbackItems.join('\n')}`
@@ -315,33 +322,31 @@ const useAIMove = () => {
                     <div className="w-full mt-2">
                       <p className="text-xs text-gray-400 mb-1">已完成 {moveResults.length} 个</p>
                       <div className="max-h-32 overflow-y-auto text-xs space-y-1">
-                        {moveResults.map((r, i) => {
-                          const isFailed = r.title.startsWith('❌')
-                          const isSame = r.targetFavoriteId === dataContext.defaultFavoriteId
-                          return (
-                            <div key={i} className="flex items-center gap-1 text-gray-500">
-                              <span
-                                className={
-                                  isFailed
-                                    ? 'text-red-500'
-                                    : isSame
-                                      ? 'text-gray-400'
-                                      : 'text-green-600'
-                                }
-                              >
-                                {isFailed ? '✗' : isSame ? '-' : '✓'}
-                              </span>
-                              <span className="truncate flex-1" title={r.videoTitle}>
-                                {r.videoTitle}
-                              </span>
-                              <span className="text-gray-400 shrink-0">
-                                {isSame
-                                  ? '未移动'
+                        {moveResults.map((r, i) => (
+                          <div key={i} className="flex items-center gap-1 text-gray-500">
+                            <span
+                              className={
+                                r.status === 'failed'
+                                  ? 'text-red-500'
+                                  : r.status === 'skipped'
+                                    ? 'text-gray-400'
+                                    : 'text-green-600'
+                              }
+                            >
+                              {r.status === 'failed' ? '✗' : r.status === 'skipped' ? '-' : '✓'}
+                            </span>
+                            <span className="truncate flex-1" title={r.videoTitle}>
+                              {r.videoTitle}
+                            </span>
+                            <span className="text-gray-400 shrink-0">
+                              {r.status === 'skipped'
+                                ? '未移动'
+                                : r.status === 'failed'
+                                  ? r.reason
                                   : `${favoriteMap.get(dataContext.defaultFavoriteId!) || '默认'} → ${favoriteMap.get(r.targetFavoriteId) || '未知'}`}
-                              </span>
-                            </div>
-                          )
-                        })}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -368,10 +373,17 @@ const useAIMove = () => {
               <p className="text-sm font-semibold mb-2">移动结果：</p>
               <div className="max-h-40 overflow-y-auto text-xs space-y-1">
                 {moveResults.map((result: AIMoveResult, idx: number) => (
-                  <div key={idx} className="border-b py-1">
-                    <span className="font-medium">{result.title}</span>
-                    <span className="text-gray-500 ml-2">
-                      → {favoriteMap.get(result.targetFavoriteId)}
+                  <div key={idx} className="border-b py-1 flex items-center gap-1">
+                    <span className={result.status === 'failed' ? 'text-red-500' : result.status === 'skipped' ? 'text-gray-400' : 'text-green-600'}>
+                      {result.status === 'failed' ? '✗' : result.status === 'skipped' ? '-' : '✓'}
+                    </span>
+                    <span className="font-medium truncate">{result.videoTitle}</span>
+                    <span className="text-gray-500 ml-auto shrink-0">
+                      {result.status === 'skipped'
+                        ? '未移动'
+                        : result.status === 'failed'
+                          ? result.reason
+                          : `→ ${favoriteMap.get(result.targetFavoriteId) || '未知'}`}
                     </span>
                   </div>
                 ))}
