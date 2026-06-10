@@ -35,7 +35,7 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['storage', 'tabs', 'sidePanel', 'contextMenus'],
+  permissions: ['storage', 'tabs', 'sidePanel'],
   host_permissions: [
     'https://api.openai.com/*',
     'https://*.openai.com/*',
