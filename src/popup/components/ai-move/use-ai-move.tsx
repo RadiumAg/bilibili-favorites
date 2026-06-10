@@ -13,6 +13,7 @@ import { parseAIJSON } from '@/utils/parse-ai-json'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 type AIMoveStatus = 'success' | 'failed' | 'skipped'
 
@@ -382,33 +383,35 @@ const useAIMove = () => {
                   {moveResults.length > 0 && (
                     <div className="w-full mt-2">
                       <p className="text-xs text-gray-400 mb-1">已完成 {moveResults.length} 个</p>
-                      <div className="max-h-32 overflow-y-auto text-xs space-y-1">
-                        {moveResults.map((r, i) => (
-                          <div key={i} className="flex items-center gap-1 text-gray-500">
-                            <span
-                              className={
-                                r.status === 'failed'
-                                  ? 'text-red-500'
-                                  : r.status === 'skipped'
-                                    ? 'text-gray-400'
-                                    : 'text-green-600'
-                              }
-                            >
-                              {r.status === 'failed' ? '✗' : r.status === 'skipped' ? '-' : '✓'}
-                            </span>
-                            <span className="truncate flex-1" title={r.videoTitle}>
-                              {r.videoTitle}
-                            </span>
-                            <span className="text-gray-400 shrink-0">
-                              {r.status === 'skipped'
-                                ? '未移动'
-                                : r.status === 'failed'
-                                  ? r.reason
-                                  : `${favoriteMap.get(dataContext.defaultFavoriteId!) || '默认'} → ${favoriteMap.get(r.targetFavoriteId) || '未知'}`}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                      <ScrollArea className="h-32 max-h-0">
+                        <div className="text-xs space-y-1">
+                          {moveResults.map((r, i) => (
+                            <div key={i} className="flex items-center gap-1 text-gray-500">
+                              <span
+                                className={
+                                  r.status === 'failed'
+                                    ? 'text-red-500'
+                                    : r.status === 'skipped'
+                                      ? 'text-gray-400'
+                                      : 'text-green-600'
+                                }
+                              >
+                                {r.status === 'failed' ? '✗' : r.status === 'skipped' ? '-' : '✓'}
+                              </span>
+                              <span className="truncate flex-1" title={r.videoTitle}>
+                                {r.videoTitle}
+                              </span>
+                              <span className="text-gray-400 shrink-0">
+                                {r.status === 'skipped'
+                                  ? '未移动'
+                                  : r.status === 'failed'
+                                    ? r.reason
+                                    : `${favoriteMap.get(dataContext.defaultFavoriteId!) || '默认'} → ${favoriteMap.get(r.targetFavoriteId) || '未知'}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
                     </div>
                   )}
                 </>
