@@ -14,7 +14,7 @@ const Keyword: React.FC<KeywordProps> = (props) => {
   return (
     <ScrollArea
       className={cn(
-        'h-44 border-solid border-b-primary/30 border-2 rounded-lg transition-all duration-200 focus-within:border-b-primary/60 focus-within:shadow-sm focus-within:shadow-b-primary/20',
+        'h-44 border-solid border-b-primary/30 border-2 rounded-lg transition-all duration-200',
         className,
       )}
     >
