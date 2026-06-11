@@ -15,7 +15,7 @@ const AutoCreateKeyword: React.FC = () => {
       onClick={handleClick}
       className="bg-b-primary hover:bg-b-primary-hover h-7 transition-colors duration-200"
     >
-      自动创建关键字
+      自动创建标签
     </Button>
   )
 }
