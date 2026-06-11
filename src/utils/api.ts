@@ -259,6 +259,7 @@ const fetchAIMove = async (
   favoriteTitles: string[],
   config: AIMoveConfig,
   useCustomAI: boolean,
+  favoriteTagsMap?: Record<string, string[]>,
 ) => {
   return connectAndStream({
     type: MessageEnum.fetchAIMove,
@@ -266,6 +267,7 @@ const fetchAIMove = async (
       videos,
       useCustomAI,
       favoriteTitles,
+      favoriteTagsMap,
       config: {
         apiKey: config.apiKey,
         baseURL: config.baseURL,

@@ -157,6 +157,13 @@ const useAIMove = () => {
       let processedCount = 0
 
       const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
+      const favoriteTagsMap: Record<string, string[]> = {}
+      dataContext.favoriteData.forEach((fav) => {
+        const keywordItem = dataContext.keyword.find((k) => k.favoriteDataId === fav.id)
+        if (keywordItem?.value?.length) {
+          favoriteTagsMap[fav.title] = keywordItem.value.map((v) => v.value)
+        }
+      })
       const config = {
         apiKey: dataContext.aiConfig.key!,
         baseURL: dataContext.aiConfig.baseUrl!,
@@ -168,7 +175,13 @@ const useAIMove = () => {
       await batchProcess(videos, {
         maxSize: 1000,
         async processCallback(batchVideos) {
-          const stream = await fetchAIMove(batchVideos, favoriteTitles, config, useCustomAI)
+          const stream = await fetchAIMove(
+            batchVideos,
+            favoriteTitles,
+            config,
+            useCustomAI,
+            favoriteTagsMap,
+          )
           streamRef.current = stream
           const reader = stream.toReadableStream().getReader()
           const adapter = createStreamAdapter(dataContext.aiConfig.adapter)

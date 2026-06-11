@@ -58,8 +58,8 @@ chrome.runtime.onConnect.addListener((port) => {
       }
 
       case MessageEnum.fetchAIMove: {
-        const { videos, favoriteTitles, config, useCustomAI } = message.data
-        const messages = await buildAIMoveMessages(videos, favoriteTitles)
+        const { videos, favoriteTitles, config, useCustomAI, favoriteTagsMap } = message.data
+        const messages = await buildAIMoveMessages(videos, favoriteTitles, favoriteTagsMap)
         currentAbortController = new AbortController()
         if (useCustomAI) {
           streamAIRequest(port, config, messages, currentAbortController)
