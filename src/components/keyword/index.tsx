@@ -14,7 +14,7 @@ const Keyword: React.FC<KeywordProps> = (props) => {
   return (
     <ScrollArea
       className={cn(
-        'h-44 border-solid border-b-primary/30 border-2 rounded-lg transition-all duration-200 focus-within:border-b-primary/60 focus-within:shadow-sm focus-within:shadow-b-primary/20',
+        'h-44 border-solid border-b-primary/30 border-2 rounded-lg transition-all duration-200',
         className,
       )}
     >
@@ -22,10 +22,10 @@ const Keyword: React.FC<KeywordProps> = (props) => {
         {tagElementArray}
 
         <input
-          placeholder="关键字/回车输入/退格删除"
+          placeholder="标签/回车输入/退格删除"
           className="outline-none bg-transparent p-1 text-ellipsis overflow-hidden text-b-text-primary min-w-3 flex-1 placeholder:text-b-primary/40"
           onKeyDown={handleKeyDown}
-          aria-label="输入关键字，按回车添加"
+          aria-label="输入标签，按回车添加"
         />
       </div>
     </ScrollArea>

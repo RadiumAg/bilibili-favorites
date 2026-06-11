@@ -48,7 +48,7 @@ const Options: React.FC = () => {
           </TabWrapper.Tab>
 
           <TabWrapper.Tab
-            title="关键字管理"
+            title="标签管理"
             keyValue="keyword-manager"
             defaultTab={searchParams.get('tab') === 'keyword-manager' || !searchParams.get('tab')}
           >

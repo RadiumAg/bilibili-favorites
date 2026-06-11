@@ -13,7 +13,7 @@ const Move: React.FC = () => {
         size="sm"
         className="bg-b-primary hover:bg-b-primary-hover h-7 transition-colors duration-200"
       >
-        通过关键字整理
+        通过标签整理
         <Popover>
           <PopoverTrigger asChild>
             <button
@@ -28,7 +28,7 @@ const Move: React.FC = () => {
           </PopoverTrigger>
           <PopoverContent className="w-64 text-sm">
             <p className="text-gray-700">
-              通过视频标题与收藏夹关键字进行匹配，将默认收藏夹中的视频自动移动到对应的收藏夹。
+              通过视频标题与收藏夹标签进行匹配，将默认收藏夹中的视频自动移动到对应的收藏夹。
             </p>
           </PopoverContent>
         </Popover>

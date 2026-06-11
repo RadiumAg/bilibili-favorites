@@ -7,7 +7,7 @@ interface PetContextMenuProps {
 }
 
 const MENU_ITEMS = [
-  { id: 'organize', label: '🔑 关键字整理', tab: 'keyword-manager' },
+  { id: 'organize', label: '🔑 标签整理', tab: 'keyword-manager' },
   { id: 'ai-organize', label: '🤖 AI 整理', tab: 'keyword-manager' },
   { id: 'analysis', label: '📊 数据分析', tab: 'analysis' },
   { id: 'settings', label: '⚙️ 设置', tab: 'setting' },

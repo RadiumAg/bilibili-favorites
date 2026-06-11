@@ -22,7 +22,7 @@ const TOUR_STEPS: TourStep[] = [
     target: '[data-tour="favorites"]',
     title: '收藏夹列表',
     icon: <FolderHeart className={STEP_ICON_CLASS} />,
-    description: '点击选中收藏夹，即可查看该收藏夹下的分类关键字。',
+    description: '点击选中收藏夹，即可查看该收藏夹下的分类标签。',
     placement: 'bottom',
   },
   {
@@ -30,21 +30,21 @@ const TOUR_STEPS: TourStep[] = [
     title: '设置默认收藏夹',
     icon: <Star className={STEP_ICON_CLASS} />,
     description:
-      '长按收藏夹可标记为默认文件夹（显示星标）。点击「关键字整理」后，会将该文件夹中的视频自动分类到匹配关键字的收藏夹中。',
+      '长按收藏夹可标记为默认文件夹（显示星标）。点击「标签整理」后，会将该文件夹中的视频自动分类到匹配标签的收藏夹中。',
     placement: 'bottom',
   },
   {
     target: '[data-tour="keywords"]',
-    title: '关键字过滤',
+    title: '标签过滤',
     icon: <Tag className={STEP_ICON_CLASS} />,
-    description: '设置关键字后，可以快速筛选出包含特定关键词的视频，支持添加多个关键字。',
+    description: '设置标签后，可以快速筛选出包含特定关键词的视频，支持添加多个标签。',
     placement: 'top',
   },
   {
     target: '[data-tour="actions"]',
     title: '智能操作',
     icon: <Gamepad2 className={STEP_ICON_CLASS} />,
-    description: '批量移动视频、AI 智能分类、自动生成关键字等功能，让收藏夹管理变得轻松有趣！',
+    description: '批量移动视频、AI 智能分类、自动生成标签等功能，让收藏夹管理变得轻松有趣！',
     placement: 'top',
   },
 ]

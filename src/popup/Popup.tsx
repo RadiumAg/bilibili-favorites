@@ -87,7 +87,7 @@ const Popup: React.FC<PopupProps> = (props) => {
           <FavoriteTag className={isSidePanel ? 'max-h-[300px]' : 'h-[200px]'} />
         </div>
 
-        <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">关键字</h3>
+        <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">标签</h3>
         <div className={cn(isSidePanel ? 'flex flex-col flex-1' : undefined)} data-tour="keywords">
           <Keyword className={cn(isSidePanel ? 'flex-1' : undefined)} />
         </div>

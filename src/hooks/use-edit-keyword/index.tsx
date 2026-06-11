@@ -92,7 +92,7 @@ const useEditKeyword = () => {
             version="1.1"
             xmlns="http://www.w3.org/2000/svg"
             p-id="4257"
-            aria-label="删除关键字"
+            aria-label="删除标签"
             role="button"
           >
             <path

@@ -9,10 +9,11 @@ import { useGlobalConfig } from '@/store/global-data'
 import { sleep } from '@/utils/promise'
 import { toast, useFavoriteListData } from '@/hooks'
 import { AIError } from '@/utils/error'
-import { parseAIJSON } from '@/utils/parse-ai-json'
+import { extractCompleteObjects, parseAIJSON } from '@/utils/parse-ai-json'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
+import { batchProcess } from '@/utils/batch-process'
 
 type AIMoveStatus = 'success' | 'failed' | 'skipped'
 
@@ -93,58 +94,6 @@ const useAIMove = () => {
     }
   })
 
-  /**
-   * 从流式文本中增量提取完整的 JSON 对象
-   * AI 返回格式: [{...}, {...}, ...]，逐字符检测花括号配对
-   */
-  const extractCompleteObjects = useMemoizedFn(
-    (buffer: string): { objects: any[]; remaining: string } => {
-      const objects: any[] = []
-      let depth = 0
-      let inString = false
-      let escape = false
-      let objectStart = -1
-
-      for (let i = 0; i < buffer.length; i++) {
-        const ch = buffer[i]
-
-        if (escape) {
-          escape = false
-          continue
-        }
-        if (ch === '\\' && inString) {
-          escape = true
-          continue
-        }
-        if (ch === '"') {
-          inString = !inString
-          continue
-        }
-        if (inString) continue
-
-        if (ch === '{') {
-          if (depth === 0) objectStart = i
-          depth++
-        } else if (ch === '}') {
-          depth--
-          if (depth === 0 && objectStart !== -1) {
-            const jsonStr = buffer.slice(objectStart, i + 1)
-            try {
-              objects.push(JSON.parse(jsonStr))
-            } catch {
-              // 解析失败则跳过
-            }
-            objectStart = -1
-          }
-        }
-      }
-
-      // 返回未完成部分
-      const remaining = objectStart !== -1 ? buffer.slice(objectStart) : ''
-      return { objects, remaining }
-    },
-  )
-
   // 开始 AI 整理
   const handleAIMove = useMemoizedFn(async () => {
     // 根据 configMode 检查是否有可用配置
@@ -176,10 +125,10 @@ const useAIMove = () => {
 
     setIsLoading(true)
     setIsFinished(false)
-    isFinishedRef.current = false
     setMoveResults([])
     setIsProcessing(true)
     setProgress({ current: 0, total: 0, currentTitle: '' })
+    isFinishedRef.current = false
 
     abortControllerRef.current = new AbortController()
 
@@ -205,95 +154,109 @@ const useAIMove = () => {
 
       const allResults: AIMoveResult[] = []
       const fallbackItems: string[] = []
+      let processedCount = 0
 
-      // 一次性发送所有视频，流式增量解析返回的 JSON 数组
-      const useCustomAI = dataContext.aiConfig?.configMode === 'custom'
       const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
+      const favoriteTagsMap: Record<string, string[]> = {}
+      dataContext.favoriteData.forEach((fav) => {
+        const keywordItem = dataContext.keyword.find((k) => k.favoriteDataId === fav.id)
+        if (keywordItem?.value?.length) {
+          favoriteTagsMap[fav.title] = keywordItem.value.map((v) => v.value)
+        }
+      })
       const config = {
         apiKey: dataContext.aiConfig.key!,
         baseURL: dataContext.aiConfig.baseUrl!,
         model: dataContext.aiConfig.model!,
         extraParams: dataContext.aiConfig.extraParams || {},
       }
+      const totalCount = videos.length
 
-      const stream = await fetchAIMove(videos, favoriteTitles, config, useCustomAI)
-      streamRef.current = stream
-      const reader = stream.toReadableStream().getReader()
-      const adapter = createStreamAdapter(dataContext.aiConfig.adapter)
+      await batchProcess(videos, {
+        maxSize: 1000,
+        async processCallback(batchVideos) {
+          const stream = await fetchAIMove(
+            batchVideos,
+            favoriteTitles,
+            config,
+            useCustomAI,
+            favoriteTagsMap,
+          )
+          streamRef.current = stream
+          const reader = stream.toReadableStream().getReader()
+          const adapter = createStreamAdapter(dataContext.aiConfig.adapter)
 
-      let buffer = ''
-      let processedCount = 0
+          let buffer = ''
 
-      while (true) {
-        if (abortControllerRef.current?.signal.aborted) {
-          reader.cancel()
-          streamRef.current?.cancel()
-          throw new AIError('用户取消操作')
-        }
+          while (true) {
+            if (abortControllerRef.current?.signal.aborted) {
+              reader.cancel()
+              streamRef.current?.cancel()
+              throw new AIError('用户取消操作')
+            }
 
-        const { value, done } = await reader.read()
-        if (done) break
+            const { value, done } = await reader.read()
+            if (done) break
 
-        buffer += adapter.parse(value)
-        const { objects, remaining } = extractCompleteObjects(buffer)
-        buffer = remaining
+            buffer += adapter.parse(value)
+            const { objects, remaining } = extractCompleteObjects(buffer)
+            buffer = remaining
 
-        console.log('[DEBUG] extractCompleteObjects', objects, remaining)
+            for (const aiObj of objects) {
+              processedCount++
+              const result = resolveAIResult(aiObj, batchVideos)
+              if (!result) continue
 
-        for (const aiObj of objects) {
-          processedCount++
-          const result = resolveAIResult(aiObj, videos)
-          if (!result) continue
+              setProgress({
+                current: processedCount,
+                total: totalCount,
+                currentTitle: result.videoTitle,
+              })
 
-          setProgress({
-            current: processedCount,
-            total: videos.length,
-            currentTitle: result.videoTitle,
-          })
+              if (result.isFallback) {
+                fallbackItems.push(`${result.videoTitle} → AI建议的收藏夹不在列表中`)
+              }
 
-          if (result.isFallback) {
-            fallbackItems.push(`${result.videoTitle} → AI建议的收藏夹不在列表中`)
-          }
-
-          const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
-          if (needsMove) {
-            const movedResult = await moveOneVideo(result)
-            allResults.push(movedResult)
-            moveVideosCache(
-              dataContext.defaultFavoriteId!.toString(),
-              movedResult.targetFavoriteId.toString(),
-              [movedResult.videoId],
-            )
-          } else {
-            allResults.push({ ...result, status: 'skipped' })
-          }
-          setMoveResults([...allResults])
-          await sleep(100)
-        }
-      }
-      streamRef.current = null
-
-      // 处理 buffer 中可能残留的最后一个对象
-      if (buffer.trim()) {
-        try {
-          const lastObjects = parseAIJSON<any[]>(`[${buffer}]`)
-          for (const aiObj of lastObjects) {
-            const result = resolveAIResult(aiObj, videos)
-            if (!result) continue
-            processedCount++
-            const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
-            if (needsMove) {
-              const movedResult = await moveOneVideo(result)
-              allResults.push(movedResult)
-            } else {
-              allResults.push({ ...result, status: 'skipped' })
+              const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
+              if (needsMove) {
+                const movedResult = await moveOneVideo(result)
+                allResults.push(movedResult)
+                moveVideosCache(
+                  dataContext.defaultFavoriteId!.toString(),
+                  movedResult.targetFavoriteId.toString(),
+                  [movedResult.videoId],
+                )
+              } else {
+                allResults.push({ ...result, status: 'skipped' })
+              }
+              setMoveResults([...allResults])
+              await sleep(100)
             }
           }
-          setMoveResults([...allResults])
-        } catch {
-          console.warn('[AI Move] 残留 buffer 解析失败:', buffer)
-        }
-      }
+          streamRef.current = null
+
+          if (buffer.trim()) {
+            try {
+              const lastObjects = parseAIJSON<any[]>(`[${buffer}]`)
+              for (const aiObj of lastObjects) {
+                const result = resolveAIResult(aiObj, batchVideos)
+                if (!result) continue
+                processedCount++
+                const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
+                if (needsMove) {
+                  const movedResult = await moveOneVideo(result)
+                  allResults.push(movedResult)
+                } else {
+                  allResults.push({ ...result, status: 'skipped' })
+                }
+              }
+              setMoveResults([...allResults])
+            } catch {
+              console.warn('[AI Move] 残留 buffer 解析失败:', buffer)
+            }
+          }
+        },
+      })
 
       const successCount = allResults.filter((r) => r.status === 'success').length
       const failCount = allResults.filter((r) => r.status === 'failed').length
@@ -434,12 +397,7 @@ const useAIMove = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <Finished
-              start={isFinished}
-              height={150}
-              width={150}
-              title="AI 整理完成！"
-            />
+            <Finished start={isFinished} height={150} width={150} title="AI 整理完成！" />
             <div className="mt-4 w-full">
               <p className="text-sm font-semibold mb-2">移动结果：</p>
               <div className="max-h-40 overflow-y-auto overscroll-contain rounded-md border border-gray-100 text-xs scrollbar-thin">
