@@ -391,6 +391,8 @@ type FetchAllProgress = {
   total?: number
   /** 当前请求页码 */
   currentPage: number
+  /** 当前加载到的视频标题（每页最后一个） */
+  currentVideoTitle?: string
 }
 
 type FetchAllFavoriteMediasOptions = {
@@ -486,6 +488,7 @@ const fetchAllFavoriteMedias = async (
       loaded: allMedias.length,
       total: mediaCount,
       currentPage,
+      currentVideoTitle: medias?.[medias.length - 1]?.title,
     })
 
     currentPage++
