@@ -1,6 +1,6 @@
 import React from 'react'
 import type { PetGrowthData } from './pet-config'
-import { SKIN_COLORS, STREAK_GOAL } from './pet-config'
+import { SKIN_COLORS, SKIN_NAMES } from './pet-config'
 import { PetMessageEnum } from '@/utils/pet-message'
 
 interface PetDashboardProps {
@@ -27,8 +27,7 @@ const PetDashboard: React.FC<PetDashboardProps> = (props) => {
 
   if (!visible) return null
 
-  const skinName = ['银灰', '樱粉', '天蓝', '薄荷', '星紫'][growth.skinLevel % SKIN_COLORS.length]
-  const streakProgress = Math.min(growth.consecutiveOrganizeDays, STREAK_GOAL)
+  const skinName = SKIN_NAMES[growth.activeSkinLevel % SKIN_NAMES.length]
 
   return (
     <div className="bili-pet-dashboard">
@@ -52,7 +51,7 @@ const PetDashboard: React.FC<PetDashboardProps> = (props) => {
           <span className="bili-pet-stat-label">已整理</span>
         </div>
         <div className="bili-pet-stat">
-          <span className="bili-pet-stat-value">{streakProgress}/{STREAK_GOAL}</span>
+          <span className="bili-pet-stat-value">{growth.consecutiveOrganizeDays}</span>
           <span className="bili-pet-stat-label">连续天数</span>
         </div>
       </div>
@@ -60,9 +59,9 @@ const PetDashboard: React.FC<PetDashboardProps> = (props) => {
       <div className="bili-pet-dashboard-skin">
         <span
           className="bili-pet-skin-dot"
-          style={{ backgroundColor: SKIN_COLORS[growth.skinLevel % SKIN_COLORS.length].body }}
+          style={{ backgroundColor: SKIN_COLORS[growth.activeSkinLevel % SKIN_COLORS.length].body }}
         />
-        <span className="bili-pet-stat-label">当前皮肤：{skinName}</span>
+        <span className="bili-pet-stat-label">当前皮肤：{skinName}（点击切换）</span>
       </div>
     </div>
   )

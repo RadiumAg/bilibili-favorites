@@ -40,7 +40,7 @@ const Setting: React.FC = () => {
       </div>
       {petEnabled && (
         <p className="text-xs text-muted-foreground ml-12">
-          小电视会在 B 站页面右下角出现，根据你的操作变换表情，连续整理还能解锁新皮肤哦~
+          小电视会在 B 站页面右下角出现，根据你的操作变换表情，点击可切换皮肤~
         </p>
       )}
     </div>

@@ -4,12 +4,25 @@ import type { PetMood } from './pet-config'
 import { MOOD_PRIORITY, MOOD_DURATION, PET_DIALOGUES } from './pet-config'
 
 const STORAGE_KEY = 'bili-pet-mood'
-const DIALOGUE_KEY = 'bili-pet-dialogue'
+
+export type SetMoodOptions = {
+  force?: boolean
+  dialogue?: string
+}
 
 /** 随机选择对话文案 */
 function randomDialogue(mood: PetMood): string {
   const lines = PET_DIALOGUES[mood]
   return lines[Math.floor(Math.random() * lines.length)] ?? ''
+}
+
+function normalizeSetMoodOptions(
+  forceOrOptions?: boolean | SetMoodOptions,
+): SetMoodOptions {
+  if (typeof forceOrOptions === 'boolean') {
+    return { force: forceOrOptions }
+  }
+  return forceOrOptions ?? {}
 }
 
 /**
@@ -41,7 +54,9 @@ export function usePetState() {
     }
   }, [])
 
-  const setMood = useMemoizedFn((newMood: PetMood, force = false) => {
+  const setMood = useMemoizedFn((newMood: PetMood, forceOrOptions?: boolean | SetMoodOptions) => {
+    const { force = false, dialogue: customDialogue } = normalizeSetMoodOptions(forceOrOptions)
+
     setMoodState((current) => {
       const currentPriority = MOOD_PRIORITY[current]
       const newPriority = MOOD_PRIORITY[newMood]
@@ -55,7 +70,7 @@ export function usePetState() {
         timerRef.current = null
       }
 
-      setDialogue(randomDialogue(newMood))
+      setDialogue(customDialogue ?? randomDialogue(newMood))
 
       try {
         chrome?.storage?.local?.set({ [STORAGE_KEY]: newMood })

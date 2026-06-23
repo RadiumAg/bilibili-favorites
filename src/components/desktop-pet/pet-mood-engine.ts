@@ -3,13 +3,17 @@ import {
   IDLE_THRESHOLD,
   ABSENCE_DAYS,
   PILE_UP_THRESHOLD,
-  STREAK_GOAL,
   PET_GROWTH_KEY,
   DEFAULT_GROWTH,
+  normalizeGrowthData,
+  SKIN_COLORS,
+  FAVORITE_ADDED_DIALOGUE,
 } from './pet-config'
 import { fetchPetDefaultFavCount, getStoredDefaultFavoriteId } from '@/utils/pet-stats'
+import { injectPetFavoriteHook, listenPetFavoriteAdded } from './pet-favorite-hook'
+import type { SetMoodOptions } from './use-pet-state'
 
-type MoodCallback = (mood: PetMood, force?: boolean) => void
+type MoodCallback = (mood: PetMood, options?: boolean | SetMoodOptions) => void
 
 /** 获取 chrome.storage.local 的 helper */
 function getStorage<T>(key: string, fallback: T): Promise<T> {
@@ -46,9 +50,9 @@ export class PetMoodEngine {
   private idleTimer: ReturnType<typeof setTimeout> | null = null
   private lastActivityTime = Date.now()
   private scrollTimeout: ReturnType<typeof setTimeout> | null = null
-  private observer: MutationObserver | null = null
   private boundHandlers: Array<[string, EventListener]> = []
   private pileCheckTimer: ReturnType<typeof setInterval> | null = null
+  private favoriteAddedCleanup: (() => void) | null = null
   private growth: PetGrowthData = { ...DEFAULT_GROWTH }
   private onGrowthChange: ((growth: PetGrowthData) => void) | null = null
 
@@ -85,7 +89,7 @@ export class PetMoodEngine {
     window.addEventListener('scroll', this.onScroll, { passive: true })
     this.boundHandlers.push(['scroll', this.onScroll as EventListener])
 
-    this.startFavoriteObserver()
+    this.startFavoriteApiHook()
     this.startIdleCheck()
     this.listenForMessages()
 
@@ -108,9 +112,9 @@ export class PetMoodEngine {
       clearTimeout(this.scrollTimeout)
       this.scrollTimeout = null
     }
-    if (this.observer) {
-      this.observer.disconnect()
-      this.observer = null
+    if (this.favoriteAddedCleanup) {
+      this.favoriteAddedCleanup()
+      this.favoriteAddedCleanup = null
     }
     if (this.pileCheckTimer) {
       clearInterval(this.pileCheckTimer)
@@ -120,7 +124,8 @@ export class PetMoodEngine {
 
   /** 加载成长数据 */
   private async loadGrowthData() {
-    this.growth = await getStorage<PetGrowthData>(PET_GROWTH_KEY, { ...DEFAULT_GROWTH })
+    const raw = await getStorage<Partial<PetGrowthData>>(PET_GROWTH_KEY, { ...DEFAULT_GROWTH })
+    this.growth = normalizeGrowthData(raw)
   }
 
   /** 保存成长数据 */
@@ -169,30 +174,14 @@ export class PetMoodEngine {
     }
   }
 
-  private startFavoriteObserver() {
-    this.observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        const target = mutation.target as HTMLElement
-        if (
-          target.classList?.contains('bili-mini-fav') ||
-          target.closest?.('.bili-mini-fav') ||
-          target.classList?.contains('fav-btn') ||
-          target.closest?.('.fav-btn') ||
-          target.classList?.contains('collect-btn') ||
-          target.closest?.('.video-tool .collect')
-        ) {
-          this.setMood('gift')
-          return
-        }
-      }
-    })
+  private startFavoriteApiHook() {
+    injectPetFavoriteHook()
 
-    this.observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'data-stat'],
-    })
+    const onFavoriteAdded = () => {
+      this.setMood('gift', { force: true, dialogue: FAVORITE_ADDED_DIALOGUE })
+    }
+
+    this.favoriteAddedCleanup = listenPetFavoriteAdded(onFavoriteAdded)
   }
 
   private startIdleCheck() {
@@ -214,7 +203,7 @@ export class PetMoodEngine {
       chrome?.runtime?.onMessage?.addListener((message: any) => {
         switch (message?.type) {
           case 'favorite_added':
-            this.setMood('gift')
+            this.setMood('gift', { force: true, dialogue: FAVORITE_ADDED_DIALOGUE })
             break
           case 'move_success':
           case 'organize_done':
@@ -251,12 +240,6 @@ export class PetMoodEngine {
     this.growth.lastOrganizeDate = today
     this.growth.totalOrganizeCount += 1
 
-    // 连续 3 天达成 → 皮肤进化
-    if (this.growth.consecutiveOrganizeDays >= STREAK_GOAL) {
-      this.growth.skinLevel = Math.min(this.growth.skinLevel + 1, 4)
-      this.growth.consecutiveOrganizeDays = 0
-    }
-
     this.saveGrowthData()
   }
 
@@ -268,6 +251,14 @@ export class PetMoodEngine {
   /** 手动唤醒（sleep → wave，用于 7 天未打开后点击唤醒） */
   triggerWakeUp() {
     this.setMood('wave', true)
+  }
+
+  /** 循环切换全部皮肤 */
+  cycleSkin(): void {
+    const maxSkin = SKIN_COLORS.length - 1
+    this.growth.activeSkinLevel =
+      this.growth.activeSkinLevel >= maxSkin ? 0 : this.growth.activeSkinLevel + 1
+    this.saveGrowthData()
   }
 
   /** 获取当前成长数据 */
