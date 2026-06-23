@@ -6,10 +6,13 @@ import { PetMessageEnum } from '@/utils/pet-message'
 interface PetDashboardProps {
   visible: boolean
   growth: PetGrowthData
+  onChangeSkin: () => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
 }
 
 const PetDashboard: React.FC<PetDashboardProps> = (props) => {
-  const { visible, growth } = props
+  const { visible, growth, onChangeSkin, onMouseEnter, onMouseLeave } = props
   const [favStats, setFavStats] = React.useState<{ total: number; defaultCount: number } | null>(null)
 
   React.useEffect(() => {
@@ -30,7 +33,11 @@ const PetDashboard: React.FC<PetDashboardProps> = (props) => {
   const skinName = SKIN_NAMES[growth.activeSkinLevel % SKIN_NAMES.length]
 
   return (
-    <div className="bili-pet-dashboard">
+    <div
+      className="bili-pet-dashboard"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       <div className="bili-pet-dashboard-title">📺 小电视状态</div>
 
       <div className="bili-pet-dashboard-grid">
@@ -61,7 +68,22 @@ const PetDashboard: React.FC<PetDashboardProps> = (props) => {
           className="bili-pet-skin-dot"
           style={{ backgroundColor: SKIN_COLORS[growth.activeSkinLevel % SKIN_COLORS.length].body }}
         />
-        <span className="bili-pet-stat-label">当前皮肤：{skinName}（点击切换）</span>
+        <span className="bili-pet-stat-label">当前皮肤：{skinName}</span>
+        <button
+          type="button"
+          className="bili-pet-skin-button bili-pet-no-drag"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onChangeSkin()
+          }}
+        >
+          换一换
+        </button>
       </div>
     </div>
   )

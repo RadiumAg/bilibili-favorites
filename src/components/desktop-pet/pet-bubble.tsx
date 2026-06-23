@@ -13,13 +13,18 @@ export const PetBubble: React.FC<PetBubbleProps> = ({ text, action }) => {
   if (!text && !action) return null
 
   return (
-    <div className="bili-pet-bubble">
+    <div className={`bili-pet-bubble ${action ? 'bili-pet-bubble-with-action' : ''}`}>
       {text ? <span className="bili-pet-bubble-text">{text}</span> : null}
       {action ? (
         <button
           type="button"
-          className="bili-pet-bubble-action"
+          className="bili-pet-bubble-action bili-pet-no-drag"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }}
           onClick={(event) => {
+            event.preventDefault()
             event.stopPropagation()
             action.onClick()
           }}

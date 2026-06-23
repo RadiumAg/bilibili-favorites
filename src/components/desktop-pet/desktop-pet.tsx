@@ -32,6 +32,7 @@ const DesktopPetInner: React.FC = () => {
   })
   const engineRef = React.useRef<PetMoodEngine | null>(null)
   const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hideTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleGrowthChange = useMemoizedFn((newGrowth: PetGrowthData) => {
     setGrowth(newGrowth)
@@ -56,6 +57,11 @@ const DesktopPetInner: React.FC = () => {
     setMood('happy')
   })
 
+  const handleChangeSkin = useMemoizedFn(() => {
+    engineRef.current?.cycleSkin()
+    setMood('happy')
+  })
+
   const handleContextMenu = useMemoizedFn((event: React.MouseEvent) => {
     event.preventDefault()
     event.stopPropagation()
@@ -69,6 +75,10 @@ const DesktopPetInner: React.FC = () => {
 
   const handleMouseEnter = useMemoizedFn(() => {
     if (contextMenu.visible) return
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current)
+      hideTimerRef.current = null
+    }
     hoverTimerRef.current = setTimeout(() => setIsHovered(true), 500)
   })
 
@@ -77,12 +87,13 @@ const DesktopPetInner: React.FC = () => {
       clearTimeout(hoverTimerRef.current)
       hoverTimerRef.current = null
     }
-    setIsHovered(false)
+    hideTimerRef.current = setTimeout(() => setIsHovered(false), 250)
   })
 
   React.useEffect(() => {
     return () => {
       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
     }
   }, [])
 
@@ -105,7 +116,13 @@ const DesktopPetInner: React.FC = () => {
       >
         <div className="relative bili-pet-body">
           {isHovered && !contextMenu.visible && (
-            <PetDashboard visible={isHovered} growth={growth} />
+            <PetDashboard
+              visible={isHovered}
+              growth={growth}
+              onChangeSkin={handleChangeSkin}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
           )}
 
           {!isHovered && (
