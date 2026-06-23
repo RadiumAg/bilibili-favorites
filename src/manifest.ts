@@ -26,6 +26,12 @@ export default defineManifest({
   content_scripts: [
     {
       matches: bilibiliUrlPatterns,
+      js: ['src/contentScript/pet-favorite-main.ts'],
+      run_at: 'document_start',
+      world: 'MAIN',
+    } as chrome.runtime.ManifestV3['content_scripts'][number] & { world: 'MAIN' },
+    {
+      matches: bilibiliUrlPatterns,
       js: ['src/contentScript/index.ts'],
     },
   ],
