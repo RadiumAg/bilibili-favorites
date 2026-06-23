@@ -1,7 +1,14 @@
 import { StateCreator } from 'zustand'
 
 // 定义需要持久化的字段
-const PERSISTED_KEYS = ['keyword', 'activeKey', 'cookie', 'aiConfig', 'defaultFavoriteId'] as const
+const PERSISTED_KEYS = [
+  'keyword',
+  'activeKey',
+  'cookie',
+  'aiConfig',
+  'defaultFavoriteId',
+  'petEnabled',
+] as const
 
 type PersistedKeys = (typeof PERSISTED_KEYS)[number]
 

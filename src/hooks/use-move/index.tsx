@@ -10,6 +10,7 @@ import { queryAndSendMessage } from '@/utils/tab'
 import { Button } from '@/components/ui/button'
 import { toast } from '../use-toast'
 import { fetchAllFavoriteMedias } from '@/utils/api'
+import { notifyOrganizeDone } from '@/utils/pet-message'
 
 const useMove = () => {
   const dataContext = useGlobalConfig(
@@ -58,6 +59,8 @@ const useMove = () => {
   }
 
   const startMove = async () => {
+    let movedCount = 0
+
     const run = async () => {
       if (cancelRef.current) return false
       if (dataContext.defaultFavoriteId == null) return false
@@ -94,6 +97,7 @@ const useMove = () => {
 
             if (videoTitle.includes(keyword)) {
               await fetchMove(targetFavoriteTag.id, videoInfo.id)
+              movedCount += 1
             }
           }
         }
@@ -102,18 +106,22 @@ const useMove = () => {
 
     try {
       const start = Date.now()
-      const completed = await run()
+      await run()
 
       if (cancelRef.current) {
         setIsLoading(false)
         return
       }
 
-      if (completed && Date.now() - start < 1000) {
+      if (Date.now() - start < 1000) {
         await sleep(1000)
         setIsFinished(true)
       } else {
         setIsFinished(true)
+      }
+
+      if (movedCount > 0) {
+        notifyOrganizeDone(movedCount)
       }
     } catch (e) {
       if (e instanceof Error) {

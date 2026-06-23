@@ -8,6 +8,7 @@ import { useFavoriteData, useFavoriteListData } from '@/hooks'
 import FolderList from './folder-list'
 import VideoList from './video-list'
 import { sleep } from '@/utils/promise'
+import { notifyOrganizeDone } from '@/utils/pet-message'
 
 interface VideoItem {
   id: number
@@ -199,6 +200,7 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
       loadVideos(selectedFolderId)
       await sleep(1000) // 请求太快favdata会刷新不了
       refreshFavData()
+      notifyOrganizeDone(successCount)
     }
   })
 

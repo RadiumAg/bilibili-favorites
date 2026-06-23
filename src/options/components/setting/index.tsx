@@ -25,27 +25,23 @@ const Setting: React.FC = () => {
       {selectorMode === 'custom' && <CustomConfigForm />}
       {selectorMode === 'free' && <QuotaCard />}
 
-      {import.meta.env.DEV && (
-        <>
-          <Title title="桌面宠物" />
-          <div className="flex items-center gap-3">
-            <Switch
-              id="pet-enabled"
-              checked={petEnabled}
-              onCheckedChange={(checked) => {
-                setGlobalData({ petEnabled: checked })
-              }}
-            />
-            <Label htmlFor="pet-enabled" className="cursor-pointer text-sm font-medium">
-              在 B 站页面显示桌面宠物
-            </Label>
-          </div>
-          {petEnabled && (
-            <p className="text-xs text-muted-foreground ml-12">
-              小电视会在 B 站页面右下角出现，根据你的操作变换表情，连续整理还能解锁新皮肤哦~
-            </p>
-          )}
-        </>
+      <Title title="桌面宠物" />
+      <div className="flex items-center gap-3">
+        <Switch
+          id="pet-enabled"
+          checked={petEnabled}
+          onCheckedChange={(checked) => {
+            setGlobalData({ petEnabled: checked })
+          }}
+        />
+        <Label htmlFor="pet-enabled" className="cursor-pointer text-sm font-medium">
+          在 B 站页面显示桌面宠物
+        </Label>
+      </div>
+      {petEnabled && (
+        <p className="text-xs text-muted-foreground ml-12">
+          小电视会在 B 站页面右下角出现，根据你的操作变换表情，连续整理还能解锁新皮肤哦~
+        </p>
       )}
     </div>
   )

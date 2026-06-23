@@ -12,6 +12,7 @@ import {
 import { PetBubble } from './pet-bubble'
 import { PetContextMenu } from './pet-context-menu'
 import { PetDashboard } from './pet-dashboard'
+import { openOrganizePage } from './pet-actions'
 import { usePetState } from './use-pet-state'
 import { usePetDrag } from './use-pet-drag'
 import { PetMoodEngine } from './pet-mood-engine'
@@ -113,7 +114,19 @@ const DesktopPetInner: React.FC = () => {
             <PetDashboard visible={isHovered} growth={growth} />
           )}
 
-          {!isHovered && <PetBubble text={dialogue} />}
+          {!isHovered && (
+            <PetBubble
+              text={dialogue}
+              action={
+                mood === 'angry'
+                  ? {
+                      label: '去整理',
+                      onClick: openOrganizePage,
+                    }
+                  : undefined
+              }
+            />
+          )}
 
           {mood === 'happy' && <HappyStars />}
           {mood === 'sleep' && <SleepZzz />}

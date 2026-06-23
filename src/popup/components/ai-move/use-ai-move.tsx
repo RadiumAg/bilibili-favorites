@@ -14,6 +14,7 @@ import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
 import { batchProcess } from '@/utils/batch-process'
+import { notifyOrganizeDone } from '@/utils/pet-message'
 
 type AIMoveStatus = 'success' | 'failed' | 'skipped'
 
@@ -271,6 +272,10 @@ const useAIMove = () => {
             ? `以下视频因AI返回的收藏夹不在列表中，已归到默认收藏夹：\n${fallbackItems.join('\n')}`
             : undefined,
       })
+
+      if (successCount > 0) {
+        notifyOrganizeDone(successCount)
+      }
 
       await sleep(1000)
       isFinishedRef.current = true

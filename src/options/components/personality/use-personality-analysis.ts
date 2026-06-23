@@ -7,6 +7,7 @@ import { quickExtractKeywords } from '@/utils/keyword-extractor'
 import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
 import dbManager from '@/utils/indexed-db'
 import { parseAIJSON } from '@/utils/parse-ai-json'
+import { notifyAiAnalysisDone } from '@/utils/pet-message'
 
 /** MBTI 维度结果 */
 type DimensionResult = {
@@ -136,8 +137,8 @@ export const usePersonalityAnalysis = (
       const parsed = parsePersonalityJSON(fullContent)
       if (parsed) {
         setResult(parsed)
-        // 缓存结果
         await dbManager.set(CACHE_KEY, parsed)
+        notifyAiAnalysisDone(parsed.title)
       } else {
         setError('AI 返回格式异常，请重试')
       }

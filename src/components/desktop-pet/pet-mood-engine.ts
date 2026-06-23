@@ -7,6 +7,7 @@ import {
   PET_GROWTH_KEY,
   DEFAULT_GROWTH,
 } from './pet-config'
+import { fetchPetDefaultFavCount, getStoredDefaultFavoriteId } from '@/utils/pet-stats'
 
 type MoodCallback = (mood: PetMood, force?: boolean) => void
 
@@ -137,13 +138,13 @@ export class PetMoodEngine {
 
   /** 定期检查默认收藏夹是否堆积 > 100 */
   private startPileUpCheck() {
-    const check = () => {
+    const check = async () => {
       try {
-        chrome?.runtime?.sendMessage({ type: 'get_default_fav_count' }, (response: any) => {
-          if (response?.count !== undefined && response.count > PILE_UP_THRESHOLD) {
-            this.setMood('angry')
-          }
-        })
+        const defaultFavoriteId = await getStoredDefaultFavoriteId()
+        const count = await fetchPetDefaultFavCount(document.cookie, defaultFavoriteId)
+        if (count != null && count > PILE_UP_THRESHOLD) {
+          this.setMood('angry')
+        }
       } catch {
         // ignore
       }
@@ -221,6 +222,9 @@ export class PetMoodEngine {
             break
           case 'ai_analysis_done':
             this.setMood('smart', true)
+            if (message?.summary) {
+              // 保留扩展点：后续可在气泡展示 AI 摘要
+            }
             break
         }
       })

@@ -15,7 +15,7 @@ const useGlobalConfig = create<DataContextType>()(
           configMode: 'free',
         },
         defaultFavoriteId: undefined,
-        petEnabled: false,
+        petEnabled: true,
         setGlobalData: (data: Partial<DataContextType>) => {
           return set(data)
         },

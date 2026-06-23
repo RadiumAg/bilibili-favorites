@@ -1,6 +1,7 @@
 import React from 'react'
 import type { PetGrowthData } from './pet-config'
 import { SKIN_COLORS, STREAK_GOAL } from './pet-config'
+import { PetMessageEnum } from '@/utils/pet-message'
 
 interface PetDashboardProps {
   visible: boolean
@@ -14,7 +15,7 @@ const PetDashboard: React.FC<PetDashboardProps> = (props) => {
   React.useEffect(() => {
     if (!visible) return
     try {
-      chrome?.runtime?.sendMessage({ type: 'get_fav_stats' }, (response: any) => {
+      chrome?.runtime?.sendMessage({ type: PetMessageEnum.getFavStats }, (response: any) => {
         if (response?.total !== undefined) {
           setFavStats({ total: response.total, defaultCount: response.defaultCount ?? 0 })
         }

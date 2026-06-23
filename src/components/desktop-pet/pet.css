@@ -96,6 +96,27 @@
   pointer-events: none;
   animation: bili-pet-bubble-in 0.2s ease-out;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bili-pet-bubble-action {
+  pointer-events: auto;
+  padding: 2px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #00A1D6;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bili-pet-bubble-action:hover {
+  background: #0082AE;
 }
 
 .bili-pet-bubble::after {

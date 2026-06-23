@@ -7,8 +7,10 @@ import {
   streamAIRequest,
 } from './utils'
 import { callAIGateAI, checkAIGateQuota } from './ai-gate'
+import { setupPetMessageHandlers } from './pet'
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+setupPetMessageHandlers()
 
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (message?.type === 'open_sidepanel') {
