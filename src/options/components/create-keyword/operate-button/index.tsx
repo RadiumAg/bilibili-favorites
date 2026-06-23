@@ -21,16 +21,40 @@ const OperateButton: React.FC = () => {
             </p>
             {progress.currentTitle && (
               <p
-                className="text-sm text-gray-500 mb-1 max-w-xs truncate"
+                className="text-sm text-[#61666D] mb-1 max-w-xs truncate"
                 title={progress.currentTitle}
               >
-                {progress.currentTitle}
+                收藏夹：{progress.currentTitle}
+              </p>
+            )}
+            {progress.phase === 'loading' && progress.videoTotal > 0 && (
+              <p className="text-sm text-[#61666D] mb-1">
+                正在加载视频 {progress.videoLoaded}/{progress.videoTotal}
+              </p>
+            )}
+            {progress.phase === 'analyzing' && progress.videoTotal > 0 && (
+              <p className="text-sm text-[#61666D] mb-1">
+                正在分析 {progress.videoTotal} 个视频标题
+              </p>
+            )}
+            {progress.currentVideoTitle && (
+              <p
+                className="text-xs text-[#9499A0] mb-1 max-w-xs truncate"
+                title={progress.currentVideoTitle}
+              >
+                当前视频：{progress.currentVideoTitle}
               </p>
             )}
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2 mb-1">
               <div
                 className="bg-b-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                style={{
+                  width: `${
+                    progress.phase === 'loading' && progress.videoTotal > 0
+                      ? (progress.videoLoaded / progress.videoTotal) * 100
+                      : (progress.current / progress.total) * 100
+                  }%`,
+                }}
               />
             </div>
           </>

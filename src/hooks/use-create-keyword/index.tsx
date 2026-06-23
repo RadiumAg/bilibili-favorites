@@ -14,9 +14,30 @@ import { useMemoizedFn } from 'ahooks'
 export type ExtractionMode = 'local' | 'ai' | 'manual'
 
 export type CreateKeywordProgress = {
+  /** 当前处理的收藏夹序号 */
   current: number
+  /** 收藏夹总数 */
   total: number
+  /** 当前收藏夹名称 */
   currentTitle: string
+  /** 已加载/分析的视频数量 */
+  videoLoaded: number
+  /** 当前收藏夹视频总数 */
+  videoTotal: number
+  /** 当前正在处理的视频标题 */
+  currentVideoTitle: string
+  /** 当前阶段：加载视频列表 / AI或本地分析 */
+  phase: 'idle' | 'loading' | 'analyzing'
+}
+
+const INITIAL_PROGRESS: CreateKeywordProgress = {
+  current: 0,
+  total: 0,
+  currentTitle: '',
+  videoLoaded: 0,
+  videoTotal: 0,
+  currentVideoTitle: '',
+  phase: 'idle',
 }
 
 type UseCreateKeywordProps = {
@@ -38,145 +59,194 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   )
 
   const [isLoading, setIsLoading] = React.useState(false)
-  const [progress, setProgress] = React.useState<CreateKeywordProgress>({
-    current: 0,
-    total: 0,
-    currentTitle: '',
-  })
+  const [progress, setProgress] = React.useState<CreateKeywordProgress>(INITIAL_PROGRESS)
   const [currentMode, setCurrentMode] = React.useState<ExtractionMode>(defaultMode)
   const abortControllerRef = React.useRef<AbortController | null>(null)
+
+  const fetchMediasWithProgress = useMemoizedFn(
+    async (
+      favKey: string,
+      folderProgress: Pick<CreateKeywordProgress, 'current' | 'total' | 'currentTitle'>,
+    ) => {
+      const mediaCount = dataProvideData.favoriteData?.find(
+        (f) => f.id === Number(favKey),
+      )?.media_count
+
+      setProgress((prev) => ({
+        ...prev,
+        ...folderProgress,
+        videoLoaded: 0,
+        videoTotal: mediaCount ?? 0,
+        currentVideoTitle: '',
+        phase: 'loading',
+      }))
+
+      const allVideos = await fetchAllFavoriteMedias(favKey, {
+        mediaCount,
+        onProgress: ({ loaded, total, currentVideoTitle }) => {
+          setProgress((prev) => ({
+            ...prev,
+            videoLoaded: loaded,
+            videoTotal: total ?? prev.videoTotal,
+            currentVideoTitle: currentVideoTitle ?? '',
+            phase: 'loading',
+          }))
+        },
+      })
+
+      setProgress((prev) => ({
+        ...prev,
+        videoLoaded: allVideos.length,
+        videoTotal: allVideos.length || prev.videoTotal,
+        currentVideoTitle: '',
+        phase: 'analyzing',
+      }))
+
+      return allVideos
+    },
+  )
 
   /**
    * 使用本地算法提取关键词
    */
-  const extractWithLocal = useMemoizedFn(async (favKey: string) => {
-    const mediaCount = dataProvideData.favoriteData?.find(
-      (f) => f.id === Number(favKey),
-    )?.media_count
-    const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey, { mediaCount })
-    const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
+  const extractWithLocal = useMemoizedFn(
+    async (
+      favKey: string,
+      folderProgress: Pick<CreateKeywordProgress, 'current' | 'total' | 'currentTitle'>,
+    ) => {
+      const allDefaultFavoriteVideo = await fetchMediasWithProgress(favKey, folderProgress)
+      const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
 
-    if (titleArray == null || titleArray.length === 0) {
-      throw new Error('没有找到视频标题')
-    }
+      if (titleArray == null || titleArray.length === 0) {
+        throw new Error('没有找到视频标题')
+      }
 
-    // 使用本地 TF-IDF 算法提取关键词
-    const keywords = quickExtractKeywords(titleArray, 10)
+      // 使用本地 TF-IDF 算法提取关键词
+      const keywords = quickExtractKeywords(titleArray, 10)
 
-    if (keywords.length === 0) {
-      throw new Error('未能提取到关键词')
-    }
-    const currentData = dataProvideData.getGlobalData()
-    const existingKeywordIndex = currentData.keyword.findIndex(
-      (item) => item.favoriteDataId === Number(favKey),
-    )
-    const newKeywordValues = keywords.map((keyword, index) => ({
-      id: `${favKey}-${index}-${Date.now()}`,
-      value: keyword,
-    }))
-    if (existingKeywordIndex !== -1) {
-      currentData.keyword[existingKeywordIndex].value = newKeywordValues
-    } else {
-      currentData.keyword.push({
-        favoriteDataId: Number(favKey),
-        value: newKeywordValues,
-      })
-    }
+      if (keywords.length === 0) {
+        throw new Error('未能提取到关键词')
+      }
+      const currentData = dataProvideData.getGlobalData()
+      const existingKeywordIndex = currentData.keyword.findIndex(
+        (item) => item.favoriteDataId === Number(favKey),
+      )
+      const newKeywordValues = keywords.map((keyword, index) => ({
+        id: `${favKey}-${index}-${Date.now()}`,
+        value: keyword,
+      }))
+      if (existingKeywordIndex !== -1) {
+        currentData.keyword[existingKeywordIndex].value = newKeywordValues
+      } else {
+        currentData.keyword.push({
+          favoriteDataId: Number(favKey),
+          value: newKeywordValues,
+        })
+      }
 
-    dataProvideData.setGlobalData({ keyword: [...currentData.keyword] })
+      dataProvideData.setGlobalData({ keyword: [...currentData.keyword] })
 
-    return keywords
-  })
+      return keywords
+    },
+  )
 
   /**
    * 使用 AI 提取关键词
    * 根据 configMode 判断使用内置免费 AI 还是自定义模型
    */
-  const extractWithAI = useMemoizedFn(async (favKey: string) => {
-    const aiConfig = dataProvideData.aiConfig || {}
+  const extractWithAI = useMemoizedFn(
+    async (
+      favKey: string,
+      folderProgress: Pick<CreateKeywordProgress, 'current' | 'total' | 'currentTitle'>,
+    ) => {
+      const aiConfig = dataProvideData.aiConfig || {}
 
-    const mediaCount = dataProvideData.favoriteData?.find(
-      (f) => f.id === Number(favKey),
-    )?.media_count
-    const allDefaultFavoriteVideo = await fetchAllFavoriteMedias(favKey, { mediaCount })
-    const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
+      const allDefaultFavoriteVideo = await fetchMediasWithProgress(favKey, folderProgress)
+      const titleArray = allDefaultFavoriteVideo?.map((item) => item.title)
 
-    if (titleArray == null || titleArray.length === 0) {
-      throw new Error('没有找到视频标题')
-    }
+      if (titleArray == null || titleArray.length === 0) {
+        throw new Error('没有找到视频标题')
+      }
 
-    // 根据 configMode 判断使用自定义还是内置 AI
-    const useCustomAI = aiConfig.configMode === 'custom'
+      // 根据 configMode 判断使用自定义还是内置 AI
+      const useCustomAI = aiConfig.configMode === 'custom'
 
-    // 使用自定义模型
-    const gptResult = await fetchChatGpt(
-      titleArray,
-      {
-        baseURL: aiConfig.baseUrl,
-        apiKey: aiConfig.key!,
-        model: aiConfig.model!,
-        extraParams: aiConfig?.extraParams,
-      },
-      useCustomAI,
-    )
-    const reader = gptResult.toReadableStream().getReader()
-    const adapter = createStreamAdapter(aiConfig.adapter)
-    const parser = createAIStreamParser({
-      favKey,
-      getGlobalData: () => dataProvideData.getGlobalData(),
-      setGlobalData: (data) => dataProvideData.setGlobalData(data),
-      onKeywordExtracted: (keyword) => {
-        console.log('[DEBUG] AI extracted keyword:', keyword)
-      },
-      adapter,
-    })
+      // 使用自定义模型
+      const gptResult = await fetchChatGpt(
+        titleArray,
+        {
+          baseURL: aiConfig.baseUrl,
+          apiKey: aiConfig.key!,
+          model: aiConfig.model!,
+          extraParams: aiConfig?.extraParams,
+        },
+        useCustomAI,
+      )
+      const reader = gptResult.toReadableStream().getReader()
+      const adapter = createStreamAdapter(aiConfig.adapter)
+      const parser = createAIStreamParser({
+        favKey,
+        getGlobalData: () => dataProvideData.getGlobalData(),
+        setGlobalData: (data) => dataProvideData.setGlobalData(data),
+        onKeywordExtracted: (keyword) => {
+          console.log('[DEBUG] AI extracted keyword:', keyword)
+        },
+        adapter,
+      })
 
-    try {
-      while (true) {
-        if (abortControllerRef.current?.signal.aborted) {
-          await reader.cancel()
-          throw new DOMException('用户取消操作', 'AbortError')
+      try {
+        while (true) {
+          if (abortControllerRef.current?.signal.aborted) {
+            await reader.cancel()
+            throw new DOMException('用户取消操作', 'AbortError')
+          }
+
+          const { value, done } = await reader.read()
+
+          if (done) {
+            parser.flush()
+            break
+          }
+
+          parser.processChunk(value)
         }
-
-        const { value, done } = await reader.read()
-
-        if (done) {
-          parser.flush()
-          break
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          throw error
         }
-
-        parser.processChunk(value)
+        if (error instanceof AIError) {
+          throw new AIError(`AI 提取关键词失败: ${error.message}`, error.detail)
+        }
+        if (error instanceof Error) {
+          throw new AIError(`AI 提取关键词失败: ${error.message}`)
+        }
+        throw new AIError('AI 提取关键词失败')
       }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        throw error
-      }
-      if (error instanceof AIError) {
-        throw new AIError(`AI 提取关键词失败: ${error.message}`, error.detail)
-      }
-      if (error instanceof Error) {
-        throw new AIError(`AI 提取关键词失败: ${error.message}`)
-      }
-      throw new AIError('AI 提取关键词失败')
-    }
-  })
+    },
+  )
 
   /**
    * 处理单个收藏夹
    */
-  const processSingleFavorite = useMemoizedFn(async (favKey: string, mode: ExtractionMode) => {
-    switch (mode) {
-      case 'local':
-        return await extractWithLocal(favKey)
-      case 'ai':
-        return await extractWithAI(favKey)
-      case 'manual':
-        // 手动模式不自动提取，由用户手动输入
-        return []
-      default:
-        throw new Error(`不支持的提取模式: ${mode}`)
-    }
-  })
+  const processSingleFavorite = useMemoizedFn(
+    async (
+      favKey: string,
+      mode: ExtractionMode,
+      folderProgress: Pick<CreateKeywordProgress, 'current' | 'total' | 'currentTitle'>,
+    ) => {
+      switch (mode) {
+        case 'local':
+          return await extractWithLocal(favKey, folderProgress)
+        case 'ai':
+          return await extractWithAI(favKey, folderProgress)
+        case 'manual':
+          // 手动模式不自动提取，由用户手动输入
+          return []
+        default:
+          throw new Error(`不支持的提取模式: ${mode}`)
+      }
+    },
+  )
 
   /**
    * 创建关键词
@@ -184,7 +254,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   const handleCreate = useMemoizedFn(
     async (type: 'select' | 'all', mode: ExtractionMode = currentMode) => {
       setIsLoading(true)
-      setProgress({ current: 0, total: 0, currentTitle: '' })
+      setProgress({ ...INITIAL_PROGRESS, phase: 'loading' })
       abortControllerRef.current = new AbortController()
 
       try {
@@ -202,13 +272,24 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
             const activeFav = dataProvideData.favoriteData?.find(
               (f) => f.id === dataProvideData.activeKey,
             )
-            setProgress({
+            const folderProgress = {
               current: 1,
               total: 1,
               currentTitle: activeFav?.title ?? '',
+            }
+            setProgress({
+              ...folderProgress,
+              videoLoaded: 0,
+              videoTotal: activeFav?.media_count ?? 0,
+              currentVideoTitle: '',
+              phase: 'loading',
             })
 
-            const keywords = await processSingleFavorite(dataProvideData.activeKey.toString(), mode)
+            const keywords = await processSingleFavorite(
+              dataProvideData.activeKey.toString(),
+              mode,
+              folderProgress,
+            )
 
             if (mode === 'local' && keywords && keywords.length > 0) {
               toast({
@@ -238,16 +319,24 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
               const fav = dataProvideData.favoriteData[i]
               if (abortControllerRef.current.signal?.aborted) return
 
-              setProgress({
+              const folderProgress = {
                 current: i + 1,
                 total,
                 currentTitle: fav.title,
+              }
+
+              setProgress({
+                ...folderProgress,
+                videoLoaded: 0,
+                videoTotal: fav.media_count ?? 0,
+                currentVideoTitle: '',
+                phase: 'loading',
               })
 
               try {
                 const activeKey = fav.id
                 dataProvideData.setGlobalData({ activeKey })
-                await processSingleFavorite(activeKey.toString(), mode)
+                await processSingleFavorite(activeKey.toString(), mode, folderProgress)
                 successCount++
               } catch (error) {
                 console.error(`处理收藏夹 ${fav.id} 失败:`, error)
@@ -297,7 +386,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       } finally {
         abortControllerRef.current = null
         setIsLoading(false)
-        setProgress({ current: 0, total: 0, currentTitle: '' })
+        setProgress(INITIAL_PROGRESS)
       }
     },
   )
