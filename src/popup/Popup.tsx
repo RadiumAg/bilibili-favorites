@@ -31,10 +31,10 @@ const Popup: React.FC<PopupProps> = (props) => {
   return (
     <main
       className={`p-3 bg-b-primary bg-opacity-15 flex flex-col ${
-        isSidePanel ? 'w-full min-h-screen' : 'w-96 min-h-96'
+        isSidePanel ? 'w-full h-screen overflow-hidden' : 'w-96 min-h-96'
       }`}
     >
-      <div className="flex-grow flex flex-col">
+      <div className="flex flex-col flex-1 overflow-hidden">
         <h3 className="text-lg font-bold mb-2 text-b-text-primary flex justify-between">
           收藏夹
           <div className="flex items-center gap-1">
@@ -88,7 +88,10 @@ const Popup: React.FC<PopupProps> = (props) => {
         </div>
 
         <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">标签</h3>
-        <div className={cn(isSidePanel ? 'flex flex-col flex-1' : undefined)} data-tour="keywords">
+        <div
+          className={cn(isSidePanel ? 'flex flex-col flex-1 overflow-hidden' : undefined)}
+          data-tour="keywords"
+        >
           <Keyword className={cn(isSidePanel ? 'flex-1' : undefined)} />
         </div>
       </div>

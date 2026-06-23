@@ -64,7 +64,7 @@ const useEditKeyword = () => {
       let targetkeyword = dataContext.keyword?.find(
         (key) => key.favoriteDataId === dataContext.activeKey,
       )
-      if(targetkeyword?.value == null) return
+      if (targetkeyword?.value == null) return
 
       targetkeyword.value = [...targetkeyword?.value.slice(0, -1)]
       dataContext.setGlobalData({ keyword: [...dataContext.keyword] })

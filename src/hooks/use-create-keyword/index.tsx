@@ -13,6 +13,12 @@ import { useMemoizedFn } from 'ahooks'
 
 export type ExtractionMode = 'local' | 'ai' | 'manual'
 
+export type CreateKeywordProgress = {
+  current: number
+  total: number
+  currentTitle: string
+}
+
 type UseCreateKeywordProps = {
   mode?: ExtractionMode
 }
@@ -32,6 +38,11 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   )
 
   const [isLoading, setIsLoading] = React.useState(false)
+  const [progress, setProgress] = React.useState<CreateKeywordProgress>({
+    current: 0,
+    total: 0,
+    currentTitle: '',
+  })
   const [currentMode, setCurrentMode] = React.useState<ExtractionMode>(defaultMode)
   const abortControllerRef = React.useRef<AbortController | null>(null)
 
@@ -173,6 +184,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
   const handleCreate = useMemoizedFn(
     async (type: 'select' | 'all', mode: ExtractionMode = currentMode) => {
       setIsLoading(true)
+      setProgress({ current: 0, total: 0, currentTitle: '' })
       abortControllerRef.current = new AbortController()
 
       try {
@@ -186,6 +198,15 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
               })
               return
             }
+
+            const activeFav = dataProvideData.favoriteData?.find(
+              (f) => f.id === dataProvideData.activeKey,
+            )
+            setProgress({
+              current: 1,
+              total: 1,
+              currentTitle: activeFav?.title ?? '',
+            })
 
             const keywords = await processSingleFavorite(dataProvideData.activeKey.toString(), mode)
 
@@ -211,9 +232,17 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
             // 批量处理时记录成功和失败
             let successCount = 0
             let failCount = 0
+            const total = dataProvideData.favoriteData.length
 
-            for (const fav of dataProvideData.favoriteData) {
+            for (let i = 0; i < total; i++) {
+              const fav = dataProvideData.favoriteData[i]
               if (abortControllerRef.current.signal?.aborted) return
+
+              setProgress({
+                current: i + 1,
+                total,
+                currentTitle: fav.title,
+              })
 
               try {
                 const activeKey = fav.id
@@ -268,6 +297,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       } finally {
         abortControllerRef.current = null
         setIsLoading(false)
+        setProgress({ current: 0, total: 0, currentTitle: '' })
       }
     },
   )
@@ -280,6 +310,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
 
   return {
     isLoading,
+    progress,
     currentMode,
     extractWithLocal,
     extractWithAI,
