@@ -11,15 +11,25 @@ type IndexedDBPersistedKeys = (typeof INDEXEDDB_PERSISTED_KEYS)[number]
 
 const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
   return (set, get, api) => {
-    const savedSetState = api.setState
-
-    // 从 IndexedDB 恢复数据
+    // 从 IndexedDB 恢复数据（含一次性迁移）
     const hydrate = async () => {
       try {
         const data: Record<string, any> = {}
 
         for (const key of INDEXEDDB_PERSISTED_KEYS) {
-          const value = await dbManager.getTag(key)
+          let value = await dbManager.getTag(key)
+
+          // 一次性迁移：IndexedDB 中没有时，尝试从 chrome.storage.local 旧位置读取
+          if (value === null) {
+            const legacyData = await chrome.storage.local.get(key)
+            if (legacyData[key] !== undefined) {
+              value = legacyData[key]
+              await dbManager.setTag(key, value)
+              // 迁移完成后清理旧存储位置，避免重复迁移
+              await chrome.storage.local.remove(key)
+            }
+          }
+
           if (value !== null) {
             data[key] = value
           }
@@ -56,6 +66,10 @@ const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
       get,
       api,
     )
+
+    // 在内层 middleware（如 chromeStorageMiddleware）完成 api.setState 包装后再捕获，
+    // 确保 setState 调用能触发所有层的持久化逻辑，形成链式调用。
+    const savedSetState = api.setState
 
     api.getInitialState = () => {
       return configResult

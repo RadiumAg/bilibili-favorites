@@ -8,8 +8,8 @@ type CacheData = {
   timestamp: number
 }
 
-const DB_NAME = 'bilibili-favorites-db'
-const DB_VERSION = 2
+export const DB_NAME = 'bilibili-favorites-db'
+export const DB_VERSION = 2
 const STORE_NAME = 'analysis-cache'
 const TAG_STORE_NAME = 'tag-storage'
 

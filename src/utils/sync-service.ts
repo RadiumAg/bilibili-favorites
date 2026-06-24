@@ -3,7 +3,7 @@
  */
 
 import { type WebDAVConfig, connect, put, get, propfind, ensureDirectory } from './webdav'
-import dbManager from './indexed-db'
+import dbManager, { DB_NAME, DB_VERSION } from './indexed-db'
 
 /** 同步状态 */
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
@@ -288,9 +288,9 @@ async function downloadIndexedDBData(config: WebDAVConfig): Promise<void> {
  * 获取 IndexedDB 中所有缓存 key
  */
 function getAllIndexedDBKeys(): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('bilibili-favorites-db', 1)
-    request.onerror = () => reject(request.error)
+  return new Promise((resolve) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION)
+    request.onerror = () => resolve([])
     request.onsuccess = () => {
       const db = request.result
       try {

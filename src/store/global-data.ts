@@ -6,8 +6,8 @@ import { indexedDBStorageMiddleware } from './indexeddb-storage-middleware'
 
 const useGlobalConfig = create<DataContextType>()(
   immer(
-    indexedDBStorageMiddleware(
-      chromeStorageMiddleware((set, get) => {
+    chromeStorageMiddleware(
+      indexedDBStorageMiddleware((set, get) => {
         return {
           keyword: [],
           favoriteData: [],

@@ -19,8 +19,6 @@ type PersistedKeys = (typeof PERSISTED_KEYS)[number]
 
 const chromeStorageMiddleware: ChromeStorageImpl = (config) => {
   return (set, get, api) => {
-    const savedSetState = api.setState
-
     // 从 chrome.storage 恢复数据
     const hydrate = () => {
       chrome.storage.local.get(PERSISTED_KEYS as unknown as string[]).then((data) => {
@@ -58,6 +56,9 @@ const chromeStorageMiddleware: ChromeStorageImpl = (config) => {
       get,
       api,
     )
+
+    // 在内层 middleware 完成 api.setState 包装后再捕获，确保 setState 调用能触发所有层的持久化逻辑。
+    const savedSetState = api.setState
 
     api.getInitialState = () => {
       return configResult
