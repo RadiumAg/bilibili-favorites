@@ -7,11 +7,11 @@ import {
   FireworkParticles,
   AngerMark,
   SmartGlow,
-  EvolveSpark,
 } from './pet-sprites'
 import { PetBubble } from './pet-bubble'
 import { PetContextMenu } from './pet-context-menu'
 import { PetDashboard } from './pet-dashboard'
+import { openOrganizePage } from './pet-actions'
 import { usePetState } from './use-pet-state'
 import { usePetDrag } from './use-pet-drag'
 import { PetMoodEngine } from './pet-mood-engine'
@@ -24,7 +24,6 @@ const DesktopPetInner: React.FC = () => {
   const { mood, dialogue, setMood } = usePetState()
   const { position, isDragging } = usePetDrag(containerRef)
   const [growth, setGrowth] = React.useState<PetGrowthData>({ ...DEFAULT_GROWTH })
-  const [showEvolveSpark, setShowEvolveSpark] = React.useState(false)
   const [isHovered, setIsHovered] = React.useState(false)
   const [contextMenu, setContextMenu] = React.useState<{ visible: boolean; x: number; y: number }>({
     visible: false,
@@ -33,15 +32,10 @@ const DesktopPetInner: React.FC = () => {
   })
   const engineRef = React.useRef<PetMoodEngine | null>(null)
   const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hideTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleGrowthChange = useMemoizedFn((newGrowth: PetGrowthData) => {
-    setGrowth((prev) => {
-      if (newGrowth.skinLevel > prev.skinLevel) {
-        setShowEvolveSpark(true)
-        setTimeout(() => setShowEvolveSpark(false), 1500)
-      }
-      return newGrowth
-    })
+    setGrowth(newGrowth)
   })
 
   React.useEffect(() => {
@@ -56,9 +50,16 @@ const DesktopPetInner: React.FC = () => {
     if (isDragging) return
     if (mood === 'sleep') {
       engineRef.current?.triggerWakeUp()
-    } else {
-      setMood('happy')
+      return
     }
+
+    engineRef.current?.cycleSkin()
+    setMood('happy')
+  })
+
+  const handleChangeSkin = useMemoizedFn(() => {
+    engineRef.current?.cycleSkin()
+    setMood('happy')
   })
 
   const handleContextMenu = useMemoizedFn((event: React.MouseEvent) => {
@@ -74,6 +75,10 @@ const DesktopPetInner: React.FC = () => {
 
   const handleMouseEnter = useMemoizedFn(() => {
     if (contextMenu.visible) return
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current)
+      hideTimerRef.current = null
+    }
     hoverTimerRef.current = setTimeout(() => setIsHovered(true), 500)
   })
 
@@ -82,12 +87,13 @@ const DesktopPetInner: React.FC = () => {
       clearTimeout(hoverTimerRef.current)
       hoverTimerRef.current = null
     }
-    setIsHovered(false)
+    hideTimerRef.current = setTimeout(() => setIsHovered(false), 250)
   })
 
   React.useEffect(() => {
     return () => {
       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
     }
   }, [])
 
@@ -110,19 +116,37 @@ const DesktopPetInner: React.FC = () => {
       >
         <div className="relative bili-pet-body">
           {isHovered && !contextMenu.visible && (
-            <PetDashboard visible={isHovered} growth={growth} />
+            <PetDashboard
+              visible={isHovered}
+              growth={growth}
+              onChangeSkin={handleChangeSkin}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
           )}
 
-          {!isHovered && <PetBubble text={dialogue} />}
+          {!isHovered && (
+            <PetBubble
+              text={dialogue}
+              action={
+                mood === 'angry'
+                  ? {
+                      label: '去整理',
+                      onClick: openOrganizePage,
+                    }
+                  : undefined
+              }
+            />
+          )}
 
+          {mood === 'gift' && <HappyStars />}
           {mood === 'happy' && <HappyStars />}
           {mood === 'sleep' && <SleepZzz />}
           {mood === 'angry' && <AngerMark />}
           {mood === 'dancing' && <FireworkParticles />}
           {mood === 'smart' && <SmartGlow />}
-          {showEvolveSpark && <EvolveSpark />}
 
-          <PetSprite mood={mood} skinLevel={growth.skinLevel} />
+          <PetSprite mood={mood} skinLevel={growth.activeSkinLevel} />
         </div>
       </div>
 

@@ -2,926 +2,832 @@
 
 <cite>
 **本文档引用的文件**
-- [button.tsx](file://src/components/ui/button.tsx)
-- [card.tsx](file://src/components/ui/card.tsx)
-- [form.tsx](file://src/components/ui/form.tsx)
-- [input.tsx](file://src/components/ui/input.tsx)
-- [select.tsx](file://src/components/ui/select.tsx)
-- [tabs.tsx](file://src/components/ui/tabs.tsx)
-- [toast.tsx](file://src/components/ui/toast.tsx)
-- [utils.ts](file://src/lib/utils.ts)
-- [components.json](file://components.json)
-- [index.css](file://src/options/index.css)
-- [Options.tsx](file://src/options/Options.tsx)
-- [Popup.tsx](file://src/popup/Popup.tsx)
-- [global-data.ts](file://src/store/global-data.ts)
+- [src/lib/utils.ts](file://src/lib/utils.ts)
 - [tailwind.config.js](file://tailwind.config.js)
-- [package.json](file://package.json)
+- [components.json](file://components.json)
+- [src/options/index.css](file://src/options/index.css)
+- [src/popup/index.css](file://src/popup/index.css)
+- [src/popup/index.tsx](file://src/popup/index.tsx)
+- [src/popup/Popup.tsx](file://src/popup/Popup.tsx)
+- [src/components/ui/button.tsx](file://src/components/ui/button.tsx)
+- [src/components/ui/card.tsx](file://src/components/ui/card.tsx)
+- [src/components/ui/form.tsx](file://src/components/ui/form.tsx)
+- [src/components/ui/input.tsx](file://src/components/ui/input.tsx)
+- [src/components/ui/select.tsx](file://src/components/ui/select.tsx)
+- [src/components/ui/badge.tsx](file://src/components/ui/badge.tsx)
+- [src/components/ui/progress.tsx](file://src/components/ui/progress.tsx)
+- [src/components/ui/toast.tsx](file://src/components/ui/toast.tsx)
+- [src/components/ui/toaster.tsx](file://src/components/ui/toaster.tsx)
+- [src/components/ui/popover.tsx](file://src/components/ui/popover.tsx)
+- [.codebuddy/skills/bilibili-ui-design/SKILL.md](file://.codebuddy/skills/bilibili-ui-design/SKILL.md)
 </cite>
 
+## 更新摘要
+**所做更改**
+- 新增popup样式系统章节，详细介绍B站风格的popup界面设计
+- 更新颜色方案章节，整合B站品牌色彩系统和新的CSS变量
+- 新增字体系统章节，说明中英文字体混排和适配方案
+- 更新交互反馈章节，增加微交互和动画效果说明
+- 新增滚动条样式规范，提供多种滚动条定制方案
+- 更新popup组件系统，分析实际的弹窗交互实现
+
 ## 目录
-1. [项目概述](#项目概述)
-2. [设计系统架构](#设计系统架构)
-3. [核心组件库](#核心组件库)
-4. [视觉设计系统](#视觉设计系统)
-5. [交互设计规范](#交互设计规范)
-6. [状态管理设计](#状态管理设计)
-7. [响应式设计策略](#响应式设计策略)
-8. [可访问性设计](#可访问性设计)
-9. [性能优化策略](#性能优化策略)
-10. [总结与最佳实践](#总结与最佳实践)
+1. [简介](#简介)
+2. [项目结构](#项目结构)
+3. [核心组件](#核心组件)
+4. [架构概览](#架构概览)
+5. [详细组件分析](#详细组件分析)
+6. [依赖关系分析](#依赖关系分析)
+7. [性能考虑](#性能考虑)
+8. [故障排除指南](#故障排除指南)
+9. [结论](#结论)
 
-## 项目概述
+## 简介
 
-本项目是一个基于React开发的浏览器扩展UI/UX设计系统，专注于B站收藏夹管理功能。该设计系统采用现代化的设计理念，结合了原子化设计原则、组件化架构和响应式布局，为用户提供直观、高效的操作体验。
+这是一个基于现代前端技术栈构建的专业级浏览器扩展UI/UX设计系统。该系统采用React + TypeScript + TailwindCSS + shadcn/ui的组合，为B站收藏夹管理扩展提供了统一、可维护且具有良好用户体验的设计体系。
 
-### 设计系统特点
+设计系统的核心特色包括：
+- 基于CSS变量的主题系统，支持明暗模式切换
+- 组件化的UI原子设计，确保视觉一致性
+- 响应式设计和无障碍访问支持
+- 动画和过渡效果增强用户交互体验
+- 渐进式Web应用(PWA)特性
+- **新增** B站品牌风格的popup界面设计系统
 
-- **原子化设计原则**：采用原子类设计，通过组合基础样式构建复杂界面
-- **主题化设计**：支持明暗主题切换，提供丰富的色彩体系
-- **组件化架构**：模块化的组件设计，便于维护和扩展
-- **响应式布局**：适配不同屏幕尺寸和浏览器窗口大小
-- **无障碍设计**：遵循WCAG标准，确保良好的可访问性
+## 项目结构
 
-## 设计系统架构
-
-### 整体架构图
+该项目采用了模块化的设计系统架构，主要分为以下几个层次：
 
 ```mermaid
 graph TB
-subgraph "用户界面层"
-Popup[弹窗界面]
-Options[选项页面]
-SidePanel[侧边栏面板]
+subgraph "设计系统架构"
+A[主题配置层] --> B[工具函数层]
+B --> C[基础组件层]
+C --> D[业务组件层]
+D --> E[页面组件层]
 end
-subgraph "组件库层"
-UIComponents[UI组件库]
-FormComponents[表单组件]
-DataComponents[数据组件]
+subgraph "核心配置"
+F[tailwind.config.js]
+G[components.json]
+H[src/lib/utils.ts]
 end
-subgraph "设计系统层"
-ThemeSystem[主题系统]
-StyleSystem[样式系统]
-AnimationSystem[动画系统]
+subgraph "样式系统"
+I[src/options/index.css]
+J[src/popup/index.css]
+K[CSS变量定义]
+L[渐变背景]
+M[B站品牌风格]
 end
-subgraph "状态管理层"
-Zustand[Zustand状态管理]
-ChromeStorage[Chrome存储]
-DataContext[数据上下文]
-end
-Popup --> UIComponents
-Options --> UIComponents
-SidePanel --> UIComponents
-UIComponents --> ThemeSystem
-FormComponents --> ThemeSystem
-DataComponents --> ThemeSystem
-ThemeSystem --> StyleSystem
-StyleSystem --> AnimationSystem
-UIComponents --> Zustand
-FormComponents --> Zustand
-DataComponents --> Zustand
-Zustand --> ChromeStorage
-DataContext --> ChromeStorage
+A --> F
+B --> H
+C --> I
+C --> J
+D --> K
+E --> L
+E --> M
 ```
 
 **图表来源**
-- [Popup.tsx:14-76](file://src/popup/Popup.tsx#L14-L76)
-- [Options.tsx:12-87](file://src/options/Options.tsx#L12-L87)
-- [global-data.ts:6-24](file://src/store/global-data.ts#L6-L24)
+- [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
+- [components.json:1-22](file://components.json#L1-L22)
+- [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
+- [src/popup/index.css:1-86](file://src/popup/index.css#L1-L86)
 
-### 组件层次结构
+**章节来源**
+- [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
+- [components.json:1-22](file://components.json#L1-L22)
+- [src/options/index.css:1-83](file://src/options/index.css#L1-L83)
+- [src/popup/index.css:1-86](file://src/popup/index.css#L1-L86)
+
+## 核心组件
+
+### 主题系统与颜色方案
+
+设计系统采用基于CSS变量的主题架构，支持明暗两种模式，并集成了B站品牌色彩系统：
 
 ```mermaid
 classDiagram
-class UIButton {
-+variant : string
-+size : string
-+asChild : boolean
-+onClick() : void
-+render() : JSX.Element
+class ThemeSystem {
++colors : ColorPalette
++spacing : SpacingScale
++typography : TypographyScale
++shadows : ShadowEffects
++radii : BorderRadiusScale
++toggleTheme() void
++applyColors() void
 }
-class UICard {
-+header : CardHeader
-+content : CardContent
-+footer : CardFooter
-+title : CardTitle
-+description : CardDescription
+class ColorPalette {
++primary : HSLColor
++secondary : HSLColor
++background : HSLColor
++foreground : HSLColor
++destructive : HSLColor
++success : HSLColor
++warning : HSLColor
++b-primary : HexColor
++b-secondary : HexColor
++b-accent : HexColor
++b-text-primary : HexColor
 }
-class UIForm {
-+formProvider : FormProvider
-+formField : FormField
-+formLabel : FormLabel
-+formControl : FormControl
-+formMessage : FormMessage
+class SpacingScale {
++unit : number
++xs : string
++sm : string
++md : string
++lg : string
++xl : string
 }
-class UITabs {
-+tabsRoot : TabsPrimitive.Root
-+tabsList : TabsPrimitive.List
-+tabsTrigger : TabsPrimitive.Trigger
-+tabsContent : TabsPrimitive.Content
-}
-class UIToast {
-+toastProvider : ToastPrimitives.Provider
-+toastViewport : ToastPrimitives.Viewport
-+toast : ToastPrimitives.Root
-+toastAction : ToastPrimitives.Action
-+toastClose : ToastPrimitives.Close
-}
-UIButton --> Utils : 使用cn函数
-UICard --> Utils : 使用cn函数
-UIForm --> Utils : 使用cn函数
-UITabs --> Utils : 使用cn函数
-UIToast --> Utils : 使用cn函数
+ThemeSystem --> ColorPalette
+ThemeSystem --> SpacingScale
 ```
 
 **图表来源**
-- [button.tsx:34-50](file://src/components/ui/button.tsx#L34-L50)
-- [card.tsx:5-56](file://src/components/ui/card.tsx#L5-L56)
-- [form.tsx:16-167](file://src/components/ui/form.tsx#L16-L167)
-- [tabs.tsx:6-53](file://src/components/ui/tabs.tsx#L6-L53)
-- [toast.tsx:8-126](file://src/components/ui/toast.tsx#L8-L126)
+- [tailwind.config.js:14-62](file://tailwind.config.js#L14-L62)
+- [tailwind.config.js:55-62](file://tailwind.config.js#L55-L62)
+- [src/options/index.css:6-33](file://src/options/index.css#L6-L33)
+- [src/popup/index.css:6-59](file://src/popup/index.css#L6-L59)
+
+### B站品牌色彩系统
+
+设计系统集成了完整的B站品牌色彩体系，包括主色调、辅助色和文本色彩：
+
+| 色彩类别 | 名称 | 色值 | Tailwind类 | 用途 |
+|---------|------|------|------------|------|
+| 主色调 | B站粉 | `#FB7299` | `bg-[#FB7299]` | 强调、警告、热门标签 |
+| 主色调 | B站蓝 | `#00AEEC` | `bg-[#00AEEC]` / `bg-b-primary` | 主按钮、链接、选中状态 |
+| 主色调 | 深蓝 | `#0095CC` | `bg-[#0095CC]` | 悬停状态 |
+| 主色调 | 浅蓝 | `#00AEEC/10` | `bg-[#00AEEC]/10` | 背景高亮、选中背景 |
+| 辅助色 | 深粉 | `#FF1493` | `bg-[#FF1493]` / `bg-b-secondary` | 强调、重要操作 |
+| 辅助色 | 青色 | `#00FFFF` | `bg-[#00FFFF]` / `bg-b-accent` | 强调、装饰元素 |
+| 辅助色 | 橙色 | `#FFAA00` | `bg-[#FFAA00]` / `bg-b-warning` | 警告、注意状态 |
+| 特殊色 | 荧光绿 | `#39FF14` | `bg-[#39FF14]` / `bg-b-neon` | 强调、特殊状态 |
+| 文本色 | 主文本 | `#2D1B4E` | `text-[#2D1B4E]` / `text-b-text-primary` | 标题、正文 |
 
 **章节来源**
-- [Popup.tsx:1-80](file://src/popup/Popup.tsx#L1-L80)
-- [Options.tsx:1-91](file://src/options/Options.tsx#L1-L91)
-- [global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
+- [tailwind.config.js:55-62](file://tailwind.config.js#L55-L62)
+- [.codebuddy/skills/bilibili-ui-design/SKILL.md:10-29](file://.codebuddy/skills/bilibili-ui-design/SKILL.md#L10-L29)
 
-## 核心组件库
+### 字体系统
+
+设计系统采用中英文字体混排方案，确保在不同语言环境下的最佳显示效果：
+
+```mermaid
+classDiagram
+class TypographySystem {
++fontFamily : FontStack
++fontSize : Scale
++fontWeight : WeightScale
++lineHeight : LineHeightScale
++letterSpacing : LetterSpacingScale
+}
+class FontStack {
++chinese : ChineseFontStack
++english : EnglishFontStack
++fallback : FallbackFonts
+}
+class ChineseFontStack {
++primary : PingFangSC
++secondary : HarmonyOS_Medium
++tertiary : MicrosoftYaHei
+}
+class EnglishFontStack {
++primary : HelveticaNeue
++secondary : Arial
++fallback : sans-serif
+}
+TypographySystem --> FontStack
+```
+
+**图表来源**
+- [src/popup/index.css:76](file://src/popup/index.css#L76)
+
+字体配置说明：
+- **中文支持**：`'PingFang SC, HarmonyOS_Medium, Microsoft YaHei'`
+- **英文支持**：`'Helvetica Neue, Arial'`
+- **备用字体**：`sans-serif`
+- **字体回退机制**：确保在任何环境下都有合适的字体显示
+
+**章节来源**
+- [src/popup/index.css:72-77](file://src/popup/index.css#L72-L77)
+
+### 组件变体系统
+
+所有UI组件都采用CVA(class-variance-authority)模式，提供统一的变体接口：
+
+```mermaid
+classDiagram
+class ComponentVariant {
++variant : string
++size : string
++className : string
++build() string
+}
+class ButtonVariant {
++default : Variant
++destructive : Variant
++outline : Variant
++secondary : Variant
++ghost : Variant
++link : Variant
+}
+class SizeVariant {
++default : Size
++sm : Size
++lg : Size
++icon : Size
+}
+ComponentVariant --> ButtonVariant
+ComponentVariant --> SizeVariant
+```
+
+**图表来源**
+- [src/components/ui/button.tsx:7-32](file://src/components/ui/button.tsx#L7-L32)
+
+**章节来源**
+- [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
+- [tailwind.config.js:14-62](file://tailwind.config.js#L14-L62)
+- [src/options/index.css:6-60](file://src/options/index.css#L6-L60)
+
+## 架构概览
+
+设计系统的整体架构采用分层模式，确保了良好的可维护性和扩展性：
+
+```mermaid
+graph TD
+subgraph "配置层"
+A[tailwind.config.js]
+B[components.json]
+C[src/lib/utils.ts]
+end
+subgraph "样式层"
+D[src/options/index.css]
+E[src/popup/index.css]
+F[CSS变量定义]
+G[渐变背景系统]
+H[B站品牌色彩]
+I[字体系统]
+end
+subgraph "组件层"
+J[基础组件]
+K[表单组件]
+L[反馈组件]
+M[布局组件]
+N[弹窗组件]
+O[业务组件]
+end
+subgraph "业务层"
+P[弹窗组件]
+Q[选项页面]
+R[主界面]
+S[侧边栏]
+end
+A --> D
+A --> E
+B --> J
+C --> J
+D --> F
+E --> F
+F --> G
+F --> H
+F --> I
+G --> J
+H --> K
+I --> L
+J --> M
+K --> N
+L --> O
+M --> P
+N --> Q
+O --> R
+P --> S
+```
+
+**图表来源**
+- [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
+- [components.json:1-22](file://components.json#L1-L22)
+- [src/options/index.css:1-83](file://src/options/index.css#L1-L83)
+- [src/popup/index.css:1-86](file://src/popup/index.css#L1-L86)
+
+## 详细组件分析
 
 ### 按钮组件系统
 
-按钮组件是整个设计系统的基础元素，采用变体模式提供多种样式选择：
+按钮组件是设计系统中最核心的交互元素，采用变体模式提供多种状态和尺寸：
 
 ```mermaid
 classDiagram
 class Button {
-+variant : "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
-+size : "default" | "sm" | "lg" | "icon"
++variant : ButtonVariant
++size : SizeVariant
 +asChild : boolean
-+className : string
-+children : React.ReactNode
++onClick : Function
++disabled : boolean
++render() ReactElement
 }
-class ButtonVariants {
-+default : string
-+destructive : string
-+outline : string
-+secondary : string
-+ghost : string
-+link : string
+class ButtonVariant {
+<<enumeration>>
+default
+destructive
+outline
+secondary
+ghost
+link
 }
-class ButtonSizes {
-+default : string
-+sm : string
-+lg : string
-+icon : string
+class SizeVariant {
+<<enumeration>>
+default
+sm
+lg
+icon
 }
-Button --> ButtonVariants
-Button --> ButtonSizes
-Button --> Slot : 使用Slot组件
-Button --> cn : 合并样式
+Button --> ButtonVariant
+Button --> SizeVariant
 ```
 
 **图表来源**
-- [button.tsx:7-32](file://src/components/ui/button.tsx#L7-L32)
-- [button.tsx:40-47](file://src/components/ui/button.tsx#L40-L47)
+- [src/components/ui/button.tsx:34-50](file://src/components/ui/button.tsx#L34-L50)
 
-#### 按钮变体设计
+#### 按钮交互流程
 
-| 变体类型 | 颜色方案 | 使用场景 | 状态效果 |
-|---------|---------|---------|---------|
-| default | 主色调背景 + 逆色文字 | 主要操作按钮 | 悬停时透明度变化 |
-| destructive | 错误色背景 + 逆色文字 | 危险操作按钮 | 强烈的红色系 |
-| outline | 边框 + 背景透明 | 次要操作按钮 | 边框颜色变化 |
-| secondary | 次色调背景 + 逆色文字 | 次要功能按钮 | 轻微透明效果 |
-| ghost | 仅悬停效果 | 工具栏按钮 | 透明背景 |
-| link | 主色调文字 | 文本链接 | 下划线效果 |
+```mermaid
+sequenceDiagram
+participant U as 用户
+participant B as Button组件
+participant V as 变体系统
+participant H as 处理器
+U->>B : 点击按钮
+B->>V : 获取当前变体状态
+V-->>B : 返回样式类名
+B->>H : 触发onClick回调
+H-->>U : 执行相应操作
+B->>B : 更新状态显示
+```
+
+**图表来源**
+- [src/components/ui/button.tsx:40-47](file://src/components/ui/button.tsx#L40-L47)
 
 **章节来源**
-- [button.tsx:10-31](file://src/components/ui/button.tsx#L10-L31)
+- [src/components/ui/button.tsx:1-51](file://src/components/ui/button.tsx#L1-L51)
 
 ### 卡片组件系统
 
-卡片组件提供内容容器的标准化设计：
+卡片组件提供内容容器功能，支持标题、描述、内容区域和页脚：
 
 ```mermaid
 classDiagram
 class Card {
 +className : string
-+children : React.ReactNode
++children : ReactNode
++render() ReactElement
 }
 class CardHeader {
 +className : string
-+children : React.ReactNode
++children : ReactNode
++render() ReactElement
 }
 class CardTitle {
 +className : string
-+children : React.ReactNode
++children : ReactNode
++render() ReactElement
 }
 class CardContent {
 +className : string
-+children : React.ReactNode
++children : ReactNode
++render() ReactElement
 }
 class CardFooter {
 +className : string
-+children : React.ReactNode
++children : ReactNode
++render() ReactElement
 }
 Card --> CardHeader
+Card --> CardTitle
 Card --> CardContent
 Card --> CardFooter
-CardHeader --> CardTitle
-CardHeader --> CardDescription
 ```
 
 **图表来源**
-- [card.tsx:5-56](file://src/components/ui/card.tsx#L5-L56)
-
-#### 卡片布局规范
-
-- **圆角半径**：16px（lg），14px（md），12px（sm）
-- **阴影效果**：轻量级阴影，提升层级感
-- **内边距**：标题区域1.5rem，内容区域1rem
-- **边框样式**：统一的边框颜色和宽度
+- [src/components/ui/card.tsx:5-56](file://src/components/ui/card.tsx#L5-L56)
 
 **章节来源**
-- [card.tsx:16-54](file://src/components/ui/card.tsx#L16-L54)
+- [src/components/ui/card.tsx:1-57](file://src/components/ui/card.tsx#L1-L57)
 
 ### 表单组件系统
 
-表单组件提供完整的表单处理能力：
-
-```mermaid
-sequenceDiagram
-participant User as 用户
-participant Form as 表单组件
-participant Controller as 控制器
-participant Context as 上下文
-participant Validation as 验证器
-User->>Form : 输入表单数据
-Form->>Controller : 更新字段值
-Controller->>Context : 触发状态更新
-Context->>Validation : 执行验证规则
-Validation-->>Context : 返回验证结果
-Context-->>Form : 更新表单状态
-Form-->>User : 显示验证反馈
-```
-
-**图表来源**
-- [form.tsx:27-38](file://src/components/ui/form.tsx#L27-L38)
-- [form.tsx:40-61](file://src/components/ui/form.tsx#L40-L61)
-
-#### 表单验证流程
+表单组件采用React Hook Form集成，提供完整的表单验证和状态管理：
 
 ```mermaid
 flowchart TD
-Start([表单提交]) --> Validate["验证输入数据"]
-Validate --> Valid{"验证通过?"}
-Valid --> |否| ShowError["显示错误信息"]
-Valid --> |是| Process["处理表单数据"]
-ShowError --> Focus["聚焦错误字段"]
-Process --> Success["提交成功"]
-Success --> Reset["重置表单"]
-Reset --> End([结束])
-Focus --> End
+A[Form组件] --> B[FormField上下文]
+B --> C[字段控制器]
+C --> D[字段状态管理]
+D --> E[验证规则]
+E --> F[错误处理]
+F --> G[UI反馈]
+H[FormLabel] --> I[无障碍属性]
+J[FormControl] --> K[受控组件]
+L[FormMessage] --> M[错误消息]
 ```
 
 **图表来源**
-- [form.tsx:134-155](file://src/components/ui/form.tsx#L134-L155)
+- [src/components/ui/form.tsx:16-167](file://src/components/ui/form.tsx#L16-L167)
 
 **章节来源**
-- [form.tsx:16-167](file://src/components/ui/form.tsx#L16-L167)
+- [src/components/ui/form.tsx:1-168](file://src/components/ui/form.tsx#L1-L168)
 
-### 选择器组件系统
+### 输入组件系统
 
-选择器组件提供下拉选择功能：
+输入组件提供统一的文本输入体验，支持多种类型和状态：
 
 ```mermaid
 classDiagram
-class Select {
-+selectRoot : SelectPrimitive.Root
-+selectTrigger : SelectPrimitive.Trigger
-+selectContent : SelectPrimitive.Content
-+selectItem : SelectPrimitive.Item
+class Input {
++type : InputType
++placeholder : string
++value : string
++onChange : Function
++onFocus : Function
++onBlur : Function
++disabled : boolean
++error : boolean
 }
-class SelectPrimitive {
-+Root
-+Trigger
-+Content
-+Item
-+Portal
-+Viewport
+class InputType {
+<<enumeration>>
+text
+email
+password
+number
+search
 }
-Select --> SelectPrimitive
-Select --> ChevronIcon : 使用图标组件
-Select --> cn : 合并样式
+Input --> InputType
 ```
 
 **图表来源**
-- [select.tsx:7-150](file://src/components/ui/select.tsx#L7-L150)
-
-#### 选择器交互模式
-
-- **触发器**：显示当前选中值，点击展开选项
-- **内容区域**：支持滚动查看更多选项
-- **选项项**：支持键盘导航和鼠标选择
-- **动画效果**：展开收起的平滑过渡动画
+- [src/components/ui/input.tsx:5-22](file://src/components/ui/input.tsx#L5-L22)
 
 **章节来源**
-- [select.tsx:13-91](file://src/components/ui/select.tsx#L13-L91)
+- [src/components/ui/input.tsx:1-23](file://src/components/ui/input.tsx#L1-L23)
 
-### 标签页组件系统
+### 下拉选择组件
 
-标签页组件提供多面板切换功能：
-
-```mermaid
-stateDiagram-v2
-[*] --> Inactive
-Inactive : 默认状态
-Active : 激活状态
-Inactive --> Active : 点击标签
-Active --> Inactive : 点击其他标签
-Active --> Inactive : 切换到其他面板
-note right of Active
-显示对应内容面板
-应用激活样式
-end note
-note right of Inactive
-隐藏内容面板
-应用默认样式
-end note
-```
-
-**图表来源**
-- [tabs.tsx:23-36](file://src/components/ui/tabs.tsx#L23-L36)
-
-**章节来源**
-- [tabs.tsx:6-53](file://src/components/ui/tabs.tsx#L6-L53)
-
-### 提示组件系统
-
-提示组件提供用户反馈机制：
+下拉选择组件提供丰富的选项展示和交互功能：
 
 ```mermaid
 sequenceDiagram
-participant User as 用户
-participant Toast as 提示组件
-participant Viewport as 视口
-participant Provider as 提供者
-User->>Toast : 触发操作
-Toast->>Provider : 请求显示提示
-Provider->>Viewport : 添加到视口
-Viewport->>Toast : 渲染提示
-Toast->>Toast : 自动隐藏定时器
-Toast->>Viewport : 移除提示
-Viewport->>Provider : 通知移除完成
+participant U as 用户
+participant S as Select组件
+participant T as Trigger触发器
+participant C as Content内容面板
+participant I as Item选项
+U->>T : 点击触发器
+T->>S : 触发open状态
+S->>C : 显示下拉面板
+U->>I : 选择选项
+I->>S : 触发onChange
+S->>T : 更新显示值
+S->>C : 关闭面板
 ```
 
 **图表来源**
-- [toast.tsx:8-23](file://src/components/ui/toast.tsx#L8-L23)
-
-#### 提示类型设计
-
-| 类型 | 颜色方案 | 使用场景 | 动画效果 |
-|------|---------|---------|---------|
-| default | 基础主题色 | 一般信息提示 | 从顶部滑入 |
-| destructive | 错误主题色 | 错误操作反馈 | 从底部滑入 |
+- [src/components/ui/select.tsx:13-91](file://src/components/ui/select.tsx#L13-L91)
 
 **章节来源**
-- [toast.tsx:25-53](file://src/components/ui/toast.tsx#L25-L53)
+- [src/components/ui/select.tsx:1-151](file://src/components/ui/select.tsx#L1-L151)
 
-**章节来源**
-- [button.tsx:1-51](file://src/components/ui/button.tsx#L1-L51)
-- [card.tsx:1-57](file://src/components/ui/card.tsx#L1-L57)
-- [form.tsx:1-168](file://src/components/ui/form.tsx#L1-L168)
-- [input.tsx:1-23](file://src/components/ui/input.tsx#L1-L23)
-- [select.tsx:1-151](file://src/components/ui/select.tsx#L1-L151)
-- [tabs.tsx:1-54](file://src/components/ui/tabs.tsx#L1-L54)
-- [toast.tsx:1-127](file://src/components/ui/toast.tsx#L1-L127)
+### 进度条组件
 
-## 视觉设计系统
-
-### 色彩体系设计
-
-设计系统采用多巴胺配色方案，提供丰富的色彩选择：
+进度条组件提供直观的任务完成度指示：
 
 ```mermaid
-graph TB
-subgraph "明色主题"
-LightPrimary[#BF00FF 主色调]
-LightSecondary[#FF1493 次色调]
-LightAccent[#00FFFF 强调色]
-LightBackground[#FFFFFF 背景色]
-LightForeground[#2D1B4E 文字色]
-end
-subgraph "暗色主题"
-DarkPrimary[#BF00FF 主色调]
-DarkSecondary[#FF1493 次色调]
-DarkAccent[#00FFFF 强调色]
-DarkBackground[#270C30 背景色]
-DarkForeground[#FFFFFF 文字色]
-end
-LightPrimary -.-> DarkPrimary
-LightSecondary -.-> DarkSecondary
-LightAccent -.-> DarkAccent
-LightBackground -.-> DarkBackground
-LightForeground -.-> DarkForeground
+flowchart LR
+A[Progress根元素] --> B[进度指示器]
+B --> C[动画过渡]
+D[值变化] --> E[计算百分比]
+E --> F[更新transform]
+F --> G[视觉反馈]
+H[样式定制] --> I[indicatorClassName]
+I --> J[自定义颜色]
+J --> K[自定义动画]
 ```
 
 **图表来源**
-- [index.css:6-60](file://src/options/index.css#L6-L60)
-
-#### 色彩变量定义
-
-| 色彩变量 | 明色值 | 暗色值 | 用途说明 |
-|---------|-------|-------|---------|
-| --primary | 288° 100% 50% | 288° 100% 60% | 主要品牌色彩 |
-| --secondary | 328° 100% 54% | 328° 100% 60% | 次要功能色彩 |
-| --accent | 180° 100% 50% | 180° 100% 50% | 强调装饰色彩 |
-| --destructive | 39° 100% 50% | 39° 100% 55% | 错误警告色彩 |
-| --background | 270° 100% 99% | 270° 30% 8% | 页面背景色彩 |
-| --foreground | 270° 50% 10% | 0° 0% 98% | 主要文字色彩 |
+- [src/components/ui/progress.tsx:6-25](file://src/components/ui/progress.tsx#L6-L25)
 
 **章节来源**
-- [index.css:7-60](file://src/options/index.css#L7-L60)
+- [src/components/ui/progress.tsx:1-26](file://src/components/ui/progress.tsx#L1-L26)
 
-### 字体系统设计
+### 弹出框组件
+
+弹出框组件提供非侵入式的上下文信息展示：
 
 ```mermaid
-graph LR
-FontFamily[字体族] --> PingFang["PingFang SC<br/>苹方字体"]
-FontFamily --> Harmony["HarmonyOS_Medium<br/>华为鸿蒙字体"]
-FontFamily --> Helvetica["Helvetica Neue<br/>苹果系统字体"]
-FontFamily --> Microsoft["Microsoft YaHei<br/>微软雅黑字体"]
-FontFamily --> SansSerif["sans-serif<br/>无衬线字体"]
-FontSize[字号系统] --> TextBase[16px 基准]
-FontSize --> TextSm[12px 小号]
-FontSize --> TextLg[18px 大号]
-FontSize --> TextXl[24px 超大号]
-FontWeight[字重系统] --> Regular[400 常规]
-FontWeight --> Medium[500 中等]
-FontWeight --> Semibold[600 半粗]
-FontWeight --> Bold[700 粗体]
+classDiagram
+class Popover {
++open : boolean
++align : Alignment
++sideOffset : number
++children : ReactNode
+}
+class PopoverTrigger {
++asChild : boolean
++onClick : Function
+}
+class PopoverContent {
++align : Alignment
++sideOffset : number
++className : string
+}
+Popover --> PopoverTrigger
+Popover --> PopoverContent
 ```
 
 **图表来源**
-- [index.css:81-83](file://src/options/index.css#L81-L83)
-
-#### 字体排版规范
-
-- **主字体**：PingFang SC（优先），Helvetica Neue（回退）
-- **字号层级**：12px → 14px → 16px → 18px → 20px → 24px
-- **行高比例**：1.4-1.6倍行高
-- **字重选择**：标题使用Semibold，正文使用Regular
+- [src/components/ui/popover.tsx:5-32](file://src/components/ui/popover.tsx#L5-L32)
 
 **章节来源**
-- [index.css:81-83](file://src/options/index.css#L81-L83)
+- [src/components/ui/popover.tsx:1-33](file://src/components/ui/popover.tsx#L1-L33)
 
-### 阴影与圆角系统
+### 面包屑组件
+
+面包屑组件提供导航层级指示：
 
 ```mermaid
-graph TB
-ShadowSystem[阴影系统] --> BoxShadow[盒子阴影]
-ShadowSystem --> TextShadow[文本阴影]
-BoxShadow --> Depth1[深度1: 0 1px 3px rgba(0,0,0,0.1)]
-BoxShadow --> Depth2[深度2: 0 4px 6px rgba(0,0,0,0.1)]
-BoxShadow --> Depth3[深度3: 0 10px 25px rgba(0,0,0,0.1)]
-BoxShadow --> Depth4[深度4: 0 20px 40px rgba(0,0,0,0.1)]
-BorderRadius[圆角系统] --> RadiusSmall[小圆角: 4px]
-BorderRadius --> RadiusMedium[中圆角: 8px]
-BorderRadius --> RadiusLarge[大圆角: 16px]
-BorderRadius --> RadiusFull[全圆角: 9999px]
+classDiagram
+class Badge {
++variant : BadgeVariant
++children : ReactNode
++className : string
+}
+class BadgeVariant {
+<<enumeration>>
+default
+secondary
+destructive
+outline
+}
+Badge --> BadgeVariant
 ```
 
 **图表来源**
-- [tailwind.config.js:9-13](file://tailwind.config.js#L9-L13)
-
-#### 视觉层次设计
-
-- **层级关系**：通过阴影深度区分界面层级
-- **圆角一致性**：保持统一的圆角半径规范
-- **过渡动画**：0.2秒的标准过渡时间
-- **空间留白**：8px、16px、24px的基础间距
+- [src/components/ui/badge.tsx:25-33](file://src/components/ui/badge.tsx#L25-L33)
 
 **章节来源**
-- [tailwind.config.js:8-63](file://tailwind.config.js#L8-L63)
+- [src/components/ui/badge.tsx:1-34](file://src/components/ui/badge.tsx#L1-L34)
 
-## 交互设计规范
+### 通知系统
 
-### 动画与过渡系统
+通知系统提供用户反馈和状态提示功能：
 
-设计系统采用流畅的动画过渡效果：
+```mermaid
+sequenceDiagram
+participant A as 应用程序
+participant T as Toaster
+participant P as ToastProvider
+participant V as Viewport
+participant N as Notification
+A->>T : 发送通知请求
+T->>P : 创建ToastProvider
+P->>V : 添加到视口
+V->>N : 渲染通知
+N->>N : 显示动画效果
+N->>V : 自动消失
+V->>P : 移除通知
+P->>T : 完成渲染
+```
+
+**图表来源**
+- [src/components/ui/toaster.tsx:11-31](file://src/components/ui/toaster.tsx#L11-L31)
+
+**章节来源**
+- [src/components/ui/toast.tsx:1-127](file://src/components/ui/toast.tsx#L1-L127)
+- [src/components/ui/toaster.tsx:1-32](file://src/components/ui/toaster.tsx#L1-L32)
+
+### 弹窗组件系统
+
+**新增** 弹窗组件系统是B站收藏夹管理扩展的核心交互界面，采用B站品牌风格设计：
+
+```mermaid
+classDiagram
+class Popup {
++isSidePanel : boolean
++touristRef : RefObject
++handleOpenSettings() void
++render() ReactElement
+}
+class PopupLayout {
++container : MainContainer
++header : HeaderSection
++content : ContentSection
++actions : ActionSection
++footer : FooterSection
+}
+class PopupComponents {
++FavoriteTag : FavoriteTag
++Keyword : Keyword
++Move : Move
++AutoCreateKeyword : AutoCreateKeyword
++AIMove : AIMove
++DragManagerButton : DragManagerButton
++LoginCheck : LoginCheck
++Tourist : Tourist
+}
+Popup --> PopupLayout
+Popup --> PopupComponents
+```
+
+**图表来源**
+- [src/popup/Popup.tsx:10-80](file://src/popup/Popup.tsx#L10-L80)
+
+#### 弹窗布局结构
+
+弹窗采用灵活的布局设计，支持标准弹窗和侧边栏模式：
 
 ```mermaid
 flowchart TD
-Interaction[用户交互] --> Trigger[触发事件]
-Trigger --> Animation[执行动画]
-Animation --> Easing[缓动函数]
-Easing --> Duration[持续时间]
-Duration --> Complete[动画完成]
-Easing --> EaseOut[Ease Out 缓出]
-Easing --> EaseInOut[Ease InOut 缓入缓出]
-Easing --> Linear[Linear 线性]
-Duration --> Short[短: 150ms]
-Duration --> Medium[中: 250ms]
-Duration --> Long[长: 350ms]
+A[Popup容器] --> B[头部区域]
+B --> C[标题 + 操作按钮]
+C --> D[收藏夹区域]
+D --> E[FavoriteTag组件]
+E --> F[关键字区域]
+F --> G[Keyword组件]
+G --> H[操作按钮区域]
+H --> I[Move/AutoCreateKeyword/AIMove/DragManagerButton]
+I --> J[底部区域]
+J --> K[LoginCheck组件]
+K --> L[Toaster通知]
+L --> M[Tourist引导]
 ```
 
 **图表来源**
-- [toast.tsx:25-39](file://src/components/ui/toast.tsx#L25-L39)
-
-#### 动画规范
-
-- **按钮悬停**：0.2秒缓出动画
-- **模态框显示**：0.3秒缓入缓出
-- **标签切换**：0.2秒线性过渡
-- **表单验证**：0.15秒快速反馈
+- [src/popup/Popup.tsx:22-76](file://src/popup/Popup.tsx#L22-L76)
 
 **章节来源**
-- [toast.tsx:25-39](file://src/components/ui/toast.tsx#L25-L39)
+- [src/popup/Popup.tsx:1-80](file://src/popup/Popup.tsx#L1-L80)
+- [src/popup/index.css:72-86](file://src/popup/index.css#L72-L86)
 
-### 焦点管理设计
+### 滚动条样式系统
 
-```mermaid
-sequenceDiagram
-participant User as 用户
-participant Element as 可聚焦元素
-participant FocusManager as 焦点管理器
-participant ScreenReader as 屏幕阅读器
-User->>Element : Tab键导航
-Element->>FocusManager : 请求焦点
-FocusManager->>Element : 设置焦点样式
-Element->>ScreenReader : 通知焦点变化
-ScreenReader-->>User : 读出元素信息
-FocusManager-->>User : 高亮显示焦点
-```
+**新增** 设计系统提供了多种滚动条样式定制方案：
 
-**图表来源**
-- [form.tsx:103-114](file://src/components/ui/form.tsx#L103-L114)
-
-#### 焦点可见性
-
-- **焦点环**：蓝色轮廓边框
-- **键盘导航**：Tab键顺序导航
-- **屏幕阅读**：语音朗读元素名称
-- **高对比度**：确保焦点清晰可见
+| 类名 | 效果 | 颜色配置 | 适用场景 |
+|------|------|----------|----------|
+| `scrollbar-hide` | 完全隐藏滚动条 | 无 | 简洁界面、全屏内容 |
+| `scrollbar-styled` | 美化滚动条（8px） | 主色渐变：`#BF00FF → #FF1493` | 默认滚动区域 |
+| `scrollbar-thin` | 细滚动条（4px） | 主色：`#BF00FF` | 内容较多的列表 |
 
 **章节来源**
-- [form.tsx:82-114](file://src/components/ui/form.tsx#L82-L114)
+- [tailwind.config.js:67-115](file://tailwind.config.js#L67-L115)
 
-### 触摸与手势支持
+## 依赖关系分析
 
-```mermaid
-graph LR
-Touch[触摸交互] --> Tap[点击触摸]
-Touch --> Swipe[滑动手势]
-Touch --> Pinch[缩放手势]
-Tap --> Click[点击事件]
-Swipe --> Scroll[滚动事件]
-Pinch --> Zoom[缩放事件]
-Click --> Immediate[即时反馈]
-Scroll --> Smooth[平滑滚动]
-Zoom --> Scale[比例缩放]
-```
-
-**图表来源**
-- [select.tsx:65-89](file://src/components/ui/select.tsx#L65-L89)
-
-#### 移动端适配
-
-- **触摸目标**：最小44px×44px点击区域
-- **手势识别**：支持滑动、缩放等手势
-- **响应速度**：100ms内的触摸响应
-- **方向锁定**：智能的方向锁定机制
-
-**章节来源**
-- [select.tsx:65-91](file://src/components/ui/select.tsx#L65-L91)
-
-## 状态管理设计
-
-### 全局状态架构
+设计系统的依赖关系清晰明确，遵循单一职责原则：
 
 ```mermaid
 graph TB
-subgraph "状态存储层"
-Zustand[Zustand Store]
-ChromeStorage[Chrome Storage]
-LocalStorage[本地存储]
+subgraph "外部依赖"
+A[React 18+]
+B[TailwindCSS]
+C[Radix UI]
+D[Lucide Icons]
+E[Class Variance Authority]
+F[Chrome Extensions API]
 end
-subgraph "数据模型层"
-DataContext[DataContextType]
-GlobalData[全局数据]
-ConfigData[配置数据]
+subgraph "内部模块"
+G[utils.ts]
+H[组件库]
+I[样式系统]
+J[主题配置]
+K[popup系统]
+L[bilibili-ui-design规范]
 end
-subgraph "组件层"
-PopupComponents[弹窗组件]
-OptionsComponents[选项组件]
-SidePanelComponents[侧边栏组件]
+subgraph "业务逻辑"
+M[Hooks]
+N[Store]
+O[Workers]
+P[popup组件]
+Q[业务功能]
 end
-Zustand --> ChromeStorage
-ChromeStorage --> LocalStorage
-DataContext --> GlobalData
-GlobalData --> ConfigData
-PopupComponents --> Zustand
-OptionsComponents --> Zustand
-SidePanelComponents --> Zustand
+A --> H
+B --> I
+C --> H
+D --> H
+E --> H
+F --> P
+G --> H
+I --> J
+H --> M
+M --> N
+N --> O
+P --> Q
+J --> L
 ```
 
 **图表来源**
-- [global-data.ts:6-24](file://src/store/global-data.ts#L6-L24)
-
-#### 状态管理模式
-
-- **集中式管理**：所有状态集中在单一store中
-- **持久化存储**：自动同步到Chrome存储
-- **响应式更新**：状态变更自动触发组件重渲染
-- **类型安全**：完整的TypeScript类型定义
+- [package.json](file://package.json)
 
 **章节来源**
-- [global-data.ts:1-28](file://src/store/global-data.ts#L1-L28)
+- [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
+- [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
 
-### 数据流设计
+## 性能考虑
 
-```mermaid
-sequenceDiagram
-participant UI as 用户界面
-participant Store as 状态存储
-participant Storage as 存储层
-participant API as API接口
-UI->>Store : dispatch(action)
-Store->>Store : 更新状态
-Store->>Storage : 同步到存储
-Storage->>Store : 确认保存
-Store->>UI : 通知状态变更
-UI->>API : 发起网络请求
-API-->>UI : 返回数据
-UI->>Store : 更新状态
-```
+设计系统在性能方面采用了多项优化策略：
 
-**图表来源**
-- [global-data.ts:16-22](file://src/store/global-data.ts#L16-L22)
+### 样式优化
+- 使用CSS变量减少重复样式定义
+- TailwindCSS按需生成，避免样式冗余
+- 组件样式通过CVA动态组合，提高复用性
+- **新增** B站品牌色彩变量预编译，减少运行时计算
 
-#### 状态同步机制
+### 渲染优化
+- React.memo化组件减少不必要的重渲染
+- 懒加载非关键组件
+- 合理的组件拆分和代码分割
+- **新增** popup组件的条件渲染优化
 
-- **双向绑定**：UI状态与存储状态双向同步
-- **冲突解决**：优先使用最新状态
-- **错误恢复**：自动恢复失败的状态更新
-- **性能优化**：批量更新减少重渲染
+### 交互优化
+- CSS过渡动画替代JavaScript动画
+- 防抖和节流处理高频事件
+- 无障碍访问优化提升用户体验
+- **新增** 微交互和触觉反馈优化
 
-**章节来源**
-- [global-data.ts:16-22](file://src/store/global-data.ts#L16-L22)
+### 字体优化
+- **新增** 中英文字体分离加载
+- **新增** 字体回退机制确保显示稳定性
+- **新增** 字体缓存策略减少重复加载
 
-## 响应式设计策略
+## 故障排除指南
 
-### 断点系统设计
+### 常见问题及解决方案
 
-```mermaid
-graph LR
-Breakpoints[断点系统] --> Mobile[移动端: <768px]
-Breakpoints --> Tablet[平板端: 768px-1024px]
-Breakpoints --> Desktop[桌面端: >1024px]
-Mobile --> MobileLayout[移动布局]
-Tablet --> TabletLayout[平板布局]
-Desktop --> DesktopLayout[桌面布局]
-MobileLayout --> FlexColumn[垂直布局]
-MobileLayout --> SingleColumn[单列显示]
-TabletLayout --> FlexRow[水平布局]
-TabletLayout --> DoubleColumn[双列显示]
-DesktopLayout --> MultiColumn[多列布局]
-DesktopLayout --> Sidebar[侧边栏布局]
-```
+**主题样式不生效**
+- 检查CSS变量是否正确编译
+- 确认Tailwind配置中的content路径
+- 验证暗色模式切换逻辑
+- **新增** 检查B站品牌色彩变量是否正确加载
 
-**图表来源**
-- [Popup.tsx:24-26](file://src/popup/Popup.tsx#L24-L26)
+**组件样式冲突**
+- 检查组件className优先级
+- 避免直接内联样式覆盖
+- 使用CVA变体系统统一管理
+- **新增** 确认popup样式层叠顺序
 
-#### 响应式布局策略
+**响应式布局问题**
+- 确认断点设置符合设计规范
+- 检查媒体查询语法
+- 测试不同屏幕尺寸表现
+- **新增** 验证popup在不同窗口大小下的适配
 
-- **移动端优先**：以手机屏幕为基础进行设计
-- **弹性布局**：使用Flexbox实现自适应布局
-- **网格系统**：基于CSS Grid的响应式网格
-- **媒体查询**：精确控制断点切换时机
+**字体显示问题**
+- **新增** 检查字体文件加载状态
+- **新增** 验证字体回退机制
+- **新增** 确认中英文字体混合显示
 
-**章节来源**
-- [Popup.tsx:24-26](file://src/popup/Popup.tsx#L24-L26)
+**popup交互问题**
+- **新增** 检查Chrome扩展权限
+- **新增** 验证popup生命周期管理
+- **新增** 确认事件监听器正确绑定
 
-### 适配策略
-
-```mermaid
-flowchart TD
-Screen[屏幕检测] --> Width[宽度判断]
-Width --> Height[高度判断]
-Height --> Orientation[方向判断]
-Width --> Mobile[移动端适配]
-Width --> Tablet[平板端适配]
-Width --> Desktop[桌面端适配]
-Mobile --> TouchTarget[触摸目标优化]
-Mobile --> FontScaling[字体缩放]
-Mobile --> IconScaling[图标缩放]
-Tablet --> LayoutAdjust[布局调整]
-Tablet --> ComponentResize[组件重排]
-Desktop --> AdvancedFeatures[高级功能]
-Desktop --> KeyboardShortcuts[快捷键支持]
-```
-
-**图表来源**
-- [Options.tsx:52-60](file://src/options/Options.tsx#L52-L60)
-
-#### 适配优化
-
-- **触摸友好**：确保所有交互元素易于触摸
-- **字体可读性**：在小屏幕上保持良好的可读性
-- **组件尺寸**：根据屏幕大小调整组件尺寸
-- **导航简化**：在小屏幕上简化导航结构
+**性能问题排查**
+- 使用React DevTools Profiler分析
+- 检查组件重渲染次数
+- 优化大型列表渲染
+- **新增** 监控popup组件渲染性能
 
 **章节来源**
-- [Options.tsx:52-60](file://src/options/Options.tsx#L52-L60)
+- [src/options/index.css:63-83](file://src/options/index.css#L63-L83)
+- [tailwind.config.js:65-116](file://tailwind.config.js#L65-L116)
+- [src/popup/index.css:72-86](file://src/popup/index.css#L72-L86)
 
-## 可访问性设计
+## 结论
 
-### WCAG合规性
+该UI/UX设计系统展现了现代前端开发的最佳实践，通过以下关键特性实现了高质量的用户体验：
 
-设计系统遵循WCAG 2.1 AA标准：
+### 设计优势
+- **一致性**: 统一的颜色、字体、间距和组件行为
+- **可扩展性**: 模块化架构支持功能扩展和主题定制
+- **可访问性**: 完善的无障碍访问支持
+- **性能**: 优化的渲染和资源管理
+- **品牌化**: 完整的B站品牌风格实现
 
-```mermaid
-graph TB
-Accessibility[可访问性] --> Perceivable[可感知]
-Accessibility --> Operable[可操作]
-Accessibility --> Understandable[可理解]
-Accessibility --> Robust[健壮性]
-Perceivable --> TextAlternatives[替代文本]
-Perceivable --> SensoryAlternatives[多感官替代]
-Perceivable --> Distinguishable[易于区分]
-Operable --> KeyboardAccessible[键盘可达]
-Operable --> EnoughTime[充足时间]
-Operable --> SeizureSafe[防癫痫]
-Understandable --> Readable[可读性]
-Understandable --> Predictable[可预测性]
-Understandable --> Assistive[辅助技术]
-Robust --> Compatible[兼容性]
-```
+### 技术亮点
+- 基于CSS变量的主题系统
+- 组件化的原子设计模式
+- 完整的TypeScript类型支持
+- 现代化的构建工具链
+- **新增** B站品牌色彩系统集成
+- **新增** popup界面的完整实现
 
-**图表来源**
-- [form.tsx:86-96](file://src/components/ui/form.tsx#L86-L96)
+### 应用价值
+该设计系统不仅适用于B站收藏夹管理扩展，还可作为其他浏览器扩展项目的参考模板，为开发者提供了一套完整、可维护且具有良好用户体验的UI解决方案。
 
-#### 可访问性特性
+通过持续的迭代和优化，这套设计系统将继续为用户提供优秀的视觉和交互体验，同时保持代码的可维护性和扩展性。
 
-- **键盘导航**：完整的键盘操作支持
-- **屏幕阅读**：全面的ARIA标签支持
-- **颜色对比**：满足WCAG对比度要求
-- **语义标记**：正确的HTML语义结构
+**新增** 特别是在popup样式改进方面，系统成功整合了B站品牌风格，提供了专业的弹窗界面设计，包括：
+- 完整的品牌色彩体系
+- 优化的字体混排方案  
+- 微交互和动画反馈
+- 响应式布局适配
+- 无障碍访问支持
 
-**章节来源**
-- [form.tsx:86-96](file://src/components/ui/form.tsx#L86-L96)
-
-### 辅助技术支持
-
-```mermaid
-sequenceDiagram
-participant User as 用户
-participant ScreenReader as 屏幕阅读器
-participant DOM as DOM树
-participant ARIA as ARIA属性
-User->>ScreenReader : 启动屏幕阅读器
-ScreenReader->>DOM : 读取页面结构
-DOM->>ARIA : 获取语义信息
-ARIA-->>ScreenReader : 返回可访问性信息
-ScreenReader-->>User : 语音播报内容
-User->>DOM : 操作界面元素
-DOM->>ARIA : 更新状态信息
-ARIA-->>ScreenReader : 通知状态变化
-ScreenReader-->>User : 更新语音反馈
-```
-
-**图表来源**
-- [form.tsx:103-114](file://src/components/ui/form.tsx#L103-L114)
-
-#### 辅助技术支持
-
-- **ARIA标签**：为所有交互元素添加ARIA属性
-- **语义结构**：使用正确的HTML语义标签
-- **动态更新**：实时更新可访问性状态
-- **语音反馈**：提供详细的语音描述
-
-**章节来源**
-- [form.tsx:103-114](file://src/components/ui/form.tsx#L103-L114)
-
-## 性能优化策略
-
-### 渲染性能优化
-
-设计系统采用多种性能优化技术：
-
-```mermaid
-graph TB
-Performance[性能优化] --> BundleOptimization[包体积优化]
-Performance --> RenderOptimization[渲染优化]
-Performance --> MemoryOptimization[内存优化]
-Performance --> NetworkOptimization[网络优化]
-BundleOptimization --> TreeShaking[Tree Shaking]
-BundleOptimization --> CodeSplitting[代码分割]
-BundleOptimization --> LazyLoading[懒加载]
-RenderOptimization --> ReactMemo[React.memo]
-RenderOptimization --> useCallback[useCallback]
-RenderOptimization --> useMemo[useMemo]
-MemoryOptimization --> GarbageCollection[垃圾回收]
-MemoryOptimization --> MemoryLeakPrevention[内存泄漏预防]
-NetworkOptimization --> Caching[缓存策略]
-NetworkOptimization --> RequestDebouncing[请求去抖]
-```
-
-**图表来源**
-- [utils.ts:4-6](file://src/lib/utils.ts#L4-L6)
-
-#### 性能监控指标
-
-- **首屏渲染**：小于3秒的初始加载时间
-- **交互延迟**：小于50ms的用户操作响应
-- **内存使用**：保持稳定的内存占用
-- **包体积**：压缩后小于500KB的JS包
-
-**章节来源**
-- [utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
-
-### 优化实现策略
-
-```mermaid
-flowchart TD
-Optimization[性能优化] --> ComponentLevel[组件级优化]
-Optimization --> ApplicationLevel[应用级优化]
-ComponentLevel --> Memoization[记忆化]
-ComponentLevel --> Virtualization[虚拟化]
-ComponentLevel --> Debouncing[去抖]
-ApplicationLevel --> StateManagement[状态管理优化]
-ApplicationLevel --> AssetOptimization[资源优化]
-ApplicationLevel --> CachingStrategy[缓存策略]
-Memoization --> ReactMemo[React.memo]
-Memoization --> useMemo[useMemo]
-Memoization --> useCallback[useCallback]
-Virtualization --> Windowing[窗口化]
-Virtualization --> LazyRendering[懒渲染]
-StateManagement --> ZustandOptimization[Zustand优化]
-StateManagement --> ChromeStorageOptimization[存储优化]
-```
-
-**图表来源**
-- [global-data.ts:6-24](file://src/store/global-data.ts#L6-L24)
-
-#### 优化技术栈
-
-- **Zustand优化**：使用immer中间件提高性能
-- **Chrome存储优化**：批量更新减少存储操作
-- **组件优化**：合理使用React.memo和hooks
-- **资源优化**：图片和字体的懒加载策略
-
-**章节来源**
-- [global-data.ts:6-24](file://src/store/global-data.ts#L6-L24)
-
-## 总结与最佳实践
-
-### 设计系统优势
-
-本UI/UX设计系统具有以下显著优势：
-
-1. **一致性**：统一的设计语言和交互模式
-2. **可扩展性**：模块化的组件架构便于功能扩展
-3. **可维护性**：清晰的代码结构和文档规范
-4. **性能**：优化的渲染和状态管理策略
-5. **可访问性**：全面的无障碍设计支持
-
-### 最佳实践建议
-
-```mermaid
-graph TB
-BestPractices[最佳实践] --> DesignConsistency[设计一致性]
-BestPractices --> ComponentReuse[组件复用]
-BestPractices --> PerformanceOptimization[性能优化]
-BestPractices --> AccessibilityCompliance[可访问性合规]
-DesignConsistency --> DesignTokens[设计令牌]
-DesignConsistency --> ComponentLibrary[组件库]
-DesignConsistency --> StyleGuide[样式指南]
-ComponentReuse --> AtomicDesign[原子设计]
-ComponentReuse --> Composition[组合模式]
-ComponentReuse --> PropsInterface[属性接口]
-PerformanceOptimization --> BundleSize[包体积控制]
-PerformanceOptimization --> RenderEfficiency[渲染效率]
-PerformanceOptimization --> MemoryManagement[内存管理]
-AccessibilityCompliance --> WCAGStandards[WCAG标准]
-AccessibilityCompliance --> ScreenReaderSupport[屏幕阅读器支持]
-AccessibilityCompliance --> KeyboardNavigation[键盘导航]
-```
-
-#### 开发指导原则
-
-- **设计优先**：先设计再开发，确保设计的一致性
-- **组件导向**：以组件为中心的开发模式
-- **性能意识**：从项目开始就考虑性能影响
-- **测试驱动**：编写充分的单元测试和集成测试
-- **文档完善**：保持代码和设计文档的同步更新
-
-### 未来发展方向
-
-1. **设计系统演进**：持续优化设计语言和组件库
-2. **性能提升**：探索新的优化技术和工具
-3. **可访问性增强**：进一步提升无障碍功能
-4. **跨平台支持**：扩展到更多平台和设备
-5. **智能化功能**：集成AI辅助的设计和开发功能
-
-通过这套完整的UI/UX设计系统，项目实现了高质量的用户体验，为浏览器扩展开发提供了优秀的参考范例。
+这些改进使得整个设计系统更加专业化和品牌化，为用户提供了更好的使用体验。

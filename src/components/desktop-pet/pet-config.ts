@@ -54,9 +54,6 @@ export const ABSENCE_DAYS = 7
 /** 默认收藏夹堆积阈值 */
 export const PILE_UP_THRESHOLD = 100
 
-/** 连续整理天数达标 */
-export const STREAK_GOAL = 3
-
 /** 桌宠成长数据存储 key */
 export const PET_GROWTH_KEY = 'bili-pet-growth'
 
@@ -65,7 +62,8 @@ export interface PetGrowthData {
   lastOpenTime: number
   consecutiveOrganizeDays: number
   lastOrganizeDate: string
-  skinLevel: number
+  /** 当前穿戴的皮肤等级 */
+  activeSkinLevel: number
   totalOrganizeCount: number
 }
 
@@ -74,13 +72,34 @@ export const DEFAULT_GROWTH: PetGrowthData = {
   lastOpenTime: Date.now(),
   consecutiveOrganizeDays: 0,
   lastOrganizeDate: '',
-  skinLevel: 0,
+  activeSkinLevel: 0,
   totalOrganizeCount: 0,
 }
 
+/** 皮肤名称 */
+export const SKIN_NAMES = ['银灰', '樱粉', '天蓝', '薄荷', '星紫'] as const
+
+/** 规范化成长数据（兼容旧版本存储） */
+export function normalizeGrowthData(data: Partial<PetGrowthData> & { skinLevel?: number }): PetGrowthData {
+  const maxSkin = SKIN_NAMES.length - 1
+  const activeSkinLevel = Math.min(
+    Math.max(0, data.activeSkinLevel ?? data.skinLevel ?? 0),
+    maxSkin,
+  )
+
+  return {
+    ...DEFAULT_GROWTH,
+    ...data,
+    activeSkinLevel,
+  }
+}
+
+/** 收藏成功时的固定气泡文案 */
+export const FAVORITE_ADDED_DIALOGUE = '又多了个收藏！'
+
 /** 对话气泡文案 */
 export const PET_DIALOGUES: Record<PetMood, string[]> = {
-  happy: ['收藏成功！📺', '好片子！已收录~', '又多了个收藏！', '信号满格！'],
+  happy: ['收藏成功！📺', '好片子！已收录~', '又多了个收藏！', '信号满格！', '换台成功~'],
   idle: ['待机中...', '调频调频~', '要不要整理下收藏夹？'],
   wave: ['嗨！欢迎收看~', '开机成功！📺', '今天想整理收藏夹吗？'],
   walk: ['换台中~', '频道切换...', '扫描好视频中~'],
@@ -96,7 +115,7 @@ export const PET_DIALOGUES: Record<PetMood, string[]> = {
 export const PET_SIZE = 48
 export const PIXEL_SCALE = 3
 
-/** 皮肤配色方案 — 小电视外壳进化（随 skinLevel 解锁）
+/** 皮肤配色方案 — 小电视外壳配色（点击循环切换）
  *  body = shell 主色, bodyDark = shellDark, foot = 底座
  */
 export const SKIN_COLORS = [

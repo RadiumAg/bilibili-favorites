@@ -53,6 +53,9 @@ export function usePetDrag(containerRef: React.RefObject<HTMLDivElement | null>)
     const onMouseDown = (e: MouseEvent) => {
       // 只响应左键
       if (e.button !== 0) return
+      const target = e.target as HTMLElement | null
+      if (target?.closest('.bili-pet-no-drag')) return
+
       e.preventDefault()
       e.stopPropagation()
 

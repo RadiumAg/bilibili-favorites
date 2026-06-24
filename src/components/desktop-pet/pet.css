@@ -86,7 +86,7 @@
   left: 50%;
   transform: translateX(-50%);
   margin-bottom: 4px;
-  padding: 4px 10px;
+  padding: 5px 10px;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -96,6 +96,38 @@
   pointer-events: none;
   animation: bili-pet-bubble-in 0.2s ease-out;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.bili-pet-bubble-with-action {
+  pointer-events: auto;
+  padding-right: 6px;
+}
+
+.bili-pet-bubble-text {
+  display: inline-block;
+}
+
+.bili-pet-bubble-action {
+  flex: none;
+  pointer-events: auto;
+  padding: 3px 9px;
+  border: none;
+  border-radius: 6px;
+  background: #00A1D6;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bili-pet-bubble-action:hover {
+  background: #0082AE;
 }
 
 .bili-pet-bubble::after {
@@ -260,7 +292,7 @@
   min-width: 160px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   animation: bili-pet-bubble-in 0.2s ease-out;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .bili-pet-dashboard-title {
@@ -302,6 +334,25 @@
   gap: 6px;
   padding-top: 6px;
   border-top: 1px solid #f3f4f6;
+}
+
+.bili-pet-skin-button {
+  flex: none;
+  padding: 2px 8px;
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #0284c7;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bili-pet-skin-button:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
 }
 
 .bili-pet-skin-dot {

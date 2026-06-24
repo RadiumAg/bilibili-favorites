@@ -7,10 +7,52 @@ import {
   streamAIRequest,
 } from './utils'
 import { callAIGateAI, checkAIGateQuota } from './ai-gate'
+import { setupPetMessageHandlers } from './pet'
+import { uploadSync } from '@/utils/sync-service'
+import type { WebDAVRequestOptions } from '@/utils/webdav'
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+setupPetMessageHandlers()
 
-chrome.runtime.onMessage.addListener((message, sender) => {
+// ========== WebDAV 同步防抖计时器 ==========
+let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null
+const SYNC_DEBOUNCE_MS = 5000
+
+function debouncedSync() {
+  if (syncDebounceTimer) clearTimeout(syncDebounceTimer)
+  syncDebounceTimer = setTimeout(async () => {
+    try {
+      await uploadSync()
+      console.log('[Background] WebDAV auto sync completed')
+    } catch (error) {
+      console.warn('[Background] WebDAV auto sync failed:', error)
+    }
+  }, SYNC_DEBOUNCE_MS)
+}
+
+// ========== 消息监听（短连接） ==========
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // WebDAV 请求代理
+  if (message?.type === 'webdavRequest') {
+    const options = message.data as WebDAVRequestOptions
+    handleWebDAVRequest(options)
+      .then(sendResponse)
+      .catch((error) => {
+        sendResponse({
+          ok: false,
+          status: 0,
+          statusText: error instanceof Error ? error.message : 'Unknown error',
+        })
+      })
+    return true // 表示异步响应
+  }
+
+  // WebDAV 同步触发
+  if (message?.type === 'triggerSync') {
+    debouncedSync()
+    return false
+  }
+
   if (message?.type === 'open_sidepanel') {
     const windowId = sender.tab?.windowId
     if (windowId !== undefined) {
@@ -18,6 +60,28 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     }
   }
 })
+
+/**
+ * 处理 WebDAV 请求代理（在 background 中发起 fetch，绕过 CORS）
+ */
+async function handleWebDAVRequest(options: WebDAVRequestOptions) {
+  const { method, url, headers, body } = options
+
+  const response = await fetch(url, {
+    method,
+    headers: headers || {},
+    body: body || undefined,
+  })
+
+  const responseBody = await response.text()
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    statusText: response.statusText,
+    body: responseBody,
+  }
+}
 
 // 使用 onConnect 监听长连接，支持流式传输
 chrome.runtime.onConnect.addListener((port) => {

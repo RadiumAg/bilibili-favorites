@@ -1,5 +1,7 @@
 import { getAllFavoriteFlag, getFavoriteList, moveFavorite } from '@/utils/api'
 import { Message, MessageEnum } from '@/utils/message'
+import { PetMessageEnum } from '@/utils/pet-message'
+import { fetchPetFavStats, getStoredDefaultFavoriteId } from '@/utils/pet-stats'
 import { DesktopPet } from '@/components/desktop-pet'
 import ReactDOM from 'react-dom/client'
 import React from 'react'
@@ -28,7 +30,7 @@ function unmountDesktopPet() {
 function initDesktopPet() {
   try {
     chrome?.storage?.local?.get(['petEnabled'], (result) => {
-      const enabled = result.petEnabled === true
+      const enabled = result.petEnabled !== false
       if (enabled) mountDesktopPet()
     })
 
@@ -52,8 +54,19 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
   window.addEventListener('DOMContentLoaded', initDesktopPet)
 }
 
-chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
-  switch (message.type) {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === PetMessageEnum.internalGetFavStats) {
+    void (async () => {
+      const defaultFavoriteId = await getStoredDefaultFavoriteId()
+      const stats = await fetchPetFavStats(document.cookie, defaultFavoriteId)
+      sendResponse(stats)
+    })()
+    return true
+  }
+
+  const typedMessage = message as Message
+
+  switch (typedMessage.type) {
     case MessageEnum.getCookie:
       {
         sendResponse(document.cookie)
@@ -61,7 +74,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
       break
 
     case MessageEnum.moveVideo: {
-      const { srcMediaId, tarMediaId, videoId } = message.data
+      const { srcMediaId, tarMediaId, videoId } = typedMessage.data
       moveFavorite(srcMediaId, tarMediaId, videoId, document.cookie)
         ?.then(() => {
           sendResponse(MessageEnum.moveVideo)
@@ -74,7 +87,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
     }
 
     case MessageEnum.getFavoriteList: {
-      const { mediaId, pn, ps } = message.data
+      const { mediaId, pn, ps } = typedMessage.data
 
       getFavoriteList(mediaId, pn, ps)
         .then((data) => {

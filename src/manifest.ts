@@ -26,6 +26,12 @@ export default defineManifest({
   content_scripts: [
     {
       matches: bilibiliUrlPatterns,
+      js: ['src/contentScript/pet-favorite-main.ts'],
+      run_at: 'document_start',
+      world: 'MAIN',
+    } as chrome.runtime.ManifestV3['content_scripts'][number] & { world: 'MAIN' },
+    {
+      matches: bilibiliUrlPatterns,
       js: ['src/contentScript/index.ts'],
     },
   ],
@@ -35,7 +41,8 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['storage', 'tabs', 'sidePanel'],
+  permissions: ['storage', 'tabs', 'sidePanel', 'alarms'],
+  optional_host_permissions: ['https://*/*', 'http://*/*'],
   host_permissions: [
     'https://api.openai.com/*',
     'https://*.openai.com/*',

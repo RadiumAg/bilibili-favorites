@@ -1,4 +1,5 @@
 import React from 'react'
+import { openOrganizePage, openAnalysisPage } from './pet-actions'
 
 interface PetContextMenuProps {
   visible: boolean
@@ -14,6 +15,14 @@ const MENU_ITEMS = [
 ] as const
 
 function executeAction(tab: string) {
+  if (tab === 'keyword-manager') {
+    openOrganizePage()
+    return
+  }
+  if (tab === 'analysis') {
+    openAnalysisPage()
+    return
+  }
   window.open(chrome.runtime.getURL(`options.html?tab=${tab}`), '_blank')
 }
 

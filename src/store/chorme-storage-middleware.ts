@@ -1,7 +1,19 @@
 import { StateCreator } from 'zustand'
 
 // 定义需要持久化的字段
-const PERSISTED_KEYS = ['keyword', 'activeKey', 'cookie', 'aiConfig', 'defaultFavoriteId'] as const
+const PERSISTED_KEYS = [
+  'keyword',
+  'activeKey',
+  'cookie',
+  'aiConfig',
+  'defaultFavoriteId',
+  'petEnabled',
+  // WebDAV 云同步配置（仅本地持久化，不参与同步上传）
+  'webdavConfig',
+  'webdavEnabled',
+  'webdavSyncIndexedDB',
+  'webdavLastSyncTime',
+] as const
 
 type PersistedKeys = (typeof PERSISTED_KEYS)[number]
 
@@ -31,6 +43,11 @@ const chromeStorageMiddleware: ChromeStorageImpl = (config) => {
       })
 
       chrome.storage.local.set(dataToPersist)
+
+      // WebDAV 自动同步：通知 background 触发上传（静默失败）
+      if (state.webdavEnabled && state.webdavConfig) {
+        chrome.runtime.sendMessage({ type: 'triggerSync' }).catch(() => {})
+      }
     }
 
     const configResult = config(
