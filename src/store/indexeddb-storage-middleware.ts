@@ -11,6 +11,8 @@ type IndexedDBPersistedKeys = (typeof INDEXEDDB_PERSISTED_KEYS)[number]
 
 const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
   return (set, get, api) => {
+    const setStateWithoutPersistence = api.setState
+
     // 从 IndexedDB 恢复数据（含一次性迁移）
     const hydrate = async () => {
       try {
@@ -36,7 +38,7 @@ const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
         }
 
         if (Object.keys(data).length > 0) {
-          set(data as any)
+          setStateWithoutPersistence(data as any, false as any)
         }
       } catch (error) {
         console.warn('[IndexedDBStorage] hydrate failed:', error)

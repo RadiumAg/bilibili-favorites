@@ -34,6 +34,8 @@ type DataContextType = {
   webdavEnabled: boolean
   webdavSyncIndexedDB: boolean
   webdavLastSyncTime?: number
+  webdavLocalModifiedTime?: number
+  webdavApplyingRemote?: boolean
   setGlobalData: (data: Partial<DataContextType>) => void
   getGlobalData: () => DataContextType
 }

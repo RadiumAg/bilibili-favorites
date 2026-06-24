@@ -23,6 +23,8 @@ const useGlobalConfig = create<DataContextType>()(
           webdavEnabled: false,
           webdavSyncIndexedDB: false,
           webdavLastSyncTime: undefined,
+          webdavLocalModifiedTime: undefined,
+          webdavApplyingRemote: false,
           setGlobalData: (data: Partial<DataContextType>) => {
             return set(data)
           },

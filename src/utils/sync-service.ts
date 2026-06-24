@@ -15,11 +15,24 @@ type SyncMeta = {
   deviceId: string
 }
 
+export type SyncSettings = Partial<
+  Record<(typeof SYNC_KEYS)[number] | (typeof INDEXEDDB_SYNC_KEYS)[number], any>
+>
+
+export type DownloadSyncResult = {
+  hasNew: boolean
+  settings?: SyncSettings
+  remoteLastModified?: number
+}
+
 /** 需要同步的 Chrome Storage 字段（排除 cookie 和已迁移到 IndexedDB 的 keyword） */
-const SYNC_KEYS = ['activeKey', 'aiConfig', 'defaultFavoriteId', 'petEnabled'] as const
+export const SYNC_KEYS = ['activeKey', 'aiConfig', 'defaultFavoriteId', 'petEnabled'] as const
 
 /** 已迁移到 IndexedDB 但仍需参与 WebDAV 同步的字段 */
-const INDEXEDDB_SYNC_KEYS = ['keyword'] as const
+export const INDEXEDDB_SYNC_KEYS = ['keyword'] as const
+
+export const WEBDAV_LOCAL_MODIFIED_TIME_KEY = 'webdavLocalModifiedTime'
+export const WEBDAV_LAST_SYNC_TIME_KEY = 'webdavLastSyncTime'
 
 /** 应用版本号 */
 const SYNC_VERSION = '1.0'
@@ -53,10 +66,10 @@ export function getWebDAVConfig(): Promise<WebDAVConfig | null> {
 }
 
 /** 获取本地同步时间戳 */
-function getLocalSyncTime(): Promise<number> {
+export function getLocalSyncTime(): Promise<number> {
   return new Promise((resolve) => {
-    chrome.storage.local.get('webdavLastSyncTime', (data) => {
-      resolve(data.webdavLastSyncTime || 0)
+    chrome.storage.local.get(WEBDAV_LAST_SYNC_TIME_KEY, (data) => {
+      resolve(data[WEBDAV_LAST_SYNC_TIME_KEY] || 0)
     })
   })
 }
@@ -64,7 +77,29 @@ function getLocalSyncTime(): Promise<number> {
 /** 保存本地同步时间戳 */
 function setLocalSyncTime(time: number): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.local.set({ webdavLastSyncTime: time }, resolve)
+    chrome.storage.local.set({ [WEBDAV_LAST_SYNC_TIME_KEY]: time }, resolve)
+  })
+}
+
+/** 获取本地数据最后修改时间 */
+export function getLocalModifiedTime(): Promise<number> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(WEBDAV_LOCAL_MODIFIED_TIME_KEY, (data) => {
+      resolve(data[WEBDAV_LOCAL_MODIFIED_TIME_KEY] || 0)
+    })
+  })
+}
+
+/** 标记本地同步范围内的数据已修改 */
+export function markWebDAVLocalModified(time = Date.now()): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [WEBDAV_LOCAL_MODIFIED_TIME_KEY]: time }, resolve)
+  })
+}
+
+function setLocalModifiedTime(time: number): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [WEBDAV_LOCAL_MODIFIED_TIME_KEY]: time }, resolve)
   })
 }
 
@@ -75,6 +110,46 @@ function getSyncIndexedDBOption(): Promise<boolean> {
       resolve(data.webdavSyncIndexedDB === true)
     })
   })
+}
+
+function pickSyncSettings(settings: Record<string, any>): SyncSettings {
+  const picked: SyncSettings = {}
+
+  for (const key of SYNC_KEYS) {
+    if (key in settings) {
+      picked[key] = settings[key]
+    }
+  }
+
+  for (const key of INDEXEDDB_SYNC_KEYS) {
+    if (key in settings) {
+      picked[key] = settings[key]
+    }
+  }
+
+  return picked
+}
+
+async function applySyncSettingsToStorage(settings: SyncSettings): Promise<void> {
+  const storageData: Record<string, any> = {}
+
+  for (const key of SYNC_KEYS) {
+    if (key in settings) {
+      storageData[key] = settings[key]
+    }
+  }
+
+  if (Object.keys(storageData).length > 0) {
+    await new Promise<void>((resolve) => {
+      chrome.storage.local.set(storageData, resolve)
+    })
+  }
+
+  for (const key of INDEXEDDB_SYNC_KEYS) {
+    if (key in settings) {
+      await dbManager.setTag(key, settings[key])
+    }
+  }
 }
 
 /**
@@ -118,13 +193,18 @@ export async function uploadSync(): Promise<void> {
 
   // 6. 更新本地同步时间
   await setLocalSyncTime(meta.lastModified)
+  await setLocalModifiedTime(meta.lastModified)
 }
 
 /**
  * 下载同步 - 从 WebDAV 拉取最新数据到本地
  */
-export async function downloadSync(): Promise<boolean> {
+export async function downloadSync(options?: {
+  applyToStorage?: boolean
+}): Promise<DownloadSyncResult> {
+  const applyToStorage = options?.applyToStorage !== false
   const config = await getWebDAVConfig()
+  debugger
   if (!config) throw new Error('WebDAV 未配置')
 
   // 1. 获取远端 meta
@@ -132,7 +212,7 @@ export async function downloadSync(): Promise<boolean> {
   if (!metaStr) {
     // 远端无数据，执行首次上传
     await uploadSync()
-    return false
+    return { hasNew: false }
   }
 
   const remoteMeta: SyncMeta = JSON.parse(metaStr)
@@ -140,29 +220,17 @@ export async function downloadSync(): Promise<boolean> {
 
   // 2. 判断是否需要同步（远端更新时间 > 本地同步时间）
   if (remoteMeta.lastModified <= localSyncTime) {
-    return false // 无需同步
+    return { hasNew: false } // 无需同步
   }
 
   // 3. 下载 settings.json
   const settingsStr = await get(config, '/settings.json')
+  let syncSettings: SyncSettings | undefined
   if (settingsStr) {
     const settings = JSON.parse(settingsStr)
-    // 写入 chrome.storage（仅覆盖同步范围内的字段）
-    const toWrite: Record<string, any> = {}
-    for (const key of SYNC_KEYS) {
-      if (key in settings) {
-        toWrite[key] = settings[key]
-      }
-    }
-    await new Promise<void>((resolve) => {
-      chrome.storage.local.set(toWrite, resolve)
-    })
-
-    // 写入 IndexedDB（同步范围内已迁移到 IndexedDB 的字段）
-    for (const key of INDEXEDDB_SYNC_KEYS) {
-      if (key in settings) {
-        await dbManager.setTag(key, settings[key])
-      }
+    syncSettings = pickSyncSettings(settings)
+    if (applyToStorage) {
+      await applySyncSettingsToStorage(syncSettings)
     }
   }
 
@@ -173,9 +241,16 @@ export async function downloadSync(): Promise<boolean> {
   }
 
   // 5. 更新本地同步时间
-  await setLocalSyncTime(remoteMeta.lastModified)
+  if (applyToStorage) {
+    await setLocalSyncTime(remoteMeta.lastModified)
+    await setLocalModifiedTime(remoteMeta.lastModified)
+  }
 
-  return true // 有新数据
+  return {
+    hasNew: true,
+    settings: syncSettings,
+    remoteLastModified: remoteMeta.lastModified,
+  }
 }
 
 /**
@@ -189,6 +264,8 @@ export async function resolveAndSync(): Promise<'uploaded' | 'downloaded' | 'non
   try {
     const metaStr = await get(config, '/sync-meta.json')
     const localSyncTime = await getLocalSyncTime()
+    const localModifiedTime = await getLocalModifiedTime()
+    const hasLocalChanges = localModifiedTime > localSyncTime
 
     if (!metaStr) {
       // 远端无数据，上传本地数据
@@ -198,15 +275,29 @@ export async function resolveAndSync(): Promise<'uploaded' | 'downloaded' | 'non
 
     const remoteMeta: SyncMeta = JSON.parse(metaStr)
 
-    if (remoteMeta.lastModified > localSyncTime) {
-      // 远端更新，下载
-      await downloadSync()
-      return 'downloaded'
-    } else {
-      // 本地更新或相同，上传
+    const hasRemoteChanges = remoteMeta.lastModified > localSyncTime
+
+    if (hasRemoteChanges && hasLocalChanges) {
+      // 两端均有修改，使用 last-write-wins
+      if (remoteMeta.lastModified >= localModifiedTime) {
+        await downloadSync()
+        return 'downloaded'
+      }
       await uploadSync()
       return 'uploaded'
     }
+
+    if (hasRemoteChanges) {
+      await downloadSync()
+      return 'downloaded'
+    }
+
+    if (hasLocalChanges) {
+      await uploadSync()
+      return 'uploaded'
+    }
+
+    return 'none'
   } catch (error) {
     console.error('[SyncService] resolveAndSync failed:', error)
     return 'none'
@@ -218,21 +309,24 @@ export async function resolveAndSync(): Promise<'uploaded' | 'downloaded' | 'non
  */
 export async function getSyncInfo(): Promise<{
   lastSyncTime: number
+  localModifiedTime: number
   remoteLastModified: number | null
 }> {
   const config = await getWebDAVConfig()
   const lastSyncTime = await getLocalSyncTime()
+  const localModifiedTime = await getLocalModifiedTime()
 
-  if (!config) return { lastSyncTime, remoteLastModified: null }
+  if (!config) return { lastSyncTime, localModifiedTime, remoteLastModified: null }
 
   try {
     const metaInfo = await propfind(config, '/sync-meta.json')
     return {
       lastSyncTime,
+      localModifiedTime,
       remoteLastModified: metaInfo?.lastModified ?? null,
     }
   } catch {
-    return { lastSyncTime, remoteLastModified: null }
+    return { lastSyncTime, localModifiedTime, remoteLastModified: null }
   }
 }
 
@@ -262,7 +356,9 @@ async function uploadIndexedDBData(config: WebDAVConfig): Promise<void> {
       await put(config, '/analysis-cache/data.json', JSON.stringify(allData))
     }
   } catch (error) {
-    console.warn('[SyncService] uploadIndexedDBData failed:', error)
+    throw new Error(
+      `IndexedDB 分析缓存上传失败: ${error instanceof Error ? error.message : '未知错误'}`,
+    )
   }
 }
 

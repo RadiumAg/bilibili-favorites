@@ -24,6 +24,18 @@ export type WebDAVResponse = {
   headers?: Record<string, string>
 }
 
+function assertWebDAVStatus(
+  response: WebDAVResponse,
+  okStatuses: number[],
+  action: string,
+  path: string,
+): void {
+  if (okStatuses.includes(response.status)) return
+  throw new Error(
+    `WebDAV ${action} 失败: ${response.status} ${response.statusText || ''} (${path})`,
+  )
+}
+
 /**
  * 构建 Authorization header（Basic Auth）
  */
@@ -76,7 +88,7 @@ export async function connect(config: WebDAVConfig): Promise<boolean> {
   })
   // 207 Multi-Status 表示连接成功
   // 404 表示路径不存在，需要先创建
-  return response.status === 207 || response.status === 200
+  return response.status === 207 || response.status === 200 || response.status === 404
 }
 
 /**
@@ -92,7 +104,8 @@ export async function mkcol(config: WebDAVConfig, path: string): Promise<boolean
     },
   })
   // 201 Created 或 405 Method Not Allowed（已存在）
-  return response.status === 201 || response.status === 405
+  assertWebDAVStatus(response, [201, 405], 'MKCOL', path)
+  return true
 }
 
 /**
@@ -109,7 +122,8 @@ export async function put(config: WebDAVConfig, path: string, data: string): Pro
     },
     body: data,
   })
-  return response.status === 201 || response.status === 204 || response.status === 200
+  assertWebDAVStatus(response, [200, 201, 204], 'PUT', path)
+  return true
 }
 
 /**
@@ -172,6 +186,8 @@ export async function propfind(
  * 确保远端目录结构存在
  */
 export async function ensureDirectory(config: WebDAVConfig, path = '/'): Promise<void> {
+  await mkcol(config, '/')
+
   const segments = path.split('/').filter(Boolean)
   let current = '/'
   for (const segment of segments) {

@@ -4,11 +4,28 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { toast } from '@/hooks/use-toast'
 import { type WebDAVConfig } from '@/utils/webdav'
-import { testConnection, uploadSync, downloadSync, type SyncStatus } from '@/utils/sync-service'
+import {
+  testConnection,
+  uploadSync,
+  downloadSync,
+  getSyncInfo,
+  type SyncStatus,
+} from '@/utils/sync-service'
 import {
   Cloud,
   CloudOff,
@@ -126,11 +143,17 @@ export const WebDAVConfigPanel: React.FC = () => {
   const handleDownload = useMemoizedFn(async () => {
     setSyncStatus('syncing')
     try {
-      const hasNew = await downloadSync()
+      const result = await downloadSync({ applyToStorage: false })
       setSyncStatus('success')
-      if (hasNew) {
-        setGlobalData({ webdavLastSyncTime: Date.now() })
-        toast({ title: '下载成功', description: '已从云端同步最新数据，刷新页面生效' })
+      if (result.hasNew) {
+        setGlobalData({
+          webdavApplyingRemote: true,
+          ...result.settings,
+          webdavLastSyncTime: result.remoteLastModified,
+          webdavLocalModifiedTime: result.remoteLastModified,
+        })
+        setGlobalData({ webdavApplyingRemote: false })
+        toast({ title: '下载成功', description: '已从云端同步最新数据' })
       } else {
         toast({ title: '已是最新', description: '本地数据与云端一致' })
       }
@@ -157,20 +180,25 @@ export const WebDAVConfigPanel: React.FC = () => {
     return new Date(ts).toLocaleString('zh-CN')
   }
 
-  // 页面打开时自动拉取最新数据
+  // 页面打开时仅提示云端更新，避免静默覆盖本地修改
   React.useEffect(() => {
     if (!webdavEnabled || !webdavConfig) return
-    downloadSync()
-      .then((hasNew) => {
-        if (hasNew) {
-          setGlobalData({ webdavLastSyncTime: Date.now() })
-          console.log('[WebDAV] Auto download: new data applied')
+    getSyncInfo()
+      .then(({ lastSyncTime, localModifiedTime, remoteLastModified }) => {
+        if (remoteLastModified && remoteLastModified > lastSyncTime) {
+          const hasLocalChanges = localModifiedTime > lastSyncTime
+          toast({
+            title: '云端有更新',
+            description: hasLocalChanges
+              ? '本地和云端都有修改，请手动选择上传或下载。'
+              : '点击“从云端下载”可同步最新数据。',
+          })
         }
       })
       .catch((error) => {
-        console.warn('[WebDAV] Auto download failed:', error)
+        console.warn('[WebDAV] Check remote update failed:', error)
       })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [webdavEnabled, webdavConfig])
 
   return (
     <div className="space-y-4">
@@ -294,21 +322,38 @@ export const WebDAVConfigPanel: React.FC = () => {
                 <Upload className="w-4 h-4 mr-1" />
                 上传到云端
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleDownload}
-                disabled={syncStatus === 'syncing' || !webdavConfig}
-              >
-                <Download className="w-4 h-4 mr-1" />
-                从云端下载
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={syncStatus === 'syncing' || !webdavConfig}
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    从云端下载
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>确认从云端下载？</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      这会覆盖本地的同步数据，包括配置、默认收藏夹、桌宠开关和标签规则。
+                      已下载的数据会立即写入当前页面状态。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>取消</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDownload}>确认下载</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
 
           <p className="text-xs text-muted-foreground">
-            数据变更后将自动上传至 WebDAV 服务器，打开设置页时自动拉取最新数据。 支持
-            Nextcloud、坚果云、群晖等 WebDAV 服务。
+            同步范围内的数据变更后将自动上传至 WebDAV
+            服务器；打开设置页时仅提示云端更新，不会静默覆盖本地数据。支持 Nextcloud、坚果云、群晖等
+            WebDAV 服务。
           </p>
         </div>
       )}
