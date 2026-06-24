@@ -2,6 +2,7 @@ import React from 'react'
 import { ConfigModeSelector } from './components/config-mode-selector'
 import { CustomConfigForm } from './components/custom-config-form'
 import { QuotaCard } from './components/quota-card'
+import { WebDAVConfigPanel } from './components/webdav-config'
 import { Title } from '@/components'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -43,6 +44,9 @@ const Setting: React.FC = () => {
           小电视会在 B 站页面右下角出现，根据你的操作变换表情，点击可切换皮肤~
         </p>
       )}
+
+      <Title title="云同步" />
+      <WebDAVConfigPanel />
     </div>
   )
 }

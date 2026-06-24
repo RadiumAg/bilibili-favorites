@@ -16,6 +16,11 @@ const useGlobalConfig = create<DataContextType>()(
         },
         defaultFavoriteId: undefined,
         petEnabled: true,
+        // WebDAV 云同步默认值
+        webdavConfig: undefined,
+        webdavEnabled: false,
+        webdavSyncIndexedDB: false,
+        webdavLastSyncTime: undefined,
         setGlobalData: (data: Partial<DataContextType>) => {
           return set(data)
         },

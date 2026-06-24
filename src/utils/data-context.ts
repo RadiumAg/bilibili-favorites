@@ -1,3 +1,5 @@
+import { type WebDAVConfig } from './webdav'
+
 type Adapter = 'spark' | 'openai' | 'custom' | 'aigate' | 'qianwen' | 'kimi' | 'gml'
 
 type DataContextType = {
@@ -27,6 +29,11 @@ type DataContextType = {
   defaultFavoriteId: number | undefined
   keyword: { value: { id: string; value: string }[]; favoriteDataId: number }[]
   petEnabled: boolean
+  // WebDAV 云同步配置（存 chrome.storage.local，不参与 WebDAV 同步）
+  webdavConfig?: WebDAVConfig
+  webdavEnabled: boolean
+  webdavSyncIndexedDB: boolean
+  webdavLastSyncTime?: number
   setGlobalData: (data: Partial<DataContextType>) => void
   getGlobalData: () => DataContextType
 }
