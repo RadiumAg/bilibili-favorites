@@ -20,7 +20,7 @@ const Setting: React.FC = () => {
   )
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-h-[calc(100vh-16rem)] overflow-y-auto pr-2 scrollbar-styled">
       <Title title="AI 相关配置" />
       <ConfigModeSelector configMode={selectorMode} onModeChange={setSelectorMode} />
       {selectorMode === 'custom' && <CustomConfigForm />}

@@ -79,6 +79,31 @@ body {
   font-family: 'Sora,PingFang SC,HarmonyOS_Medium,Helvetica Neue,Microsoft YaHei,sans-serif';
 }
 
+/* 自定义滚动条样式 */
+.scrollbar-styled {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(288 60% 80%) transparent;
+}
+
+.scrollbar-styled::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-styled::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.scrollbar-styled::-webkit-scrollbar-thumb {
+  background: hsl(288 60% 82%);
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.scrollbar-styled::-webkit-scrollbar-thumb:hover {
+  background: hsl(288 80% 65%);
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   *,
