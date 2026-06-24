@@ -2,33 +2,36 @@ import { DataContextType } from '@/utils/data-context'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { chromeStorageMiddleware } from './chorme-storage-middleware'
+import { indexedDBStorageMiddleware } from './indexeddb-storage-middleware'
 
 const useGlobalConfig = create<DataContextType>()(
   immer(
-    chromeStorageMiddleware((set, get) => {
-      return {
-        keyword: [],
-        favoriteData: [],
-        cookie: undefined,
-        activeKey: undefined,
-        aiConfig: {
-          configMode: 'free',
-        },
-        defaultFavoriteId: undefined,
-        petEnabled: true,
-        // WebDAV 云同步默认值
-        webdavConfig: undefined,
-        webdavEnabled: false,
-        webdavSyncIndexedDB: false,
-        webdavLastSyncTime: undefined,
-        setGlobalData: (data: Partial<DataContextType>) => {
-          return set(data)
-        },
-        getGlobalData: () => {
-          return get()
-        },
-      }
-    }),
+    indexedDBStorageMiddleware(
+      chromeStorageMiddleware((set, get) => {
+        return {
+          keyword: [],
+          favoriteData: [],
+          cookie: undefined,
+          activeKey: undefined,
+          aiConfig: {
+            configMode: 'free',
+          },
+          defaultFavoriteId: undefined,
+          petEnabled: true,
+          // WebDAV 云同步默认值
+          webdavConfig: undefined,
+          webdavEnabled: false,
+          webdavSyncIndexedDB: false,
+          webdavLastSyncTime: undefined,
+          setGlobalData: (data: Partial<DataContextType>) => {
+            return set(data)
+          },
+          getGlobalData: () => {
+            return get()
+          },
+        }
+      }),
+    ),
   ),
 )
 

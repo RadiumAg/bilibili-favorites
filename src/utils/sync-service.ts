@@ -15,8 +15,11 @@ type SyncMeta = {
   deviceId: string
 }
 
-/** 需要同步的 Chrome Storage 字段（排除 cookie） */
-const SYNC_KEYS = ['keyword', 'activeKey', 'aiConfig', 'defaultFavoriteId', 'petEnabled'] as const
+/** 需要同步的 Chrome Storage 字段（排除 cookie 和已迁移到 IndexedDB 的 keyword） */
+const SYNC_KEYS = ['activeKey', 'aiConfig', 'defaultFavoriteId', 'petEnabled'] as const
+
+/** 已迁移到 IndexedDB 但仍需参与 WebDAV 同步的字段 */
+const INDEXEDDB_SYNC_KEYS = ['keyword'] as const
 
 /** 应用版本号 */
 const SYNC_VERSION = '1.0'
@@ -89,17 +92,22 @@ export async function uploadSync(): Promise<void> {
     chrome.storage.local.get(SYNC_KEYS as unknown as string[], resolve)
   })
 
-  // 2. 上传 settings.json
+  // 2. 补充从 IndexedDB 读取的同步字段（如标签数据 keyword）
+  for (const key of INDEXEDDB_SYNC_KEYS) {
+    storageData[key] = await dbManager.getTag(key)
+  }
+
+  // 3. 上传 settings.json
   await put(config, '/settings.json', JSON.stringify(storageData, null, 2))
 
-  // 3. 可选：上传 IndexedDB 分析缓存
+  // 4. 可选：上传 IndexedDB 分析缓存
   const syncIndexedDB = await getSyncIndexedDBOption()
   if (syncIndexedDB) {
     await ensureDirectory(config, '/analysis-cache/')
     await uploadIndexedDBData(config)
   }
 
-  // 4. 更新 sync-meta.json
+  // 5. 更新 sync-meta.json
   const deviceId = await getDeviceId()
   const meta: SyncMeta = {
     lastModified: Date.now(),
@@ -108,7 +116,7 @@ export async function uploadSync(): Promise<void> {
   }
   await put(config, '/sync-meta.json', JSON.stringify(meta, null, 2))
 
-  // 5. 更新本地同步时间
+  // 6. 更新本地同步时间
   await setLocalSyncTime(meta.lastModified)
 }
 
@@ -149,6 +157,13 @@ export async function downloadSync(): Promise<boolean> {
     await new Promise<void>((resolve) => {
       chrome.storage.local.set(toWrite, resolve)
     })
+
+    // 写入 IndexedDB（同步范围内已迁移到 IndexedDB 的字段）
+    for (const key of INDEXEDDB_SYNC_KEYS) {
+      if (key in settings) {
+        await dbManager.setTag(key, settings[key])
+      }
+    }
   }
 
   // 4. 可选：下载 IndexedDB 分析缓存

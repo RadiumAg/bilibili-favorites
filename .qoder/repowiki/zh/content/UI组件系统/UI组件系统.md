@@ -18,6 +18,7 @@
 - [src/components/ui/scroll-area.tsx](file://src/components/ui/scroll-area.tsx)
 - [src/components/ui/toast.tsx](file://src/components/ui/toast.tsx)
 - [src/components/ui/toaster.tsx](file://src/components/ui/toaster.tsx)
+- [src/components/ui/switch.tsx](file://src/components/ui/switch.tsx)
 - [src/components/index.ts](file://src/components/index.ts)
 - [src/lib/utils.ts](file://src/lib/utils.ts)
 - [tailwind.config.js](file://tailwind.config.js)
@@ -41,14 +42,20 @@
 - [src/options/components/analysis/options-analysis-tab.tsx](file://src/options/components/analysis/options-analysis-tab.tsx)
 - [src/options/components/analysis/stats-cards.tsx](file://src/options/components/analysis/stats-cards.tsx)
 - [src/options/components/analysis/index.ts](file://src/options/components/analysis/index.ts)
+- [src/options/components/setting/components/webdav-config.tsx](file://src/options/components/setting/components/webdav-config.tsx)
+- [src/options/components/setting/index.tsx](file://src/options/components/setting/index.tsx)
+- [src/utils/webdav.ts](file://src/utils/webdav.ts)
+- [src/utils/sync-service.ts](file://src/utils/sync-service.ts)
+- [src/options/components/setting/types.ts](file://src/options/components/setting/types.ts)
+- [src/options/components/setting/components/custom-config-form.tsx](file://src/options/components/setting/components/custom-config-form.tsx)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 新增favorite-tag组件稳定性改进章节，详细说明useMemo依赖数组扩展
-- 更新核心组件无障碍特性说明，包括按钮、选择器、滑块、标签页、吐司组件
-- 增强表单组件的可访问性特性，包括自动ARIA属性注入
-- 新增无障碍性最佳实践和故障排查指南
+- 新增WebDAV配置面板UI组件章节，详细介绍云同步配置界面的实现
+- 扩展表单组件功能说明，包含WebDAV配置表单的完整实现
+- 更新核心组件无障碍特性说明，包括Switch组件的无障碍支持
+- 新增WebDAV同步状态管理和权限处理机制
 - 更新样式系统重大改进章节，反映popup样式系统的全新B站品牌色彩体系
 - **更新BarChart组件视觉一致性改进**：修复水平和垂直柱状图的圆角半径显示问题，统一视觉效果
 
@@ -58,15 +65,16 @@
 3. [核心组件](#核心组件)
 4. [架构总览](#架构总览)
 5. [详细组件分析](#详细组件分析)
-6. [favorite-tag组件稳定性改进](#favorite-tag组件稳定性改进)
-7. [无障碍性改进](#无障碍性改进)
-8. [样式系统重大改进](#样式系统重大改进)
-9. [分析图表组件系统](#分析图表组件系统)
-10. [依赖关系分析](#依赖关系分析)
-11. [性能考量](#性能考量)
-12. [故障排查指南](#故障排查指南)
-13. [结论](#结论)
-14. [附录](#附录)
+6. [WebDAV配置面板UI组件](#webdav配置面板ui组件)
+7. [favorite-tag组件稳定性改进](#favorite-tag组件稳定性改进)
+8. [无障碍性改进](#无障碍性改进)
+9. [样式系统重大改进](#样式系统重大改进)
+10. [分析图表组件系统](#分析图表组件系统)
+11. [依赖关系分析](#依赖关系分析)
+12. [性能考量](#性能考量)
+13. [故障排查指南](#故障排查指南)
+14. [结论](#结论)
+15. [附录](#附录)
 
 ## 简介
 本文件系统化梳理 B站收藏夹整理工具的UI组件体系，围绕以下设计理念展开：
@@ -75,7 +83,7 @@
 
 组件覆盖从基础输入控件到复合交互组件（如表单、选择器、弹出层、进度条、标签页等），并提供组合模式、复用策略、响应式与跨浏览器兼容建议、可访问性与国际化支持说明，以及主题定制与样式扩展方法。
 
-**更新**：本次更新重点介绍了favorite-tag组件的稳定性改进，通过扩展useMemo依赖数组显著提升了组件的性能和可靠性。同时新增了全面的无障碍性改进章节，涵盖ARIA属性、键盘导航、屏幕阅读器兼容性，以及UI组件的可访问性增强。样式系统也进行了重大改进，包括全新的B站品牌色彩体系（#BF00FF主色调）、暗色模式增强、滚动条样式系统、字体优化和交互增强等。**BarChart组件也经历了重要的视觉一致性改进，修复了水平和垂直柱状图的圆角半径显示问题，提升了图表组件的视觉统一性。**
+**更新**：本次更新重点介绍了WebDAV配置面板UI组件的实现，这是一个全新的云同步配置界面，提供了完整的WebDAV服务器配置、连接测试、手动同步等功能。该组件扩展了表单组件的功能，集成了权限申请、状态管理、图标组件等特性。同时新增了favorite-tag组件的稳定性改进章节，详细说明useMemo依赖数组扩展。更新了核心组件的无障碍特性说明，特别是Switch组件的无障碍支持。样式系统也进行了重大改进，包括全新的B站品牌色彩体系（#BF00FF主色调）、暗色模式增强、滚动条样式系统、字体优化和交互增强等。**BarChart组件也经历了重要的视觉一致性改进，修复了水平和垂直柱状图的圆角半径显示问题，提升了图表组件的视觉统一性。**
 
 ## 项目结构
 UI组件集中位于 src/components/ui 下，采用"按功能拆分"的模块化组织方式；公共工具函数 cn 负责类名合并；Tailwind 配置通过设计令牌与插件扩展提供统一主题与滚动条样式。
@@ -100,6 +108,8 @@ Slider["Slider<br/>滑块"]
 Toast["Toast<br/>提示消息"]
 Toaster["Toaster<br/>消息栈"]
 FTag["FavoriteTag<br/>收藏夹标签"]
+Switch["Switch<br/>开关组件"]
+WebDAV["WebDAVConfigPanel<br/>WebDAV配置面板"]
 end
 Utils["cn 合并工具"]
 TW["Tailwind 配置<br/>设计令牌/插件"]
@@ -120,6 +130,8 @@ Slider --> Utils
 Toast --> Utils
 Toaster --> Utils
 FTag --> Utils
+Switch --> Utils
+WebDAV --> Utils
 FTag --> TW
 Btn --> TW
 Inp --> TW
@@ -137,6 +149,8 @@ Skin --> TW
 Slider --> TW
 Toast --> TW
 Toaster --> TW
+Switch --> TW
+WebDAV --> TW
 ```
 
 **图表来源**
@@ -156,9 +170,11 @@ Toaster --> TW
 - [src/components/ui/scroll-area.tsx](file://src/components/ui/scroll-area.tsx)
 - [src/components/ui/toast.tsx](file://src/components/ui/toast.tsx)
 - [src/components/ui/toaster.tsx](file://src/components/ui/toaster.tsx)
+- [src/components/ui/switch.tsx](file://src/components/ui/switch.tsx)
 - [src/lib/utils.ts:1-7](file://src/lib/utils.ts#L1-L7)
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
 - [src/components/favorite-tag/index.tsx:1-85](file://src/components/favorite-tag/index.tsx#L1-L85)
+- [src/options/components/setting/components/webdav-config.tsx:1-318](file://src/options/components/setting/components/webdav-config.tsx#L1-L318)
 
 **章节来源**
 - [src/components/index.ts:1-4](file://src/components/index.ts#L1-L4)
@@ -213,12 +229,25 @@ Toaster --> TW
   - 关键属性：value（数值）、indicatorClassName、className、...props。
   - 最佳实践：与异步流程配合；在低对比度主题下保证前景色对比度。
 
+- 开关 Switch
+  - 功能：二进制状态切换，支持受控与非受控模式，提供视觉反馈与无障碍支持。
+  - 关键属性：checked（受控状态）、onCheckedChange（状态变更回调）、id（无障碍标识）、className、...props。
+  - 可访问性：支持键盘切换、屏幕阅读器识别、焦点管理。
+  - 最佳实践：用于开关式设置项；与Label配合提供清晰的语义化标签。
+
 - 收藏夹标签 FavoriteTag
   - 功能：展示用户收藏夹列表，支持点击设置默认收藏夹、长按拖拽、悬停效果。
   - 关键属性：className（组件样式类名）
   - 可访问性：支持键盘导航、屏幕阅读器识别、焦点管理
   - 性能优化：通过useMemo依赖数组扩展提升渲染性能
   - 最佳实践：与useSetDefaultFav hook配合使用；支持长按拖拽功能；提供加载状态指示
+
+- WebDAV配置面板 WebDAVConfigPanel
+  - 功能：提供完整的WebDAV云同步配置界面，包括服务器地址、认证信息、同步选项和状态管理。
+  - 关键属性：无（组件内部管理状态）
+  - 可访问性：集成Switch、Input、Button等组件的无障碍特性
+  - 功能特性：权限申请、连接测试、手动同步、状态指示、自动同步
+  - 最佳实践：与useGlobalConfig hook配合使用；提供完整的错误处理；支持权限拒绝场景
 
 - 其他常用组件
   - Skeleton：骨架屏占位，提升加载体验。
@@ -243,18 +272,20 @@ Toaster --> TW
 - [src/components/ui/scroll-area.tsx](file://src/components/ui/scroll-area.tsx)
 - [src/components/ui/toast.tsx](file://src/components/ui/toast.tsx)
 - [src/components/ui/toaster.tsx](file://src/components/ui/toaster.tsx)
+- [src/components/ui/switch.tsx](file://src/components/ui/switch.tsx)
 - [src/components/favorite-tag/index.tsx:1-85](file://src/components/favorite-tag/index.tsx#L1-L85)
+- [src/options/components/setting/components/webdav-config.tsx:1-318](file://src/options/components/setting/components/webdav-config.tsx#L1-L318)
 
 ## 架构总览
 UI组件体系遵循"基础组件 + 复合组件 + 工具函数 + 主题系统"的分层架构：
-- 基础组件：Button、Input、Textarea、Label、Badge、Progress 等，提供通用交互与视觉。
+- 基础组件：Button、Input、Textarea、Label、Badge、Progress、Switch 等，提供通用交互与视觉。
 - 复合组件：Form、Select、Popover、Tabs、ScrollArea 等，封装复杂交互与状态管理。
 - 工具函数：cn 合并类名，确保样式叠加与冲突最小化。
 - 主题系统：Tailwind 设计令牌与插件，提供暗色模式、颜色变量、滚动条样式与动画插件。
 
 ```mermaid
 graph TB
-Base["基础组件<br/>Button/Input/Textarea/Label/Badge/Progress"]
+Base["基础组件<br/>Button/Input/Textarea/Label/Badge/Progress/Switch"]
 Composite["复合组件<br/>Form/Select/Popover/Tabs/ScrollArea"]
 Util["工具函数<br/>cn 合并类名"]
 Theme["主题系统<br/>Tailwind 设计令牌/插件"]
@@ -347,6 +378,16 @@ class FavoriteTag {
 +className : string
 +props : FavoriteTagProps
 }
+class Switch {
++checked : boolean
++onCheckedChange : function
++id : string
++className : string
++props : ComponentPropsWithoutRef
+}
+class WebDAVConfigPanel {
++props : WebDAVConfigPanelProps
+}
 ```
 
 **图表来源**
@@ -367,6 +408,8 @@ class FavoriteTag {
 - [src/components/ui/toast.tsx](file://src/components/ui/toast.tsx)
 - [src/components/ui/toaster.tsx](file://src/components/ui/toaster.tsx)
 - [src/components/favorite-tag/index.tsx:9-11](file://src/components/favorite-tag/index.tsx#L9-L11)
+- [src/components/ui/switch.tsx:1-50](file://src/components/ui/switch.tsx#L1-L50)
+- [src/options/components/setting/components/webdav-config.tsx:23-33](file://src/options/components/setting/components/webdav-config.tsx#L23-L33)
 
 ### 表单工作流时序
 ```mermaid
@@ -404,10 +447,30 @@ Update --> End
 **图表来源**
 - [src/components/ui/select.tsx:13-91](file://src/components/ui/select.tsx#L13-L91)
 
+### WebDAV配置面板交互流程
+```mermaid
+flowchart TD
+Start(["打开设置页"]) --> CheckEnabled{"WebDAV已启用？"}
+CheckEnabled --> |否| EnableFlow["用户点击启用开关"]
+EnableFlow --> ShowConfig["显示配置表单"]
+ShowConfig --> TestConn["测试连接"]
+TestConn --> SaveConfig["保存配置"]
+SaveConfig --> AutoDownload["自动下载最新数据"]
+AutoDownload --> End(["完成"])
+CheckEnabled --> |是| ShowConfig
+ShowConfig --> ManualOps["手动上传/下载"]
+ManualOps --> UpdateStatus["更新同步状态"]
+UpdateStatus --> End
+```
+
+**图表来源**
+- [src/options/components/setting/components/webdav-config.tsx:160-173](file://src/options/components/setting/components/webdav-config.tsx#L160-L173)
+- [src/options/components/setting/components/webdav-config.tsx:107-145](file://src/options/components/setting/components/webdav-config.tsx#L107-L145)
+
 ### 组合模式与复用策略
-- 组合模式：Form 与 FormField/FormControl/Label/Message 协同；Card 分区组合；Select 内部子组件组合；FavoriteTag 与useSetDefaultFav hook组合。
+- 组合模式：Form 与 FormField/FormControl/Label/Message 协同；Card 分区组合；Select 内部子组件组合；FavoriteTag 与useSetDefaultFav hook组合；WebDAVConfigPanel 与useGlobalConfig hook组合。
 - 复用策略：通过 Variants（如 Button/Label/Badge）与 className 扩展实现跨页面复用；cn 工具保证样式叠加稳定。
-- 事件处理：Button/Select/Popover/FavoriteTag 等组件透传原生事件，同时提供回调钩子；表单组件通过 react-hook-form 提供统一状态管理。
+- 事件处理：Button/Select/Popover/FavoriteTag/Switch/WebDAVConfigPanel 等组件透传原生事件，同时提供回调钩子；表单组件通过 react-hook-form 提供统一状态管理。
 
 **章节来源**
 - [src/components/ui/form.tsx:1-168](file://src/components/ui/form.tsx#L1-L168)
@@ -416,7 +479,86 @@ Update --> End
 - [src/components/ui/button.tsx:1-51](file://src/components/ui/button.tsx#L1-L51)
 - [src/components/ui/label.tsx:1-22](file://src/components/ui/label.tsx#L1-L22)
 - [src/components/ui/badge.tsx:1-34](file://src/components/ui/badge.tsx#L1-L34)
+- [src/components/ui/switch.tsx:1-50](file://src/components/ui/switch.tsx#L1-L50)
 - [src/components/favorite-tag/index.tsx:1-85](file://src/components/favorite-tag/index.tsx#L1-L85)
+- [src/options/components/setting/components/webdav-config.tsx:1-318](file://src/options/components/setting/components/webdav-config.tsx#L1-L318)
+
+## WebDAV配置面板UI组件
+
+### 组件概述
+WebDAV配置面板是一个完整的云同步配置界面，提供了WebDAV服务器的完整配置、连接测试、手动同步和状态管理功能。该组件集成了权限申请、状态指示、错误处理等高级特性。
+
+### 核心功能特性
+- **服务器配置**：支持服务器地址、用户名、密码、同步路径的配置
+- **连接测试**：一键测试WebDAV连接并自动保存配置
+- **权限管理**：动态申请WebDAV服务器访问权限
+- **同步选项**：可选同步分析缓存数据
+- **手动同步**：支持手动上传和下载操作
+- **状态管理**：实时显示同步状态和最近同步时间
+- **自动同步**：页面加载时自动拉取最新数据
+
+### 组件架构设计
+```mermaid
+graph TB
+subgraph "WebDAVConfigPanel 组件"
+EnabledSwitch["启用开关<br/>Switch"]
+ConfigForm["配置表单<br/>Input + Grid"]
+Permission["权限申请<br/>chrome.permissions"]
+TestButton["测试连接<br/>Button"]
+SyncOptions["同步选项<br/>Switch"]
+SyncStatus["同步状态<br/>状态指示器"]
+ManualOps["手动操作<br/>上传/下载按钮"]
+AutoSync["自动同步<br/>页面加载时"]
+end
+```
+
+**图表来源**
+- [src/options/components/setting/components/webdav-config.tsx:175-317](file://src/options/components/setting/components/webdav-config.tsx#L175-L317)
+
+### 状态管理机制
+组件使用React状态管理以下关键状态：
+- `serverUrl`：WebDAV服务器地址
+- `username`：认证用户名
+- `password`：认证密码
+- `basePath`：同步路径
+- `testing`：连接测试状态
+- `syncStatus`：同步状态（idle/syncing/success/error）
+- `webdavEnabled`：WebDAV启用状态
+- `webdavSyncIndexedDB`：同步IndexedDB选项
+- `webdavLastSyncTime`：最近同步时间
+
+### 权限处理机制
+组件实现了动态权限申请机制：
+- 使用 `chrome.permissions.request()` 申请服务器访问权限
+- 支持权限被拒绝的错误处理
+- 自动检测Origin并申请相应权限
+
+### 同步服务集成
+组件与同步服务紧密集成：
+- `testConnection()`：测试WebDAV连接
+- `uploadSync()`：手动上传数据
+- `downloadSync()`：手动下载数据
+- `getSyncInfo()`：获取同步状态信息
+
+### 使用示例
+```typescript
+// 在设置页面中使用WebDAV配置面板
+<Title title="云同步" />
+<WebDAVConfigPanel />
+```
+
+### 最佳实践
+- **安全性**：密码字段使用 `type="password"`，支持显示/隐藏切换
+- **用户体验**：提供详细的错误提示和状态指示
+- **性能优化**：使用 `useMemoizedFn` 优化事件处理函数
+- **无障碍性**：与Switch、Input、Button等组件的无障碍特性集成
+- **错误处理**：完善的try-catch错误处理和用户友好的提示
+
+**章节来源**
+- [src/options/components/setting/components/webdav-config.tsx:1-318](file://src/options/components/setting/components/webdav-config.tsx#L1-L318)
+- [src/utils/webdav.ts:1-182](file://src/utils/webdav.ts#L1-L182)
+- [src/utils/sync-service.ts:1-293](file://src/utils/sync-service.ts#L1-L293)
+- [src/store/global-data.ts:19-23](file://src/store/global-data.ts#L19-L23)
 
 ## favorite-tag组件稳定性改进
 
@@ -477,6 +619,7 @@ const tagElementArray = React.useMemo(() => {
 - **标签页组件**：TabsPrimitive 支持键盘切换和焦点管理
 - **吐司组件**：ToastPrimitive 提供通知状态管理
 - **收藏夹标签组件**：FavoriteTag 支持键盘导航和屏幕阅读器识别
+- **开关组件**：Switch 支持键盘切换和无障碍标识
 
 ### 键盘导航增强
 组件实现了完整的键盘导航支持：
@@ -486,6 +629,7 @@ const tagElementArray = React.useMemo(() => {
 - **快捷键支持**：支持 Enter/Space 触发，Esc 关闭
 - **键盘可达性**：禁用态元素正确处理键盘事件
 - **收藏夹标签**：支持Tab键导航、Enter触发、屏幕阅读器识别
+- **开关组件**：支持键盘切换，提供无障碍标识
 
 ### 屏幕阅读器兼容性
 - **语义化标签**：使用语义化HTML元素而非纯div
@@ -493,6 +637,7 @@ const tagElementArray = React.useMemo(() => {
 - **动态内容**：异步更新使用 aria-live="polite"
 - **状态指示**：通过aria-label和aria-describedby提供上下文
 - **收藏夹标签**：为每个标签提供aria-label，包含收藏夹名称
+- **开关组件**：通过id属性与Label关联，提供清晰的语义化标签
 
 ### 无障碍性最佳实践
 
@@ -566,6 +711,27 @@ const tagElementArray = React.useMemo(() => {
 </div>
 ```
 
+#### 开关组件无障碍性
+```typescript
+// 开关组件支持键盘切换和无障碍标识
+<Switch
+  id="webdav-enabled"
+  checked={webdavEnabled}
+  onCheckedChange={handleToggleEnabled}
+/>
+<Label
+  htmlFor="webdav-enabled"
+  className="cursor-pointer text-sm font-medium flex items-center gap-2"
+>
+  {webdavEnabled ? (
+    <Cloud className="w-4 h-4 text-[#00AEEC]" />
+  ) : (
+    <CloudOff className="w-4 h-4 text-gray-400" />
+  )}
+  启用 WebDAV 云同步
+</Label>
+```
+
 ### 无障碍性故障排查
 - **ARIA属性缺失**：检查组件是否正确注入aria-describedby和aria-invalid
 - **键盘不可达**：确认组件支持Tab键导航和Enter/Space触发
@@ -573,6 +739,7 @@ const tagElementArray = React.useMemo(() => {
 - **屏幕阅读器问题**：测试语音朗读是否正确，检查aria-label使用
 - **对比度问题**：确保文本与背景的对比度满足WCAG要求
 - **收藏夹标签问题**：验证aria-label是否包含收藏夹名称，检查Tab索引设置
+- **开关组件问题**：验证id与Label的关联，检查键盘切换功能
 
 **章节来源**
 - [src/components/ui/form.tsx:108-114](file://src/components/ui/form.tsx#L108-L114)
@@ -582,6 +749,7 @@ const tagElementArray = React.useMemo(() => {
 - [src/components/ui/toast.tsx:74-84](file://src/components/ui/toast.tsx#L74-L84)
 - [src/hooks/use-toast/index.ts:136-163](file://src/hooks/use-toast/index.ts#L136-L163)
 - [src/components/favorite-tag/index.tsx:51-54](file://src/components/favorite-tag/index.tsx#L51-L54)
+- [src/components/ui/switch.tsx:1-50](file://src/components/ui/switch.tsx#L1-L50)
 
 ## 样式系统重大改进
 
@@ -796,6 +964,7 @@ OptionsTab->>User : "显示更新后的图表"
 - 外部依赖：Radix UI（语义化与无障碍）、class-variance-authority（变体样式）、lucide-react（图标）、tailwindcss-animate（动画插件）、ahooks（高性能hooks库）。
 - 主题与样式：cn 工具负责类名合并；Tailwind 设计令牌统一颜色与圆角；插件扩展滚动条样式与动画。
 - **分析图表依赖**：BarChart/DistributionChart/TrendChart 依赖 ECharts 图表库，StatsCards 依赖 lucide-react 图标。
+- **WebDAV配置依赖**：WebDAVConfigPanel 依赖 WebDAV工具函数、同步服务、权限API、Toast通知等。
 
 ```mermaid
 graph TB
@@ -809,6 +978,10 @@ ZUS["zustand"]
 IMMER["immer"]
 CSSM["chromeStorageMiddleware"]
 ECHARTS["echarts"]
+WEBDAV["WebDAV工具函数"]
+SYNC["同步服务"]
+PERMISSIONS["Chrome权限API"]
+TOAST["Toast通知"]
 end
 Btn["Button"] --> RUI
 Btn --> CVA
@@ -828,6 +1001,10 @@ BarChart["BarChart"] --> ECHARTS
 DistributionChart["DistributionChart"] --> ECHARTS
 TrendChart["TrendChart"] --> ECHARTS
 StatsCards["StatsCards"] --> LUCIDE
+WebDAV["WebDAVConfigPanel"] --> WEBDAV
+WebDAV --> SYNC
+WebDAV --> PERMISSIONS
+WebDAV --> TOAST
 ```
 
 **图表来源**
@@ -842,6 +1019,7 @@ StatsCards["StatsCards"] --> LUCIDE
 - [src/options/components/analysis/chart/bar-chart.tsx:1-3](file://src/options/components/analysis/chart/bar-chart.tsx#L1-L3)
 - [src/options/components/analysis/chart/distribution-chart.tsx:1-3](file://src/options/components/analysis/chart/distribution-chart.tsx#L1-L3)
 - [src/options/components/analysis/chart/trend-chart.tsx:1-3](file://src/options/components/analysis/chart/trend-chart.tsx#L1-L3)
+- [src/options/components/setting/components/webdav-config.tsx:1-21](file://src/options/components/setting/components/webdav-config.tsx#L1-L21)
 
 **章节来源**
 - [src/components/ui/button.tsx:1-6](file://src/components/ui/button.tsx#L1-L6)
@@ -855,6 +1033,7 @@ StatsCards["StatsCards"] --> LUCIDE
 - [src/options/components/analysis/chart/bar-chart.tsx:1-3](file://src/options/components/analysis/chart/bar-chart.tsx#L1-L3)
 - [src/options/components/analysis/chart/distribution-chart.tsx:1-3](file://src/options/components/analysis/chart/distribution-chart.tsx#L1-L3)
 - [src/options/components/analysis/chart/trend-chart.tsx:1-3](file://src/options/components/analysis/chart/trend-chart.tsx#L1-L3)
+- [src/options/components/setting/components/webdav-config.tsx:1-21](file://src/options/components/setting/components/webdav-config.tsx#L1-L21)
 
 ## 性能考量
 - 类名合并：使用 cn 合并多个类名，减少重复与冲突，避免不必要的重排。
@@ -866,6 +1045,7 @@ StatsCards["StatsCards"] --> LUCIDE
 - **收藏夹标签性能**：通过扩展useMemo依赖数组，避免不必要的重渲染，提升组件响应速度。
 - **分析图表性能**：ECharts图表组件通过懒初始化和事件清理，避免内存泄漏；使用useMemo优化数据处理。
 - **BarChart视觉一致性**：圆角半径修复减少了视觉不一致问题，提升了用户体验。
+- **WebDAV配置面板性能**：使用useMemoizedFn优化事件处理，避免不必要的函数重建；合理的状态管理减少重渲染。
 
 ## 故障排查指南
 - 可访问性问题
@@ -873,6 +1053,7 @@ StatsCards["StatsCards"] --> LUCIDE
   - 键盘不可达：确认 Select/Popover/Tabs 使用了 Radix UI 触发器与键盘导航。
   - ARIA属性缺失：检查组件是否正确注入 aria-describedby 和 aria-invalid 属性。
   - 收藏夹标签无障碍性：验证aria-label是否包含收藏夹名称，检查role="button"和tabIndex设置。
+  - 开关组件无障碍性：验证id与Label的关联，检查键盘切换功能。
 - 样式冲突
   - 使用 cn 合并类名，避免直接覆盖设计令牌；检查 Tailwind 配置中的颜色与圆角扩展。
 - 动画异常
@@ -892,6 +1073,11 @@ StatsCards["StatsCards"] --> LUCIDE
   - 检查useMemo依赖数组是否包含所有相关状态
   - 验证事件处理器是否正确使用useMemoizedFn包装
   - 确认DOM引用和状态更新的正确性
+- **WebDAV配置面板问题**
+  - 权限申请失败：检查chrome.permissions.request()的使用和错误处理
+  - 连接测试超时：验证服务器地址和网络连接
+  - 同步状态异常：检查syncStatus状态管理和错误处理
+  - 自动同步失败：验证页面加载时的effect执行和错误捕获
 
 **章节来源**
 - [src/components/ui/form.tsx:82-156](file://src/components/ui/form.tsx#L82-L156)
@@ -901,13 +1087,14 @@ StatsCards["StatsCards"] --> LUCIDE
 - [src/components/favorite-tag/index.tsx:32-69](file://src/components/favorite-tag/index.tsx#L32-L69)
 - [src/hooks/use-set-default-fav/index.tsx:45-53](file://src/hooks/use-set-default-fav/index.tsx#L45-L53)
 - [src/options/components/analysis/chart/bar-chart.tsx:25-104](file://src/options/components/analysis/chart/bar-chart.tsx#L25-L104)
+- [src/options/components/setting/components/webdav-config.tsx:55-105](file://src/options/components/setting/components/webdav-config.tsx#L55-L105)
 
 ## 结论
 该UI组件系统以 Radix UI 的无障碍与语义化为基础，以 Tailwind 的设计令牌与插件为支撑，实现了高可复用、强一致性的组件生态。通过 cn 工具与 Variants 模式，开发者可在不牺牲可访问性的前提下快速扩展样式与行为。
 
-**更新**：本次更新引入了favorite-tag组件的稳定性改进，通过扩展useMemo依赖数组显著提升了组件性能和可靠性。同时新增了全面的无障碍性改进章节，包括ARIA属性、键盘导航、屏幕阅读器兼容性等，显著提升了组件的可访问性。样式系统也进行了重大改进，包括全新的B站品牌色彩体系、优化的边框管理、字体优化和交互增强，显著提升了组件的整体外观和用户体验。**BarChart组件的重大视觉一致性改进修复了水平和垂直柱状图的圆角半径显示问题，通过统一的圆角半径配置（水平：[0,4,4,0]，垂直：[4,4,4,4]）提升了图表组件的视觉统一性和专业性。分析图表组件系统通过ECharts实现了专业的数据可视化功能，配合统计卡片和工作器模式，为用户提供了完整的收藏夹数据分析解决方案。**
+**更新**：本次更新引入了WebDAV配置面板UI组件，这是一个全新的云同步配置界面，提供了完整的WebDAV服务器配置、连接测试、手动同步和状态管理功能。该组件扩展了表单组件的功能，集成了权限申请、状态管理、图标组件等特性，显著增强了应用的数据同步能力。同时新增了favorite-tag组件的稳定性改进，通过扩展useMemo依赖数组显著提升了组件性能和可靠性。同时新增了全面的无障碍性改进章节，包括ARIA属性、键盘导航、屏幕阅读器兼容性等，显著提升了组件的可访问性。样式系统也进行了重大改进，包括全新的B站品牌色彩体系、优化的边框管理、字体优化和交互增强，显著提升了组件的整体外观和用户体验。**BarChart组件的重大视觉一致性改进修复了水平和垂直柱状图的圆角半径显示问题，通过统一的圆角半径配置（水平：[0,4,4,0]，垂直：[4,4,4,4]）提升了图表组件的视觉统一性和专业性。分析图表组件系统通过ECharts实现了专业的数据可视化功能，配合统计卡片和工作器模式，为用户提供了完整的收藏夹数据分析解决方案。**
 
-建议在实际项目中遵循组合模式与复用策略，结合表单与选择器等复合组件，构建一致、易维护的用户界面。同时充分利用新的B站风格色彩系统、无障碍性特性和favorite-tag组件的性能优化，确保界面风格的一致性和良好的用户体验。分析图表组件的现代化设计为数据可视化提供了优秀的基础，开发者可以在此基础上进一步扩展和定制。**BarChart组件的圆角半径统一改进为整个图表系统提供了更专业的视觉效果，提升了用户对数据可视化的理解和体验。**
+建议在实际项目中遵循组合模式与复用策略，结合表单与选择器等复合组件，构建一致、易维护的用户界面。同时充分利用新的B站风格色彩系统、无障碍性特性和favorite-tag组件的性能优化，确保界面风格的一致性和良好的用户体验。分析图表组件的现代化设计为数据可视化提供了优秀的基础，开发者可以在此基础上进一步扩展和定制。**WebDAV配置面板的完整实现为应用提供了强大的云同步能力，支持多种WebDAV服务提供商，为用户的数据安全和跨设备同步提供了可靠保障。BarChart组件的圆角半径统一改进为整个图表系统提供了更专业的视觉效果，提升了用户对数据可视化的理解和体验。**
 
 ## 附录
 
@@ -917,6 +1104,7 @@ StatsCards["StatsCards"] --> LUCIDE
 - 触摸目标：按钮与输入控件的最小触控面积建议不小于 44px × 44px。
 - 导航与滚动：在移动端优先使用底部导航或侧边抽屉；长列表使用 ScrollArea 优化滚动性能。
 - **分析图表响应式**：图表组件自动适配容器尺寸，支持窗口resize事件；在小屏设备上优化标签旋转角度和图例位置。
+- **WebDAV配置面板响应式**：表单布局自动适配不同屏幕尺寸，移动端提供优化的触摸交互。
 
 ### 跨浏览器兼容性
 - 浏览器支持：现代浏览器（Chrome/Firefox/Safari/Edge）均支持 Tailwind 与 Radix UI；确保 polyfill（如 classnames 合并）在旧环境可用。
@@ -924,6 +1112,7 @@ StatsCards["StatsCards"] --> LUCIDE
 - 滚动条：使用 CSS 自定义滚动条样式时，注意 WebKit 与非 WebKit 内核的差异。
 - 字体渲染：确保系统字体栈中的字体在不同操作系统上的可用性。
 - **ECharts兼容性**：确保在不同浏览器中图表渲染一致性，测试渐变色和圆角边框的兼容性。
+- **WebDAV兼容性**：Chrome扩展API在不同浏览器中的兼容性，权限申请和存储API的支持。
 
 ### 可访问性特性
 - 语义化标签：使用语义化元素与语义化组件（如 Label、Form*），确保屏幕阅读器可理解。
@@ -932,12 +1121,14 @@ StatsCards["StatsCards"] --> LUCIDE
 - 对比度与色彩：遵循 WCAG 对比度要求；在暗色模式下保持足够的前景/背景对比。
 - **收藏夹标签**：支持键盘导航、屏幕阅读器识别、焦点管理。
 - **分析图表**：图表提供可访问的标题和描述，支持键盘导航和屏幕阅读器读取。
+- **WebDAV配置面板**：集成所有子组件的无障碍特性，提供完整的键盘导航和屏幕阅读器支持。
 
 ### 国际化支持
 - 文字方向：RTL 语言需检查布局与对齐；组件默认从左到右，必要时通过容器方向控制。
 - 数字与日期：在需要本地化格式时，结合 i18n 库进行格式化；UI 组件保持纯展示属性。
 - 文案与占位符：文案抽取至资源文件，避免硬编码；错误提示文案可动态替换。
 - **图表国际化**：ECharts支持多语言配置，可根据用户语言环境调整图表文本。
+- **WebDAV配置面板国际化**：支持多语言的错误提示和状态信息显示。
 
 ### 主题定制与样式扩展
 - 设计令牌：通过 Tailwind 配置扩展颜色、圆角、字体与动画；使用 CSS 变量统一主题。
@@ -946,6 +1137,7 @@ StatsCards["StatsCards"] --> LUCIDE
 - 深色模式：通过 class 切换与 CSS 变量映射实现深浅主题；确保所有组件适配。
 - B站风格：使用预定义的B站色彩变量，确保品牌一致性。
 - **分析图表主题**：ECharts支持主题配置，可扩展自定义颜色方案和样式。
+- **WebDAV配置面板主题**：支持深色模式下的图标颜色和状态指示器适配。
 
 ### 无障碍性最佳实践
 - **ARIA标签**：为图标按钮添加 aria-label，为装饰性图标添加 aria-hidden="true"
@@ -956,6 +1148,8 @@ StatsCards["StatsCards"] --> LUCIDE
 - **响应速度**：避免过长的加载时间，提供进度指示
 - **收藏夹标签**：为每个标签提供aria-label，支持键盘导航和屏幕阅读器
 - **分析图表**：提供图表标题和描述，支持键盘导航和屏幕阅读器读取
+- **WebDAV配置面板**：集成所有子组件的无障碍特性，提供完整的键盘导航和屏幕阅读器支持
+- **开关组件**：通过id与Label关联，支持键盘切换和无障碍标识
 
 **章节来源**
 - [tailwind.config.js:1-118](file://tailwind.config.js#L1-L118)
@@ -968,3 +1162,5 @@ StatsCards["StatsCards"] --> LUCIDE
 - [src/options/index.css:1-83](file://src/options/index.css#L1-L83)
 - [src/components/favorite-tag/index.tsx:51-54](file://src/components/favorite-tag/index.tsx#L51-L54)
 - [src/options/components/analysis/chart/bar-chart.tsx:71-78](file://src/options/components/analysis/chart/bar-chart.tsx#L71-L78)
+- [src/components/ui/switch.tsx:1-50](file://src/components/ui/switch.tsx#L1-L50)
+- [src/options/components/setting/components/webdav-config.tsx:178-191](file://src/options/components/setting/components/webdav-config.tsx#L178-L191)

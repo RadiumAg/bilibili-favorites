@@ -1,8 +1,8 @@
 import { StateCreator } from 'zustand'
 
-// 定义需要持久化的字段
+// 定义需要持久化到 chrome.storage.local 的字段
+// 注意：keyword（标签数据）已迁移到 IndexedDB，不在此处持久化
 const PERSISTED_KEYS = [
-  'keyword',
   'activeKey',
   'cookie',
   'aiConfig',
