@@ -8,9 +8,10 @@ type CacheData = {
   timestamp: number
 }
 
-const DB_NAME = 'bilibili-favorites-db'
-const DB_VERSION = 1
+export const DB_NAME = 'bilibili-favorites-db'
+export const DB_VERSION = 2
 const STORE_NAME = 'analysis-cache'
+const TAG_STORE_NAME = 'tag-storage'
 
 class IndexedDBManager {
   private db: IDBDatabase | null = null
@@ -34,6 +35,10 @@ class IndexedDBManager {
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const store = db.createObjectStore(STORE_NAME, { keyPath: 'key' })
           store.createIndex('timestamp', 'timestamp', { unique: false })
+        }
+
+        if (!db.objectStoreNames.contains(TAG_STORE_NAME)) {
+          db.createObjectStore(TAG_STORE_NAME, { keyPath: 'key' })
         }
       }
     })
@@ -120,6 +125,41 @@ class IndexedDBManager {
     if (!cached) return true
 
     return Date.now() - cached.timestamp > maxAge
+  }
+
+  /**
+   * 获取标签数据
+   */
+  async getTag(key: string): Promise<any | null> {
+    if (!this.db) await this.init()
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([TAG_STORE_NAME], 'readonly')
+      const store = transaction.objectStore(TAG_STORE_NAME)
+      const request = store.get(key)
+
+      request.onsuccess = () => {
+        const result = request.result as { key: string; data: any } | undefined
+        resolve(result ? result.data : null)
+      }
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  /**
+   * 保存标签数据
+   */
+  async setTag(key: string, data: any): Promise<void> {
+    if (!this.db) await this.init()
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([TAG_STORE_NAME], 'readwrite')
+      const store = transaction.objectStore(TAG_STORE_NAME)
+      const request = store.put({ key, data })
+
+      request.onsuccess = () => resolve()
+      request.onerror = () => reject(request.error)
+    })
   }
 }
 
