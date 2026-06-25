@@ -59,6 +59,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.sidePanel.open({ windowId })
     }
   }
+
+  if (message?.type === 'openOptionsPage' && typeof message.tab === 'string') {
+    chrome.tabs.create({
+      url: `options.html?tab=${message.tab}`,
+      active: true,
+    })
+  }
 })
 
 /**
