@@ -71,7 +71,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
   }
 
   return (
-    <ScrollArea className={cn(className)}>
+    <ScrollArea containerClassname={cn(className)}>
       <div ref={domRef} className="flex gap-1.5 flex-wrap cursor-pointer">
         {tagElementArray}
       </div>
