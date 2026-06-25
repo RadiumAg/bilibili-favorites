@@ -1,5 +1,6 @@
 import React from 'react'
 import { openOrganizePage, openAnalysisPage } from './pet-actions'
+import { openOptionsPage } from '@/utils/open-options'
 
 interface PetContextMenuProps {
   visible: boolean
@@ -23,7 +24,7 @@ function executeAction(tab: string) {
     openAnalysisPage()
     return
   }
-  window.open(chrome.runtime.getURL(`options.html?tab=${tab}`), '_blank')
+  openOptionsPage(tab)
 }
 
 const PetContextMenu: React.FC<PetContextMenuProps> = (props) => {

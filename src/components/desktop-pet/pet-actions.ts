@@ -1,8 +1,10 @@
+import { openOptionsPage } from '@/utils/open-options'
+
 /** 打开标签整理页 */
 export function openOrganizePage(): void {
-  window.open(chrome.runtime.getURL('options.html?tab=keyword-manager'), '_blank')
+  openOptionsPage('keyword-manager')
 }
 
 export function openAnalysisPage(): void {
-  window.open(chrome.runtime.getURL('options.html?tab=analysis'), '_blank')
+  openOptionsPage('analysis')
 }
