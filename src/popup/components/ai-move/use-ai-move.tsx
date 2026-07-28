@@ -15,6 +15,10 @@ import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
 import { batchProcess } from '@/utils/batch-process'
 import { notifyOrganizeDone } from '@/utils/pet-message'
+import {
+  recordSuccessfulUseForStarInvitation,
+  requestPendingStarInvitation,
+} from '@/utils/star-invitation'
 
 type AIMoveStatus = 'success' | 'failed' | 'skipped'
 
@@ -46,6 +50,7 @@ const useAIMove = () => {
   const abortControllerRef = React.useRef<AbortController | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
   const isFinishedRef = React.useRef(false)
+  const shouldRequestStarInvitationRef = React.useRef(false)
 
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
@@ -130,6 +135,7 @@ const useAIMove = () => {
     setIsProcessing(true)
     setProgress({ current: 0, total: 0, currentTitle: '' })
     isFinishedRef.current = false
+    shouldRequestStarInvitationRef.current = false
 
     abortControllerRef.current = new AbortController()
 
@@ -275,6 +281,7 @@ const useAIMove = () => {
 
       if (successCount > 0) {
         notifyOrganizeDone(successCount)
+        shouldRequestStarInvitationRef.current = await recordSuccessfulUseForStarInvitation()
       }
 
       await sleep(1000)
@@ -402,7 +409,18 @@ const useAIMove = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <Finished start={isFinished} height={150} width={150} title="AI 整理完成！" />
+            <Finished
+              start={isFinished}
+              height={150}
+              width={150}
+              title="AI 整理完成！"
+              onFinished={() => {
+                if (shouldRequestStarInvitationRef.current) {
+                  shouldRequestStarInvitationRef.current = false
+                  requestPendingStarInvitation()
+                }
+              }}
+            />
             <div className="mt-4 w-full">
               <p className="text-sm font-semibold mb-2">移动结果：</p>
               <div className="max-h-40 overflow-y-auto overscroll-contain rounded-md border border-gray-100 text-xs scrollbar-thin">

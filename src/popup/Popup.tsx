@@ -1,7 +1,14 @@
 import React from 'react'
 import { FavoriteTag, Keyword } from '@/components'
 import { Button } from '@/components/ui/button'
-import { Move, LoginCheck, AutoCreateKeyword, AIMove, DragManagerButton } from './components'
+import {
+  Move,
+  LoginCheck,
+  AutoCreateKeyword,
+  AIMove,
+  DragManagerButton,
+  StarInvitation,
+} from './components'
 import { Toaster } from '@/components/ui/toaster'
 import { Settings, HelpCircle, RefreshCwIcon, Github } from 'lucide-react'
 import Tourist, { TouristRef, useTourist } from './components/tourist'
@@ -108,6 +115,7 @@ const Popup: React.FC<PopupProps> = (props) => {
       <LoginCheck />
       <Toaster />
       <Tourist ref={touristRef} />
+      <StarInvitation />
     </main>
   )
 }
