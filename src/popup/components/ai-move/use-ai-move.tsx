@@ -409,18 +409,7 @@ const useAIMove = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <Finished
-              start={isFinished}
-              height={150}
-              width={150}
-              title="AI 整理完成！"
-              onFinished={() => {
-                if (shouldRequestStarInvitationRef.current) {
-                  shouldRequestStarInvitationRef.current = false
-                  requestPendingStarInvitation()
-                }
-              }}
-            />
+            <Finished start={isFinished} height={150} width={150} title="AI 整理完成！" />
             <div className="mt-4 w-full">
               <p className="text-sm font-semibold mb-2">移动结果：</p>
               <div className="max-h-40 overflow-y-auto overscroll-contain rounded-md border border-gray-100 text-xs scrollbar-thin">
@@ -458,6 +447,11 @@ const useAIMove = () => {
               onClick={() => {
                 setIsFinished(false)
                 setIsLoading(false)
+
+                if (shouldRequestStarInvitationRef.current) {
+                  shouldRequestStarInvitationRef.current = false
+                  requestPendingStarInvitation()
+                }
               }}
               variant="outline"
               className="mt-4"

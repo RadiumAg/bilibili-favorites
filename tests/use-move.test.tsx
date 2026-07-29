@@ -43,6 +43,15 @@ vi.mock('@/hooks/use-toast', () => ({
   toast: vi.fn(),
 }))
 
+vi.mock('@/utils/pet-message', () => ({
+  notifyOrganizeDone: vi.fn(),
+}))
+
+vi.mock('@/utils/star-invitation', () => ({
+  recordSuccessfulUseForStarInvitation: vi.fn(),
+  requestPendingStarInvitation: vi.fn(),
+}))
+
 // Mock components
 vi.mock('@/components/finished-animate', () => ({
   default: ({ start, title, onFinished }: any) => (
@@ -73,6 +82,10 @@ import { queryAndSendMessage } from '../src/utils/tab'
 import { fetchAllFavoriteMedias } from '../src/utils/api'
 import { toast } from '../src/hooks/use-toast'
 import { MessageEnum } from '../src/utils/message'
+import {
+  recordSuccessfulUseForStarInvitation,
+  requestPendingStarInvitation,
+} from '../src/utils/star-invitation'
 import type { FavoriteMedia } from '../src/utils/api'
 
 // Helper function to create mock video data
@@ -107,6 +120,7 @@ const getElementProps = (element: unknown): any => {
 describe('useMove', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(recordSuccessfulUseForStarInvitation).mockResolvedValue(false)
     mockStoreState = {
       keyword: [],
       favoriteData: [],
@@ -198,7 +212,9 @@ describe('useMove', () => {
         await result.current.handleMove()
       })
 
-      expect(fetchAllFavoriteMedias).toHaveBeenCalledWith('100')
+      expect(fetchAllFavoriteMedias).toHaveBeenCalledWith('100', {
+        mediaCount: undefined,
+      })
       expect(queryAndSendMessage).toHaveBeenCalledWith({
         type: MessageEnum.moveVideo,
         data: {
@@ -207,6 +223,43 @@ describe('useMove', () => {
           videoId: 1,
         },
       })
+    })
+
+    it('成功整理后先记录，完成弹层关闭时再请求 Star 弹窗', async () => {
+      mockStoreState = {
+        ...mockStoreState,
+        defaultFavoriteId: 100,
+        keyword: [
+          {
+            favoriteDataId: 200,
+            value: [{ id: '1', value: 'React' }],
+          },
+        ],
+        favoriteData: [{ id: 200, title: '前端框架' }],
+      }
+
+      vi.mocked(fetchAllFavoriteMedias).mockResolvedValue([createMockVideo(1, 'React 教程')])
+      vi.mocked(queryAndSendMessage).mockResolvedValue({ code: 0 })
+      vi.mocked(recordSuccessfulUseForStarInvitation).mockResolvedValue(true)
+
+      const { result } = renderHook(() => useMove())
+
+      await act(async () => {
+        await result.current.handleMove()
+      })
+
+      expect(recordSuccessfulUseForStarInvitation).toHaveBeenCalledTimes(1)
+      expect(requestPendingStarInvitation).not.toHaveBeenCalled()
+
+      const loadingElement = result.current.isLoadingElement as ReactElement
+      const children = (loadingElement.props as { children: ReactElement[] }).children
+      const finishedElement = children[0]
+
+      await act(async () => {
+        ;(finishedElement.props as { onFinished: () => void }).onFinished()
+      })
+
+      expect(requestPendingStarInvitation).toHaveBeenCalledTimes(1)
     })
 
     it('应该匹配多个关键词', async () => {

@@ -119,17 +119,15 @@ const useMove = () => {
         return
       }
 
-      if (Date.now() - start < 1000) {
-        await sleep(1000)
-        setIsFinished(true)
-      } else {
-        setIsFinished(true)
-      }
-
       if (movedCount > 0) {
         notifyOrganizeDone(movedCount)
         shouldRequestStarInvitationRef.current = await recordSuccessfulUseForStarInvitation()
       }
+
+      if (Date.now() - start < 1000) {
+        await sleep(1000)
+      }
+      setIsFinished(true)
     } catch (e) {
       if (e instanceof Error) {
         toast({
