@@ -8,6 +8,7 @@ import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-
 import dbManager from '@/utils/indexed-db'
 import { parseAIJSON } from '@/utils/parse-ai-json'
 import { notifyAiAnalysisDone } from '@/utils/pet-message'
+import { useStarInvitation } from '@/hooks/use-star-invitation'
 
 /** MBTI 维度结果 */
 type DimensionResult = {
@@ -77,6 +78,8 @@ export const usePersonalityAnalysis = (
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
+  const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
+    useStarInvitation()
 
   // 加载缓存
   React.useEffect(() => {
@@ -93,6 +96,7 @@ export const usePersonalityAnalysis = (
   }, [])
 
   const startAnalysis = useMemoizedFn(async () => {
+    resetStarInvitation()
     const useCustomAI = aiConfig.configMode === 'custom'
 
     // 使用自定义 AI 时，必须有完整配置
@@ -138,6 +142,7 @@ export const usePersonalityAnalysis = (
       if (parsed) {
         setResult(parsed)
         await dbManager.set(CACHE_KEY, parsed)
+        await recordSuccessfulUse()
         notifyAiAnalysisDone(parsed.title)
       } else {
         setError('AI 返回格式异常，请重试')
@@ -156,7 +161,14 @@ export const usePersonalityAnalysis = (
     setLoading(false)
   })
 
-  return { result, loading, error, startAnalysis, cancel }
+  return {
+    result,
+    loading,
+    error,
+    startAnalysis,
+    cancel,
+    showStarInvitationAfterClose,
+  }
 }
 
 /**

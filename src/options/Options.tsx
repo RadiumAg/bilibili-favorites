@@ -1,7 +1,7 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
 import TabWrapper from './components/tabs'
-import { FavoriteTag, Keyword } from '@/components'
+import { FavoriteTag, Keyword, StarInvitation } from '@/components'
 import OperateButton from './components/create-keyword/operate-button'
 import Setting from './components/setting'
 import { OptionsAnalysisTab } from './components/analysis'
@@ -101,6 +101,7 @@ const Options: React.FC = () => {
         </TabWrapper>
 
         <LoginCheck popup={false} />
+        <StarInvitation />
       </div>
     </AnalysisDataContext.Provider>
   )

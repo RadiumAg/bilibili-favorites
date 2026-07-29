@@ -8,8 +8,11 @@ import { AnalysisLoadingOverlay } from '../analysis/analysis-loading-overlay'
 import { usePersonalityAnalysis } from './use-personality-analysis'
 import { PersonalityResultView } from './personality-result'
 import { Sparkles, Loader2, AlertCircle } from 'lucide-react'
+import { TabProvide } from '../tabs/provide'
 
 const PersonalityAnalysis: React.FC = () => {
+  const { activeKey } = React.use(TabProvide)
+  const previousActiveKeyRef = React.useRef(activeKey)
   const { favoriteData } = useFavoriteData()
   const {
     allMedias,
@@ -24,7 +27,16 @@ const PersonalityAnalysis: React.FC = () => {
     error,
     startAnalysis,
     cancel,
+    showStarInvitationAfterClose,
   } = usePersonalityAnalysis(favoriteData, allMedias)
+
+  React.useEffect(() => {
+    if (previousActiveKeyRef.current === 'personality' && activeKey !== 'personality') {
+      showStarInvitationAfterClose()
+    }
+
+    previousActiveKeyRef.current = activeKey
+  }, [activeKey, showStarInvitationAfterClose])
 
   const handleStart = async () => {
     // 如果还没有数据，先拉取
