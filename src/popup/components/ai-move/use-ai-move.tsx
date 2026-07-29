@@ -15,10 +15,7 @@ import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
 import { batchProcess } from '@/utils/batch-process'
 import { notifyOrganizeDone } from '@/utils/pet-message'
-import {
-  recordSuccessfulUseForStarInvitation,
-  requestPendingStarInvitation,
-} from '@/utils/star-invitation'
+import { useStarInvitation } from '@/hooks/use-star-invitation'
 
 type AIMoveStatus = 'success' | 'failed' | 'skipped'
 
@@ -50,7 +47,8 @@ const useAIMove = () => {
   const abortControllerRef = React.useRef<AbortController | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
   const isFinishedRef = React.useRef(false)
-  const shouldRequestStarInvitationRef = React.useRef(false)
+  const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
+    useStarInvitation()
 
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
@@ -135,7 +133,7 @@ const useAIMove = () => {
     setIsProcessing(true)
     setProgress({ current: 0, total: 0, currentTitle: '' })
     isFinishedRef.current = false
-    shouldRequestStarInvitationRef.current = false
+    resetStarInvitation()
 
     abortControllerRef.current = new AbortController()
 
@@ -281,7 +279,7 @@ const useAIMove = () => {
 
       if (successCount > 0) {
         notifyOrganizeDone(successCount)
-        shouldRequestStarInvitationRef.current = await recordSuccessfulUseForStarInvitation()
+        await recordSuccessfulUse()
       }
 
       await sleep(1000)
@@ -447,11 +445,7 @@ const useAIMove = () => {
               onClick={() => {
                 setIsFinished(false)
                 setIsLoading(false)
-
-                if (shouldRequestStarInvitationRef.current) {
-                  shouldRequestStarInvitationRef.current = false
-                  requestPendingStarInvitation()
-                }
+                showStarInvitationAfterClose()
               }}
               variant="outline"
               className="mt-4"

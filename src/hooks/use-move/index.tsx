@@ -11,10 +11,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '../use-toast'
 import { fetchAllFavoriteMedias } from '@/utils/api'
 import { notifyOrganizeDone } from '@/utils/pet-message'
-import {
-  recordSuccessfulUseForStarInvitation,
-  requestPendingStarInvitation,
-} from '@/utils/star-invitation'
+import { useStarInvitation } from '@/hooks/use-star-invitation'
 
 const useMove = () => {
   const dataContext = useGlobalConfig(
@@ -28,11 +25,12 @@ const useMove = () => {
   const [isLoading, setIsLoading] = React.useState(false)
   const [isCancelled, setIsCancelled] = React.useState(false)
   const cancelRef = React.useRef(false)
-  const shouldRequestStarInvitationRef = React.useRef(false)
+  const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
+    useStarInvitation()
 
   const handleMove = async () => {
     cancelRef.current = false
-    shouldRequestStarInvitationRef.current = false
+    resetStarInvitation()
     setIsCancelled(false)
     setIsLoading(true)
     setIsFinished(false)
@@ -121,7 +119,7 @@ const useMove = () => {
 
       if (movedCount > 0) {
         notifyOrganizeDone(movedCount)
-        shouldRequestStarInvitationRef.current = await recordSuccessfulUseForStarInvitation()
+        await recordSuccessfulUse()
       }
 
       if (Date.now() - start < 1000) {
@@ -155,11 +153,7 @@ const useMove = () => {
         onFinished={() => {
           setIsFinished(false)
           setIsLoading(false)
-
-          if (shouldRequestStarInvitationRef.current) {
-            shouldRequestStarInvitationRef.current = false
-            requestPendingStarInvitation()
-          }
+          showStarInvitationAfterClose()
         }}
       />
 
