@@ -44,6 +44,9 @@
 - 组件文件使用 PascalCase 命名
 - 工具函数使用 camelCase 命名
 - 遵循 Prettier 格式化配置
+- React 组件和自定义 Hook 中需要稳定引用的回调统一使用 ahooks 的 `useMemoizedFn`，禁止使用 `useCallback`
+- 禁止使用 `void func()`、`void promise` 或 `void (async () => {})()` 忽略函数返回值；异步调用应根据场景直接调用、使用 `await`，或通过 Promise 链显式处理
+- 上述 `void` 限制仅针对调用表达式，不影响 TypeScript 返回类型和函数签名中的 `: void`
 
 ### 4. 组件规范
 

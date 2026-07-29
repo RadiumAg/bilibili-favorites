@@ -18,7 +18,10 @@ async function queryStatsFromBilibiliTab(): Promise<PetFavStats | null> {
 
 async function queryStatsFromStorage(): Promise<PetFavStats | null> {
   const data = await chrome.storage.local.get(['cookie', 'defaultFavoriteId'])
-  return fetchPetFavStats(data.cookie as string | undefined, data.defaultFavoriteId as number | undefined)
+  return fetchPetFavStats(
+    data.cookie as string | undefined,
+    data.defaultFavoriteId as number | undefined,
+  )
 }
 
 async function resolvePetFavStats(): Promise<PetFavStats | null> {
@@ -32,11 +35,15 @@ export function setupPetMessageHandlers(): void {
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     switch (message?.type) {
       case PetMessageEnum.getFavStats: {
-        void resolvePetFavStats().then((stats) => sendResponse(stats))
+        resolvePetFavStats()
+          .then((stats) => sendResponse(stats))
+          .catch(() => sendResponse(null))
         return true
       }
       case PetMessageEnum.getDefaultFavCount: {
-        void resolvePetFavStats().then((stats) => sendResponse({ count: stats?.defaultCount ?? 0 }))
+        resolvePetFavStats()
+          .then((stats) => sendResponse({ count: stats?.defaultCount ?? 0 }))
+          .catch(() => sendResponse({ count: 0 }))
         return true
       }
       default:

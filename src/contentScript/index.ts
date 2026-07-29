@@ -56,11 +56,10 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === PetMessageEnum.internalGetFavStats) {
-    void (async () => {
-      const defaultFavoriteId = await getStoredDefaultFavoriteId()
-      const stats = await fetchPetFavStats(document.cookie, defaultFavoriteId)
-      sendResponse(stats)
-    })()
+    getStoredDefaultFavoriteId()
+      .then((defaultFavoriteId) => fetchPetFavStats(document.cookie, defaultFavoriteId))
+      .then((stats) => sendResponse(stats))
+      .catch(() => sendResponse(null))
     return true
   }
 

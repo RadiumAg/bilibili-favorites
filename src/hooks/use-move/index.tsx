@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '../use-toast'
 import { fetchAllFavoriteMedias } from '@/utils/api'
 import { notifyOrganizeDone } from '@/utils/pet-message'
+import { useStarInvitation } from '@/hooks/use-star-invitation'
 
 const useMove = () => {
   const dataContext = useGlobalConfig(
@@ -24,9 +25,12 @@ const useMove = () => {
   const [isLoading, setIsLoading] = React.useState(false)
   const [isCancelled, setIsCancelled] = React.useState(false)
   const cancelRef = React.useRef(false)
+  const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
+    useStarInvitation('popup')
 
   const handleMove = async () => {
     cancelRef.current = false
+    resetStarInvitation()
     setIsCancelled(false)
     setIsLoading(true)
     setIsFinished(false)
@@ -113,16 +117,15 @@ const useMove = () => {
         return
       }
 
-      if (Date.now() - start < 1000) {
-        await sleep(1000)
-        setIsFinished(true)
-      } else {
-        setIsFinished(true)
-      }
-
       if (movedCount > 0) {
         notifyOrganizeDone(movedCount)
+        await recordSuccessfulUse()
       }
+
+      if (Date.now() - start < 1000) {
+        await sleep(1000)
+      }
+      setIsFinished(true)
     } catch (e) {
       if (e instanceof Error) {
         toast({
@@ -150,6 +153,7 @@ const useMove = () => {
         onFinished={() => {
           setIsFinished(false)
           setIsLoading(false)
+          showStarInvitationAfterClose()
         }}
       />
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { FavoriteTag, Keyword } from '@/components'
+import { FavoriteTag, Keyword, StarInvitation } from '@/components'
 import { Button } from '@/components/ui/button'
 import { Move, LoginCheck, AutoCreateKeyword, AIMove, DragManagerButton } from './components'
 import { Toaster } from '@/components/ui/toaster'
@@ -108,6 +108,7 @@ const Popup: React.FC<PopupProps> = (props) => {
       <LoginCheck />
       <Toaster />
       <Tourist ref={touristRef} />
+      <StarInvitation scope="popup" />
     </main>
   )
 }

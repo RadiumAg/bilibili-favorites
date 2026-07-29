@@ -15,6 +15,8 @@ import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
 import { batchProcess } from '@/utils/batch-process'
 import { notifyOrganizeDone } from '@/utils/pet-message'
+import { useStarInvitation } from '@/hooks/use-star-invitation'
+import { shouldRecordAIMoveUse } from './star-invitation'
 
 type AIMoveStatus = 'success' | 'failed' | 'skipped'
 
@@ -46,6 +48,8 @@ const useAIMove = () => {
   const abortControllerRef = React.useRef<AbortController | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
   const isFinishedRef = React.useRef(false)
+  const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
+    useStarInvitation('popup')
 
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
@@ -130,6 +134,7 @@ const useAIMove = () => {
     setIsProcessing(true)
     setProgress({ current: 0, total: 0, currentTitle: '' })
     isFinishedRef.current = false
+    resetStarInvitation()
 
     abortControllerRef.current = new AbortController()
 
@@ -273,8 +278,11 @@ const useAIMove = () => {
             : undefined,
       })
 
-      if (successCount > 0) {
-        notifyOrganizeDone(successCount)
+      if (shouldRecordAIMoveUse(successCount, skippedCount)) {
+        if (successCount > 0) {
+          notifyOrganizeDone(successCount)
+        }
+        await recordSuccessfulUse()
       }
 
       await sleep(1000)
@@ -440,6 +448,7 @@ const useAIMove = () => {
               onClick={() => {
                 setIsFinished(false)
                 setIsLoading(false)
+                showStarInvitationAfterClose()
               }}
               variant="outline"
               className="mt-4"
