@@ -108,7 +108,7 @@ const Popup: React.FC<PopupProps> = (props) => {
       <LoginCheck />
       <Toaster />
       <Tourist ref={touristRef} />
-      <StarInvitation />
+      <StarInvitation scope="popup" />
     </main>
   )
 }

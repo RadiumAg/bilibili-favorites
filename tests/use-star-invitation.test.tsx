@@ -20,7 +20,7 @@ describe('useStarInvitation', () => {
 
   it('成功记录待提示状态后，在完成弹层关闭时请求展示', async () => {
     vi.mocked(recordSuccessfulUseForStarInvitation).mockResolvedValue(true)
-    const { result } = renderHook(() => useStarInvitation())
+    const { result } = renderHook(() => useStarInvitation('popup'))
 
     await act(async () => {
       await result.current.recordSuccessfulUse()
@@ -30,10 +30,12 @@ describe('useStarInvitation', () => {
     })
 
     expect(requestPendingStarInvitation).toHaveBeenCalledTimes(1)
+    expect(recordSuccessfulUseForStarInvitation).toHaveBeenCalledWith('popup')
+    expect(requestPendingStarInvitation).toHaveBeenCalledWith('popup')
   })
 
   it('没有待提示状态时不会请求展示', async () => {
-    const { result } = renderHook(() => useStarInvitation())
+    const { result } = renderHook(() => useStarInvitation('popup'))
 
     await act(async () => {
       await result.current.recordSuccessfulUse()
@@ -47,7 +49,7 @@ describe('useStarInvitation', () => {
 
   it('新一轮整理开始时会清除上一轮尚未触发的内存状态', async () => {
     vi.mocked(recordSuccessfulUseForStarInvitation).mockResolvedValue(true)
-    const { result } = renderHook(() => useStarInvitation())
+    const { result } = renderHook(() => useStarInvitation('popup'))
 
     await act(async () => {
       await result.current.recordSuccessfulUse()

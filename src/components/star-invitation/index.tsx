@@ -1,4 +1,5 @@
 import React from 'react'
+import { useMemoizedFn } from 'ahooks'
 import { Github } from 'lucide-react'
 import {
   AlertDialog,
@@ -11,37 +12,43 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import {
-  STAR_INVITATION_REQUEST_EVENT,
   completeStarInvitation,
   consumePendingStarInvitation,
+  getStarInvitationRequestEvent,
+  type StarInvitationScope,
 } from '@/utils/star-invitation'
 
 const GITHUB_REPOSITORY_URL = 'https://github.com/RadiumAg/bilibili-favorites'
 
-const StarInvitation: React.FC = () => {
-  const [open, setOpen] = React.useState(false)
+type StarInvitationProps = {
+  scope: StarInvitationScope
+}
 
-  const showPendingInvitation = React.useCallback(async () => {
-    if (await consumePendingStarInvitation()) {
+const StarInvitation: React.FC<StarInvitationProps> = ({ scope }) => {
+  const [open, setOpen] = React.useState(false)
+  const requestEvent = getStarInvitationRequestEvent(scope)
+
+  const showPendingInvitation = useMemoizedFn(async () => {
+    if (await consumePendingStarInvitation(scope)) {
       setOpen(true)
     }
-  }, [])
+  })
 
   React.useEffect(() => {
     const handleInvitationRequest = () => {
-      void showPendingInvitation()
+      showPendingInvitation()
     }
 
-    window.addEventListener(STAR_INVITATION_REQUEST_EVENT, handleInvitationRequest)
-    void showPendingInvitation()
+    window.addEventListener(requestEvent, handleInvitationRequest)
+    showPendingInvitation()
 
     return () => {
-      window.removeEventListener(STAR_INVITATION_REQUEST_EVENT, handleInvitationRequest)
+      window.removeEventListener(requestEvent, handleInvitationRequest)
     }
-  }, [showPendingInvitation])
+  }, [requestEvent, showPendingInvitation])
 
   const handleSupportProject = async () => {
-    await completeStarInvitation()
+    await completeStarInvitation(scope)
     try {
       await chrome.tabs.create({
         url: GITHUB_REPOSITORY_URL,
@@ -74,9 +81,7 @@ const StarInvitation: React.FC = () => {
         <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
           <AlertDialogCancel className="min-h-11 flex-1 cursor-pointer">下次再说</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => {
-              void handleSupportProject()
-            }}
+            onClick={handleSupportProject}
             className="min-h-11 flex-1 cursor-pointer gap-2 bg-[#00AEEC] text-white transition-colors duration-200 hover:bg-[#0099D4] focus-visible:ring-[#00AEEC]"
           >
             <Github className="h-4 w-4" aria-hidden="true" />去 GitHub 点 Star

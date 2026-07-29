@@ -249,6 +249,7 @@ describe('useMove', () => {
       })
 
       expect(recordSuccessfulUseForStarInvitation).toHaveBeenCalledTimes(1)
+      expect(recordSuccessfulUseForStarInvitation).toHaveBeenCalledWith('popup')
       expect(requestPendingStarInvitation).not.toHaveBeenCalled()
 
       const loadingElement = result.current.isLoadingElement as ReactElement
@@ -260,6 +261,7 @@ describe('useMove', () => {
       })
 
       expect(requestPendingStarInvitation).toHaveBeenCalledTimes(1)
+      expect(requestPendingStarInvitation).toHaveBeenCalledWith('popup')
     })
 
     it('应该匹配多个关键词', async () => {

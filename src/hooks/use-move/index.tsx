@@ -26,7 +26,7 @@ const useMove = () => {
   const [isCancelled, setIsCancelled] = React.useState(false)
   const cancelRef = React.useRef(false)
   const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
-    useStarInvitation()
+    useStarInvitation('popup')
 
   const handleMove = async () => {
     cancelRef.current = false

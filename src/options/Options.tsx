@@ -101,7 +101,7 @@ const Options: React.FC = () => {
         </TabWrapper>
 
         <LoginCheck popup={false} />
-        <StarInvitation />
+        <StarInvitation scope="options" />
       </div>
     </AnalysisDataContext.Provider>
   )

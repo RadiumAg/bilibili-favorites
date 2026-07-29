@@ -1,26 +1,28 @@
 import React from 'react'
+import { useMemoizedFn } from 'ahooks'
 import {
   recordSuccessfulUseForStarInvitation,
   requestPendingStarInvitation,
+  type StarInvitationScope,
 } from '@/utils/star-invitation'
 
-const useStarInvitation = () => {
+const useStarInvitation = (scope: StarInvitationScope) => {
   const shouldShowAfterCloseRef = React.useRef(false)
 
-  const resetStarInvitation = React.useCallback(() => {
+  const resetStarInvitation = useMemoizedFn(() => {
     shouldShowAfterCloseRef.current = false
-  }, [])
+  })
 
-  const recordSuccessfulUse = React.useCallback(async () => {
-    shouldShowAfterCloseRef.current = await recordSuccessfulUseForStarInvitation()
-  }, [])
+  const recordSuccessfulUse = useMemoizedFn(async () => {
+    shouldShowAfterCloseRef.current = await recordSuccessfulUseForStarInvitation(scope)
+  })
 
-  const showStarInvitationAfterClose = React.useCallback(() => {
+  const showStarInvitationAfterClose = useMemoizedFn(() => {
     if (!shouldShowAfterCloseRef.current) return
 
     shouldShowAfterCloseRef.current = false
-    requestPendingStarInvitation()
-  }, [])
+    requestPendingStarInvitation(scope)
+  })
 
   return {
     recordSuccessfulUse,

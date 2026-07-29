@@ -79,7 +79,7 @@ export const usePersonalityAnalysis = (
   const [error, setError] = React.useState<string | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
   const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
-    useStarInvitation()
+    useStarInvitation('options')
 
   // 加载缓存
   React.useEffect(() => {

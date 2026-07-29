@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { batchProcess } from '@/utils/batch-process'
 import { notifyOrganizeDone } from '@/utils/pet-message'
 import { useStarInvitation } from '@/hooks/use-star-invitation'
+import { shouldRecordAIMoveUse } from './star-invitation'
 
 type AIMoveStatus = 'success' | 'failed' | 'skipped'
 
@@ -48,7 +49,7 @@ const useAIMove = () => {
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
   const isFinishedRef = React.useRef(false)
   const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
-    useStarInvitation()
+    useStarInvitation('popup')
 
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
@@ -277,8 +278,10 @@ const useAIMove = () => {
             : undefined,
       })
 
-      if (successCount > 0) {
-        notifyOrganizeDone(successCount)
+      if (shouldRecordAIMoveUse(successCount, skippedCount)) {
+        if (successCount > 0) {
+          notifyOrganizeDone(successCount)
+        }
         await recordSuccessfulUse()
       }
 

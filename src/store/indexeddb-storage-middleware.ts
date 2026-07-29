@@ -63,7 +63,7 @@ const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
     const configResult = config(
       (...args) => {
         set(...(args as Parameters<typeof set>))
-        void persistState()
+        persistState()
       },
       get,
       api,
@@ -79,7 +79,7 @@ const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
 
     api.setState = (state, replace) => {
       savedSetState(state, replace as any)
-      void persistState()
+      persistState()
     }
 
     hydrate()

@@ -1,6 +1,9 @@
-const STAR_INVITATION_STORAGE_KEY = 'bilibili_favorites_star_invitation'
-
-const STAR_INVITATION_REQUEST_EVENT = 'bilibili-favorites:request-star-invitation'
+const STAR_INVITATION_STORAGE_KEYS = {
+  popup: 'bilibili_favorites_star_invitation',
+  options: 'bilibili_favorites_options_star_invitation',
+} as const
+const STAR_INVITATION_COMPLETED_STORAGE_KEY = 'bilibili_favorites_star_invitation_completed'
+const STAR_INVITATION_REQUEST_EVENT_PREFIX = 'bilibili-favorites:request-star-invitation'
 
 const STAR_INVITATION_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000
 const STAR_INVITATION_USAGE_INTERVAL = 3
@@ -15,6 +18,8 @@ type StarInvitationState = {
   lastPromptAt?: number
   lastPromptUseCount?: number
 }
+
+type StarInvitationScope = keyof typeof STAR_INVITATION_STORAGE_KEYS
 
 type ConsumePendingResult = {
   state: StarInvitationState
@@ -117,20 +122,43 @@ const consumePendingInvitation = (
   }
 }
 
-const readStarInvitationState = async (): Promise<StarInvitationState> => {
-  const result = await chrome.storage.local.get([STAR_INVITATION_STORAGE_KEY])
-  return normalizeStarInvitationState(result[STAR_INVITATION_STORAGE_KEY])
+const getStarInvitationRequestEvent = (scope: StarInvitationScope): string => {
+  return `${STAR_INVITATION_REQUEST_EVENT_PREFIX}:${scope}`
 }
 
-const writeStarInvitationState = async (state: StarInvitationState): Promise<void> => {
-  await chrome.storage.local.set({ [STAR_INVITATION_STORAGE_KEY]: state })
+const readStarInvitationState = async (
+  scope: StarInvitationScope,
+): Promise<StarInvitationState> => {
+  const storageKey = STAR_INVITATION_STORAGE_KEYS[scope]
+  const popupStorageKey = STAR_INVITATION_STORAGE_KEYS.popup
+  const result = await chrome.storage.local.get([
+    storageKey,
+    popupStorageKey,
+    STAR_INVITATION_COMPLETED_STORAGE_KEY,
+  ])
+  const scopeState = normalizeStarInvitationState(result[storageKey])
+  const legacyPopupCompleted = normalizeStarInvitationState(result[popupStorageKey]).completed
+
+  return {
+    ...scopeState,
+    completed: result[STAR_INVITATION_COMPLETED_STORAGE_KEY] === true || legacyPopupCompleted,
+  }
 }
 
-const recordSuccessfulUseForStarInvitation = async (): Promise<boolean> => {
+const writeStarInvitationState = async (
+  scope: StarInvitationScope,
+  state: StarInvitationState,
+): Promise<void> => {
+  await chrome.storage.local.set({ [STAR_INVITATION_STORAGE_KEYS[scope]]: state })
+}
+
+const recordSuccessfulUseForStarInvitation = async (
+  scope: StarInvitationScope,
+): Promise<boolean> => {
   try {
-    const currentState = await readStarInvitationState()
+    const currentState = await readStarInvitationState(scope)
     const nextState = registerSuccessfulUse(currentState, Date.now())
-    await writeStarInvitationState(nextState)
+    await writeStarInvitationState(scope, nextState)
     return nextState.pending
   } catch (error) {
     console.warn('[Star Invitation] Failed to record successful use:', error)
@@ -138,13 +166,13 @@ const recordSuccessfulUseForStarInvitation = async (): Promise<boolean> => {
   }
 }
 
-const consumePendingStarInvitation = async (): Promise<boolean> => {
+const consumePendingStarInvitation = async (scope: StarInvitationScope): Promise<boolean> => {
   try {
-    const currentState = await readStarInvitationState()
+    const currentState = await readStarInvitationState(scope)
     const result = consumePendingInvitation(currentState, Date.now())
 
     if (result.state !== currentState) {
-      await writeStarInvitationState(result.state)
+      await writeStarInvitationState(scope, result.state)
     }
 
     return result.shouldShow
@@ -154,35 +182,38 @@ const consumePendingStarInvitation = async (): Promise<boolean> => {
   }
 }
 
-const completeStarInvitation = async (): Promise<void> => {
+const completeStarInvitation = async (scope: StarInvitationScope): Promise<void> => {
   try {
-    const currentState = await readStarInvitationState()
-    await writeStarInvitationState({
-      ...currentState,
-      pending: false,
-      completed: true,
+    const currentState = await readStarInvitationState(scope)
+    await chrome.storage.local.set({
+      [STAR_INVITATION_STORAGE_KEYS[scope]]: {
+        ...currentState,
+        pending: false,
+        completed: true,
+      },
+      [STAR_INVITATION_COMPLETED_STORAGE_KEY]: true,
     })
   } catch (error) {
     console.warn('[Star Invitation] Failed to complete invitation:', error)
   }
 }
 
-const requestPendingStarInvitation = (): void => {
-  window.dispatchEvent(new Event(STAR_INVITATION_REQUEST_EVENT))
+const requestPendingStarInvitation = (scope: StarInvitationScope): void => {
+  window.dispatchEvent(new Event(getStarInvitationRequestEvent(scope)))
 }
 
 export {
   STAR_INVITATION_COOLDOWN_MS,
   STAR_INVITATION_MAX_PROMPTS,
-  STAR_INVITATION_REQUEST_EVENT,
   STAR_INVITATION_USAGE_INTERVAL,
   completeStarInvitation,
   consumePendingInvitation,
   consumePendingStarInvitation,
   createInitialStarInvitationState,
+  getStarInvitationRequestEvent,
   normalizeStarInvitationState,
   recordSuccessfulUseForStarInvitation,
   registerSuccessfulUse,
   requestPendingStarInvitation,
 }
-export type { StarInvitationState }
+export type { StarInvitationScope, StarInvitationState }

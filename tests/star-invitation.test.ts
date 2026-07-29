@@ -1,10 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   STAR_INVITATION_COOLDOWN_MS,
   STAR_INVITATION_MAX_PROMPTS,
+  completeStarInvitation,
   consumePendingInvitation,
+  consumePendingStarInvitation,
   createInitialStarInvitationState,
   normalizeStarInvitationState,
+  recordSuccessfulUseForStarInvitation,
   registerSuccessfulUse,
 } from '../src/utils/star-invitation'
 
@@ -97,5 +100,62 @@ describe('star invitation fatigue rules', () => {
         lastPromptAt: 'yesterday',
       }),
     ).toEqual(createInitialStarInvitationState())
+  })
+})
+
+describe('star invitation scopes', () => {
+  let storage: Record<string, unknown>
+
+  beforeEach(() => {
+    storage = {}
+    vi.stubGlobal('chrome', {
+      storage: {
+        local: {
+          get: vi.fn(async (keys: string[]) => {
+            return Object.fromEntries(keys.map((key) => [key, storage[key]]))
+          }),
+          set: vi.fn(async (values: Record<string, unknown>) => {
+            Object.assign(storage, values)
+          }),
+        },
+      },
+    })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('Popup 与 Options 分别计算使用次数和待弹状态', async () => {
+    await expect(recordSuccessfulUseForStarInvitation('popup')).resolves.toBe(true)
+    await expect(recordSuccessfulUseForStarInvitation('options')).resolves.toBe(true)
+
+    await expect(consumePendingStarInvitation('popup')).resolves.toBe(true)
+    await expect(consumePendingStarInvitation('popup')).resolves.toBe(false)
+    await expect(consumePendingStarInvitation('options')).resolves.toBe(true)
+  })
+
+  it.each(['popup', 'options'] as const)(
+    '%s 点击 Star 后，两端都永久停止提示',
+    async (completedScope) => {
+      await recordSuccessfulUseForStarInvitation('popup')
+      await recordSuccessfulUseForStarInvitation('options')
+      await completeStarInvitation(completedScope)
+
+      await expect(consumePendingStarInvitation('options')).resolves.toBe(false)
+      await expect(consumePendingStarInvitation('popup')).resolves.toBe(false)
+      await expect(recordSuccessfulUseForStarInvitation('options')).resolves.toBe(false)
+      await expect(recordSuccessfulUseForStarInvitation('popup')).resolves.toBe(false)
+    },
+  )
+
+  it('兼容旧版本已点击 Star 的记录', async () => {
+    storage.bilibili_favorites_star_invitation = {
+      ...createInitialStarInvitationState(),
+      completed: true,
+    }
+
+    await expect(recordSuccessfulUseForStarInvitation('options')).resolves.toBe(false)
+    await expect(consumePendingStarInvitation('options')).resolves.toBe(false)
   })
 })

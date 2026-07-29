@@ -79,7 +79,7 @@ const chromeStorageMiddleware: ChromeStorageImpl = (config) => {
       (...args) => {
         const prevState = get() as Record<string, any>
         set(...(args as Parameters<typeof set>))
-        void persistState(prevState)
+        persistState(prevState)
       },
       get,
       api,

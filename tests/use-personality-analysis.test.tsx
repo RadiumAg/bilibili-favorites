@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   recordSuccessfulUse: vi.fn(),
   resetStarInvitation: vi.fn(),
   showStarInvitationAfterClose: vi.fn(),
+  useStarInvitation: vi.fn(),
 }))
 
 vi.mock('zustand/react/shallow', () => ({
@@ -51,11 +52,14 @@ vi.mock('@/utils/pet-message', () => ({
 }))
 
 vi.mock('@/hooks/use-star-invitation', () => ({
-  useStarInvitation: () => ({
-    recordSuccessfulUse: mocks.recordSuccessfulUse,
-    resetStarInvitation: mocks.resetStarInvitation,
-    showStarInvitationAfterClose: mocks.showStarInvitationAfterClose,
-  }),
+  useStarInvitation: (scope: string) => {
+    mocks.useStarInvitation(scope)
+    return {
+      recordSuccessfulUse: mocks.recordSuccessfulUse,
+      resetStarInvitation: mocks.resetStarInvitation,
+      showStarInvitationAfterClose: mocks.showStarInvitationAfterClose,
+    }
+  },
 }))
 
 import {
@@ -116,6 +120,7 @@ describe('usePersonalityAnalysis Star invitation', () => {
 
     expect(mocks.resetStarInvitation).toHaveBeenCalledTimes(1)
     expect(mocks.recordSuccessfulUse).toHaveBeenCalledTimes(1)
+    expect(mocks.useStarInvitation).toHaveBeenCalledWith('options')
     expect(mocks.notifyAiAnalysisDone).toHaveBeenCalledWith('建筑师')
     expect(result.current.result).toEqual(personalityResult)
   })
