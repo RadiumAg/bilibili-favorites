@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Lightbulb, RotateCcw, Sparkles } from 'lucide-react'
 import type { PersonalityResult } from './use-personality-analysis'
 import { MbtiAvatar } from './mbti-avatar'
+import { getAnalysisAgeText } from './analysis-age'
 
 type PersonalityResultViewProps = {
   result: PersonalityResult
+  analyzedAt: number | null
   onReset: () => void
 }
 
@@ -22,8 +24,11 @@ const DIMENSIONS = [
 
 export const PersonalityResultView: React.FC<PersonalityResultViewProps> = ({
   result,
+  analyzedAt,
   onReset,
 }) => {
+  const analysisAgeText = analyzedAt !== null ? getAnalysisAgeText(analyzedAt) : null
+
   return (
     <div className="space-y-6">
       {/* MBTI 类型大卡 */}
@@ -128,9 +133,18 @@ export const PersonalityResultView: React.FC<PersonalityResultViewProps> = ({
 
       {/* 重新分析按钮 */}
       <div className="flex justify-center pt-2">
-        <Button variant="outline" onClick={onReset} className="gap-2">
-          <RotateCcw className="w-4 h-4" />
-          重新分析
+        <Button
+          variant="outline"
+          onClick={onReset}
+          className="h-auto min-h-12 gap-2.5 px-4 py-2 text-left"
+        >
+          <RotateCcw className="h-4 w-4 shrink-0" />
+          <span className="flex flex-col leading-5">
+            <span className="font-medium">重新分析收藏人格</span>
+            <span className="text-xs font-normal text-[#61666D]">
+              {analysisAgeText ? `${analysisAgeText}，` : ''}看看自己变成了啥
+            </span>
+          </span>
         </Button>
       </div>
     </div>

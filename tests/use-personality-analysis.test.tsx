@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   adapterParse: vi.fn(),
+  dbGet: vi.fn(),
   dbSet: vi.fn(),
   fetchPersonalityAnalysis: vi.fn(),
   notifyAiAnalysisDone: vi.fn(),
@@ -41,8 +42,7 @@ vi.mock('@/hooks/use-create-keyword-by-ai/ai-stream-parser', () => ({
 
 vi.mock('@/utils/indexed-db', () => ({
   default: {
-    get: vi.fn(),
-    isExpired: vi.fn(() => Promise.resolve(true)),
+    get: mocks.dbGet,
     set: mocks.dbSet,
   },
 }))
@@ -102,6 +102,7 @@ describe('usePersonalityAnalysis Star invitation', () => {
     vi.clearAllMocks()
     mocks.fetchPersonalityAnalysis.mockResolvedValue(createAnalysisStream())
     mocks.adapterParse.mockReturnValue(JSON.stringify(personalityResult))
+    mocks.dbGet.mockResolvedValue(null)
     mocks.dbSet.mockResolvedValue(undefined)
     mocks.recordSuccessfulUse.mockResolvedValue(undefined)
   })
@@ -123,6 +124,25 @@ describe('usePersonalityAnalysis Star invitation', () => {
     expect(mocks.useStarInvitation).toHaveBeenCalledWith('options')
     expect(mocks.notifyAiAnalysisDone).toHaveBeenCalledWith('建筑师')
     expect(result.current.result).toEqual(personalityResult)
+    expect(result.current.analyzedAt).toEqual(expect.any(Number))
+  })
+
+  it('无论缓存时间过去多久都加载历史结果', async () => {
+    const cachedAt = new Date('2025-01-01T00:00:00+08:00').getTime()
+    mocks.dbGet.mockResolvedValue({
+      key: 'personality-analysis',
+      data: personalityResult,
+      timestamp: cachedAt,
+    })
+
+    const { result } = renderHook(() => usePersonalityAnalysis([], []))
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(result.current.result).toEqual(personalityResult)
+    expect(result.current.analyzedAt).toBe(cachedAt)
   })
 
   it('AI 返回异常结果时不记录使用', async () => {

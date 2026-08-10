@@ -17,6 +17,10 @@ type DimensionResult = {
   reason: string
 }
 
+type PersonalityMedia = {
+  title: string
+}
+
 /** MBTI 性格分析结果 */
 export type PersonalityResult = {
   type: string
@@ -33,7 +37,6 @@ export type PersonalityResult = {
 }
 
 const CACHE_KEY = 'personality-analysis'
-const CACHE_EXPIRE = 24 * 60 * 60 * 1000 // 24h
 
 /**
  * 从收藏夹数据生成摘要（压缩 token 消耗）
@@ -71,10 +74,11 @@ const buildSummary = (
 
 export const usePersonalityAnalysis = (
   favoriteData: Array<{ id: number; title: string; media_count: number }>,
-  allMedias: Array<{ title: string }>,
+  allMedias: PersonalityMedia[],
 ) => {
   const aiConfig = useGlobalConfig(useShallow((state) => state.aiConfig))
   const [result, setResult] = React.useState<PersonalityResult | null>(null)
+  const [analyzedAt, setAnalyzedAt] = React.useState<number | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
@@ -84,18 +88,16 @@ export const usePersonalityAnalysis = (
   // 加载缓存
   React.useEffect(() => {
     const loadCache = async () => {
-      const isExpired = await dbManager.isExpired(CACHE_KEY)
-      if (!isExpired) {
-        const cached = await dbManager.get(CACHE_KEY)
-        if (cached?.data) {
-          setResult(cached.data)
-        }
+      const cached = await dbManager.get(CACHE_KEY)
+      if (cached?.data) {
+        setResult(cached.data)
+        setAnalyzedAt(cached.timestamp)
       }
     }
     loadCache()
   }, [])
 
-  const startAnalysis = useMemoizedFn(async () => {
+  const startAnalysis = useMemoizedFn(async (medias = allMedias) => {
     resetStarInvitation()
     const useCustomAI = aiConfig.configMode === 'custom'
 
@@ -110,7 +112,7 @@ export const usePersonalityAnalysis = (
     setResult(null)
 
     try {
-      const summary = buildSummary(favoriteData, allMedias)
+      const summary = buildSummary(favoriteData, medias)
       const config = {
         apiKey: aiConfig.key || '',
         baseURL: aiConfig.baseUrl || '',
@@ -140,7 +142,9 @@ export const usePersonalityAnalysis = (
       // 解析 JSON
       const parsed = parsePersonalityJSON(fullContent)
       if (parsed) {
+        const completedAt = Date.now()
         setResult(parsed)
+        setAnalyzedAt(completedAt)
         await dbManager.set(CACHE_KEY, parsed)
         await recordSuccessfulUse()
         notifyAiAnalysisDone(parsed.title)
@@ -163,6 +167,7 @@ export const usePersonalityAnalysis = (
 
   return {
     result,
+    analyzedAt,
     loading,
     error,
     startAnalysis,
