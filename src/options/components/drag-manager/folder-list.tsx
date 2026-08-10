@@ -2,7 +2,7 @@ import React from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import classNames from 'classnames'
-import { FolderOpen } from 'lucide-react'
+import { FolderOpen, Trash2 } from 'lucide-react'
 
 interface FolderItem {
   id: number
@@ -13,8 +13,11 @@ interface FolderItem {
 interface FolderListProps {
   folders: FolderItem[]
   selectedFolderId: number | null
+  trashSelected: boolean
+  trashCount: number
   dragOverFolderId: number | null
   onSelectFolder: (folderId: number) => void
+  onSelectTrash: () => void
   onDragOver: (event: React.DragEvent, folderId: number) => void
   onDragLeave: () => void
   onDrop: (event: React.DragEvent, folderId: number) => void
@@ -23,8 +26,11 @@ interface FolderListProps {
 const FolderList: React.FC<FolderListProps> = ({
   folders,
   selectedFolderId,
+  trashSelected,
+  trashCount,
   dragOverFolderId,
   onSelectFolder,
+  onSelectTrash,
   onDragOver,
   onDragLeave,
   onDrop,
@@ -72,6 +78,29 @@ const FolderList: React.FC<FolderListProps> = ({
           ))}
         </div>
       </ScrollArea>
+      <div className="border-t border-[#00AEEC]/15 p-3">
+        <button
+          type="button"
+          onClick={onSelectTrash}
+          className={classNames(
+            'flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors duration-200',
+            {
+              'border-[#FB7299]/40 bg-[#FB7299]/10 text-[#E85B87]': trashSelected,
+              'border-transparent text-gray-600 hover:border-[#FB7299]/20 hover:bg-[#FB7299]/5':
+                !trashSelected,
+            },
+          )}
+          aria-current={trashSelected ? 'page' : undefined}
+        >
+          <span className="flex items-center gap-2 font-medium">
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+            回收站
+          </span>
+          <span className="rounded-full bg-[#FB7299]/10 px-1.5 py-0.5 text-xs text-[#E85B87]">
+            {trashCount}
+          </span>
+        </button>
+      </div>
     </div>
   )
 }

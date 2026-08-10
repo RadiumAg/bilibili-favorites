@@ -1,4 +1,5 @@
 import { fetchAllFavoriteMedias, fetchFavoritePage, type FavoriteMedia } from '@/utils/api'
+import dbManager from '@/utils/indexed-db'
 
 // ─── 全量缓存（现有，供分析等需要全量数据的功能使用） ────────────────────────────
 const CACHE_PREFIX = 'fav-list-cache:'
@@ -202,6 +203,7 @@ const useFavoriteListData = () => {
   const invalidateCache = (mediaId?: string) => {
     if (mediaId) {
       localStorage.removeItem(`${CACHE_PREFIX}${mediaId}`)
+      dbManager.delete(`favorite-all-${mediaId}`)
     } else {
       const keysToRemove: string[] = []
       for (let i = 0; i < localStorage.length; i++) {

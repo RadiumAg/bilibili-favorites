@@ -1,4 +1,5 @@
 import React from 'react'
+import { useMemoizedFn } from 'ahooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Title } from '@/components'
@@ -23,6 +24,7 @@ const PersonalityAnalysis: React.FC = () => {
 
   const {
     result,
+    analyzedAt,
     loading: analysisLoading,
     error,
     startAnalysis,
@@ -38,13 +40,15 @@ const PersonalityAnalysis: React.FC = () => {
     previousActiveKeyRef.current = activeKey
   }, [activeKey, showStarInvitationAfterClose])
 
-  const handleStart = async () => {
+  const handleStart = useMemoizedFn(async () => {
     // 如果还没有数据，先拉取
     if (allMedias.length === 0) {
-      await fetchAllMedias()
+      const medias = await fetchAllMedias()
+      startAnalysis(medias)
+      return
     }
-    startAnalysis()
-  }
+    startAnalysis(allMedias)
+  })
 
   // 数据加载中
   if (dataLoading) {
@@ -62,12 +66,7 @@ const PersonalityAnalysis: React.FC = () => {
     return (
       <div className="w-full h-full">
         <div className="mx-auto">
-          <PersonalityResultView
-            result={result}
-            onReset={() => {
-              startAnalysis()
-            }}
-          />
+          <PersonalityResultView result={result} analyzedAt={analyzedAt} onReset={handleStart} />
         </div>
       </div>
     )

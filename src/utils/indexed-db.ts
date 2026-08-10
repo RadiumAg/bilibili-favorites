@@ -8,10 +8,23 @@ type CacheData = {
   timestamp: number
 }
 
+type VideoTrashRecord = {
+  key: string
+  videoId: number
+  title: string
+  cover?: string
+  bvid?: string
+  originalFolderId: number
+  originalFolderTitle: string
+  deletedAt: number
+  expiresAt: number
+}
+
 export const DB_NAME = 'bilibili-favorites-db'
-export const DB_VERSION = 2
+export const DB_VERSION = 3
 const STORE_NAME = 'analysis-cache'
 const TAG_STORE_NAME = 'tag-storage'
+const VIDEO_TRASH_STORE_NAME = 'video-trash'
 
 class IndexedDBManager {
   private db: IDBDatabase | null = null
@@ -26,6 +39,10 @@ class IndexedDBManager {
       request.onerror = () => reject(request.error)
       request.onsuccess = () => {
         this.db = request.result
+        this.db.onversionchange = () => {
+          this.db?.close()
+          this.db = null
+        }
         resolve()
       }
 
@@ -39,6 +56,11 @@ class IndexedDBManager {
 
         if (!db.objectStoreNames.contains(TAG_STORE_NAME)) {
           db.createObjectStore(TAG_STORE_NAME, { keyPath: 'key' })
+        }
+
+        if (!db.objectStoreNames.contains(VIDEO_TRASH_STORE_NAME)) {
+          const store = db.createObjectStore(VIDEO_TRASH_STORE_NAME, { keyPath: 'key' })
+          store.createIndex('expiresAt', 'expiresAt', { unique: false })
         }
       }
     })
@@ -161,7 +183,72 @@ class IndexedDBManager {
       request.onerror = () => reject(request.error)
     })
   }
+
+  async getVideoTrash(now = Date.now()): Promise<VideoTrashRecord[]> {
+    if (!this.db) await this.init()
+
+    const records = await new Promise<VideoTrashRecord[]>((resolve, reject) => {
+      const transaction = this.db!.transaction([VIDEO_TRASH_STORE_NAME], 'readonly')
+      const request = transaction.objectStore(VIDEO_TRASH_STORE_NAME).getAll()
+      request.onsuccess = () => resolve(request.result as VideoTrashRecord[])
+      request.onerror = () => reject(request.error)
+    })
+    const expiredKeys = records
+      .filter((record) => record.expiresAt <= now)
+      .map((record) => record.key)
+
+    if (expiredKeys.length > 0) {
+      await this.deleteVideoTrash(expiredKeys)
+    }
+
+    return records
+      .filter((record) => record.expiresAt > now)
+      .sort((a, b) => b.deletedAt - a.deletedAt)
+  }
+
+  async putVideoTrash(records: VideoTrashRecord[]): Promise<void> {
+    if (records.length === 0) return
+    if (!this.db) await this.init()
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([VIDEO_TRASH_STORE_NAME], 'readwrite')
+      const store = transaction.objectStore(VIDEO_TRASH_STORE_NAME)
+      records.forEach((record) => store.put(record))
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
+    })
+  }
+
+  async replaceVideoTrash(records: VideoTrashRecord[]): Promise<void> {
+    if (!this.db) await this.init()
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([VIDEO_TRASH_STORE_NAME], 'readwrite')
+      const store = transaction.objectStore(VIDEO_TRASH_STORE_NAME)
+      store.clear()
+      records.forEach((record) => store.put(record))
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
+    })
+  }
+
+  async deleteVideoTrash(keys: string[]): Promise<void> {
+    if (keys.length === 0) return
+    if (!this.db) await this.init()
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([VIDEO_TRASH_STORE_NAME], 'readwrite')
+      const store = transaction.objectStore(VIDEO_TRASH_STORE_NAME)
+      keys.forEach((key) => store.delete(key))
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
+    })
+  }
 }
 
 export const dbManager = new IndexedDBManager()
 export default dbManager
+export type { VideoTrashRecord }
