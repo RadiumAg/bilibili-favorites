@@ -175,6 +175,75 @@ const moveFavorite = (
   }).then((res) => res.json())
 }
 
+type FavoriteResourceOperationResponse = {
+  code: number
+  message?: string
+}
+
+const deleteFavoriteResources = async (
+  mediaId: number,
+  videoIds: number[],
+  cookies?: string,
+): Promise<FavoriteResourceOperationResponse> => {
+  if (!cookies) throw new Error('未获取到 B 站登录信息')
+
+  const csrf = getCookieValue('bili_jct', cookies)
+  if (!csrf) throw new Error('未获取到 B 站 CSRF 信息')
+
+  const body = new URLSearchParams({
+    media_id: mediaId.toString(),
+    resources: videoIds.map((videoId) => `${videoId}:2`).join(','),
+    platform: 'web',
+    csrf,
+  })
+  const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/batch-del', {
+    method: 'post',
+    credentials: 'include',
+    body,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  })
+  const result = (await response.json()) as FavoriteResourceOperationResponse
+  if (result.code !== 0) {
+    throw new Error(result.message || '从收藏夹删除视频失败')
+  }
+  return result
+}
+
+const restoreFavoriteResource = async (
+  mediaId: number,
+  videoId: number,
+  cookies?: string,
+): Promise<FavoriteResourceOperationResponse> => {
+  if (!cookies) throw new Error('未获取到 B 站登录信息')
+
+  const csrf = getCookieValue('bili_jct', cookies)
+  if (!csrf) throw new Error('未获取到 B 站 CSRF 信息')
+
+  const body = new URLSearchParams({
+    rid: videoId.toString(),
+    type: '2',
+    add_media_ids: mediaId.toString(),
+    del_media_ids: '',
+    platform: 'web',
+    csrf,
+  })
+  const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/deal', {
+    method: 'post',
+    credentials: 'include',
+    body,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  })
+  const result = (await response.json()) as FavoriteResourceOperationResponse
+  if (result.code !== 0) {
+    throw new Error(result.message || '恢复视频到收藏夹失败')
+  }
+  return result
+}
+
 /**
  * 通过 chrome.runtime.connect 建立长连接，实现流式 AI 通信
  * 返回一个带有 toReadableStream 方法和 cancel 方法的对象
@@ -502,6 +571,8 @@ export {
   getAllFavoriteFlag,
   getFavoriteList,
   moveFavorite,
+  deleteFavoriteResources,
+  restoreFavoriteResource,
   fetchChatGpt,
   fetchAIMove,
   fetchFavoritePage,
@@ -519,4 +590,5 @@ export type {
   AIConfig,
   PersonalitySummary,
   FetchAllProgress,
+  FavoriteResourceOperationResponse,
 }

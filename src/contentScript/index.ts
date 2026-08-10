@@ -1,4 +1,10 @@
-import { getAllFavoriteFlag, getFavoriteList, moveFavorite } from '@/utils/api'
+import {
+  deleteFavoriteResources,
+  getAllFavoriteFlag,
+  getFavoriteList,
+  moveFavorite,
+  restoreFavoriteResource,
+} from '@/utils/api'
 import { Message, MessageEnum } from '@/utils/message'
 import { PetMessageEnum } from '@/utils/pet-message'
 import { fetchPetFavStats, getStoredDefaultFavoriteId } from '@/utils/pet-stats'
@@ -82,6 +88,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse({ code: -1 })
         })
 
+      break
+    }
+
+    case MessageEnum.deleteFavoriteVideos: {
+      const { mediaId, videoIds } = typedMessage.data
+      deleteFavoriteResources(mediaId, videoIds, document.cookie)
+        .then((response) => sendResponse(response))
+        .catch((error) => {
+          sendResponse({
+            code: -1,
+            message: error instanceof Error ? error.message : '删除视频失败',
+          })
+        })
+      break
+    }
+
+    case MessageEnum.restoreFavoriteVideo: {
+      const { mediaId, videoId } = typedMessage.data
+      restoreFavoriteResource(mediaId, videoId, document.cookie)
+        .then((response) => sendResponse(response))
+        .catch((error) => {
+          sendResponse({
+            code: -1,
+            message: error instanceof Error ? error.message : '恢复视频失败',
+          })
+        })
       break
     }
 
