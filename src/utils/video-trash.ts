@@ -1,4 +1,5 @@
 import { dbManager, type VideoTrashRecord } from './indexed-db'
+import { requestVideoTrashWebDAVSync } from './sync-service'
 
 const VIDEO_TRASH_RETENTION_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -33,12 +34,16 @@ const getVideoTrashRemainingDays = (record: VideoTrashRecord, now = Date.now()):
 
 const getVideoTrash = (): Promise<VideoTrashRecord[]> => dbManager.getVideoTrash()
 
-const saveVideoTrash = (records: VideoTrashRecord[]): Promise<void> => {
-  return dbManager.putVideoTrash(records)
+const saveVideoTrash = async (records: VideoTrashRecord[]): Promise<void> => {
+  if (records.length === 0) return
+  await dbManager.putVideoTrash(records)
+  await requestVideoTrashWebDAVSync()
 }
 
-const removeVideoTrash = (keys: string[]): Promise<void> => {
-  return dbManager.deleteVideoTrash(keys)
+const removeVideoTrash = async (keys: string[]): Promise<void> => {
+  if (keys.length === 0) return
+  await dbManager.deleteVideoTrash(keys)
+  await requestVideoTrashWebDAVSync()
 }
 
 export {

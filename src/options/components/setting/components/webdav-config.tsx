@@ -338,7 +338,7 @@ export const WebDAVConfigPanel: React.FC = () => {
                     <AlertDialogTitle>确认从云端下载？</AlertDialogTitle>
                     <AlertDialogDescription>
                       这会覆盖本地的同步数据，包括配置、默认收藏夹、桌宠开关和标签规则。
-                      已下载的数据会立即写入当前页面状态。
+                      回收站记录也会同步到本地 IndexedDB，已下载的数据会立即写入当前页面状态。
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -352,8 +352,8 @@ export const WebDAVConfigPanel: React.FC = () => {
 
           <p className="text-xs text-muted-foreground">
             同步范围内的数据变更后将自动上传至 WebDAV
-            服务器；打开设置页时仅提示云端更新，不会静默覆盖本地数据。支持 Nextcloud、坚果云、群晖等
-            WebDAV 服务。
+            服务器；回收站数据会单独同步，不受“分析缓存数据”开关影响。打开设置页时仅提示云端更新，不会静默覆盖本地数据。支持
+            Nextcloud、坚果云、群晖等 WebDAV 服务。
           </p>
         </div>
       )}

@@ -3,7 +3,7 @@
  */
 
 import { type WebDAVConfig, connect, put, get, propfind, ensureDirectory } from './webdav'
-import dbManager, { DB_NAME, DB_VERSION } from './indexed-db'
+import dbManager, { DB_NAME, DB_VERSION, type VideoTrashRecord } from './indexed-db'
 
 /** 同步状态 */
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
@@ -25,6 +25,17 @@ export type DownloadSyncResult = {
   remoteLastModified?: number
 }
 
+type VideoTrashSyncData = {
+  version: 1
+  updatedAt: number
+  records: VideoTrashRecord[]
+}
+
+export type VideoTrashSyncResult = {
+  direction: 'uploaded' | 'downloaded' | 'none'
+  records: VideoTrashRecord[]
+}
+
 /** 需要同步的 Chrome Storage 字段（排除 cookie 和已迁移到 IndexedDB 的 keyword） */
 export const SYNC_KEYS = ['activeKey', 'aiConfig', 'defaultFavoriteId', 'petEnabled'] as const
 
@@ -33,9 +44,12 @@ export const INDEXEDDB_SYNC_KEYS = ['keyword'] as const
 
 export const WEBDAV_LOCAL_MODIFIED_TIME_KEY = 'webdavLocalModifiedTime'
 export const WEBDAV_LAST_SYNC_TIME_KEY = 'webdavLastSyncTime'
+export const WEBDAV_VIDEO_TRASH_LOCAL_MODIFIED_TIME_KEY = 'webdavVideoTrashLocalModifiedTime'
+export const WEBDAV_VIDEO_TRASH_LAST_SYNC_TIME_KEY = 'webdavVideoTrashLastSyncTime'
 
 /** 应用版本号 */
 const SYNC_VERSION = '1.0'
+const VIDEO_TRASH_SYNC_PATH = '/video-trash/data.json'
 
 /** 获取或生成设备 ID */
 function getDeviceId(): Promise<string> {
@@ -100,6 +114,20 @@ export function markWebDAVLocalModified(time = Date.now()): Promise<void> {
 function setLocalModifiedTime(time: number): Promise<void> {
   return new Promise((resolve) => {
     chrome.storage.local.set({ [WEBDAV_LOCAL_MODIFIED_TIME_KEY]: time }, resolve)
+  })
+}
+
+function getStorageTime(key: string): Promise<number> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(key, (data) => {
+      resolve(typeof data[key] === 'number' ? data[key] : 0)
+    })
+  })
+}
+
+function setStorageTime(key: string, time: number): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [key]: time }, resolve)
   })
 }
 
@@ -182,7 +210,10 @@ export async function uploadSync(): Promise<void> {
     await uploadIndexedDBData(config)
   }
 
-  // 5. 更新 sync-meta.json
+  // 5. 回收站始终单独同步，不受“分析缓存”开关影响
+  await syncVideoTrashWithWebDAV(config)
+
+  // 6. 更新 sync-meta.json
   const deviceId = await getDeviceId()
   const meta: SyncMeta = {
     lastModified: Date.now(),
@@ -191,7 +222,7 @@ export async function uploadSync(): Promise<void> {
   }
   await put(config, '/sync-meta.json', JSON.stringify(meta, null, 2))
 
-  // 6. 更新本地同步时间
+  // 7. 更新本地同步时间
   await setLocalSyncTime(meta.lastModified)
   await setLocalModifiedTime(meta.lastModified)
 }
@@ -204,8 +235,10 @@ export async function downloadSync(options?: {
 }): Promise<DownloadSyncResult> {
   const applyToStorage = options?.applyToStorage !== false
   const config = await getWebDAVConfig()
-  debugger
   if (!config) throw new Error('WebDAV 未配置')
+
+  // 回收站有独立同步时间，即使通用配置没有更新也要检查远端。
+  await syncVideoTrashWithWebDAV(config)
 
   // 1. 获取远端 meta
   const metaStr = await get(config, '/sync-meta.json')
@@ -335,6 +368,162 @@ export async function getSyncInfo(): Promise<{
  */
 export async function testConnection(config: WebDAVConfig): Promise<boolean> {
   return connect(config)
+}
+
+function isVideoTrashRecord(value: unknown): value is VideoTrashRecord {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Partial<VideoTrashRecord>
+  return (
+    typeof record.key === 'string' &&
+    typeof record.videoId === 'number' &&
+    typeof record.title === 'string' &&
+    typeof record.originalFolderId === 'number' &&
+    typeof record.originalFolderTitle === 'string' &&
+    typeof record.deletedAt === 'number' &&
+    typeof record.expiresAt === 'number'
+  )
+}
+
+function normalizeVideoTrashRecords(records: unknown, now = Date.now()): VideoTrashRecord[] {
+  if (!Array.isArray(records)) return []
+
+  const recordMap = new Map<string, VideoTrashRecord>()
+  records.forEach((record) => {
+    if (isVideoTrashRecord(record) && record.expiresAt > now) {
+      recordMap.set(record.key, record)
+    }
+  })
+
+  return Array.from(recordMap.values()).sort((a, b) => b.deletedAt - a.deletedAt)
+}
+
+function parseVideoTrashSyncData(data: string, now = Date.now()): VideoTrashSyncData {
+  const parsed: unknown = JSON.parse(data)
+
+  if (Array.isArray(parsed)) {
+    return { version: 1, updatedAt: 0, records: normalizeVideoTrashRecords(parsed, now) }
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('WebDAV 回收站数据格式异常')
+  }
+
+  const payload = parsed as Partial<VideoTrashSyncData>
+  return {
+    version: 1,
+    updatedAt: typeof payload.updatedAt === 'number' ? payload.updatedAt : 0,
+    records: normalizeVideoTrashRecords(payload.records, now),
+  }
+}
+
+function mergeVideoTrashRecords(
+  localRecords: VideoTrashRecord[],
+  remoteRecords: VideoTrashRecord[],
+): VideoTrashRecord[] {
+  return normalizeVideoTrashRecords([...localRecords, ...remoteRecords])
+}
+
+async function uploadVideoTrashSnapshot(
+  config: WebDAVConfig,
+  records: VideoTrashRecord[],
+  updatedAt: number,
+): Promise<void> {
+  const payload: VideoTrashSyncData = { version: 1, updatedAt, records }
+  await put(config, VIDEO_TRASH_SYNC_PATH, JSON.stringify(payload, null, 2))
+  await Promise.all([
+    setStorageTime(WEBDAV_VIDEO_TRASH_LAST_SYNC_TIME_KEY, updatedAt),
+    setStorageTime(WEBDAV_VIDEO_TRASH_LOCAL_MODIFIED_TIME_KEY, updatedAt),
+  ])
+}
+
+/**
+ * 同步回收站快照。首次接入会合并两端数据，之后按独立修改时间解决冲突。
+ */
+export async function syncVideoTrashWithWebDAV(
+  configOverride?: WebDAVConfig,
+): Promise<VideoTrashSyncResult> {
+  const config = configOverride ?? (await getWebDAVConfig())
+  const localRecords = await dbManager.getVideoTrash()
+  if (!config) return { direction: 'none', records: localRecords }
+
+  await ensureDirectory(config, '/video-trash/')
+  const [remoteData, lastSyncTime, localModifiedTime] = await Promise.all([
+    get(config, VIDEO_TRASH_SYNC_PATH),
+    getStorageTime(WEBDAV_VIDEO_TRASH_LAST_SYNC_TIME_KEY),
+    getStorageTime(WEBDAV_VIDEO_TRASH_LOCAL_MODIFIED_TIME_KEY),
+  ])
+
+  if (!remoteData) {
+    const updatedAt = Math.max(localModifiedTime, Date.now())
+    await uploadVideoTrashSnapshot(config, localRecords, updatedAt)
+    return { direction: 'uploaded', records: localRecords }
+  }
+
+  const remote = parseVideoTrashSyncData(remoteData)
+
+  // 旧版本升级时还没有本地同步时间，先合并，避免任一端现有记录丢失。
+  if (lastSyncTime === 0 && localRecords.length > 0) {
+    const records = mergeVideoTrashRecords(localRecords, remote.records)
+    const updatedAt = Math.max(Date.now(), localModifiedTime, remote.updatedAt + 1)
+    await dbManager.replaceVideoTrash(records)
+    await uploadVideoTrashSnapshot(config, records, updatedAt)
+    return { direction: 'uploaded', records }
+  }
+
+  if (
+    lastSyncTime === 0 &&
+    localModifiedTime === 0 &&
+    remote.updatedAt === 0 &&
+    remote.records.length > 0
+  ) {
+    const updatedAt = Date.now()
+    await dbManager.replaceVideoTrash(remote.records)
+    await uploadVideoTrashSnapshot(config, remote.records, updatedAt)
+    return { direction: 'downloaded', records: remote.records }
+  }
+
+  const hasLocalChanges = localModifiedTime > lastSyncTime
+  const hasRemoteChanges = remote.updatedAt > lastSyncTime
+
+  if (hasLocalChanges && (!hasRemoteChanges || localModifiedTime > remote.updatedAt)) {
+    await uploadVideoTrashSnapshot(config, localRecords, localModifiedTime)
+    return { direction: 'uploaded', records: localRecords }
+  }
+
+  if (hasRemoteChanges) {
+    await dbManager.replaceVideoTrash(remote.records)
+    await Promise.all([
+      setStorageTime(WEBDAV_VIDEO_TRASH_LAST_SYNC_TIME_KEY, remote.updatedAt),
+      setStorageTime(WEBDAV_VIDEO_TRASH_LOCAL_MODIFIED_TIME_KEY, remote.updatedAt),
+    ])
+    return { direction: 'downloaded', records: remote.records }
+  }
+
+  if (hasLocalChanges) {
+    await uploadVideoTrashSnapshot(config, localRecords, localModifiedTime)
+    return { direction: 'uploaded', records: localRecords }
+  }
+
+  return { direction: 'none', records: localRecords }
+}
+
+/** 标记回收站已修改，并复用后台防抖同步。 */
+export async function requestVideoTrashWebDAVSync(): Promise<void> {
+  const config = await getWebDAVConfig()
+  if (!config) return
+
+  const [lastSyncTime, previousModifiedTime] = await Promise.all([
+    getStorageTime(WEBDAV_VIDEO_TRASH_LAST_SYNC_TIME_KEY),
+    getStorageTime(WEBDAV_VIDEO_TRASH_LOCAL_MODIFIED_TIME_KEY),
+  ])
+  const modifiedAt = Math.max(Date.now(), lastSyncTime + 1, previousModifiedTime + 1)
+  await Promise.all([
+    markWebDAVLocalModified(modifiedAt),
+    setStorageTime(WEBDAV_VIDEO_TRASH_LOCAL_MODIFIED_TIME_KEY, modifiedAt),
+  ])
+  await chrome.runtime.sendMessage({ type: 'triggerSync' }).catch((error) => {
+    console.warn('[SyncService] request video trash sync failed:', error)
+  })
 }
 
 // ========== IndexedDB 同步辅助 ==========

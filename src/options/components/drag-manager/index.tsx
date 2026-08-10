@@ -28,6 +28,7 @@ import {
   saveVideoTrash,
   type VideoTrashRecord,
 } from '@/utils/video-trash'
+import { syncVideoTrashWithWebDAV } from '@/utils/sync-service'
 
 interface VideoItem {
   id: number
@@ -80,8 +81,22 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
     [favoriteData],
   )
 
-  const loadTrash = useMemoizedFn(async () => {
+  const loadTrash = useMemoizedFn(async (syncRemote = false) => {
     setTrashLoading(true)
+
+    if (syncRemote) {
+      try {
+        await syncVideoTrashWithWebDAV()
+      } catch (error) {
+        console.warn('Sync video trash from WebDAV failed:', error)
+        toast({
+          title: '云端回收站同步失败',
+          description: '已继续显示本地回收站记录',
+          variant: 'destructive',
+        })
+      }
+    }
+
     try {
       const records = await getVideoTrash()
       setTrashRecords(records)
@@ -162,7 +177,7 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
   const handleSelectTrash = useMemoizedFn(() => {
     setViewMode('trash')
     setSelectedVideoIds(new Set())
-    loadTrash()
+    loadTrash(true)
   })
 
   // 切换视频选中状态

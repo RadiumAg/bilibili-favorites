@@ -220,6 +220,20 @@ class IndexedDBManager {
     })
   }
 
+  async replaceVideoTrash(records: VideoTrashRecord[]): Promise<void> {
+    if (!this.db) await this.init()
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([VIDEO_TRASH_STORE_NAME], 'readwrite')
+      const store = transaction.objectStore(VIDEO_TRASH_STORE_NAME)
+      store.clear()
+      records.forEach((record) => store.put(record))
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
+    })
+  }
+
   async deleteVideoTrash(keys: string[]): Promise<void> {
     if (keys.length === 0) return
     if (!this.db) await this.init()
