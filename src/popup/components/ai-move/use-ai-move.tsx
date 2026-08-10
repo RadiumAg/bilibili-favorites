@@ -29,6 +29,13 @@ type AIMoveResult = {
   isFallback?: boolean
 }
 
+class AIMoveRunInterruptedError extends Error {
+  constructor() {
+    super('AI organize run interrupted')
+    this.name = 'AIMoveRunInterruptedError'
+  }
+}
+
 const useAIMove = () => {
   const { moveVideosCache } = useFavoriteListData()
   const dataContext = useGlobalConfig(
@@ -48,6 +55,8 @@ const useAIMove = () => {
   const abortControllerRef = React.useRef<AbortController | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
   const isFinishedRef = React.useRef(false)
+  const isProcessingRef = React.useRef(false)
+  const activeRunIdRef = React.useRef(0)
   const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
     useStarInvitation('popup')
 
@@ -59,48 +68,35 @@ const useAIMove = () => {
     return map
   }, [dataContext.favoriteData])
 
-  const resolveAIResult = useMemoizedFn(
-    (aiResult: any, videos: { id: number; title: string }[]): AIMoveResult | null => {
-      const video = videos.find((v) => v.title === aiResult.title)
-      if (!video) return null
-
-      const targetFavorite = dataContext.favoriteData.find(
-        (fav) => fav.title === aiResult.targetFavorite,
-      )
-      const isFallback = !targetFavorite
-
-      return {
-        status: 'success' as AIMoveStatus,
-        targetFavoriteId: targetFavorite?.id || dataContext.defaultFavoriteId!,
-        videoId: video.id,
-        videoTitle: video.title,
-        reason: aiResult.reason,
-        isFallback,
+  const moveOneVideo = useMemoizedFn(
+    async (result: AIMoveResult, sourceFavoriteId: number): Promise<AIMoveResult> => {
+      try {
+        await queryAndSendMessage({
+          type: MessageEnum.moveVideo,
+          data: {
+            srcMediaId: sourceFavoriteId,
+            tarMediaId: result.targetFavoriteId,
+            videoId: result.videoId,
+          },
+        })
+        return { ...result, status: 'success' as AIMoveStatus }
+      } catch (error) {
+        console.error('Move failed:', error)
+        return { ...result, status: 'failed' as AIMoveStatus, reason: '移动失败' }
       }
     },
   )
 
-  const moveOneVideo = useMemoizedFn(async (result: AIMoveResult): Promise<AIMoveResult> => {
-    if (dataContext.defaultFavoriteId == null) return result
-
-    try {
-      await queryAndSendMessage({
-        type: MessageEnum.moveVideo,
-        data: {
-          srcMediaId: dataContext.defaultFavoriteId,
-          tarMediaId: result.targetFavoriteId,
-          videoId: result.videoId,
-        },
-      })
-      return { ...result, status: 'success' as AIMoveStatus }
-    } catch (error) {
-      console.error('Move failed:', error)
-      return { ...result, status: 'failed' as AIMoveStatus, reason: '移动失败' }
-    }
-  })
-
   // 开始 AI 整理
   const handleAIMove = useMemoizedFn(async () => {
+    if (isProcessingRef.current) {
+      toast({
+        title: '已有整理任务进行中',
+        description: '请先取消当前任务后再开始新的整理',
+      })
+      return
+    }
+
     // 根据 configMode 检查是否有可用配置
     const useCustomAI = dataContext.aiConfig?.configMode === 'custom'
     const hasCustomKey = !!(dataContext.aiConfig?.key && dataContext.aiConfig?.model)
@@ -128,6 +124,41 @@ const useAIMove = () => {
       return
     }
 
+    const sourceFavoriteId = dataContext.defaultFavoriteId
+    const favoriteData = dataContext.favoriteData
+    const keyword = dataContext.keyword
+    const aiConfig = dataContext.aiConfig
+    const runId = activeRunIdRef.current + 1
+    const abortController = new AbortController()
+    activeRunIdRef.current = runId
+    abortControllerRef.current = abortController
+    isProcessingRef.current = true
+
+    const ensureRunActive = () => {
+      if (activeRunIdRef.current !== runId || abortController.signal.aborted) {
+        throw new AIMoveRunInterruptedError()
+      }
+    }
+
+    const resolveAIResultForRun = (
+      aiResult: any,
+      videos: { id: number; title: string }[],
+    ): AIMoveResult | null => {
+      const video = videos.find((item) => item.title === aiResult.title)
+      if (!video) return null
+
+      const targetFavorite = favoriteData.find((fav) => fav.title === aiResult.targetFavorite)
+
+      return {
+        status: 'success',
+        targetFavoriteId: targetFavorite?.id || sourceFavoriteId,
+        videoId: video.id,
+        videoTitle: video.title,
+        reason: aiResult.reason,
+        isFallback: !targetFavorite,
+      }
+    }
+
     setIsLoading(true)
     setIsFinished(false)
     setMoveResults([])
@@ -136,15 +167,12 @@ const useAIMove = () => {
     isFinishedRef.current = false
     resetStarInvitation()
 
-    abortControllerRef.current = new AbortController()
-
     try {
-      const defaultFav = dataContext.favoriteData?.find(
-        (f) => f.id === dataContext.defaultFavoriteId,
-      )
-      const videos = await fetchAllFavoriteMedias(dataContext.defaultFavoriteId.toString(), {
+      const defaultFav = favoriteData.find((favorite) => favorite.id === sourceFavoriteId)
+      const videos = await fetchAllFavoriteMedias(sourceFavoriteId.toString(), {
         mediaCount: defaultFav?.media_count,
       })
+      ensureRunActive()
 
       if (videos?.length === 0) {
         toast({
@@ -162,25 +190,26 @@ const useAIMove = () => {
       const fallbackItems: string[] = []
       let processedCount = 0
 
-      const favoriteTitles = dataContext.favoriteData.map((fav) => fav.title)
+      const favoriteTitles = favoriteData.map((fav) => fav.title)
       const favoriteTagsMap: Record<string, string[]> = {}
-      dataContext.favoriteData.forEach((fav) => {
-        const keywordItem = dataContext.keyword.find((k) => k.favoriteDataId === fav.id)
+      favoriteData.forEach((fav) => {
+        const keywordItem = keyword.find((item) => item.favoriteDataId === fav.id)
         if (keywordItem?.value?.length) {
           favoriteTagsMap[fav.title] = keywordItem.value.map((v) => v.value)
         }
       })
       const config = {
-        apiKey: dataContext.aiConfig.key!,
-        baseURL: dataContext.aiConfig.baseUrl!,
-        model: dataContext.aiConfig.model!,
-        extraParams: dataContext.aiConfig.extraParams || {},
+        apiKey: aiConfig.key!,
+        baseURL: aiConfig.baseUrl!,
+        model: aiConfig.model!,
+        extraParams: aiConfig.extraParams || {},
       }
       const totalCount = videos.length
 
       await batchProcess(videos, {
         maxSize: 1000,
         async processCallback(batchVideos) {
+          ensureRunActive()
           const stream = await fetchAIMove(
             batchVideos,
             favoriteTitles,
@@ -188,20 +217,29 @@ const useAIMove = () => {
             useCustomAI,
             favoriteTagsMap,
           )
+          try {
+            ensureRunActive()
+          } catch (error) {
+            stream.cancel()
+            throw error
+          }
           streamRef.current = stream
           const reader = stream.toReadableStream().getReader()
-          const adapter = createStreamAdapter(dataContext.aiConfig.adapter)
+          const adapter = createStreamAdapter(aiConfig.adapter)
 
           let buffer = ''
 
           while (true) {
-            if (abortControllerRef.current?.signal.aborted) {
+            try {
+              ensureRunActive()
+            } catch (error) {
               reader.cancel()
-              streamRef.current?.cancel()
-              throw new AIError('用户取消操作')
+              stream.cancel()
+              throw error
             }
 
             const { value, done } = await reader.read()
+            ensureRunActive()
             if (done) break
 
             buffer += adapter.parse(value)
@@ -209,8 +247,9 @@ const useAIMove = () => {
             buffer = remaining
 
             for (const aiObj of objects) {
+              ensureRunActive()
               processedCount++
-              const result = resolveAIResult(aiObj, batchVideos)
+              const result = resolveAIResultForRun(aiObj, batchVideos)
               if (!result) continue
 
               setProgress({
@@ -223,12 +262,13 @@ const useAIMove = () => {
                 fallbackItems.push(`${result.videoTitle} → AI建议的收藏夹不在列表中`)
               }
 
-              const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
+              const needsMove = result.targetFavoriteId !== sourceFavoriteId
               if (needsMove) {
-                const movedResult = await moveOneVideo(result)
+                const movedResult = await moveOneVideo(result, sourceFavoriteId)
+                ensureRunActive()
                 allResults.push(movedResult)
                 moveVideosCache(
-                  dataContext.defaultFavoriteId!.toString(),
+                  sourceFavoriteId.toString(),
                   movedResult.targetFavoriteId.toString(),
                   [movedResult.videoId],
                 )
@@ -237,32 +277,42 @@ const useAIMove = () => {
               }
               setMoveResults([...allResults])
               await sleep(100)
+              ensureRunActive()
             }
           }
-          streamRef.current = null
+          if (streamRef.current === stream) {
+            streamRef.current = null
+          }
 
           if (buffer.trim()) {
+            ensureRunActive()
             try {
               const lastObjects = parseAIJSON<any[]>(`[${buffer}]`)
               for (const aiObj of lastObjects) {
-                const result = resolveAIResult(aiObj, batchVideos)
+                ensureRunActive()
+                const result = resolveAIResultForRun(aiObj, batchVideos)
                 if (!result) continue
                 processedCount++
-                const needsMove = result.targetFavoriteId !== dataContext.defaultFavoriteId
+                const needsMove = result.targetFavoriteId !== sourceFavoriteId
                 if (needsMove) {
-                  const movedResult = await moveOneVideo(result)
+                  const movedResult = await moveOneVideo(result, sourceFavoriteId)
+                  ensureRunActive()
                   allResults.push(movedResult)
                 } else {
                   allResults.push({ ...result, status: 'skipped' })
                 }
               }
               setMoveResults([...allResults])
-            } catch {
+            } catch (error) {
+              if (error instanceof AIMoveRunInterruptedError) {
+                throw error
+              }
               console.warn('[AI Move] 残留 buffer 解析失败:', buffer)
             }
           }
         },
       })
+      ensureRunActive()
 
       const successCount = allResults.filter((r) => r.status === 'success').length
       const failCount = allResults.filter((r) => r.status === 'failed').length
@@ -283,12 +333,22 @@ const useAIMove = () => {
           notifyOrganizeDone(successCount)
         }
         await recordSuccessfulUse()
+        ensureRunActive()
       }
 
       await sleep(1000)
+      ensureRunActive()
       isFinishedRef.current = true
       setIsFinished(true)
     } catch (error) {
+      if (
+        error instanceof AIMoveRunInterruptedError ||
+        activeRunIdRef.current !== runId ||
+        abortController.signal.aborted
+      ) {
+        return
+      }
+
       if (error instanceof AIError) {
         toast({
           title: '整理失败',
@@ -304,19 +364,25 @@ const useAIMove = () => {
         })
       }
     } finally {
-      if (!isFinishedRef.current) {
-        setIsLoading(false)
+      if (activeRunIdRef.current === runId) {
+        if (!isFinishedRef.current) {
+          setIsLoading(false)
+        }
+        setIsProcessing(false)
+        isProcessingRef.current = false
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null
+        }
       }
-      setIsProcessing(false)
-      abortControllerRef.current = null
     }
   })
 
   // 取消操作
   const cancelMove = useMemoizedFn(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
+    activeRunIdRef.current += 1
+    isProcessingRef.current = false
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = null
     // 取消 background 中的 AI 请求
     if (streamRef.current) {
       streamRef.current.cancel()
@@ -462,6 +528,7 @@ const useAIMove = () => {
   )
 
   return {
+    cancelMove,
     isLoadingElement,
     handleAIMove,
   }
