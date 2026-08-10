@@ -1,4 +1,15 @@
-#!/bin/bash
+#!/bin/sh
+
+set -e
+
+echo "Running tests before commit..."
+if [ ! -x "./node_modules/.bin/vitest" ]; then
+    echo "Error: Vitest is not installed. Run pnpm install first."
+    exit 1
+fi
+
+./node_modules/.bin/vitest run
+echo "All tests passed."
 
 # 从 package.json 读取版本号
 VERSION=$(node -p "require('./package.json').version")
@@ -22,13 +33,14 @@ if [ "$CURRENT_README_VERSION" != "$VERSION" ]; then
     echo "Syncing README.md version: $CURRENT_README_VERSION -> $VERSION"
     
     # 使用 sed 替换版本号（macOS 兼容）
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        sed -i '' "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-$VERSION/g" README.md
-    else
-        # Linux
-        sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-$VERSION/g" README.md
-    fi
+    case "$(uname -s)" in
+        Darwin)
+            sed -i '' "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-$VERSION/g" README.md
+            ;;
+        *)
+            sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-$VERSION/g" README.md
+            ;;
+    esac
     
     # 将更新后的 README.md 添加到暂存区
     git add README.md
