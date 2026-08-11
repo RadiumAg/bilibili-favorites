@@ -1,4 +1,5 @@
 import React from 'react'
+import { CheckCircle2, Circle, Loader2, MinusCircle, Sparkles, XCircle } from 'lucide-react'
 import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
@@ -13,20 +14,20 @@ import { extractCompleteObjects, parseAIJSON } from '@/utils/parse-ai-json'
 import loadingGif from '@/assets/loading.gif'
 import Finished from '@/components/finished-animate'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { batchProcess } from '@/utils/batch-process'
 import { notifyOrganizeDone } from '@/utils/pet-message'
 import { useStarInvitation } from '@/hooks/use-star-invitation'
+import ReviewPanel from './review-panel'
 import { shouldRecordAIMoveUse } from './star-invitation'
+import type { AIMoveResult, AIMoveStatus } from './types'
 
-type AIMoveStatus = 'success' | 'failed' | 'skipped'
+type AIMoveStage = 'idle' | 'analyzing' | 'reviewing' | 'moving' | 'finished'
 
-type AIMoveResult = {
-  status: AIMoveStatus
-  targetFavoriteId: number
-  videoId: number
-  videoTitle: string
+type AIClassificationResult = {
+  title: string
+  targetFavorite: string
   reason: string
-  isFallback?: boolean
 }
 
 class AIMoveRunInterruptedError extends Error {
@@ -34,6 +35,17 @@ class AIMoveRunInterruptedError extends Error {
     super('AI organize run interrupted')
     this.name = 'AIMoveRunInterruptedError'
   }
+}
+
+const isAIClassificationResult = (value: unknown): value is AIClassificationResult => {
+  if (typeof value !== 'object' || value == null) return false
+
+  const candidate = value as Record<string, unknown>
+  return (
+    typeof candidate.title === 'string' &&
+    typeof candidate.targetFavorite === 'string' &&
+    typeof candidate.reason === 'string'
+  )
 }
 
 const useAIMove = () => {
@@ -44,50 +56,135 @@ const useAIMove = () => {
       favoriteData: state.favoriteData,
       defaultFavoriteId: state.defaultFavoriteId,
       aiConfig: state.aiConfig,
-      cookie: state.cookie,
     })),
   )
-  const [isFinished, setIsFinished] = React.useState(false)
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [stage, setStage] = React.useState<AIMoveStage>('idle')
+  const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [moveResults, setMoveResults] = React.useState<AIMoveResult[]>([])
-  const [isProcessing, setIsProcessing] = React.useState(false)
+  const [sourceFavoriteId, setSourceFavoriteId] = React.useState<number | null>(null)
   const [progress, setProgress] = React.useState({ current: 0, total: 0, currentTitle: '' })
   const abortControllerRef = React.useRef<AbortController | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
-  const isFinishedRef = React.useRef(false)
   const isProcessingRef = React.useRef(false)
   const activeRunIdRef = React.useRef(0)
+  const stageRef = React.useRef<AIMoveStage>('idle')
   const { recordSuccessfulUse, resetStarInvitation, showStarInvitationAfterClose } =
     useStarInvitation('popup')
 
   const favoriteMap = React.useMemo(() => {
     const map = new Map<number, string>()
-    dataContext.favoriteData.forEach((fav) => {
-      map.set(fav.id, fav.title)
+    dataContext.favoriteData.forEach((favorite) => {
+      map.set(favorite.id, favorite.title)
     })
     return map
   }, [dataContext.favoriteData])
 
+  const updateStage = useMemoizedFn((nextStage: AIMoveStage) => {
+    stageRef.current = nextStage
+    setStage(nextStage)
+  })
+
+  const createRunGuard = (runId: number, abortController: AbortController) => () => {
+    if (activeRunIdRef.current !== runId || abortController.signal.aborted) {
+      throw new AIMoveRunInterruptedError()
+    }
+  }
+
   const moveOneVideo = useMemoizedFn(
-    async (result: AIMoveResult, sourceFavoriteId: number): Promise<AIMoveResult> => {
+    async (result: AIMoveResult, currentSourceFavoriteId: number): Promise<AIMoveResult> => {
       try {
         await queryAndSendMessage({
           type: MessageEnum.moveVideo,
           data: {
-            srcMediaId: sourceFavoriteId,
+            srcMediaId: currentSourceFavoriteId,
             tarMediaId: result.targetFavoriteId,
             videoId: result.videoId,
           },
         })
-        return { ...result, status: 'success' as AIMoveStatus }
+        return { ...result, status: 'success' }
       } catch (error) {
         console.error('Move failed:', error)
-        return { ...result, status: 'failed' as AIMoveStatus, reason: '移动失败' }
+        return { ...result, status: 'failed', reason: '移动失败' }
       }
     },
   )
 
-  // 开始 AI 整理
+  const executeMovePlan = useMemoizedFn(
+    async (
+      plan: AIMoveResult[],
+      currentSourceFavoriteId: number,
+      runId: number,
+      abortController: AbortController,
+    ) => {
+      const ensureRunActive = createRunGuard(runId, abortController)
+      const workingResults = plan.map<AIMoveResult>((result) => ({
+        ...result,
+        status: result.targetFavoriteId === currentSourceFavoriteId ? 'skipped' : 'pending',
+      }))
+
+      updateStage('moving')
+      setMoveResults(workingResults)
+      setProgress({ current: 0, total: workingResults.length, currentTitle: '' })
+
+      for (let index = 0; index < workingResults.length; index++) {
+        ensureRunActive()
+        const result = workingResults[index]
+        let completedResult: AIMoveResult
+
+        if (result.targetFavoriteId === currentSourceFavoriteId) {
+          completedResult = { ...result, status: 'skipped' }
+        } else {
+          completedResult = await moveOneVideo(result, currentSourceFavoriteId)
+          if (completedResult.status === 'success') {
+            moveVideosCache(
+              currentSourceFavoriteId.toString(),
+              completedResult.targetFavoriteId.toString(),
+              [completedResult.videoId],
+            )
+          }
+          ensureRunActive()
+        }
+
+        workingResults[index] = completedResult
+        setMoveResults([...workingResults])
+        setProgress({
+          current: index + 1,
+          total: workingResults.length,
+          currentTitle: completedResult.videoTitle,
+        })
+
+        if (index < workingResults.length - 1) {
+          await sleep(100)
+        }
+      }
+
+      ensureRunActive()
+      const successCount = workingResults.filter((result) => result.status === 'success').length
+      const failCount = workingResults.filter((result) => result.status === 'failed').length
+      const skippedCount = workingResults.filter((result) => result.status === 'skipped').length
+      const fallbackCount = workingResults.filter((result) => result.isFallback).length
+
+      toast({
+        title: '移动完成',
+        description: `成功: ${successCount}, 保留: ${skippedCount}, 失败: ${failCount}${fallbackCount > 0 ? `, 兜底: ${fallbackCount}` : ''}`,
+      })
+
+      if (shouldRecordAIMoveUse(successCount, skippedCount)) {
+        if (successCount > 0) {
+          notifyOrganizeDone(successCount)
+        }
+        try {
+          await recordSuccessfulUse()
+        } catch (error) {
+          console.warn('[AI Move] 记录成功使用次数失败:', error)
+        }
+        ensureRunActive()
+      }
+
+      updateStage('finished')
+    },
+  )
+
   const handleAIMove = useMemoizedFn(async () => {
     if (isProcessingRef.current) {
       toast({
@@ -97,18 +194,15 @@ const useAIMove = () => {
       return
     }
 
-    // 根据 configMode 检查是否有可用配置
-    const useCustomAI = dataContext.aiConfig?.configMode === 'custom'
-    const hasCustomKey = !!(dataContext.aiConfig?.key && dataContext.aiConfig?.model)
-    const hasAIGate = true // AIGate 始终可用
+    const useCustomAI = dataContext.aiConfig.configMode === 'custom'
+    const hasCustomKey = Boolean(dataContext.aiConfig.key && dataContext.aiConfig.model)
 
-    if (!(useCustomAI ? hasCustomKey : hasAIGate)) {
+    if (useCustomAI && !hasCustomKey) {
       toast({
         title: '未配置 AI',
         description: '请先在设置页面配置 AI 或切换到免费额度',
         variant: 'destructive',
       })
-      // 延迟跳转，让用户看到提示
       setTimeout(() => {
         window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
       }, 1500)
@@ -124,87 +218,103 @@ const useAIMove = () => {
       return
     }
 
-    const sourceFavoriteId = dataContext.defaultFavoriteId
+    const currentSourceFavoriteId = dataContext.defaultFavoriteId
     const favoriteData = dataContext.favoriteData
     const keyword = dataContext.keyword
     const aiConfig = dataContext.aiConfig
     const runId = activeRunIdRef.current + 1
     const abortController = new AbortController()
+    const ensureRunActive = createRunGuard(runId, abortController)
+
     activeRunIdRef.current = runId
     abortControllerRef.current = abortController
     isProcessingRef.current = true
-
-    const ensureRunActive = () => {
-      if (activeRunIdRef.current !== runId || abortController.signal.aborted) {
-        throw new AIMoveRunInterruptedError()
-      }
-    }
-
-    const resolveAIResultForRun = (
-      aiResult: any,
-      videos: { id: number; title: string }[],
-    ): AIMoveResult | null => {
-      const video = videos.find((item) => item.title === aiResult.title)
-      if (!video) return null
-
-      const targetFavorite = favoriteData.find((fav) => fav.title === aiResult.targetFavorite)
-
-      return {
-        status: 'success',
-        targetFavoriteId: targetFavorite?.id || sourceFavoriteId,
-        videoId: video.id,
-        videoTitle: video.title,
-        reason: aiResult.reason,
-        isFallback: !targetFavorite,
-      }
-    }
-
-    setIsLoading(true)
-    setIsFinished(false)
+    setSourceFavoriteId(currentSourceFavoriteId)
     setMoveResults([])
-    setIsProcessing(true)
     setProgress({ current: 0, total: 0, currentTitle: '' })
-    isFinishedRef.current = false
+    setIsModalOpen(true)
+    updateStage('analyzing')
     resetStarInvitation()
 
     try {
-      const defaultFav = favoriteData.find((favorite) => favorite.id === sourceFavoriteId)
-      const videos = await fetchAllFavoriteMedias(sourceFavoriteId.toString(), {
-        mediaCount: defaultFav?.media_count,
+      const defaultFavorite = favoriteData.find(
+        (favorite) => favorite.id === currentSourceFavoriteId,
+      )
+      const videos = await fetchAllFavoriteMedias(currentSourceFavoriteId.toString(), {
+        mediaCount: defaultFavorite?.media_count,
       })
       ensureRunActive()
 
-      if (videos?.length === 0) {
+      if (videos.length === 0) {
         toast({
           title: '暂无数据',
           description: '默认收藏夹中没有视频需要整理',
         })
-        setIsLoading(false)
-        setIsProcessing(false)
+        setIsModalOpen(false)
+        updateStage('idle')
         return
       }
 
       setProgress({ current: 0, total: videos.length, currentTitle: '' })
 
       const allResults: AIMoveResult[] = []
-      const fallbackItems: string[] = []
-      let processedCount = 0
-
-      const favoriteTitles = favoriteData.map((fav) => fav.title)
+      const resolvedVideoIds = new Set<number>()
+      const favoriteTitles = favoriteData.map((favorite) => favorite.title)
       const favoriteTagsMap: Record<string, string[]> = {}
-      favoriteData.forEach((fav) => {
-        const keywordItem = keyword.find((item) => item.favoriteDataId === fav.id)
-        if (keywordItem?.value?.length) {
-          favoriteTagsMap[fav.title] = keywordItem.value.map((v) => v.value)
+      favoriteData.forEach((favorite) => {
+        const keywordItem = keyword.find((item) => item.favoriteDataId === favorite.id)
+        if (keywordItem?.value.length) {
+          favoriteTagsMap[favorite.title] = keywordItem.value.map((value) => value.value)
         }
       })
       const config = {
-        apiKey: aiConfig.key!,
-        baseURL: aiConfig.baseUrl!,
-        model: aiConfig.model!,
-        extraParams: aiConfig.extraParams || {},
+        apiKey: aiConfig.key ?? '',
+        baseURL: aiConfig.baseUrl ?? '',
+        model: aiConfig.model ?? '',
+        extraParams: aiConfig.extraParams ?? {},
       }
-      const totalCount = videos.length
+
+      const resolveAIResult = (
+        aiResult: unknown,
+        batchVideos: Array<{ id: number; title: string }>,
+      ): AIMoveResult | null => {
+        if (!isAIClassificationResult(aiResult)) return null
+
+        const video = batchVideos.find(
+          (item) => item.title === aiResult.title && !resolvedVideoIds.has(item.id),
+        )
+        if (!video) return null
+        resolvedVideoIds.add(video.id)
+
+        const targetFavorite = favoriteData.find(
+          (favorite) => favorite.title === aiResult.targetFavorite,
+        )
+
+        return {
+          status: 'pending',
+          targetFavoriteId: targetFavorite?.id ?? currentSourceFavoriteId,
+          videoId: video.id,
+          videoTitle: video.title,
+          reason: aiResult.reason,
+          isFallback: targetFavorite == null,
+        }
+      }
+
+      const appendAIResult = (
+        aiResult: unknown,
+        batchVideos: Array<{ id: number; title: string }>,
+      ) => {
+        const result = resolveAIResult(aiResult, batchVideos)
+        if (!result) return
+
+        allResults.push(result)
+        setMoveResults([...allResults])
+        setProgress({
+          current: allResults.length,
+          total: videos.length,
+          currentTitle: result.videoTitle,
+        })
+      }
 
       await batchProcess(videos, {
         maxSize: 1000,
@@ -226,14 +336,13 @@ const useAIMove = () => {
           streamRef.current = stream
           const reader = stream.toReadableStream().getReader()
           const adapter = createStreamAdapter(aiConfig.adapter)
-
           let buffer = ''
 
           while (true) {
             try {
               ensureRunActive()
             } catch (error) {
-              reader.cancel()
+              await reader.cancel()
               stream.cancel()
               throw error
             }
@@ -246,63 +355,23 @@ const useAIMove = () => {
             const { objects, remaining } = extractCompleteObjects(buffer)
             buffer = remaining
 
-            for (const aiObj of objects) {
+            objects.forEach((aiObject) => {
               ensureRunActive()
-              processedCount++
-              const result = resolveAIResultForRun(aiObj, batchVideos)
-              if (!result) continue
-
-              setProgress({
-                current: processedCount,
-                total: totalCount,
-                currentTitle: result.videoTitle,
-              })
-
-              if (result.isFallback) {
-                fallbackItems.push(`${result.videoTitle} → AI建议的收藏夹不在列表中`)
-              }
-
-              const needsMove = result.targetFavoriteId !== sourceFavoriteId
-              if (needsMove) {
-                const movedResult = await moveOneVideo(result, sourceFavoriteId)
-                ensureRunActive()
-                allResults.push(movedResult)
-                moveVideosCache(
-                  sourceFavoriteId.toString(),
-                  movedResult.targetFavoriteId.toString(),
-                  [movedResult.videoId],
-                )
-              } else {
-                allResults.push({ ...result, status: 'skipped' })
-              }
-              setMoveResults([...allResults])
-              await sleep(100)
-              ensureRunActive()
-            }
+              appendAIResult(aiObject, batchVideos)
+            })
           }
+
           if (streamRef.current === stream) {
             streamRef.current = null
           }
 
           if (buffer.trim()) {
-            ensureRunActive()
             try {
-              const lastObjects = parseAIJSON<any[]>(`[${buffer}]`)
-              for (const aiObj of lastObjects) {
+              const lastObjects = parseAIJSON<unknown[]>(`[${buffer}]`)
+              lastObjects.forEach((aiObject) => {
                 ensureRunActive()
-                const result = resolveAIResultForRun(aiObj, batchVideos)
-                if (!result) continue
-                processedCount++
-                const needsMove = result.targetFavoriteId !== sourceFavoriteId
-                if (needsMove) {
-                  const movedResult = await moveOneVideo(result, sourceFavoriteId)
-                  ensureRunActive()
-                  allResults.push(movedResult)
-                } else {
-                  allResults.push({ ...result, status: 'skipped' })
-                }
-              }
-              setMoveResults([...allResults])
+                appendAIResult(aiObject, batchVideos)
+              })
             } catch (error) {
               if (error instanceof AIMoveRunInterruptedError) {
                 throw error
@@ -314,32 +383,16 @@ const useAIMove = () => {
       })
       ensureRunActive()
 
-      const successCount = allResults.filter((r) => r.status === 'success').length
-      const failCount = allResults.filter((r) => r.status === 'failed').length
-      const skippedCount = allResults.filter((r) => r.status === 'skipped').length
-      const fallbackCount = allResults.filter((r) => r.isFallback).length
-
-      toast({
-        title: '整理完成',
-        description: `成功: ${successCount}, 跳过: ${skippedCount}, 失败: ${failCount}${fallbackCount > 0 ? `, 兜底: ${fallbackCount}` : ''}`,
-        detail:
-          fallbackItems.length > 0
-            ? `以下视频因AI返回的收藏夹不在列表中，已归到默认收藏夹：\n${fallbackItems.join('\n')}`
-            : undefined,
-      })
-
-      if (shouldRecordAIMoveUse(successCount, skippedCount)) {
-        if (successCount > 0) {
-          notifyOrganizeDone(successCount)
-        }
-        await recordSuccessfulUse()
-        ensureRunActive()
+      if (allResults.length === 0) {
+        throw new AIError('AI 未返回可用的整理结果，请重试')
       }
 
-      await sleep(1000)
-      ensureRunActive()
-      isFinishedRef.current = true
-      setIsFinished(true)
+      if ((aiConfig.aiMoveExecutionMode ?? 'ask') === 'auto') {
+        await executeMovePlan(allResults, currentSourceFavoriteId, runId, abortController)
+      } else {
+        setMoveResults(allResults)
+        updateStage('reviewing')
+      }
     } catch (error) {
       if (
         error instanceof AIMoveRunInterruptedError ||
@@ -349,6 +402,8 @@ const useAIMove = () => {
         return
       }
 
+      setIsModalOpen(false)
+      updateStage('idle')
       if (error instanceof AIError) {
         toast({
           title: '整理失败',
@@ -365,10 +420,6 @@ const useAIMove = () => {
       }
     } finally {
       if (activeRunIdRef.current === runId) {
-        if (!isFinishedRef.current) {
-          setIsLoading(false)
-        }
-        setIsProcessing(false)
         isProcessingRef.current = false
         if (abortControllerRef.current === abortController) {
           abortControllerRef.current = null
@@ -377,160 +428,302 @@ const useAIMove = () => {
     }
   })
 
-  // 取消操作
+  const handleTargetChange = useMemoizedFn((videoId: number, targetFavoriteId: number) => {
+    setMoveResults((currentResults) =>
+      currentResults.map((result) =>
+        result.videoId === videoId
+          ? { ...result, targetFavoriteId, status: 'pending', isFallback: false }
+          : result,
+      ),
+    )
+  })
+
+  const handleConfirmMove = useMemoizedFn(async () => {
+    if (stageRef.current !== 'reviewing' || sourceFavoriteId == null) return
+    if (isProcessingRef.current) return
+
+    const runId = activeRunIdRef.current + 1
+    const abortController = new AbortController()
+    activeRunIdRef.current = runId
+    abortControllerRef.current = abortController
+    isProcessingRef.current = true
+
+    try {
+      await executeMovePlan(moveResults, sourceFavoriteId, runId, abortController)
+    } catch (error) {
+      if (
+        error instanceof AIMoveRunInterruptedError ||
+        activeRunIdRef.current !== runId ||
+        abortController.signal.aborted
+      ) {
+        return
+      }
+
+      updateStage('reviewing')
+      toast({
+        title: '移动失败',
+        description: error instanceof Error ? error.message : '执行移动时发生未知错误',
+        variant: 'destructive',
+      })
+    } finally {
+      if (activeRunIdRef.current === runId) {
+        isProcessingRef.current = false
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null
+        }
+      }
+    }
+  })
+
   const cancelMove = useMemoizedFn(() => {
+    const currentStage = stageRef.current
     activeRunIdRef.current += 1
     isProcessingRef.current = false
     abortControllerRef.current?.abort()
     abortControllerRef.current = null
-    // 取消 background 中的 AI 请求
-    if (streamRef.current) {
-      streamRef.current.cancel()
-      streamRef.current = null
+    streamRef.current?.cancel()
+    streamRef.current = null
+    setIsModalOpen(false)
+    updateStage('idle')
+
+    if (currentStage === 'moving') {
+      toast({
+        title: '已停止移动',
+        description: '已完成的移动不会撤销，其余视频已停止处理',
+      })
+    } else if (currentStage === 'reviewing') {
+      toast({
+        title: '已取消整理',
+        description: '没有移动任何视频',
+      })
+    } else {
+      toast({
+        title: '已取消分析',
+        description: '没有移动任何视频',
+      })
     }
-    setIsProcessing(false)
-    setIsLoading(false)
-    toast({
-      title: '已取消',
-      description: '操作已取消',
-    })
   })
 
-  const isLoadingElement = (
+  const closeFinished = useMemoizedFn(() => {
+    setIsModalOpen(false)
+    updateStage('idle')
+    showStarInvitationAfterClose()
+  })
+
+  const progressValue = progress.total > 0 ? (progress.current / progress.total) * 100 : 0
+  const successCount = moveResults.filter((result) => result.status === 'success').length
+  const failedCount = moveResults.filter((result) => result.status === 'failed').length
+  const skippedCount = moveResults.filter((result) => result.status === 'skipped').length
+
+  const renderStatusIcon = (status: AIMoveStatus) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-600" aria-hidden={true} />
+      case 'failed':
+        return <XCircle className="h-3.5 w-3.5 shrink-0 text-red-500" aria-hidden={true} />
+      case 'skipped':
+        return <MinusCircle className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden={true} />
+      default:
+        return <Circle className="h-3.5 w-3.5 shrink-0 text-gray-300" aria-hidden={true} />
+    }
+  }
+
+  const isLoadingElement = isModalOpen ? (
     <div
-      className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${isLoading ? '' : 'hidden'}`}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-3"
+      role="dialog"
+      aria-modal="true"
+      aria-label={stage === 'reviewing' ? '确认 AI 整理结果' : 'AI 整理进度'}
     >
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        {!isFinished ? (
-          <div className="flex flex-col items-center">
-            <img alt="loading-gif" src={loadingGif} className="w-24 h-24 mb-4" />
-            {isProcessing && (
-              <>
-                {progress.total === 0 ? (
-                  <p className="text-lg font-semibold mb-2">正在获取收藏夹视频...</p>
-                ) : (
-                  <>
-                    <p className="text-lg font-semibold mb-2">
-                      正在处理 ({progress.current}/{progress.total})
-                    </p>
-                    {progress.currentTitle && (
-                      <p
-                        className="text-sm text-gray-500 mb-1 max-w-xs truncate"
-                        title={progress.currentTitle}
-                      >
-                        {progress.currentTitle}
-                      </p>
-                    )}
-                    {progress.total > 0 && (
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2 mb-1">
-                        <div
-                          className="bg-b-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(progress.current / progress.total) * 100}%` }}
-                        />
-                      </div>
-                    )}
-                    {moveResults.length > 0 && (
-                      <div className="w-full mt-2">
-                        <p className="text-xs text-gray-400 mb-1">已完成 {moveResults.length} 个</p>
-                        <div className="max-h-32 w-full overflow-y-auto overscroll-contain rounded-md border border-gray-100 scrollbar-thin">
-                          <div className="w-full text-xs space-y-0.5 p-1">
-                            {moveResults.map((r, i) => (
-                              <div
-                                key={i}
-                                className="flex items-center gap-1 text-gray-500 py-0.5 px-1 rounded hover:bg-gray-50 transition-colors duration-100"
-                              >
-                                <span
-                                  className={
-                                    r.status === 'failed'
-                                      ? 'text-red-500'
-                                      : r.status === 'skipped'
-                                        ? 'text-gray-400'
-                                        : 'text-green-600'
-                                  }
-                                >
-                                  {r.status === 'failed' ? '✗' : r.status === 'skipped' ? '-' : '✓'}
-                                </span>
-                                <span className="truncate flex-1" title={r.videoTitle}>
-                                  {r.videoTitle}
-                                </span>
-                                <span className="text-gray-400 shrink-0">
-                                  {r.status === 'skipped'
-                                    ? '未移动'
-                                    : r.status === 'failed'
-                                      ? r.reason
-                                      : `${favoriteMap.get(dataContext.defaultFavoriteId!) || '默认'} → ${favoriteMap.get(r.targetFavoriteId) || '未知'}`}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-            <Button onClick={cancelMove} variant="outline" className="mt-4">
-              取消
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center">
-            <Finished start={isFinished} height={150} width={150} title="AI 整理完成！" />
-            <div className="mt-4 w-full">
-              <p className="text-sm font-semibold mb-2">移动结果：</p>
-              <div className="max-h-40 overflow-y-auto overscroll-contain rounded-md border border-gray-100 text-xs scrollbar-thin">
-                <div className="space-y-0.5 p-1">
-                  {moveResults.map((result: AIMoveResult, idx: number) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-1 py-0.5 px-1 rounded hover:bg-gray-50 transition-colors duration-100"
+      {stage === 'reviewing' && sourceFavoriteId != null ? (
+        <ReviewPanel
+          results={moveResults}
+          favorites={dataContext.favoriteData}
+          sourceFavoriteId={sourceFavoriteId}
+          onTargetChange={handleTargetChange}
+          onCancel={cancelMove}
+          onConfirm={handleConfirmMove}
+        />
+      ) : (
+        <div className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-[#00AEEC]/20 bg-white p-5 shadow-2xl">
+          {stage === 'analyzing' && (
+            <div className="flex min-h-0 flex-col items-center">
+              <img alt="AI 正在分析" src={loadingGif} className="mb-3 h-20 w-20" />
+              <h2 className="text-base font-semibold text-gray-900">
+                {progress.total === 0 ? '正在获取收藏夹视频...' : 'AI 正在分析整理方案'}
+              </h2>
+              {progress.total > 0 && (
+                <div className="mt-3 w-full">
+                  <div className="mb-1.5 flex items-center justify-between text-xs text-gray-500">
+                    <span>已分析 {progress.current} 个</span>
+                    <span>{progress.total} 个视频</span>
+                  </div>
+                  <Progress
+                    value={progressValue}
+                    aria-label={`AI 分析进度 ${progress.current}/${progress.total}`}
+                    indicatorClassName="bg-[#00AEEC]"
+                  />
+                  {progress.currentTitle && (
+                    <p
+                      className="mt-2 truncate text-center text-xs text-gray-500"
+                      title={progress.currentTitle}
                     >
-                      <span
-                        className={
-                          result.status === 'failed'
-                            ? 'text-red-500'
-                            : result.status === 'skipped'
-                              ? 'text-gray-400'
-                              : 'text-green-600'
-                        }
-                      >
-                        {result.status === 'failed' ? '✗' : result.status === 'skipped' ? '-' : '✓'}
+                      {progress.currentTitle}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {moveResults.length > 0 && (
+                <div className="scrollbar-thin mt-3 max-h-40 w-full overflow-y-auto overscroll-contain rounded-lg border border-gray-100 p-1">
+                  {moveResults.map((result) => (
+                    <div
+                      key={result.videoId}
+                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-gray-50"
+                    >
+                      <Sparkles
+                        className="h-3.5 w-3.5 shrink-0 text-[#FB7299]"
+                        aria-hidden={true}
+                      />
+                      <span className="min-w-0 flex-1 truncate" title={result.videoTitle}>
+                        {result.videoTitle}
                       </span>
-                      <span className="font-medium truncate">{result.videoTitle}</span>
-                      <span className="text-gray-500 ml-auto shrink-0">
-                        {result.status === 'skipped'
-                          ? '未移动'
-                          : result.status === 'failed'
-                            ? result.reason
-                            : `→ ${favoriteMap.get(result.targetFavoriteId) || '未知'}`}
+                      <span className="max-w-28 shrink-0 truncate text-gray-400">
+                        → {favoriteMap.get(result.targetFavoriteId) || '保留'}
                       </span>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
+
+              <Button
+                type="button"
+                onClick={cancelMove}
+                variant="outline"
+                className="mt-4 min-h-11"
+              >
+                取消分析
+              </Button>
             </div>
-            <Button
-              onClick={() => {
-                setIsFinished(false)
-                setIsLoading(false)
-                showStarInvitationAfterClose()
-              }}
-              variant="outline"
-              className="mt-4"
-            >
-              关闭
-            </Button>
-          </div>
-        )}
-      </div>
+          )}
+
+          {stage === 'moving' && (
+            <div className="flex min-h-0 flex-col items-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#00AEEC]/10 text-[#008CC1]">
+                <Loader2 className="h-7 w-7 animate-spin" aria-hidden={true} />
+              </span>
+              <h2 className="mt-3 text-base font-semibold text-gray-900">正在移动视频</h2>
+              <div className="mt-3 w-full">
+                <div className="mb-1.5 flex items-center justify-between text-xs text-gray-500">
+                  <span>已处理 {progress.current} 个</span>
+                  <span>{progress.total} 个结果</span>
+                </div>
+                <Progress
+                  value={progressValue}
+                  aria-label={`视频移动进度 ${progress.current}/${progress.total}`}
+                  indicatorClassName="bg-[#00AEEC]"
+                />
+                {progress.currentTitle && (
+                  <p
+                    className="mt-2 truncate text-center text-xs text-gray-500"
+                    title={progress.currentTitle}
+                  >
+                    {progress.currentTitle}
+                  </p>
+                )}
+              </div>
+
+              <div className="scrollbar-thin mt-3 max-h-44 w-full overflow-y-auto overscroll-contain rounded-lg border border-gray-100 p-1">
+                {moveResults.map((result) => (
+                  <div
+                    key={result.videoId}
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-gray-50"
+                  >
+                    {renderStatusIcon(result.status)}
+                    <span className="min-w-0 flex-1 truncate" title={result.videoTitle}>
+                      {result.videoTitle}
+                    </span>
+                    <span className="max-w-28 shrink-0 truncate text-gray-400">
+                      {result.status === 'skipped'
+                        ? '保留'
+                        : result.status === 'failed'
+                          ? '失败'
+                          : favoriteMap.get(result.targetFavoriteId) || '未知'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                type="button"
+                onClick={cancelMove}
+                variant="outline"
+                className="mt-4 min-h-11"
+              >
+                停止移动
+              </Button>
+            </div>
+          )}
+
+          {stage === 'finished' && (
+            <div className="flex min-h-0 flex-col items-center">
+              <Finished start={true} height={130} width={130} title="AI 整理完成！" />
+              <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs">
+                <span className="rounded-full bg-green-50 px-2.5 py-1 font-medium text-green-700">
+                  成功 {successCount}
+                </span>
+                <span className="rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-600">
+                  保留 {skippedCount}
+                </span>
+                {failedCount > 0 && (
+                  <span className="rounded-full bg-red-50 px-2.5 py-1 font-medium text-red-600">
+                    失败 {failedCount}
+                  </span>
+                )}
+              </div>
+
+              <div className="scrollbar-thin mt-3 max-h-44 w-full overflow-y-auto overscroll-contain rounded-lg border border-gray-100 p-1">
+                {moveResults.map((result) => (
+                  <div
+                    key={result.videoId}
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-gray-50"
+                  >
+                    {renderStatusIcon(result.status)}
+                    <span className="min-w-0 flex-1 truncate" title={result.videoTitle}>
+                      {result.videoTitle}
+                    </span>
+                    <span className="max-w-28 shrink-0 truncate text-gray-400">
+                      {result.status === 'skipped'
+                        ? '保留'
+                        : result.status === 'failed'
+                          ? '移动失败'
+                          : `→ ${favoriteMap.get(result.targetFavoriteId) || '未知'}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                type="button"
+                onClick={closeFinished}
+                variant="outline"
+                className="mt-4 min-h-11"
+              >
+                关闭
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
-  )
+  ) : null
 
   return {
     cancelMove,
+    handleConfirmMove,
     isLoadingElement,
     handleAIMove,
+    handleTargetChange,
   }
 }
 

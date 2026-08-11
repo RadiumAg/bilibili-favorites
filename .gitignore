@@ -4,6 +4,9 @@
 
 # dependencies
 node_modules
+.pnpm-store/v11/.tmp/
+.pnpm-store/v11/index.db-shm
+.pnpm-store/v11/index.db-wal
 
 # testing
 /coverage

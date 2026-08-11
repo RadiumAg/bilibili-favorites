@@ -15,6 +15,7 @@ const useGlobalConfig = create<DataContextType>()(
           activeKey: undefined,
           aiConfig: {
             configMode: 'free',
+            aiMoveExecutionMode: 'ask',
           },
           defaultFavoriteId: undefined,
           petEnabled: true,

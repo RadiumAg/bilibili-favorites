@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
+import AIMoveExecutionSetting from './components/ai-move-execution-setting'
 
 const Setting: React.FC = () => {
   const [selectorMode, setSelectorMode] = React.useState<'custom' | 'free'>('custom')
@@ -27,6 +28,7 @@ const Setting: React.FC = () => {
         <ConfigModeSelector configMode={selectorMode} onModeChange={setSelectorMode} />
         {selectorMode === 'custom' && <CustomConfigForm />}
         {selectorMode === 'free' && <QuotaCard />}
+        <AIMoveExecutionSetting />
 
         <Title title="桌面宠物" />
         <div className="flex items-center gap-3">

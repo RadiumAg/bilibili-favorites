@@ -2,6 +2,8 @@ import { type WebDAVConfig } from './webdav'
 
 type Adapter = 'spark' | 'openai' | 'custom' | 'aigate' | 'qianwen' | 'kimi' | 'gml'
 
+type AIMoveExecutionMode = 'ask' | 'auto'
+
 type DataContextType = {
   favoriteData: {
     attr: number
@@ -23,6 +25,8 @@ type DataContextType = {
     aigateApiKeyId?: string
     // 配置模式：custom=自定义AI, free=内置免费AI
     configMode?: 'custom' | 'free'
+    // AI 整理完成后的执行方式：ask=审核后移动, auto=分析完成后自动移动
+    aiMoveExecutionMode?: AIMoveExecutionMode
   }
   cookie: string | undefined
   activeKey: number | undefined
@@ -40,4 +44,4 @@ type DataContextType = {
   getGlobalData: () => DataContextType
 }
 
-export type { DataContextType, Adapter }
+export type { DataContextType, Adapter, AIMoveExecutionMode }

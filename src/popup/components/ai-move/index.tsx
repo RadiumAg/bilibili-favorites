@@ -4,6 +4,7 @@ import { toast } from '@/hooks'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAIMove } from './use-ai-move'
 import { useMemoizedFn } from 'ahooks'
+import { Bot } from 'lucide-react'
 
 const AIMove: React.FC = () => {
   const { handleAIMove, isLoadingElement } = useAIMove()
@@ -13,7 +14,7 @@ const AIMove: React.FC = () => {
     if (!pendingConfirmRef.current) {
       pendingConfirmRef.current = true
       toast({
-        title: '⚠️ Token 消耗提醒',
+        title: 'Token 消耗提醒',
         description:
           '此操作会将所有视频标题发送给 AI 进行分析，可能消耗大量 Token。再次点击确认执行。',
       })
@@ -34,7 +35,8 @@ const AIMove: React.FC = () => {
         className="bg-b-primary hover:bg-b-primary-hover h-7 transition-colors duration-200"
         title="AI 智能分类视频到对应收藏夹（会消耗较多 Token）"
       >
-        🤖 AI 整理
+        <Bot className="h-4 w-4" aria-hidden={true} />
+        AI 整理
         <Popover>
           <PopoverTrigger asChild>
             <button

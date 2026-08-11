@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   fetchAIMove: vi.fn(),
   fetchAllFavoriteMedias: vi.fn(),
+  createStreamAdapter: vi.fn(),
   moveVideosCache: vi.fn(),
   queryAndSendMessage: vi.fn(),
   recordSuccessfulUse: vi.fn(),
@@ -23,6 +24,7 @@ let storeState = {
     model: '',
     extraParams: {},
     adapter: 'spark' as const,
+    aiMoveExecutionMode: 'ask' as 'ask' | 'auto',
   },
   cookie: '',
 }
@@ -66,7 +68,7 @@ vi.mock('@/utils/pet-message', () => ({
 }))
 
 vi.mock('@/hooks/use-create-keyword-by-ai/ai-stream-parser', () => ({
-  createStreamAdapter: vi.fn(),
+  createStreamAdapter: mocks.createStreamAdapter,
 }))
 
 vi.mock('@/components/finished-animate', () => ({
@@ -102,13 +104,37 @@ const createDeferred = <T,>(): Deferred<T> => {
 
 const createVideo = (id: number, title: string) => ({ id, title })
 
+const createAIStream = (content: string) => {
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(encoder.encode(content))
+      controller.close()
+    },
+  })
+
+  return {
+    toReadableStream: () => stream,
+    cancel: vi.fn(),
+  }
+}
+
 describe('useAIMove single run', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.createStreamAdapter.mockReturnValue({
+      parse: (chunk: Uint8Array) => new TextDecoder().decode(chunk),
+    })
+    mocks.queryAndSendMessage.mockResolvedValue(undefined)
+    mocks.recordSuccessfulUse.mockResolvedValue(undefined)
     storeState = {
       ...storeState,
       favoriteData: [{ id: 1, title: '收藏夹 1', media_count: 1 }],
       defaultFavoriteId: 1,
+      aiConfig: {
+        ...storeState.aiConfig,
+        aiMoveExecutionMode: 'ask',
+      },
     }
   })
 
@@ -170,6 +196,93 @@ describe('useAIMove single run', () => {
     await act(async () => {
       secondRequest.resolve([createVideo(2, '新视频')])
       await secondRun
+    })
+  })
+
+  it('始终询问模式会等待确认，并按用户调整后的目标移动', async () => {
+    storeState = {
+      ...storeState,
+      favoriteData: [
+        { id: 1, title: '默认收藏夹', media_count: 1 },
+        { id: 2, title: 'AI 推荐', media_count: 0 },
+        { id: 3, title: '手动调整', media_count: 0 },
+      ],
+      defaultFavoriteId: 1,
+      aiConfig: {
+        ...storeState.aiConfig,
+        aiMoveExecutionMode: 'ask',
+      },
+    }
+    mocks.fetchAllFavoriteMedias.mockResolvedValue([createVideo(101, '测试视频')])
+    mocks.fetchAIMove.mockResolvedValue(
+      createAIStream(
+        JSON.stringify([{ title: '测试视频', targetFavorite: 'AI 推荐', reason: 'AI 推荐理由' }]),
+      ),
+    )
+
+    const { result } = renderHook(() => useAIMove())
+
+    await act(async () => {
+      await result.current.handleAIMove()
+    })
+
+    expect(mocks.queryAndSendMessage).not.toHaveBeenCalled()
+    expect(result.current.isLoadingElement?.props['aria-label']).toBe('确认 AI 整理结果')
+
+    act(() => {
+      result.current.handleTargetChange(101, 3)
+    })
+    await act(async () => {
+      await result.current.handleConfirmMove()
+    })
+
+    expect(mocks.queryAndSendMessage).toHaveBeenCalledTimes(1)
+    expect(mocks.queryAndSendMessage).toHaveBeenCalledWith({
+      type: 'moveVideo',
+      data: {
+        srcMediaId: 1,
+        tarMediaId: 3,
+        videoId: 101,
+      },
+    })
+  })
+
+  it('自动执行模式会在分析全部完成后直接移动', async () => {
+    storeState = {
+      ...storeState,
+      favoriteData: [
+        { id: 1, title: '默认收藏夹', media_count: 1 },
+        { id: 2, title: '目标收藏夹', media_count: 0 },
+      ],
+      defaultFavoriteId: 1,
+      aiConfig: {
+        ...storeState.aiConfig,
+        aiMoveExecutionMode: 'auto',
+      },
+    }
+    mocks.fetchAllFavoriteMedias.mockResolvedValue([createVideo(202, '自动整理视频')])
+    mocks.fetchAIMove.mockResolvedValue(
+      createAIStream(
+        JSON.stringify([
+          { title: '自动整理视频', targetFavorite: '目标收藏夹', reason: '自动分类' },
+        ]),
+      ),
+    )
+
+    const { result } = renderHook(() => useAIMove())
+
+    await act(async () => {
+      await result.current.handleAIMove()
+    })
+
+    expect(mocks.queryAndSendMessage).toHaveBeenCalledTimes(1)
+    expect(mocks.queryAndSendMessage).toHaveBeenCalledWith({
+      type: 'moveVideo',
+      data: {
+        srcMediaId: 1,
+        tarMediaId: 2,
+        videoId: 202,
+      },
     })
   })
 })
