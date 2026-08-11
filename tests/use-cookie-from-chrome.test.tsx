@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   cookie: undefined as string | undefined,
+  hasBilibiliTab: vi.fn(),
   queryAndSendMessage: vi.fn(),
   setGlobalData: vi.fn(),
 }))
 
 vi.mock('@/utils/tab', () => ({
+  hasBilibiliTab: mocks.hasBilibiliTab,
   queryAndSendMessage: mocks.queryAndSendMessage,
 }))
 
@@ -30,6 +32,8 @@ describe('useCookieFromChrome', () => {
   beforeEach(() => {
     mocks.cookie = undefined
     mocks.queryAndSendMessage.mockReset()
+    mocks.hasBilibiliTab.mockReset()
+    mocks.hasBilibiliTab.mockResolvedValue(true)
     mocks.setGlobalData.mockReset()
     mocks.setGlobalData.mockImplementation((data: { cookie?: string }) => {
       mocks.cookie = data.cookie
@@ -54,15 +58,34 @@ describe('useCookieFromChrome', () => {
     expect(mocks.setGlobalData).toHaveBeenCalledWith({
       cookie: 'DedeUserID=123; bili_jct=csrf-token',
     })
+    expect(mocks.hasBilibiliTab).toHaveBeenCalledTimes(1)
   })
 
-  it('非 Popup 页面直接使用 Zustand 中已同步的 Cookie', () => {
+  it('Cookie 有效但没有任何 B 站 Tab 时仍然显示未登录状态', async () => {
+    mocks.queryAndSendMessage.mockResolvedValue('DedeUserID=123; bili_jct=csrf-token')
+    mocks.hasBilibiliTab.mockResolvedValue(false)
+
+    const { result } = renderHook(() => useCookieFromChrome(true))
+
+    await waitFor(() => {
+      expect(result.current.isChecking).toBe(false)
+    })
+
+    expect(result.current.hasBilibiliTab).toBe(false)
+    expect(result.current.isLogin).toBe(false)
+  })
+
+  it('非 Popup 页面直接使用 Zustand 中已同步的 Cookie', async () => {
     mocks.cookie = 'DedeUserID=123; bili_jct=csrf-token'
 
     const { result } = renderHook(() => useCookieFromChrome(false))
 
-    expect(result.current.isChecking).toBe(false)
-    expect(result.current.isLogin).toBe(true)
+    await waitFor(() => {
+      expect(result.current.isChecking).toBe(false)
+      expect(result.current.isLogin).toBe(true)
+    })
+
     expect(mocks.queryAndSendMessage).not.toHaveBeenCalled()
+    expect(mocks.hasBilibiliTab).toHaveBeenCalledTimes(1)
   })
 })

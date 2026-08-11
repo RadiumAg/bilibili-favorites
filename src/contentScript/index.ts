@@ -72,6 +72,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const typedMessage = message as Message
 
   switch (typedMessage.type) {
+    case MessageEnum.pingContentScript:
+      sendResponse(true)
+      break
+
     case MessageEnum.getCookie:
       {
         sendResponse(document.cookie)

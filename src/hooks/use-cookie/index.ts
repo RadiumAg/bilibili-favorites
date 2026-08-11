@@ -2,7 +2,7 @@ import React from 'react'
 import { MessageEnum } from '@/utils/message'
 import { getCookieValue } from '@/utils/cookie'
 import { useGlobalConfig } from '@/store/global-data'
-import { queryAndSendMessage } from '@/utils/tab'
+import { hasBilibiliTab, queryAndSendMessage } from '@/utils/tab'
 import { useMemoizedFn } from 'ahooks'
 
 const useCookie = (popup: boolean) => {
@@ -40,10 +40,12 @@ const useCookie = (popup: boolean) => {
 const useCookieFromChrome = (enabled: boolean) => {
   const setGlobalData = useGlobalConfig((state) => state.setGlobalData)
   const cookie = useGlobalConfig((state) => state.cookie)
-  const [isChecking, setIsChecking] = React.useState(enabled)
+  const [isCheckingCookie, setIsCheckingCookie] = React.useState(enabled)
+  const [isCheckingTab, setIsCheckingTab] = React.useState(true)
+  const [hasTab, setHasTab] = React.useState(false)
 
   const syncCookieFromChrome = useMemoizedFn(async () => {
-    setIsChecking(true)
+    setIsCheckingCookie(true)
 
     try {
       const cookieValue = await queryAndSendMessage<string>({
@@ -54,13 +56,24 @@ const useCookieFromChrome = (enabled: boolean) => {
       console.error('Failed to read Bilibili cookies from Chrome:', error)
       setGlobalData({ cookie: undefined })
     } finally {
-      setIsChecking(false)
+      setIsCheckingCookie(false)
+    }
+  })
+
+  const checkBilibiliTab = useMemoizedFn(async () => {
+    try {
+      setHasTab(await hasBilibiliTab())
+    } catch (error) {
+      console.error('Failed to check Bilibili tabs:', error)
+      setHasTab(false)
+    } finally {
+      setIsCheckingTab(false)
     }
   })
 
   React.useEffect(() => {
     if (!enabled) {
-      setIsChecking(false)
+      setIsCheckingCookie(false)
       return
     }
 
@@ -69,9 +82,17 @@ const useCookieFromChrome = (enabled: boolean) => {
     })
   }, [enabled, syncCookieFromChrome])
 
-  const isLogin = Boolean(cookie && getCookieValue('DedeUserID', cookie))
+  React.useEffect(() => {
+    checkBilibiliTab().catch((error) => {
+      console.error('Failed to refresh Bilibili tab state:', error)
+    })
+  }, [checkBilibiliTab])
 
-  return { isLogin, isChecking, refreshCookie: syncCookieFromChrome }
+  const hasLoginCookie = Boolean(cookie && getCookieValue('DedeUserID', cookie))
+  const isLogin = hasTab && hasLoginCookie
+  const isChecking = isCheckingCookie || isCheckingTab
+
+  return { isLogin, isChecking, hasBilibiliTab: hasTab, refreshCookie: syncCookieFromChrome }
 }
 
 export { useCookie, useCookieFromChrome }

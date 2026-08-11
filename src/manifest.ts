@@ -41,7 +41,7 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['storage', 'tabs', 'sidePanel', 'cookies'],
+  permissions: ['storage', 'tabs', 'sidePanel', 'cookies', 'scripting'],
   optional_host_permissions: ['https://*/*', 'http://*/*'],
   host_permissions: [
     'https://*.bilibili.com/*',
