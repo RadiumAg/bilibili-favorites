@@ -1,3 +1,5 @@
+import { MessageEnum } from './message'
+
 // 用于 manifest.ts 中的 content_scripts.matches
 export const bilibiliUrlPatterns = [
   'https://*.bilibili.com/*',
@@ -56,6 +58,24 @@ export const sendMessageToTab = <T = any>(
   })
 }
 
+const sendMessageToRuntime = <T = any>(message: any, timeout: number = 10000): Promise<T> => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('Message timeout: The background did not respond in time.'))
+    }, timeout)
+
+    chrome.runtime.sendMessage(message, (response: T) => {
+      clearTimeout(timer)
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message))
+        return
+      }
+
+      resolve(response)
+    })
+  })
+}
+
 /**
  * 查询 B 站标签页并向第一个标签页发送消息
  * @param message 要发送的消息
@@ -63,6 +83,10 @@ export const sendMessageToTab = <T = any>(
  * @returns Promise<T> 返回的消息响应
  */
 export const queryAndSendMessage = <T = any>(message: any, timeout: number = 10000): Promise<T> => {
+  if (message?.type === MessageEnum.getCookieFromChrome) {
+    return sendMessageToRuntime<T>(message, timeout)
+  }
+
   return new Promise((resolve, reject) => {
     chrome.tabs.query({ url: tabUrlPattern }, (tabs) => {
       if (tabs == null || tabs.length === 0) {

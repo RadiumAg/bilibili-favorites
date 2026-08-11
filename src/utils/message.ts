@@ -1,5 +1,6 @@
 enum MessageEnum {
   getCookie = 'getCookie',
+  getCookieFromChrome = 'getCookieFromChrome',
   moveVideo = 'moveVideo',
   deleteFavoriteVideos = 'deleteFavoriteVideos',
   restoreFavoriteVideo = 'restoreFavoriteVideo',

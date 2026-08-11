@@ -10,6 +10,7 @@ import { callAIGateAI, checkAIGateQuota } from './ai-gate'
 import { setupPetMessageHandlers } from './pet'
 import { uploadSync } from '@/utils/sync-service'
 import type { WebDAVRequestOptions } from '@/utils/webdav'
+import { readBilibiliCookieFromChrome } from '@/utils/cookie'
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
 setupPetMessageHandlers()
@@ -32,6 +33,16 @@ function debouncedSync() {
 
 // ========== 消息监听（短连接） ==========
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === MessageEnum.getCookieFromChrome) {
+    readBilibiliCookieFromChrome()
+      .then(sendResponse)
+      .catch((error) => {
+        console.error('[Background] Failed to read Bilibili cookies:', error)
+        sendResponse('')
+      })
+    return true
+  }
+
   // WebDAV 请求代理
   if (message?.type === 'webdavRequest') {
     const options = message.data as WebDAVRequestOptions

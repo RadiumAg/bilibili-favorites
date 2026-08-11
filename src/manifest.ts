@@ -41,9 +41,11 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['storage', 'tabs', 'sidePanel'],
+  permissions: ['storage', 'tabs', 'sidePanel', 'cookies'],
   optional_host_permissions: ['https://*/*', 'http://*/*'],
   host_permissions: [
+    'https://*.bilibili.com/*',
+    'https://bilibili.com/*',
     'https://api.openai.com/*',
     'https://*.openai.com/*',
     'https://spark-api.xf-yun.com/*',

@@ -9,4 +9,23 @@ const getCookieValue = (name: string, cookies: string) => {
   return null
 }
 
-export { getCookieValue }
+const BILIBILI_COOKIE_URL = 'https://www.bilibili.com/'
+const BILIBILI_AUTH_COOKIE_NAMES = ['DedeUserID', 'bili_jct'] as const
+
+const readBilibiliCookieFromChrome = async (): Promise<string> => {
+  const cookies = await Promise.all(
+    BILIBILI_AUTH_COOKIE_NAMES.map((name) =>
+      chrome.cookies.get({
+        url: BILIBILI_COOKIE_URL,
+        name,
+      }),
+    ),
+  )
+
+  return cookies
+    .filter((cookie): cookie is chrome.cookies.Cookie => cookie !== null)
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join('; ')
+}
+
+export { getCookieValue, readBilibiliCookieFromChrome }

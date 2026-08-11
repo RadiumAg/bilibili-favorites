@@ -1,6 +1,6 @@
 import React from 'react'
 import noDataImg from '@/assets/no-data.png'
-import { useCookie } from '@/hooks/use-cookie'
+import { useCookieFromChrome } from '@/hooks/use-cookie'
 
 type LoginCheckProps = {
   popup?: boolean
@@ -8,9 +8,11 @@ type LoginCheckProps = {
 
 const LoginCheck: React.FC<LoginCheckProps> = (props) => {
   const { popup = true } = props
-  const { isLogin } = useCookie(popup)
+  const { isLogin, isChecking } = useCookieFromChrome(popup)
 
-  return !isLogin ? (
+  if (isChecking || isLogin) return null
+
+  return (
     <div className="left-0 top-0 fixed w-full h-full bg-white flex items-center justify-center">
       <div className="flex max-w-xs flex-col items-center px-6 text-center">
         <img src={noDataImg} className="h-auto max-w-sm" alt="未登录提示" />
@@ -23,7 +25,7 @@ const LoginCheck: React.FC<LoginCheckProps> = (props) => {
         </ol>
       </div>
     </div>
-  ) : null
+  )
 }
 
 export default LoginCheck
