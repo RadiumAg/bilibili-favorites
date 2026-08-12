@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>标签增强 AI 智能整理 — UI 原型（现状 vs 改后 · 真实主题）</title>
+<style>
+  :root {
+    --pri: #BF00FF; --pri-hover: #A000D9; --sec: #FF1493; --sec-deep: #D6006F;
+    --txt: #2D1B4E; --warn: #FFAA00;
+    --g50:#faf5ff; --g100:#f3e8ff; --g200:#e9d5ff; --g300:#d8b4fe; --g400:#a78bfa; --g500:#8b5cf6; --g600:#7c3aed; --g700:#6d28d9;
+    --gray-100:#f3f4f6; --gray-200:#e5e7eb; --gray-400:#9ca3af; --gray-500:#6b7280; --gray-600:#4b5563; --gray-700:#374151; --gray-900:#111827;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,"PingFang SC","Helvetica Neue",Arial,sans-serif; }
+  body { background:#efe9f4; padding:32px; }
+  h1 { font-size:22px; color:var(--txt); margin-bottom:6px; }
+  .page-sub { font-size:13px; color:var(--gray-600); margin-bottom:12px; max-width:900px; line-height:1.7; }
+  .legend { display:flex; gap:18px; align-items:center; font-size:12px; color:var(--gray-600); margin-bottom:28px; }
+  .legend .chg-sample { display:inline-block; width:14px; height:14px; border:2px dashed var(--warn); border-radius:3px; vertical-align:-2px; margin-right:5px; }
+  section { margin-bottom:52px; }
+  .sec-title { font-size:16px; font-weight:700; color:var(--txt); margin-bottom:14px; }
+  .pair { display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; }
+  .screen-wrap { display:flex; flex-direction:column; gap:10px; }
+  .screen-title { font-size:13px; font-weight:600; color:var(--gray-700); display:flex; align-items:center; gap:8px; }
+  .tag-cur { background:var(--gray-100); color:var(--gray-600); border-radius:999px; padding:2px 10px; font-size:11px; font-weight:500; }
+  .tag-new { background:rgba(191,0,255,0.1); color:var(--pri); border-radius:999px; padding:2px 10px; font-size:11px; font-weight:500; }
+  .screen-note { font-size:12px; color:var(--gray-600); max-width:430px; line-height:1.7; }
+  .screen-note b { color:var(--gray-900); }
+  .frame { width:400px; background:rgba(191,0,255,0.12); border-radius:12px; padding:12px; box-shadow:0 4px 16px rgba(45,27,78,0.12); position:relative; }
+  .chg { position:relative; outline:2px dashed var(--warn); outline-offset:2px; border-radius:8px; }
+  .chg::after { content:attr(data-chg); position:absolute; top:-9px; right:6px; background:var(--warn); color:#fff; font-size:10px; padding:1px 6px; border-radius:999px; z-index:2; }
+  .row { display:flex; align-items:center; } .between { justify-content:space-between; }
+  .h3 { font-size:18px; font-weight:700; color:var(--txt); }
+  .icon-btn { width:30px; height:30px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; color:var(--txt); cursor:pointer; }
+  .icon-btn:hover { background:rgba(191,0,255,0.2); }
+  .btn { border:none; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:500; transition:all .2s; }
+  .btn-primary { background:var(--pri); color:#fff; } .btn-primary:hover { background:var(--pri-hover); }
+  .btn-outline { background:#fff; border:1px solid rgba(191,0,255,0.3); color:var(--txt); } .btn-outline:hover { background:rgba(191,0,255,0.1); border-color:rgba(191,0,255,0.5); }
+  .chip { display:inline-flex; align-items:center; gap:4px; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:500; }
+  .chip-pri { background:rgba(191,0,255,0.10); color:var(--pri); }
+  .chip-sec { background:rgba(255,20,147,0.10); color:var(--sec-deep); }
+  .chip-gray { background:var(--gray-100); color:var(--gray-600); }
+  .chip-green { background:#dcfce7; color:#15803d; }
+  /* ── 现状还原 ── */
+  .fav-chips { display:flex; gap:6px; flex-wrap:wrap; padding:2px; max-height:190px; overflow-y:auto; }
+  .fav-chip { white-space:nowrap; border-radius:8px; padding:4px 9px; font-size:13px; display:flex; align-items:center; gap:4px; border:1px solid; cursor:pointer; transition:all .2s; position:relative; }
+  .fav-chip.active { background:var(--pri); color:#fff; border-color:var(--pri); box-shadow:0 1px 3px rgba(191,0,255,0.3); }
+  .fav-chip.idle { color:var(--txt); background:#fff; border-color:rgba(191,0,255,0.3); }
+  .fav-chip.idle:hover { background:rgba(191,0,255,0.1); border-color:rgba(191,0,255,0.5); }
+  .star-mini { color:var(--warn); font-size:11px; }
+  .star-hover { display:none; position:absolute; right:3px; color:var(--g300); font-size:13px; background:rgba(255,255,255,0.92); border-radius:4px; padding:0 3px; cursor:pointer; }
+  .fav-chip:hover .star-hover { display:inline; } .star-hover:hover { color:var(--sec); }
+  .badge-default { border-radius:4px; padding:0 4px; font-size:10px; margin-left:2px; }
+  .badge-on-active { background:rgba(255,255,255,0.25); color:#fff; }
+  .badge-on-idle { background:rgba(255,20,147,0.12); color:var(--sec-deep); }
+  .keyword-box { border:2px solid rgba(191,0,255,0.3); border-radius:8px; height:150px; padding:5px; display:flex; flex-wrap:wrap; align-content:flex-start; gap:5px; overflow:hidden; }
+  .kw-chip { background:var(--pri); color:#fff; border-radius:6px; padding:2px 7px; font-size:12px; display:flex; align-items:center; gap:3px; }
+  .kw-chip .x { opacity:.8; font-size:10px; }
+  .kw-input { flex:1; min-width:50px; border:none; outline:none; font-size:12px; color:var(--txt); padding:3px; background:transparent; }
+  .kw-input::placeholder { color:rgba(191,0,255,0.4); }
+  .act-btn { background:var(--pri); color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px; }
+  .act-btn:hover { background:var(--pri-hover); }
+  .q-dot { width:14px; height:14px; border-radius:50%; background:var(--warn); color:#fff; font-size:10px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; }
+  .main-cta { width:100%; border:none; border-radius:10px; padding:12px 16px; cursor:pointer; background:linear-gradient(to right,var(--pri),var(--sec)); color:#fff; text-align:left; display:flex; align-items:center; gap:12px; transition:all .2s; box-shadow:0 4px 12px rgba(191,0,255,0.3); }
+  .main-cta:hover { background:linear-gradient(to right,var(--pri-hover),var(--sec-deep)); }
+  .main-cta .t1 { font-size:14px; font-weight:600; } .main-cta .t2 { font-size:11px; opacity:.8; margin-top:2px; }
+  .sub-actions { display:flex; gap:8px; margin-top:8px; } .sub-actions .btn { flex:1; height:36px; }
+  /* ── 弹窗 ── */
+  .overlay { position:absolute; inset:0; background:rgba(45,27,78,0.55); border-radius:12px; display:flex; align-items:center; justify-content:center; padding:14px; }
+  .modal { background:#fff; border-radius:12px; border:1px solid rgba(191,0,255,0.2); box-shadow:0 20px 40px rgba(45,27,78,0.3); width:100%; overflow:hidden; display:flex; flex-direction:column; }
+  .modal.p-5 { padding:20px; align-items:center; }
+  .modal-h { text-align:center; font-size:15px; font-weight:600; color:var(--gray-900); }
+  .gif-box { width:80px; height:80px; margin-bottom:12px; border-radius:16px; background:linear-gradient(135deg,rgba(191,0,255,0.2),rgba(255,20,147,0.2)); display:flex; align-items:center; justify-content:center; font-size:30px; }
+  .prog-bar { height:8px; background:var(--gray-100); border-radius:999px; overflow:hidden; }
+  .prog-bar .fill { height:100%; background:var(--pri); border-radius:999px; }
+  .stream-list { margin-top:12px; max-height:140px; overflow-y:auto; border:1px solid var(--gray-100); border-radius:8px; padding:4px; width:100%; }
+  .stream-item { display:flex; align-items:center; gap:8px; border-radius:6px; padding:5px 8px; font-size:12px; }
+  .stream-item:hover { background:var(--g50); }
+  .stream-item .vt { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--gray-700); }
+  .stream-item .tg { max-width:100px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--gray-400); }
+  .btn-block { display:block; width:100%; min-height:44px; margin-top:16px; }
+  .status-row { font-size:12px; color:var(--gray-500); text-align:center; margin-top:8px; }
+  .modal-header { padding:14px 16px; border-bottom:1px solid rgba(191,0,255,0.15); background:linear-gradient(to right,rgba(191,0,255,0.10),rgba(255,20,147,0.10)); }
+  .modal-header .desc { font-size:11px; color:var(--gray-600); margin-top:6px; line-height:1.6; }
+  .modal-header .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; align-items:center; }
+  .link-btn { font-size:11px; color:var(--pri); cursor:pointer; margin-left:auto; } .link-btn:hover { text-decoration:underline; }
+  .modal-body { flex:1; overflow-y:auto; padding:10px; max-height:330px; }
+  .group-head { position:sticky; top:0; background:rgba(250,245,255,0.95); backdrop-filter:blur(4px); font-size:12px; font-weight:500; color:var(--gray-600); padding:6px 8px; border-radius:6px; margin:4px 0 8px; display:flex; align-items:center; gap:6px; z-index:1; }
+  .result-card { background:#fff; border:1px solid var(--gray-200); border-radius:8px; padding:10px 12px; margin-bottom:8px; transition:border-color .2s; }
+  .result-card:hover { border-color:rgba(191,0,255,0.35); }
+  .result-card.tag-hit { border-left:3px solid var(--pri); }
+  .result-card .title { font-size:13px; font-weight:500; color:var(--gray-900); line-height:1.5; }
+  .evidence { display:flex; align-items:center; gap:5px; margin-top:6px; font-size:12px; color:var(--gray-500); flex-wrap:wrap; }
+  .tag-chip-sm { border-radius:999px; padding:2px 8px; font-size:11px; background:rgba(191,0,255,0.10); color:var(--pri); }
+  .move-row { display:flex; align-items:center; gap:6px; margin-top:10px; }
+  .from-box { flex:1; background:var(--g50); border-radius:6px; padding:6px 10px; min-width:0; }
+  .from-box .lb { font-size:10px; color:var(--gray-400); }
+  .from-box .vl { font-size:11px; color:var(--gray-600); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .arrow { color:var(--gray-400); font-size:12px; }
+  .select { flex:1; border:1px solid rgba(191,0,255,0.25); background:rgba(191,0,255,0.05); border-radius:6px; padding:8px 10px; font-size:11px; color:var(--gray-700); min-width:0; }
+  .fallback-alert { margin-top:8px; display:flex; gap:6px; background:rgba(255,20,147,0.10); border-radius:6px; padding:8px 10px; font-size:11px; color:var(--sec-deep); line-height:1.5; }
+  .modal-footer { border-top:1px solid var(--gray-200); background:var(--g50); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .modal-footer .tip { font-size:11px; color:var(--gray-500); }
+  .btn-mini { padding:6px 14px; font-size:12px; }
+  .finished-anim { height:80px; display:flex; align-items:center; justify-content:center; font-size:44px; }
+  .suggest-card { margin-top:12px; border:1px solid rgba(191,0,255,0.25); background:rgba(191,0,255,0.05); border-radius:8px; padding:12px; width:100%; }
+  .suggest-card .head { display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:500; color:var(--gray-700); }
+  .suggest-card .head .close { color:var(--gray-400); cursor:pointer; font-size:14px; }
+  .suggest-section { margin-top:10px; }
+  .suggest-section .fav { font-size:12px; font-weight:500; color:var(--gray-700); }
+  .suggest-section .fav span { color:var(--gray-400); font-weight:400; }
+  .candidate-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .c-chip { display:inline-flex; align-items:center; gap:4px; border-radius:999px; padding:4px 10px; font-size:12px; cursor:pointer; transition:all .2s; border:1px solid; }
+  .c-chip.on { background:rgba(191,0,255,0.15); color:var(--pri); border-color:rgba(191,0,255,0.30); }
+  .c-chip.off { background:#fff; color:var(--gray-400); border-color:var(--gray-200); }
+  .suggest-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+  .dialog { background:#fff; border-radius:12px; padding:20px; width:100%; max-width:320px; box-shadow:0 20px 40px rgba(0,0,0,0.25); }
+  .dialog h4 { font-size:14px; font-weight:600; color:var(--gray-900); margin-bottom:8px; }
+  .dialog p { font-size:12px; color:var(--gray-600); line-height:1.7; }
+  .dialog .btns { display:flex; gap:8px; margin-top:16px; justify-content:flex-end; }
+  .scroll-thin::-webkit-scrollbar { width:6px; } .scroll-thin::-webkit-scrollbar-thumb { background:rgba(191,0,255,0.25); border-radius:3px; }
+</style>
+</head>
+<body>
+<h1>标签增强 AI 智能整理 — UI 原型（现状 vs 改后）</h1>
+<p class="page-sub">基于真实主题 token：<b style="color:#BF00FF;">b-primary #BF00FF</b>（标签命中/主操作）、<b style="color:#FF1493;">b-secondary #FF1493</b>（AI 建议）、文本 #2D1B4E。左侧为截图 1:1 还原，右侧为改后；橙色虚线 = 改动点，未标注 = 保持现状。</p>
+<div class="legend"><span><span class="chg-sample"></span>橙色虚线 = 本次改动点</span><span>另：ai-move 弹窗内硬编码的 #00AEEC/#FB7299 统一替换为主题 token（紫/粉语义不变）</span></div>
+
+<!-- ════════ ① Popup 主界面 ════════ -->
+<section>
+  <div class="sec-title">① Popup 主界面（入口整合 + 默认收藏夹显性化）</div>
+  <div class="pair">
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-cur">现状</span>四个平级入口，无主次</div>
+      <div class="frame">
+        <div class="row between" style="margin-bottom:8px;">
+          <span class="h3">收藏夹</span>
+          <div class="row" style="gap:2px;"><span class="icon-btn">⟳</span><span class="icon-btn">?</span><span class="icon-btn">⚙</span><span class="icon-btn">⌥</span></div>
+        </div>
+        <div class="fav-chips scroll-thin">
+          <div class="fav-chip idle"># 默认收藏夹 <span class="star-mini">★</span></div>
+          <div class="fav-chip active"># 纪录片</div>
+          <div class="fav-chip idle"># Redis</div>
+          <div class="fav-chip idle"># ai技术</div>
+          <div class="fav-chip idle"># 电影</div>
+          <div class="fav-chip idle"># 游戏</div>
+          <div class="fav-chip idle"># 学车</div>
+          <div class="fav-chip idle"># 英语</div>
+          <div class="fav-chip idle"># 音乐</div>
+        </div>
+        <div class="h3" style="margin:10px 0 8px;">标签</div>
+        <div class="keyword-box">
+          <span class="kw-chip">纪录片 <span class="x">×</span></span><span class="kw-chip">日本 <span class="x">×</span></span><span class="kw-chip">怪兽拍房 <span class="x">×</span></span><span class="kw-chip">幕后纪实 <span class="x">×</span></span><span class="kw-chip">美国 <span class="x">×</span></span><span class="kw-chip">夺冠 <span class="x">×</span></span><span class="kw-chip">影视飓风 <span class="x">×</span></span><span class="kw-chip">团建 <span class="x">×</span></span><span class="kw-chip">大侦探 <span class="x">×</span></span><span class="kw-chip">4k <span class="x">×</span></span><span class="kw-chip">一亿玉碎 <span class="x">×</span></span><span class="kw-chip">唐朝 <span class="x">×</span></span>
+          <input class="kw-input" placeholder="标签/回车输入/退格删除" readonly>
+        </div>
+        <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button class="act-btn">🤖 AI 整理 <span class="q-dot">?</span></button>
+          <button class="act-btn">通过标签整理 <span class="q-dot">?</span></button>
+          <button class="act-btn">自动创建标签</button>
+          <button class="act-btn">拖拽管理 <span class="q-dot">?</span></button>
+        </div>
+      </div>
+      <div class="screen-note">现状问题：四个平级紫色按钮无主次，用户不知道先点哪个；默认收藏夹只有一个小 ★，含义不明；「AI 整理」需先点一次弹 Token toast 再点一次。</div>
+    </div>
+
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-new">改后</span>主按钮「智能整理」+ 规则整理收纳</div>
+      <div class="frame">
+        <div class="row between" style="margin-bottom:8px;">
+          <span class="h3">收藏夹</span>
+          <div class="row" style="gap:2px;"><span class="icon-btn">⟳</span><span class="icon-btn">?</span><span class="icon-btn">⚙</span><span class="icon-btn">⌥</span></div>
+        </div>
+        <div class="fav-chips scroll-thin chg" data-chg="改动点：默认徽标 + hover 星标">
+          <div class="fav-chip idle" style="padding-right:52px;"># 默认收藏夹 <span class="star-mini">★</span><span class="badge-default badge-on-idle">默认</span><span class="star-hover">☆</span></div>
+          <div class="fav-chip active"># 纪录片 <span class="badge-default badge-on-active">默认</span></div>
+          <div class="fav-chip idle"># Redis <span class="star-hover">☆</span></div>
+          <div class="fav-chip idle"># ai技术 <span class="star-hover">☆</span></div>
+          <div class="fav-chip idle"># 电影 <span class="star-hover">☆</span></div>
+          <div class="fav-chip idle"># 游戏 <span class="star-hover">☆</span></div>
+          <div class="fav-chip idle"># 学车 <span class="star-hover">☆</span></div>
+          <div class="fav-chip idle"># 英语 <span class="star-hover">☆</span></div>
+          <div class="fav-chip idle"># 音乐 <span class="star-hover">☆</span></div>
+        </div>
+        <div class="h3" style="margin:10px 0 8px;">标签</div>
+        <div class="keyword-box">
+          <span class="kw-chip">纪录片 <span class="x">×</span></span><span class="kw-chip">日本 <span class="x">×</span></span><span class="kw-chip">怪兽拍房 <span class="x">×</span></span><span class="kw-chip">幕后纪实 <span class="x">×</span></span><span class="kw-chip">美国 <span class="x">×</span></span><span class="kw-chip">夺冠 <span class="x">×</span></span><span class="kw-chip">影视飓风 <span class="x">×</span></span><span class="kw-chip">团建 <span class="x">×</span></span><span class="kw-chip">大侦探 <span class="x">×</span></span><span class="kw-chip">4k <span class="x">×</span></span><span class="kw-chip">一亿玉碎 <span class="x">×</span></span><span class="kw-chip">唐朝 <span class="x">×</span></span>
+          <input class="kw-input" placeholder="标签/回车输入/退格删除" readonly>
+        </div>
+        <div style="margin-top:10px;" class="chg" data-chg="改动点：操作区重排">
+          <button class="main-cta">
+            <span style="font-size:20px;">✨</span>
+            <span><div class="t1">智能整理</div><div class="t2">自动把默认收藏夹的视频归类到合适的收藏夹</div></span>
+          </button>
+          <div class="sub-actions">
+            <button class="btn btn-outline">🏷 规则整理 ▾</button>
+            <button class="btn btn-outline">🖱 拖拽管理</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-note">
+        <b>改动 1</b>：默认收藏夹 chip 增加「默认」徽标（激活态白/25、非激活态粉底深粉字），hover 浮现 ☆ 设置星标（b-secondary 粉），长按逻辑保留，引导时脉冲 3 次。<br>
+        <b>改动 2</b>：操作区 → 整行宽「紫→粉」渐变主按钮（渐变取自现有 scrollbar 渐变 token），原「通过标签整理」「自动创建标签」收进「规则整理 ▾」Popover（每项带一行说明），「拖拽管理」保留为次级 outline。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ② 分析中弹窗 ════════ -->
+<section>
+  <div class="sec-title">② 分析中弹窗（stage: analyzing）</div>
+  <div class="pair">
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-cur">现状</span>gif + 进度条 + 流式列表</div>
+      <div class="frame">
+        <div class="overlay">
+          <div class="modal p-5">
+            <div class="gif-box">🌀</div>
+            <div class="modal-h">AI 正在分析整理方案</div>
+            <div style="margin-top:12px;width:100%;">
+              <div class="row between" style="font-size:12px;color:var(--gray-500);margin-bottom:6px;"><span>已分析 14 个</span><span>28 个视频</span></div>
+              <div class="prog-bar"><div class="fill" style="width:50%;"></div></div>
+              <div style="font-size:12px;color:var(--gray-500);text-align:center;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">纪录片：怪兽拍房 幕后纪实</div>
+            </div>
+            <div class="stream-list scroll-thin">
+              <div class="stream-item"><span style="color:var(--sec);">✨</span><span class="vt">【4K】城市夜景延时摄影合集</span><span class="tg">→ 摄影灵感</span></div>
+              <div class="stream-item"><span style="color:var(--sec);">✨</span><span class="vt">Redis 持久化原理详解</span><span class="tg">→ Redis</span></div>
+            </div>
+            <button class="btn btn-outline btn-block">取消分析</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-new">改后</span>两段式状态行 + 来源图标</div>
+      <div class="frame">
+        <div class="overlay">
+          <div class="modal p-5">
+            <div class="gif-box">🌀</div>
+            <div class="modal-h">AI 正在分析整理方案</div>
+            <div class="chg" data-chg="改动点：两段式状态行" style="margin-top:10px;width:100%;">
+              <div class="status-row">🏷 标签已匹配 12 个 · ✨ AI 分析中 14/16 个</div>
+            </div>
+            <div style="margin-top:10px;width:100%;">
+              <div class="row between" style="font-size:12px;color:var(--gray-500);margin-bottom:6px;"><span>已分析 14 个</span><span>16 个待分析视频</span></div>
+              <div class="prog-bar"><div class="fill" style="width:88%;"></div></div>
+            </div>
+            <div class="stream-list scroll-thin">
+              <div class="stream-item"><span style="color:var(--pri);">🏷</span><span class="vt">Redis 持久化原理详解</span><span class="tg">→ Redis</span></div>
+              <div class="stream-item"><span style="color:var(--sec);">✨</span><span class="vt">【4K】城市夜景延时摄影合集</span><span class="tg">→ 摄影灵感</span></div>
+            </div>
+            <button class="btn btn-outline btn-block">取消分析</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-note"><b>改动</b>：进度条上方新增状态行（aria-live）；全部标签命中时显示「全部由标签匹配完成，未消耗 AI 配额」并跳过 AI；流式列表图标按来源区分 🏷(紫)/✨(粉)。其余结构不动。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ③ Review 面板 ════════ -->
+<section>
+  <div class="sec-title">③ Review 面板（stage: reviewing）</div>
+  <div class="pair">
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-cur">现状</span>平铺结果列表</div>
+      <div class="frame">
+        <div class="overlay">
+          <div class="modal">
+            <div class="modal-header">
+              <div class="row" style="gap:10px;align-items:flex-start;">
+                <span style="width:36px;height:36px;border-radius:10px;background:rgba(191,0,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">✨</span>
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--gray-900);">确认 AI 整理结果</div>
+                  <div class="desc">视频尚未移动。请检查 AI 推荐，也可以逐条修改目标收藏夹。</div>
+                </div>
+              </div>
+              <div class="chips"><span class="chip chip-pri">将移动 20 个</span><span class="chip chip-gray">保留 2 个</span></div>
+            </div>
+            <div class="modal-body scroll-thin">
+              <div class="result-card">
+                <div class="title">Redis 持久化原理详解：RDB 与 AOF</div>
+                <div class="evidence"><span style="color:var(--sec);">✨</span><span>标题与收藏夹「Redis」的标签高度相关</span></div>
+                <div class="move-row"><div class="from-box"><div class="lb">当前收藏夹</div><div class="vl">默认收藏夹</div></div><span class="arrow">→</span><div class="select">Redis ▾</div></div>
+              </div>
+              <div class="result-card">
+                <div class="title">纪录片：怪兽拍房 幕后纪实</div>
+                <div class="evidence"><span style="color:var(--sec);">✨</span><span>纪录片类内容，适合归入「纪录片」</span></div>
+                <div class="move-row"><div class="from-box"><div class="lb">当前收藏夹</div><div class="vl">默认收藏夹</div></div><span class="arrow">→</span><div class="select">纪录片 ▾</div></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <span class="tip">确认后将移动 20 个视频。</span>
+              <div class="row" style="gap:8px;"><button class="btn btn-outline btn-mini">取消</button><button class="btn btn-primary btn-mini">确认移动 20 个视频</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-new">改后</span>置信度分组 + 标签徽标</div>
+      <div class="frame">
+        <div class="overlay">
+          <div class="modal">
+            <div class="modal-header">
+              <div class="row" style="gap:10px;align-items:flex-start;">
+                <span style="width:36px;height:36px;border-radius:10px;background:rgba(191,0,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">✨</span>
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--gray-900);">确认整理结果</div>
+                  <div class="desc chg" data-chg="改文案">已按置信度分组：标签命中可直接确认，AI 建议请核对。</div>
+                </div>
+              </div>
+              <div class="chips chg" data-chg="改动点：按来源细分 + 全选链接">
+                <span class="chip chip-pri">🏷 标签命中 12</span>
+                <span class="chip chip-sec">✨ AI 建议 8</span>
+                <span class="chip chip-gray">保留 2</span>
+                <span class="link-btn">全选标签命中</span>
+              </div>
+            </div>
+            <div class="modal-body scroll-thin chg" data-chg="改动点：分组 + 标签徽标">
+              <div class="group-head" style="color:var(--pri);">🏷 标签命中 · 12 个（建议直接确认）</div>
+              <div class="result-card tag-hit">
+                <div class="title">Redis 持久化原理详解：RDB 与 AOF</div>
+                <div class="evidence"><span class="tag-chip-sm">命中标签</span><span class="tag-chip-sm">Redis</span></div>
+                <div class="move-row"><div class="from-box"><div class="lb">当前收藏夹</div><div class="vl">默认收藏夹</div></div><span class="arrow">→</span><div class="select">Redis ▾</div></div>
+              </div>
+              <div class="result-card tag-hit">
+                <div class="title">纪录片：怪兽拍房 幕后纪实</div>
+                <div class="evidence"><span class="tag-chip-sm">命中标签</span><span class="tag-chip-sm">纪录片</span><span class="tag-chip-sm">幕后纪实</span></div>
+                <div class="move-row"><div class="from-box"><div class="lb">当前收藏夹</div><div class="vl">默认收藏夹</div></div><span class="arrow">→</span><div class="select">纪录片 ▾</div></div>
+              </div>
+              <div class="group-head" style="color:var(--sec-deep);margin-top:12px;">✨ AI 建议 · 8 个（请核对）</div>
+              <div class="result-card">
+                <div class="title">【4K】城市夜景延时摄影合集，治愈系白噪音</div>
+                <div class="evidence"><span style="color:var(--sec);">✨</span><span>内容为摄影与放松向，建议归入「摄影灵感」</span></div>
+                <div class="move-row"><div class="from-box"><div class="lb">当前收藏夹</div><div class="vl">默认收藏夹</div></div><span class="arrow">→</span><div class="select">摄影灵感 ▾</div></div>
+              </div>
+              <div class="result-card">
+                <div class="title">年度盘点：那些值得关注的新番</div>
+                <div class="fallback-alert">⚠ AI 推荐的收藏夹不存在，已暂时保留在原收藏夹。</div>
+                <div class="move-row"><div class="from-box"><div class="lb">当前收藏夹</div><div class="vl">默认收藏夹</div></div><span class="arrow">→</span><div class="select" style="border-color:rgba(255,20,147,0.4);">保留在 默认收藏夹 ▾</div></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <span class="tip">确认后将移动 20 个视频。</span>
+              <div class="row" style="gap:8px;"><button class="btn btn-outline btn-mini">取消</button><button class="btn btn-primary btn-mini">确认移动 20 个视频</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-note"><b>卡片骨架、Select、footer 与现状完全一致</b>，只动三处：header chips 按来源细分（紫=标签/粉=AI）+「全选标签命中」；吸顶分组头（两组都有数据才出现，纯 AI 场景零变化）；标签命中卡片紫色左边框 + 标签徽标替换 reason 行。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ④ 完成页 ════════ -->
+<section>
+  <div class="sec-title">④ 完成页（stage: finished）— 标签建议卡片</div>
+  <div class="pair">
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-cur">现状</span>动画 + 统计 + 列表</div>
+      <div class="frame">
+        <div class="overlay">
+          <div class="modal p-5">
+            <div class="finished-anim">🎉</div>
+            <div class="modal-h">AI 整理完成！</div>
+            <div class="row" style="gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
+              <span class="chip chip-green">成功 18</span><span class="chip chip-gray">保留 2</span>
+            </div>
+            <div class="stream-list scroll-thin">
+              <div class="stream-item"><span style="color:#16a34a;">✔</span><span class="vt">Redis 持久化原理详解</span><span class="tg">→ Redis</span></div>
+              <div class="stream-item"><span style="color:#16a34a;">✔</span><span class="vt">纪录片：怪兽拍房 幕后纪实</span><span class="tg">→ 纪录片</span></div>
+              <div class="stream-item"><span style="color:var(--gray-400);">−</span><span class="vt">年度盘点：值得关注的新番</span><span class="tg">保留</span></div>
+            </div>
+            <button class="btn btn-outline btn-block">关闭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-new">改后</span>插入标签建议卡片（反馈闭环）</div>
+      <div class="frame">
+        <div class="overlay">
+          <div class="modal p-5" style="max-height:620px;overflow-y:auto;">
+            <div class="finished-anim" style="height:60px;font-size:36px;">🎉</div>
+            <div class="modal-h">智能整理完成！</div>
+            <div class="row chg" data-chg="改动点：来源统计" style="gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
+              <span class="chip chip-green">成功 18</span><span class="chip chip-gray">保留 2</span>
+              <span class="chip chip-pri">标签命中 12</span><span class="chip chip-sec">AI 建议 6</span>
+            </div>
+            <div class="suggest-card chg" data-chg="改动点：标签建议卡片（新增）">
+              <div class="head"><span>🏷 为这些收藏夹沉淀标签（下次可直接命中）</span><span class="close">✕</span></div>
+              <div class="suggest-section">
+                <div class="fav">「纪录片」<span>本次移入 5 个视频：</span></div>
+                <div class="candidate-chips"><span class="c-chip on">✓ 纪录片</span><span class="c-chip on">✓ 幕后纪实</span><span class="c-chip off">影视飓风</span></div>
+              </div>
+              <div class="suggest-section" style="border-top:1px solid rgba(191,0,255,0.10);padding-top:10px;">
+                <div class="fav">「Redis」<span>本次移入 4 个视频：</span></div>
+                <div class="candidate-chips"><span class="c-chip on">✓ Redis</span><span class="c-chip off">持久化</span></div>
+              </div>
+              <div class="suggest-actions">
+                <button class="btn btn-outline btn-mini">跳过</button>
+                <button class="btn btn-primary btn-mini">采纳 3 个</button>
+              </div>
+            </div>
+            <div class="stream-list scroll-thin">
+              <div class="stream-item"><span style="color:#16a34a;">✔</span><span class="vt">Redis 持久化原理详解</span><span class="tg">→ Redis</span></div>
+              <div class="stream-item"><span style="color:#16a34a;">✔</span><span class="vt">纪录片：怪兽拍房 幕后纪实</span><span class="tg">→ 纪录片</span></div>
+            </div>
+            <button class="btn btn-outline btn-block">关闭</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-note"><b>改动</b>：现有结构不动，中间插入建议卡片：候选词 chip 点击切换（默认全选），采纳后该节原地变成功提示 1.5s 收起；目标收藏夹新移入 ≥3 个视频才出现；最多 2 节后「展开更多」；可整体 ✕ 关闭。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ⑤ 前置检查 Dialog ════════ -->
+<section>
+  <div class="sec-title">⑤ 前置检查引导 Dialog（点击「智能整理」时，新增）</div>
+  <div class="pair">
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-cur">现状</span>仅 Token 提醒 toast，前置条件静默失败</div>
+      <div class="frame">
+        <div style="background:#2D1B4E;color:#fff;border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.6;box-shadow:0 8px 20px rgba(45,27,78,0.3);margin-top:20px;">
+          <b>Token 消耗提醒</b><br>此操作会将所有视频标题发送给 AI 进行分析，可能消耗大量 Token。再次点击确认执行。
+        </div>
+        <div class="screen-note" style="margin-top:12px;">未登录 / 未设默认收藏夹 / 配额不足时无引导，直接报错或空结果。</div>
+      </div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen-title"><span class="tag-new">改后</span>三态引导 Dialog（复用现有 Dialog）</div>
+      <div class="frame">
+        <div class="overlay">
+          <div class="dialog chg" data-chg="新增">
+            <h4>先设置默认收藏夹</h4>
+            <p>智能整理会处理<b>默认收藏夹</b>中的视频。<br>在收藏夹标签上点击 ☆ 即可设置。</p>
+            <div class="btns">
+              <button class="btn btn-outline btn-mini">取消</button>
+              <button class="btn btn-primary btn-mini">去设置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-note">三态：① 未设默认收藏夹（本图）→「去设置」滚动到收藏夹区并触发星标脉冲；② 无任何标签 → 非阻断提示，主按钮直接「开始整理」；③ 免费配额不足 → 主按钮「配置自己的 AI」跳转设置页。通过后沿用现有二次点击确认。</div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

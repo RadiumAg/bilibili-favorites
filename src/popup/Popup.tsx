@@ -97,9 +97,9 @@ const Popup: React.FC<PopupProps> = (props) => {
       </div>
 
       <div className="flex items-center mt-2 gap-2 w-full flex-wrap" data-tour="actions">
-        <AIMove />
         <ButtonGroup>
-          <Move />
+          {/* <Move /> */}
+          <AIMove />
           <AutoCreateKeyword />
         </ButtonGroup>
         <DragManagerButton />

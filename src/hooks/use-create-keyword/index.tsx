@@ -4,7 +4,7 @@ import { AIError } from '@/utils/error'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { quickExtractKeywords } from '@/utils/keyword-extractor'
-import { fetchChatGpt, fetchAllFavoriteMedias, callAIGateAI } from '@/utils/api'
+import { fetchChatGpt, fetchAllFavoriteMedias } from '@/utils/api'
 import {
   createAIStreamParser,
   createStreamAdapter,
