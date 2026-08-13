@@ -1,0 +1,2279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Hybrid Organize Ui</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Hybrid Organize Ui" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Hybrid Organize Ui&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: var(--border-radius-lg, 12.5px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed=&quot;true&quot;],
+    [aria-selected=&quot;true&quot;],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: 16px !important;
+  height: 16px !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;bf-ui-draft&quot;&gt;
+  &lt;style&gt;
+    #bf-ui-draft {
+      --bf-primary: #bf00ff;
+      --bf-primary-deep: #a000d9;
+      --bf-secondary: #ff1493;
+      --bf-secondary-deep: #d6006f;
+      --bf-text: #2d1b4e;
+      --bf-text-soft: #6f647d;
+      --bf-border: #e9d9f0;
+      --bf-surface: #ffffff;
+      --bf-canvas: #f9f4fc;
+      --bf-muted: #f6f3f8;
+      --bf-success: #2f9e68;
+      --bf-danger: #d94772;
+      width: 100%;
+      color: light-dark(#241b2d, #f8f3fb);
+      font-family: Inter, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;
+    }
+
+    #bf-ui-draft * {
+      box-sizing: border-box;
+    }
+
+    #bf-ui-draft button,
+    #bf-ui-draft select {
+      font: inherit;
+    }
+
+    #bf-ui-draft .bf-stage-picker {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    #bf-ui-draft .bf-stage-picker button,
+    #bf-ui-draft .bf-dialog-picker button {
+      min-height: 36px;
+      border: 1px solid light-dark(#d7cedd, #4b4350);
+      border-radius: 9px;
+      background: light-dark(#ffffff, #252127);
+      color: light-dark(#4a4052, #efe8f1);
+      padding: 7px 13px;
+      cursor: pointer;
+      transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    #bf-ui-draft .bf-stage-picker button[aria-pressed=&quot;true&quot;],
+    #bf-ui-draft .bf-dialog-picker button[aria-pressed=&quot;true&quot;] {
+      border-color: var(--bf-primary);
+      background: color-mix(in srgb, var(--bf-primary) 11%, white);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-stage {
+      display: none;
+      justify-content: center;
+    }
+
+    #bf-ui-draft .bf-stage.is-active {
+      display: flex;
+    }
+
+    #bf-ui-draft .bf-window {
+      position: relative;
+      width: min(100%, 384px);
+      overflow: hidden;
+      border: 1px solid #eadff0;
+      border-radius: 16px;
+      background: var(--bf-surface);
+      box-shadow: 0 18px 50px rgba(59, 27, 78, 0.15);
+      color: var(--bf-text);
+    }
+
+    #bf-ui-draft .bf-popup-body {
+      padding: 14px;
+      background: linear-gradient(145deg, #faf3ff 0%, #fff6fb 48%, #f5ffff 100%);
+    }
+
+    #bf-ui-draft .bf-app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    #bf-ui-draft .bf-app-title {
+      margin: 0;
+      color: var(--bf-text);
+      font-size: 17px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-icon-row {
+      display: flex;
+      gap: 2px;
+    }
+
+    #bf-ui-draft .bf-icon-button {
+      display: inline-flex;
+      width: 34px;
+      height: 34px;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #756581;
+      cursor: pointer;
+    }
+
+    #bf-ui-draft .bf-icon-button:hover {
+      background: rgba(191, 0, 255, 0.08);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-favorite-panel,
+    #bf-ui-draft .bf-keyword-panel {
+      border: 1px solid rgba(191, 0, 255, 0.13);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 11px;
+    }
+
+    #bf-ui-draft .bf-section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #685872;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-favorites {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    #bf-ui-draft .bf-favorite-chip {
+      position: relative;
+      display: inline-flex;
+      min-height: 34px;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #e8dbea;
+      border-radius: 9px;
+      background: #ffffff;
+      color: #5e5267;
+      padding: 6px 8px;
+      cursor: pointer;
+      transition: border-color 180ms ease, background 180ms ease;
+    }
+
+    #bf-ui-draft .bf-favorite-chip:hover {
+      border-color: rgba(191, 0, 255, 0.45);
+      background: rgba(191, 0, 255, 0.04);
+    }
+
+    #bf-ui-draft .bf-favorite-chip.is-default {
+      border-color: rgba(255, 20, 147, 0.35);
+      background: rgba(255, 20, 147, 0.07);
+    }
+
+    #bf-ui-draft .bf-default-badge {
+      border-radius: 4px;
+      background: rgba(255, 20, 147, 0.12);
+      color: var(--bf-secondary-deep);
+      padding: 1px 4px;
+      font-size: 10px;
+    }
+
+    #bf-ui-draft .bf-favorite-star {
+      display: inline-flex;
+      width: 22px;
+      height: 22px;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #cabfd0;
+      cursor: pointer;
+      transition: color 180ms ease, background 180ms ease;
+    }
+
+    #bf-ui-draft .bf-favorite-star:hover,
+    #bf-ui-draft .bf-favorite-chip.is-default .bf-favorite-star {
+      background: rgba(255, 20, 147, 0.08);
+      color: var(--bf-secondary);
+    }
+
+    #bf-ui-draft .bf-keyword-panel {
+      margin-top: 11px;
+    }
+
+    #bf-ui-draft .bf-keyword-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid #f0e8f3;
+      padding: 8px 2px;
+      color: #55465f;
+      font-size: 12px;
+    }
+
+    #bf-ui-draft .bf-keyword-row:first-of-type {
+      border-top: 0;
+    }
+
+    #bf-ui-draft .bf-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    #bf-ui-draft .bf-tag {
+      border-radius: 999px;
+      background: rgba(191, 0, 255, 0.08);
+      color: var(--bf-primary-deep);
+      padding: 3px 7px;
+      font-size: 10px;
+    }
+
+    #bf-ui-draft .bf-actions {
+      position: relative;
+      margin-top: 12px;
+    }
+
+    #bf-ui-draft .bf-smart-button {
+      display: flex;
+      width: 100%;
+      min-height: 50px;
+      align-items: center;
+      gap: 10px;
+      border: 0;
+      border-radius: 11px;
+      background: linear-gradient(100deg, var(--bf-primary), var(--bf-secondary));
+      color: #ffffff;
+      padding: 9px 14px;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(191, 0, 255, 0.2);
+      transition: filter 180ms ease, box-shadow 180ms ease;
+    }
+
+    #bf-ui-draft .bf-smart-button:hover {
+      filter: brightness(0.94);
+      box-shadow: 0 10px 24px rgba(191, 0, 255, 0.25);
+    }
+
+    #bf-ui-draft .bf-smart-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #bf-ui-draft .bf-smart-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-smart-description {
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-secondary-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    #bf-ui-draft .bf-secondary-button,
+    #bf-ui-draft .bf-ghost-button,
+    #bf-ui-draft .bf-primary-button {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 9px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    #bf-ui-draft .bf-secondary-button,
+    #bf-ui-draft .bf-ghost-button {
+      border: 1px solid #dfd2e5;
+      background: #ffffff;
+      color: #5b4a67;
+    }
+
+    #bf-ui-draft .bf-secondary-button:hover,
+    #bf-ui-draft .bf-ghost-button:hover {
+      border-color: rgba(191, 0, 255, 0.42);
+      background: rgba(191, 0, 255, 0.05);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-primary-button {
+      border: 1px solid transparent;
+      background: var(--bf-primary);
+      color: #ffffff;
+    }
+
+    #bf-ui-draft .bf-primary-button:hover {
+      background: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-rules-popover {
+      position: absolute;
+      z-index: 8;
+      bottom: 49px;
+      left: 0;
+      width: 245px;
+      border: 1px solid #e5d7ea;
+      border-radius: 11px;
+      background: #ffffff;
+      padding: 6px;
+      box-shadow: 0 14px 34px rgba(45, 27, 78, 0.18);
+    }
+
+    #bf-ui-draft .bf-rules-popover[hidden] {
+      display: none;
+    }
+
+    #bf-ui-draft .bf-rule-item {
+      display: flex;
+      width: 100%;
+      align-items: flex-start;
+      gap: 9px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      padding: 9px;
+      color: var(--bf-text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    #bf-ui-draft .bf-rule-item:hover {
+      background: rgba(191, 0, 255, 0.06);
+    }
+
+    #bf-ui-draft .bf-rule-item small {
+      display: block;
+      margin-top: 2px;
+      color: #7d7086;
+      font-size: 10px;
+    }
+
+    #bf-ui-draft .bf-modal-window {
+      width: min(100%, 620px);
+    }
+
+    #bf-ui-draft .bf-modal-header {
+      border-bottom: 1px solid rgba(191, 0, 255, 0.13);
+      background: linear-gradient(105deg, rgba(191, 0, 255, 0.09), rgba(255, 20, 147, 0.08));
+      padding: 16px;
+    }
+
+    #bf-ui-draft .bf-modal-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    #bf-ui-draft .bf-title-icon {
+      display: inline-flex;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(191, 0, 255, 0.12);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-modal-header h2,
+    #bf-ui-draft .bf-complete h2 {
+      margin: 0;
+      color: var(--bf-text);
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-modal-header p {
+      margin: 4px 0 0;
+      color: #6d5d77;
+      font-size: 12px;
+    }
+
+    #bf-ui-draft .bf-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    #bf-ui-draft .bf-metric {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-metric.tag-source {
+      background: rgba(191, 0, 255, 0.1);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-metric.ai-source {
+      background: rgba(255, 20, 147, 0.1);
+      color: var(--bf-secondary-deep);
+    }
+
+    #bf-ui-draft .bf-metric.neutral {
+      background: #efebf1;
+      color: #64596b;
+    }
+
+    #bf-ui-draft .bf-text-action {
+      margin-left: auto;
+      border: 0;
+      background: transparent;
+      color: var(--bf-primary-deep);
+      padding: 5px 2px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-review-content {
+      padding: 10px 12px 12px;
+      background: #fcfafc;
+    }
+
+    #bf-ui-draft .bf-group + .bf-group {
+      margin-top: 12px;
+    }
+
+    #bf-ui-draft .bf-group-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 3px;
+      color: #64566c;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-group-header.tag-group i {
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-group-header.ai-group i {
+      color: var(--bf-secondary-deep);
+    }
+
+    #bf-ui-draft .bf-result-card {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 8px;
+      border: 1px solid #e9e1ec;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    #bf-ui-draft .bf-result-card + .bf-result-card {
+      margin-top: 7px;
+    }
+
+    #bf-ui-draft .bf-result-card.tag-result {
+      border-left: 3px solid var(--bf-primary);
+    }
+
+    #bf-ui-draft .bf-result-card.ai-result {
+      border-left: 3px solid var(--bf-secondary);
+    }
+
+    #bf-ui-draft .bf-result-check {
+      width: 16px;
+      height: 16px;
+      margin: 2px 0 0;
+      accent-color: var(--bf-primary);
+    }
+
+    #bf-ui-draft .bf-result-title {
+      margin: 0;
+      color: #30263a;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-reason-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      margin-top: 6px;
+      color: #73667b;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-hit-label,
+    #bf-ui-draft .bf-hit-tag,
+    #bf-ui-draft .bf-manual-label {
+      border-radius: 999px;
+      padding: 3px 7px;
+    }
+
+    #bf-ui-draft .bf-hit-label,
+    #bf-ui-draft .bf-hit-tag {
+      background: rgba(191, 0, 255, 0.09);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-manual-label {
+      background: #f0edf1;
+      color: #756c7b;
+    }
+
+    #bf-ui-draft .bf-destination {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    #bf-ui-draft .bf-source-folder {
+      overflow: hidden;
+      border-radius: 7px;
+      background: #f4f1f5;
+      padding: 7px 8px;
+      color: #655b6b;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-target-select {
+      width: 100%;
+      min-width: 0;
+      height: 34px;
+      border: 1px solid rgba(191, 0, 255, 0.25);
+      border-radius: 7px;
+      background: rgba(191, 0, 255, 0.04);
+      color: #4e4058;
+      padding: 0 7px;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-top: 7px;
+      border-radius: 7px;
+      background: rgba(255, 20, 147, 0.09);
+      color: var(--bf-secondary-deep);
+      padding: 7px 8px;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid #ebe3ee;
+      background: #f8f5f9;
+      padding: 11px 13px;
+    }
+
+    #bf-ui-draft .bf-modal-footer p {
+      margin: 0;
+      color: #75697c;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-footer-buttons {
+      display: flex;
+      gap: 7px;
+    }
+
+    #bf-ui-draft .bf-complete {
+      padding: 16px;
+      background: #ffffff;
+    }
+
+    #bf-ui-draft .bf-complete-heading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+
+    #bf-ui-draft .bf-success-icon {
+      display: inline-flex;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(47, 158, 104, 0.11);
+      color: var(--bf-success);
+    }
+
+    #bf-ui-draft .bf-complete .bf-metrics {
+      justify-content: center;
+      margin: 0 0 12px;
+    }
+
+    #bf-ui-draft .bf-suggestion-card {
+      border: 1px solid rgba(191, 0, 255, 0.24);
+      border-radius: 11px;
+      background: rgba(191, 0, 255, 0.045);
+      padding: 11px;
+    }
+
+    #bf-ui-draft .bf-suggestion-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #493653;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-suggestion-title .bf-icon-button {
+      width: 28px;
+      height: 28px;
+      margin-left: auto;
+    }
+
+    #bf-ui-draft .bf-folder-suggestion {
+      margin-top: 9px;
+      border-top: 1px solid rgba(191, 0, 255, 0.1);
+      padding-top: 9px;
+    }
+
+    #bf-ui-draft .bf-folder-suggestion:first-of-type {
+      border-top: 0;
+      padding-top: 3px;
+    }
+
+    #bf-ui-draft .bf-folder-copy {
+      color: #5a4b63;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-candidates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+    }
+
+    #bf-ui-draft .bf-candidate {
+      display: inline-flex;
+      min-height: 30px;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid #e1d8e5;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #807484;
+      padding: 4px 9px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-candidate[aria-pressed=&quot;true&quot;] {
+      border-color: rgba(191, 0, 255, 0.3);
+      background: rgba(191, 0, 255, 0.11);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-candidate .bf-check-mini {
+      display: none;
+    }
+
+    #bf-ui-draft .bf-candidate[aria-pressed=&quot;true&quot;] .bf-check-mini {
+      display: inline-flex;
+    }
+
+    #bf-ui-draft .bf-suggestion-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    #bf-ui-draft .bf-small-button {
+      min-height: 30px;
+      border-radius: 7px;
+      padding: 5px 9px;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-result-summary {
+      margin-top: 11px;
+      border: 1px solid #ebe4ed;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #bf-ui-draft .bf-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-top: 1px solid #eee8f0;
+      padding: 8px 10px;
+      color: #5b4f62;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-summary-row:first-child {
+      border-top: 0;
+    }
+
+    #bf-ui-draft .bf-summary-row i {
+      color: var(--bf-success);
+    }
+
+    #bf-ui-draft .bf-summary-target {
+      margin-left: auto;
+      color: #84788a;
+    }
+
+    #bf-ui-draft .bf-close-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    #bf-ui-draft .bf-dialog-picker {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+
+    #bf-ui-draft .bf-dialog-scene {
+      position: relative;
+      min-height: 510px;
+    }
+
+    #bf-ui-draft .bf-dialog-background {
+      filter: blur(1px);
+      opacity: 0.52;
+      pointer-events: none;
+    }
+
+    #bf-ui-draft .bf-dialog-scrim {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(31, 20, 37, 0.48);
+      padding: 18px;
+    }
+
+    #bf-ui-draft .bf-dialog {
+      width: 100%;
+      border: 1px solid #eadfee;
+      border-radius: 13px;
+      background: #ffffff;
+      padding: 16px;
+      box-shadow: 0 18px 45px rgba(45, 27, 78, 0.24);
+    }
+
+    #bf-ui-draft .bf-dialog h2 {
+      margin: 0;
+      color: var(--bf-text);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-dialog p {
+      margin: 8px 0 0;
+      color: #6e6275;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    #bf-ui-draft .bf-dialog strong {
+      color: var(--bf-text);
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 7px;
+      margin-top: 15px;
+    }
+
+    #bf-ui-draft .bf-dialog-copy {
+      display: none;
+    }
+
+    #bf-ui-draft .bf-dialog-copy.is-active {
+      display: block;
+    }
+
+    @media (max-width: 520px) {
+      #bf-ui-draft .bf-modal-window {
+        width: min(100%, 384px);
+      }
+
+      #bf-ui-draft .bf-destination {
+        grid-template-columns: 1fr;
+      }
+
+      #bf-ui-draft .bf-destination &gt; i {
+        display: none;
+      }
+
+      #bf-ui-draft .bf-modal-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      #bf-ui-draft .bf-footer-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+      }
+
+      #bf-ui-draft .bf-text-action {
+        width: 100%;
+        margin-left: 0;
+        text-align: left;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #bf-ui-draft *,
+      #bf-ui-draft *::before,
+      #bf-ui-draft *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  &lt;/style&gt;
+
+  &lt;div class=&quot;bf-stage-picker&quot; aria-label=&quot;选择设计稿状态&quot;&gt;
+    &lt;button type=&quot;button&quot; data-stage-button=&quot;home&quot; aria-pressed=&quot;true&quot;&gt;主入口&lt;/button&gt;
+    &lt;button type=&quot;button&quot; data-stage-button=&quot;review&quot; aria-pressed=&quot;false&quot;&gt;结果审核&lt;/button&gt;
+    &lt;button type=&quot;button&quot; data-stage-button=&quot;complete&quot; aria-pressed=&quot;false&quot;&gt;完成与标签建议&lt;/button&gt;
+    &lt;button type=&quot;button&quot; data-stage-button=&quot;dialog&quot; aria-pressed=&quot;false&quot;&gt;前置提示&lt;/button&gt;
+  &lt;/div&gt;
+
+  &lt;section class=&quot;bf-stage is-active&quot; data-stage=&quot;home&quot; aria-label=&quot;智能整理主入口设计稿&quot;&gt;
+    &lt;div class=&quot;bf-window&quot;&gt;
+      &lt;div class=&quot;bf-popup-body&quot;&gt;
+        &lt;header class=&quot;bf-app-header&quot;&gt;
+          &lt;h1 class=&quot;bf-app-title&quot;&gt;收藏夹&lt;/h1&gt;
+          &lt;div class=&quot;bf-icon-row&quot; aria-label=&quot;页面工具&quot;&gt;
+            &lt;button type=&quot;button&quot; class=&quot;bf-icon-button&quot; aria-label=&quot;刷新&quot;&gt;&lt;i data-lucide=&quot;refresh-cw&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;bf-icon-button&quot; aria-label=&quot;使用帮助&quot;&gt;&lt;i data-lucide=&quot;circle-help&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;bf-icon-button&quot; aria-label=&quot;设置&quot;&gt;&lt;i data-lucide=&quot;settings&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/header&gt;
+
+        &lt;section class=&quot;bf-favorite-panel&quot; aria-labelledby=&quot;bf-favorites-label&quot;&gt;
+          &lt;div class=&quot;bf-section-label&quot; id=&quot;bf-favorites-label&quot;&gt;
+            &lt;span&gt;选择收藏夹&lt;/span&gt;
+            &lt;span&gt;点击星标设为默认&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;bf-favorites&quot;&gt;
+            &lt;div class=&quot;bf-favorite-chip is-default&quot; data-favorite-chip&gt;
+              &lt;span&gt;# 稍后再看&lt;/span&gt;&lt;span class=&quot;bf-default-badge&quot;&gt;默认&lt;/span&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-favorite-star&quot; aria-label=&quot;取消默认收藏夹&quot;&gt;&lt;i data-lucide=&quot;star&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;bf-favorite-chip&quot; data-favorite-chip&gt;
+              &lt;span&gt;# 前端开发&lt;/span&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-favorite-star&quot; aria-label=&quot;设为默认收藏夹&quot;&gt;&lt;i data-lucide=&quot;star&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;bf-favorite-chip&quot; data-favorite-chip&gt;
+              &lt;span&gt;# 设计灵感&lt;/span&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-favorite-star&quot; aria-label=&quot;设为默认收藏夹&quot;&gt;&lt;i data-lucide=&quot;star&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;bf-favorite-chip&quot; data-favorite-chip&gt;
+              &lt;span&gt;# 健身计划&lt;/span&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-favorite-star&quot; aria-label=&quot;设为默认收藏夹&quot;&gt;&lt;i data-lucide=&quot;star&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;section class=&quot;bf-keyword-panel&quot; aria-labelledby=&quot;bf-keywords-label&quot;&gt;
+          &lt;div class=&quot;bf-section-label&quot; id=&quot;bf-keywords-label&quot;&gt;&lt;span&gt;标签&lt;/span&gt;&lt;span&gt;已配置 9 个&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;bf-keyword-row&quot;&gt;&lt;span&gt;前端开发&lt;/span&gt;&lt;span class=&quot;bf-tags&quot;&gt;&lt;span class=&quot;bf-tag&quot;&gt;React&lt;/span&gt;&lt;span class=&quot;bf-tag&quot;&gt;TypeScript&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;bf-keyword-row&quot;&gt;&lt;span&gt;设计灵感&lt;/span&gt;&lt;span class=&quot;bf-tags&quot;&gt;&lt;span class=&quot;bf-tag&quot;&gt;UI&lt;/span&gt;&lt;span class=&quot;bf-tag&quot;&gt;配色&lt;/span&gt;&lt;span class=&quot;bf-tag&quot;&gt;Figma&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;bf-keyword-row&quot;&gt;&lt;span&gt;健身计划&lt;/span&gt;&lt;span class=&quot;bf-tags&quot;&gt;&lt;span class=&quot;bf-tag&quot;&gt;训练&lt;/span&gt;&lt;span class=&quot;bf-tag&quot;&gt;增肌&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;div class=&quot;bf-actions&quot;&gt;
+          &lt;button type=&quot;button&quot; class=&quot;bf-smart-button&quot;&gt;
+            &lt;i data-lucide=&quot;sparkles&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+            &lt;span class=&quot;bf-smart-copy&quot;&gt;&lt;span class=&quot;bf-smart-title&quot;&gt;智能整理&lt;/span&gt;&lt;span class=&quot;bf-smart-description&quot;&gt;自动把默认收藏夹的视频归类到合适的收藏夹&lt;/span&gt;&lt;/span&gt;
+          &lt;/button&gt;
+          &lt;div class=&quot;bf-secondary-actions&quot;&gt;
+            &lt;button type=&quot;button&quot; class=&quot;bf-secondary-button&quot; id=&quot;bf-rules-button&quot; aria-expanded=&quot;false&quot;&gt;
+              &lt;i data-lucide=&quot;tags&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;规则整理&lt;/span&gt;&lt;i data-lucide=&quot;chevron-down&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+            &lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;bf-secondary-button&quot;&gt;&lt;i data-lucide=&quot;mouse-pointer-2&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;拖拽管理&lt;/span&gt;&lt;/button&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;bf-rules-popover&quot; id=&quot;bf-rules-popover&quot; hidden&gt;
+            &lt;button type=&quot;button&quot; class=&quot;bf-rule-item&quot;&gt;&lt;i data-lucide=&quot;tags&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;通过标签整理&lt;small&gt;仅按已配置规则快速匹配&lt;/small&gt;&lt;/span&gt;&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;bf-rule-item&quot;&gt;&lt;i data-lucide=&quot;wand-sparkles&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;自动创建标签&lt;small&gt;从收藏内容中生成关键词&lt;/small&gt;&lt;/span&gt;&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class=&quot;bf-stage&quot; data-stage=&quot;review&quot; aria-label=&quot;智能整理结果审核设计稿&quot;&gt;
+    &lt;div class=&quot;bf-window bf-modal-window&quot;&gt;
+      &lt;header class=&quot;bf-modal-header&quot;&gt;
+        &lt;div class=&quot;bf-modal-title-row&quot;&gt;
+          &lt;span class=&quot;bf-title-icon&quot;&gt;&lt;i data-lucide=&quot;list-checks&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+          &lt;div&gt;&lt;h2&gt;确认智能整理结果&lt;/h2&gt;&lt;p&gt;已按置信度分组：标签命中可直接确认，AI 建议请核对。&lt;/p&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;bf-metrics&quot; aria-live=&quot;polite&quot;&gt;
+          &lt;span class=&quot;bf-metric tag-source&quot;&gt;&lt;i data-lucide=&quot;tag&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;标签命中 &lt;strong id=&quot;bf-tag-count&quot;&gt;2&lt;/strong&gt;&lt;/span&gt;
+          &lt;span class=&quot;bf-metric ai-source&quot;&gt;&lt;i data-lucide=&quot;sparkles&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;AI 建议 2&lt;/span&gt;
+          &lt;span class=&quot;bf-metric neutral&quot;&gt;保留 1&lt;/span&gt;
+          &lt;button type=&quot;button&quot; class=&quot;bf-text-action&quot; id=&quot;bf-select-tags&quot;&gt;全选标签命中项&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/header&gt;
+
+      &lt;div class=&quot;bf-review-content&quot;&gt;
+        &lt;section class=&quot;bf-group&quot; aria-labelledby=&quot;bf-tag-group&quot;&gt;
+          &lt;div class=&quot;bf-group-header tag-group&quot; id=&quot;bf-tag-group&quot;&gt;&lt;i data-lucide=&quot;tag&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;标签命中 · 2 个（建议直接确认）&lt;/span&gt;&lt;/div&gt;
+          &lt;article class=&quot;bf-result-card tag-result&quot;&gt;
+            &lt;input class=&quot;bf-result-check&quot; data-tag-check type=&quot;checkbox&quot; checked aria-label=&quot;选择 React 19 全新特性解析&quot; /&gt;
+            &lt;div&gt;
+              &lt;p class=&quot;bf-result-title&quot;&gt;React 19 全新特性解析：Actions 与 Server Components&lt;/p&gt;
+              &lt;div class=&quot;bf-reason-line&quot;&gt;&lt;span class=&quot;bf-hit-label&quot;&gt;命中标签&lt;/span&gt;&lt;span class=&quot;bf-hit-tag&quot;&gt;React&lt;/span&gt;&lt;span class=&quot;bf-hit-tag&quot;&gt;前端教程&lt;/span&gt;&lt;/div&gt;
+              &lt;div class=&quot;bf-destination&quot;&gt;&lt;span class=&quot;bf-source-folder&quot;&gt;稍后再看&lt;/span&gt;&lt;i data-lucide=&quot;arrow-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;select class=&quot;bf-target-select&quot; aria-label=&quot;选择目标收藏夹&quot;&gt;&lt;option selected&gt;前端开发&lt;/option&gt;&lt;option&gt;设计灵感&lt;/option&gt;&lt;option&gt;健身计划&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;bf-result-card tag-result&quot;&gt;
+            &lt;input class=&quot;bf-result-check&quot; data-tag-check type=&quot;checkbox&quot; checked aria-label=&quot;选择 Figma 变量设计系统教程&quot; /&gt;
+            &lt;div&gt;
+              &lt;p class=&quot;bf-result-title&quot;&gt;Figma 变量设计系统教程：从颜色到组件&lt;/p&gt;
+              &lt;div class=&quot;bf-reason-line&quot;&gt;&lt;span class=&quot;bf-hit-label&quot;&gt;命中标签&lt;/span&gt;&lt;span class=&quot;bf-hit-tag&quot;&gt;Figma&lt;/span&gt;&lt;span class=&quot;bf-hit-tag&quot;&gt;UI&lt;/span&gt;&lt;span class=&quot;bf-hit-tag&quot;&gt;+1&lt;/span&gt;&lt;/div&gt;
+              &lt;div class=&quot;bf-destination&quot;&gt;&lt;span class=&quot;bf-source-folder&quot;&gt;稍后再看&lt;/span&gt;&lt;i data-lucide=&quot;arrow-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;select class=&quot;bf-target-select&quot; aria-label=&quot;选择目标收藏夹&quot;&gt;&lt;option&gt;前端开发&lt;/option&gt;&lt;option selected&gt;设计灵感&lt;/option&gt;&lt;option&gt;健身计划&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/article&gt;
+        &lt;/section&gt;
+
+        &lt;section class=&quot;bf-group&quot; aria-labelledby=&quot;bf-ai-group&quot;&gt;
+          &lt;div class=&quot;bf-group-header ai-group&quot; id=&quot;bf-ai-group&quot;&gt;&lt;i data-lucide=&quot;sparkles&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;AI 建议 · 2 个（请核对）&lt;/span&gt;&lt;/div&gt;
+          &lt;article class=&quot;bf-result-card ai-result&quot;&gt;
+            &lt;input class=&quot;bf-result-check&quot; type=&quot;checkbox&quot; checked aria-label=&quot;选择 一周五练训练计划&quot; /&gt;
+            &lt;div&gt;
+              &lt;p class=&quot;bf-result-title&quot;&gt;一周五练怎么安排？增肌训练计划完整拆解&lt;/p&gt;
+              &lt;div class=&quot;bf-reason-line&quot;&gt;&lt;i data-lucide=&quot;sparkles&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;标题包含训练频率与增肌计划，适合归入健身内容。&lt;/span&gt;&lt;/div&gt;
+              &lt;div class=&quot;bf-destination&quot;&gt;&lt;span class=&quot;bf-source-folder&quot;&gt;稍后再看&lt;/span&gt;&lt;i data-lucide=&quot;arrow-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;select class=&quot;bf-target-select&quot; data-manual-select aria-label=&quot;选择目标收藏夹&quot;&gt;&lt;option&gt;前端开发&lt;/option&gt;&lt;option&gt;设计灵感&lt;/option&gt;&lt;option selected&gt;健身计划&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;bf-result-card ai-result&quot;&gt;
+            &lt;input class=&quot;bf-result-check&quot; type=&quot;checkbox&quot; checked aria-label=&quot;选择 这期视频标题无法确定目标&quot; /&gt;
+            &lt;div&gt;
+              &lt;p class=&quot;bf-result-title&quot;&gt;这期内容我真的想了很久，终于做出来了&lt;/p&gt;
+              &lt;div class=&quot;bf-warning&quot;&gt;&lt;i data-lucide=&quot;circle-alert&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;AI 未能识别目标收藏夹，请手动选择。&lt;/span&gt;&lt;/div&gt;
+              &lt;div class=&quot;bf-destination&quot;&gt;&lt;span class=&quot;bf-source-folder&quot;&gt;稍后再看&lt;/span&gt;&lt;i data-lucide=&quot;arrow-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;select class=&quot;bf-target-select&quot; aria-label=&quot;选择目标收藏夹&quot;&gt;&lt;option selected&gt;保留在稍后再看&lt;/option&gt;&lt;option&gt;前端开发&lt;/option&gt;&lt;option&gt;设计灵感&lt;/option&gt;&lt;option&gt;健身计划&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/article&gt;
+        &lt;/section&gt;
+      &lt;/div&gt;
+
+      &lt;footer class=&quot;bf-modal-footer&quot;&gt;
+        &lt;p&gt;预计移动 3 个视频，保留 1 个。&lt;/p&gt;
+        &lt;div class=&quot;bf-footer-buttons&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;bf-ghost-button&quot;&gt;取消&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;bf-primary-button&quot;&gt;确认移动 3 个视频&lt;/button&gt;&lt;/div&gt;
+      &lt;/footer&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class=&quot;bf-stage&quot; data-stage=&quot;complete&quot; aria-label=&quot;整理完成与标签建议设计稿&quot;&gt;
+    &lt;div class=&quot;bf-window bf-modal-window&quot;&gt;
+      &lt;div class=&quot;bf-complete&quot;&gt;
+        &lt;div class=&quot;bf-complete-heading&quot;&gt;&lt;span class=&quot;bf-success-icon&quot;&gt;&lt;i data-lucide=&quot;circle-check-big&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;h2&gt;智能整理完成&lt;/h2&gt;&lt;/div&gt;
+        &lt;div class=&quot;bf-metrics&quot; aria-label=&quot;整理结果统计&quot;&gt;&lt;span class=&quot;bf-metric tag-source&quot;&gt;标签命中 12&lt;/span&gt;&lt;span class=&quot;bf-metric ai-source&quot;&gt;AI 归类 8&lt;/span&gt;&lt;span class=&quot;bf-metric neutral&quot;&gt;保留 3&lt;/span&gt;&lt;/div&gt;
+
+        &lt;section class=&quot;bf-suggestion-card&quot; id=&quot;bf-suggestion-card&quot; aria-labelledby=&quot;bf-suggestion-title&quot;&gt;
+          &lt;div class=&quot;bf-suggestion-title&quot; id=&quot;bf-suggestion-title&quot;&gt;&lt;i data-lucide=&quot;tags&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;为这些收藏夹沉淀标签（下次可直接命中）&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;bf-icon-button&quot; id=&quot;bf-close-suggestion&quot; aria-label=&quot;关闭标签建议&quot;&gt;&lt;i data-lucide=&quot;x&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;/div&gt;
+          &lt;div class=&quot;bf-folder-suggestion&quot;&gt;
+            &lt;div class=&quot;bf-folder-copy&quot;&gt;「前端开发」本次移入 5 个视频&lt;/div&gt;
+            &lt;div class=&quot;bf-candidates&quot; data-candidate-group&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-candidate&quot; aria-pressed=&quot;true&quot;&gt;&lt;span class=&quot;bf-check-mini&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;React&lt;/button&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-candidate&quot; aria-pressed=&quot;true&quot;&gt;&lt;span class=&quot;bf-check-mini&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;Hooks&lt;/button&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-candidate&quot; aria-pressed=&quot;false&quot;&gt;&lt;span class=&quot;bf-check-mini&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;前端教程&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;bf-suggestion-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;bf-ghost-button bf-small-button&quot;&gt;跳过&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;bf-primary-button bf-small-button&quot; data-adopt-button&gt;采纳 2 个&lt;/button&gt;&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;bf-folder-suggestion&quot;&gt;
+            &lt;div class=&quot;bf-folder-copy&quot;&gt;「设计灵感」本次移入 4 个视频&lt;/div&gt;
+            &lt;div class=&quot;bf-candidates&quot; data-candidate-group&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-candidate&quot; aria-pressed=&quot;true&quot;&gt;&lt;span class=&quot;bf-check-mini&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;配色&lt;/button&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-candidate&quot; aria-pressed=&quot;true&quot;&gt;&lt;span class=&quot;bf-check-mini&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;设计系统&lt;/button&gt;
+              &lt;button type=&quot;button&quot; class=&quot;bf-candidate&quot; aria-pressed=&quot;true&quot;&gt;&lt;span class=&quot;bf-check-mini&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;交互设计&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;bf-suggestion-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;bf-ghost-button bf-small-button&quot;&gt;跳过&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;bf-primary-button bf-small-button&quot; data-adopt-button&gt;采纳 3 个&lt;/button&gt;&lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;div class=&quot;bf-result-summary&quot; aria-label=&quot;部分移动结果&quot;&gt;
+          &lt;div class=&quot;bf-summary-row&quot;&gt;&lt;i data-lucide=&quot;circle-check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;React 19 全新特性解析&lt;/span&gt;&lt;span class=&quot;bf-summary-target&quot;&gt;→ 前端开发&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;bf-summary-row&quot;&gt;&lt;i data-lucide=&quot;circle-check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;Figma 变量设计系统教程&lt;/span&gt;&lt;span class=&quot;bf-summary-target&quot;&gt;→ 设计灵感&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;bf-summary-row&quot;&gt;&lt;i data-lucide=&quot;minus-circle&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;这期内容我真的想了很久&lt;/span&gt;&lt;span class=&quot;bf-summary-target&quot;&gt;保留&lt;/span&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;bf-close-row&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;bf-ghost-button&quot;&gt;关闭&lt;/button&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class=&quot;bf-stage&quot; data-stage=&quot;dialog&quot; aria-label=&quot;智能整理前置提示设计稿&quot;&gt;
+    &lt;div&gt;
+      &lt;div class=&quot;bf-dialog-picker&quot; aria-label=&quot;选择提示场景&quot;&gt;
+        &lt;button type=&quot;button&quot; data-dialog-button=&quot;default&quot; aria-pressed=&quot;true&quot;&gt;未设默认收藏夹&lt;/button&gt;
+        &lt;button type=&quot;button&quot; data-dialog-button=&quot;tags&quot; aria-pressed=&quot;false&quot;&gt;没有标签&lt;/button&gt;
+        &lt;button type=&quot;button&quot; data-dialog-button=&quot;quota&quot; aria-pressed=&quot;false&quot;&gt;免费配额不足&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;bf-window bf-dialog-scene&quot;&gt;
+        &lt;div class=&quot;bf-popup-body bf-dialog-background&quot;&gt;
+          &lt;header class=&quot;bf-app-header&quot;&gt;&lt;h1 class=&quot;bf-app-title&quot;&gt;收藏夹&lt;/h1&gt;&lt;div class=&quot;bf-icon-row&quot;&gt;&lt;span class=&quot;bf-icon-button&quot;&gt;&lt;i data-lucide=&quot;settings&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;/div&gt;&lt;/header&gt;
+          &lt;div class=&quot;bf-favorite-panel&quot;&gt;&lt;div class=&quot;bf-section-label&quot;&gt;&lt;span&gt;选择收藏夹&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;bf-favorites&quot;&gt;&lt;span class=&quot;bf-favorite-chip&quot;&gt;# 稍后再看&lt;/span&gt;&lt;span class=&quot;bf-favorite-chip&quot;&gt;# 前端开发&lt;/span&gt;&lt;span class=&quot;bf-favorite-chip&quot;&gt;# 设计灵感&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+          &lt;div class=&quot;bf-keyword-panel&quot;&gt;&lt;div class=&quot;bf-section-label&quot;&gt;&lt;span&gt;标签&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;bf-keyword-row&quot;&gt;&lt;span&gt;前端开发&lt;/span&gt;&lt;span class=&quot;bf-tags&quot;&gt;&lt;span class=&quot;bf-tag&quot;&gt;React&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+          &lt;div class=&quot;bf-actions&quot;&gt;&lt;div class=&quot;bf-smart-button&quot;&gt;&lt;i data-lucide=&quot;sparkles&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span class=&quot;bf-smart-copy&quot;&gt;&lt;span class=&quot;bf-smart-title&quot;&gt;智能整理&lt;/span&gt;&lt;span class=&quot;bf-smart-description&quot;&gt;自动把默认收藏夹的视频归类到合适的收藏夹&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;bf-dialog-scrim&quot;&gt;
+          &lt;div class=&quot;bf-dialog&quot;&gt;
+            &lt;div class=&quot;bf-dialog-copy is-active&quot; data-dialog-copy=&quot;default&quot;&gt;&lt;h2&gt;先设置默认收藏夹&lt;/h2&gt;&lt;p&gt;智能整理会处理&lt;strong&gt;默认收藏夹&lt;/strong&gt;中的视频。在收藏夹标签上点击星标即可设置。&lt;/p&gt;&lt;div class=&quot;bf-dialog-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;bf-ghost-button&quot;&gt;取消&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;bf-primary-button&quot;&gt;去设置&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;div class=&quot;bf-dialog-copy&quot; data-dialog-copy=&quot;tags&quot;&gt;&lt;h2&gt;本次将全部由 AI 分析&lt;/h2&gt;&lt;p&gt;还没有标签。本次整理完成后，可以把确认过的归类沉淀为标签，下次更快、更省配额。&lt;/p&gt;&lt;div class=&quot;bf-dialog-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;bf-ghost-button&quot;&gt;取消&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;bf-primary-button&quot;&gt;开始整理&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;div class=&quot;bf-dialog-copy&quot; data-dialog-copy=&quot;quota&quot;&gt;&lt;h2&gt;免费配额不足&lt;/h2&gt;&lt;p&gt;今日免费额度已用完。可以明天再试，或配置自己的 AI 服务。&lt;/p&gt;&lt;div class=&quot;bf-dialog-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;bf-ghost-button&quot;&gt;取消&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;bf-primary-button&quot;&gt;配置自己的 AI&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;script&gt;
+    (() =&gt; {
+      const root = document.getElementById(&#x27;bf-ui-draft&#x27;)
+      if (!root) return
+
+      const activateStage = (name) =&gt; {
+        root.querySelectorAll(&#x27;[data-stage]&#x27;).forEach((stage) =&gt; {
+          stage.classList.toggle(&#x27;is-active&#x27;, stage.dataset.stage === name)
+        })
+        root.querySelectorAll(&#x27;[data-stage-button]&#x27;).forEach((button) =&gt; {
+          button.setAttribute(&#x27;aria-pressed&#x27;, String(button.dataset.stageButton === name))
+        })
+      }
+
+      root.querySelectorAll(&#x27;[data-stage-button]&#x27;).forEach((button) =&gt; {
+        button.addEventListener(&#x27;click&#x27;, () =&gt; activateStage(button.dataset.stageButton))
+      })
+
+      const rulesButton = root.querySelector(&#x27;#bf-rules-button&#x27;)
+      const rulesPopover = root.querySelector(&#x27;#bf-rules-popover&#x27;)
+      rulesButton?.addEventListener(&#x27;click&#x27;, () =&gt; {
+        const shouldOpen = rulesPopover.hasAttribute(&#x27;hidden&#x27;)
+        rulesPopover.toggleAttribute(&#x27;hidden&#x27;, !shouldOpen)
+        rulesButton.setAttribute(&#x27;aria-expanded&#x27;, String(shouldOpen))
+      })
+
+      root.querySelectorAll(&#x27;[data-favorite-chip] .bf-favorite-star&#x27;).forEach((button) =&gt; {
+        button.addEventListener(&#x27;click&#x27;, (event) =&gt; {
+          event.stopPropagation()
+          root.querySelectorAll(&#x27;[data-favorite-chip]&#x27;).forEach((chip) =&gt; {
+            chip.classList.remove(&#x27;is-default&#x27;)
+            chip.querySelector(&#x27;.bf-default-badge&#x27;)?.remove()
+            chip.querySelector(&#x27;.bf-favorite-star&#x27;)?.setAttribute(&#x27;aria-label&#x27;, &#x27;设为默认收藏夹&#x27;)
+          })
+          const chip = button.closest(&#x27;[data-favorite-chip]&#x27;)
+          chip.classList.add(&#x27;is-default&#x27;)
+          const badge = document.createElement(&#x27;span&#x27;)
+          badge.className = &#x27;bf-default-badge&#x27;
+          badge.textContent = &#x27;默认&#x27;
+          chip.querySelector(&#x27;span&#x27;)?.after(badge)
+          button.setAttribute(&#x27;aria-label&#x27;, &#x27;取消默认收藏夹&#x27;)
+        })
+      })
+
+      const updateTagCount = () =&gt; {
+        const checked = root.querySelectorAll(&#x27;[data-tag-check]:checked&#x27;).length
+        const count = root.querySelector(&#x27;#bf-tag-count&#x27;)
+        if (count) count.textContent = String(checked)
+      }
+
+      root.querySelectorAll(&#x27;[data-tag-check]&#x27;).forEach((checkbox) =&gt; checkbox.addEventListener(&#x27;change&#x27;, updateTagCount))
+      root.querySelector(&#x27;#bf-select-tags&#x27;)?.addEventListener(&#x27;click&#x27;, () =&gt; {
+        root.querySelectorAll(&#x27;[data-tag-check]&#x27;).forEach((checkbox) =&gt; { checkbox.checked = true })
+        updateTagCount()
+      })
+
+      root.querySelectorAll(&#x27;.bf-candidate&#x27;).forEach((button) =&gt; {
+        button.addEventListener(&#x27;click&#x27;, () =&gt; {
+          button.setAttribute(&#x27;aria-pressed&#x27;, String(button.getAttribute(&#x27;aria-pressed&#x27;) !== &#x27;true&#x27;))
+          const group = button.closest(&#x27;.bf-folder-suggestion&#x27;)
+          const count = group.querySelectorAll(&#x27;.bf-candidate[aria-pressed=&quot;true&quot;]&#x27;).length
+          const adoptButton = group.querySelector(&#x27;[data-adopt-button]&#x27;)
+          if (adoptButton) {
+            adoptButton.textContent = `采纳 ${count} 个`
+            adoptButton.disabled = count === 0
+          }
+        })
+      })
+
+      root.querySelector(&#x27;#bf-close-suggestion&#x27;)?.addEventListener(&#x27;click&#x27;, () =&gt; {
+        root.querySelector(&#x27;#bf-suggestion-card&#x27;)?.setAttribute(&#x27;hidden&#x27;, &#x27;&#x27;)
+      })
+
+      const activateDialog = (name) =&gt; {
+        root.querySelectorAll(&#x27;[data-dialog-copy]&#x27;).forEach((copy) =&gt; copy.classList.toggle(&#x27;is-active&#x27;, copy.dataset.dialogCopy === name))
+        root.querySelectorAll(&#x27;[data-dialog-button]&#x27;).forEach((button) =&gt; button.setAttribute(&#x27;aria-pressed&#x27;, String(button.dataset.dialogButton === name)))
+      }
+
+      root.querySelectorAll(&#x27;[data-dialog-button]&#x27;).forEach((button) =&gt; button.addEventListener(&#x27;click&#x27;, () =&gt; activateDialog(button.dataset.dialogButton)))
+    })()
+  &lt;/script&gt;
+&lt;/div&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

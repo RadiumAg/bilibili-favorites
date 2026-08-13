@@ -1,0 +1,1144 @@
+<div id="bf-ui-draft">
+  <style>
+    #bf-ui-draft {
+      --bf-primary: #bf00ff;
+      --bf-primary-deep: #a000d9;
+      --bf-secondary: #ff1493;
+      --bf-secondary-deep: #d6006f;
+      --bf-text: #2d1b4e;
+      --bf-text-soft: #6f647d;
+      --bf-border: #e9d9f0;
+      --bf-surface: #ffffff;
+      --bf-canvas: #f9f4fc;
+      --bf-muted: #f6f3f8;
+      --bf-success: #2f9e68;
+      --bf-danger: #d94772;
+      width: 100%;
+      color: light-dark(#241b2d, #f8f3fb);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    #bf-ui-draft * {
+      box-sizing: border-box;
+    }
+
+    #bf-ui-draft button,
+    #bf-ui-draft select {
+      font: inherit;
+    }
+
+    #bf-ui-draft .bf-stage-picker {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    #bf-ui-draft .bf-stage-picker button,
+    #bf-ui-draft .bf-dialog-picker button {
+      min-height: 36px;
+      border: 1px solid light-dark(#d7cedd, #4b4350);
+      border-radius: 9px;
+      background: light-dark(#ffffff, #252127);
+      color: light-dark(#4a4052, #efe8f1);
+      padding: 7px 13px;
+      cursor: pointer;
+      transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    #bf-ui-draft .bf-stage-picker button[aria-pressed="true"],
+    #bf-ui-draft .bf-dialog-picker button[aria-pressed="true"] {
+      border-color: var(--bf-primary);
+      background: color-mix(in srgb, var(--bf-primary) 11%, white);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-stage {
+      display: none;
+      justify-content: center;
+    }
+
+    #bf-ui-draft .bf-stage.is-active {
+      display: flex;
+    }
+
+    #bf-ui-draft .bf-window {
+      position: relative;
+      width: min(100%, 384px);
+      overflow: hidden;
+      border: 1px solid #eadff0;
+      border-radius: 16px;
+      background: var(--bf-surface);
+      box-shadow: 0 18px 50px rgba(59, 27, 78, 0.15);
+      color: var(--bf-text);
+    }
+
+    #bf-ui-draft .bf-popup-body {
+      padding: 14px;
+      background: linear-gradient(145deg, #faf3ff 0%, #fff6fb 48%, #f5ffff 100%);
+    }
+
+    #bf-ui-draft .bf-app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    #bf-ui-draft .bf-app-title {
+      margin: 0;
+      color: var(--bf-text);
+      font-size: 17px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-icon-row {
+      display: flex;
+      gap: 2px;
+    }
+
+    #bf-ui-draft .bf-icon-button {
+      display: inline-flex;
+      width: 34px;
+      height: 34px;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #756581;
+      cursor: pointer;
+    }
+
+    #bf-ui-draft .bf-icon-button:hover {
+      background: rgba(191, 0, 255, 0.08);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-favorite-panel,
+    #bf-ui-draft .bf-keyword-panel {
+      border: 1px solid rgba(191, 0, 255, 0.13);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 11px;
+    }
+
+    #bf-ui-draft .bf-section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #685872;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-favorites {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    #bf-ui-draft .bf-favorite-chip {
+      position: relative;
+      display: inline-flex;
+      min-height: 34px;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #e8dbea;
+      border-radius: 9px;
+      background: #ffffff;
+      color: #5e5267;
+      padding: 6px 8px;
+      cursor: pointer;
+      transition: border-color 180ms ease, background 180ms ease;
+    }
+
+    #bf-ui-draft .bf-favorite-chip:hover {
+      border-color: rgba(191, 0, 255, 0.45);
+      background: rgba(191, 0, 255, 0.04);
+    }
+
+    #bf-ui-draft .bf-favorite-chip.is-default {
+      border-color: rgba(255, 20, 147, 0.35);
+      background: rgba(255, 20, 147, 0.07);
+    }
+
+    #bf-ui-draft .bf-default-badge {
+      border-radius: 4px;
+      background: rgba(255, 20, 147, 0.12);
+      color: var(--bf-secondary-deep);
+      padding: 1px 4px;
+      font-size: 10px;
+    }
+
+    #bf-ui-draft .bf-favorite-star {
+      display: inline-flex;
+      width: 22px;
+      height: 22px;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #cabfd0;
+      cursor: pointer;
+      transition: color 180ms ease, background 180ms ease;
+    }
+
+    #bf-ui-draft .bf-favorite-star:hover,
+    #bf-ui-draft .bf-favorite-chip.is-default .bf-favorite-star {
+      background: rgba(255, 20, 147, 0.08);
+      color: var(--bf-secondary);
+    }
+
+    #bf-ui-draft .bf-keyword-panel {
+      margin-top: 11px;
+    }
+
+    #bf-ui-draft .bf-keyword-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid #f0e8f3;
+      padding: 8px 2px;
+      color: #55465f;
+      font-size: 12px;
+    }
+
+    #bf-ui-draft .bf-keyword-row:first-of-type {
+      border-top: 0;
+    }
+
+    #bf-ui-draft .bf-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    #bf-ui-draft .bf-tag {
+      border-radius: 999px;
+      background: rgba(191, 0, 255, 0.08);
+      color: var(--bf-primary-deep);
+      padding: 3px 7px;
+      font-size: 10px;
+    }
+
+    #bf-ui-draft .bf-actions {
+      position: relative;
+      margin-top: 12px;
+    }
+
+    #bf-ui-draft .bf-smart-button {
+      display: flex;
+      width: 100%;
+      min-height: 50px;
+      align-items: center;
+      gap: 10px;
+      border: 0;
+      border-radius: 11px;
+      background: linear-gradient(100deg, var(--bf-primary), var(--bf-secondary));
+      color: #ffffff;
+      padding: 9px 14px;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(191, 0, 255, 0.2);
+      transition: filter 180ms ease, box-shadow 180ms ease;
+    }
+
+    #bf-ui-draft .bf-smart-button:hover {
+      filter: brightness(0.94);
+      box-shadow: 0 10px 24px rgba(191, 0, 255, 0.25);
+    }
+
+    #bf-ui-draft .bf-smart-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #bf-ui-draft .bf-smart-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-smart-description {
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-secondary-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    #bf-ui-draft .bf-secondary-button,
+    #bf-ui-draft .bf-ghost-button,
+    #bf-ui-draft .bf-primary-button {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 9px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    #bf-ui-draft .bf-secondary-button,
+    #bf-ui-draft .bf-ghost-button {
+      border: 1px solid #dfd2e5;
+      background: #ffffff;
+      color: #5b4a67;
+    }
+
+    #bf-ui-draft .bf-secondary-button:hover,
+    #bf-ui-draft .bf-ghost-button:hover {
+      border-color: rgba(191, 0, 255, 0.42);
+      background: rgba(191, 0, 255, 0.05);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-primary-button {
+      border: 1px solid transparent;
+      background: var(--bf-primary);
+      color: #ffffff;
+    }
+
+    #bf-ui-draft .bf-primary-button:hover {
+      background: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-rules-popover {
+      position: absolute;
+      z-index: 8;
+      bottom: 49px;
+      left: 0;
+      width: 245px;
+      border: 1px solid #e5d7ea;
+      border-radius: 11px;
+      background: #ffffff;
+      padding: 6px;
+      box-shadow: 0 14px 34px rgba(45, 27, 78, 0.18);
+    }
+
+    #bf-ui-draft .bf-rules-popover[hidden] {
+      display: none;
+    }
+
+    #bf-ui-draft .bf-rule-item {
+      display: flex;
+      width: 100%;
+      align-items: flex-start;
+      gap: 9px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      padding: 9px;
+      color: var(--bf-text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    #bf-ui-draft .bf-rule-item:hover {
+      background: rgba(191, 0, 255, 0.06);
+    }
+
+    #bf-ui-draft .bf-rule-item small {
+      display: block;
+      margin-top: 2px;
+      color: #7d7086;
+      font-size: 10px;
+    }
+
+    #bf-ui-draft .bf-modal-window {
+      width: min(100%, 620px);
+    }
+
+    #bf-ui-draft .bf-modal-header {
+      border-bottom: 1px solid rgba(191, 0, 255, 0.13);
+      background: linear-gradient(105deg, rgba(191, 0, 255, 0.09), rgba(255, 20, 147, 0.08));
+      padding: 16px;
+    }
+
+    #bf-ui-draft .bf-modal-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    #bf-ui-draft .bf-title-icon {
+      display: inline-flex;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(191, 0, 255, 0.12);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-modal-header h2,
+    #bf-ui-draft .bf-complete h2 {
+      margin: 0;
+      color: var(--bf-text);
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-modal-header p {
+      margin: 4px 0 0;
+      color: #6d5d77;
+      font-size: 12px;
+    }
+
+    #bf-ui-draft .bf-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    #bf-ui-draft .bf-metric {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-metric.tag-source {
+      background: rgba(191, 0, 255, 0.1);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-metric.ai-source {
+      background: rgba(255, 20, 147, 0.1);
+      color: var(--bf-secondary-deep);
+    }
+
+    #bf-ui-draft .bf-metric.neutral {
+      background: #efebf1;
+      color: #64596b;
+    }
+
+    #bf-ui-draft .bf-text-action {
+      margin-left: auto;
+      border: 0;
+      background: transparent;
+      color: var(--bf-primary-deep);
+      padding: 5px 2px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-review-content {
+      padding: 10px 12px 12px;
+      background: #fcfafc;
+    }
+
+    #bf-ui-draft .bf-group + .bf-group {
+      margin-top: 12px;
+    }
+
+    #bf-ui-draft .bf-group-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 3px;
+      color: #64566c;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-group-header.tag-group i {
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-group-header.ai-group i {
+      color: var(--bf-secondary-deep);
+    }
+
+    #bf-ui-draft .bf-result-card {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 8px;
+      border: 1px solid #e9e1ec;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    #bf-ui-draft .bf-result-card + .bf-result-card {
+      margin-top: 7px;
+    }
+
+    #bf-ui-draft .bf-result-card.tag-result {
+      border-left: 3px solid var(--bf-primary);
+    }
+
+    #bf-ui-draft .bf-result-card.ai-result {
+      border-left: 3px solid var(--bf-secondary);
+    }
+
+    #bf-ui-draft .bf-result-check {
+      width: 16px;
+      height: 16px;
+      margin: 2px 0 0;
+      accent-color: var(--bf-primary);
+    }
+
+    #bf-ui-draft .bf-result-title {
+      margin: 0;
+      color: #30263a;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-reason-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      margin-top: 6px;
+      color: #73667b;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-hit-label,
+    #bf-ui-draft .bf-hit-tag,
+    #bf-ui-draft .bf-manual-label {
+      border-radius: 999px;
+      padding: 3px 7px;
+    }
+
+    #bf-ui-draft .bf-hit-label,
+    #bf-ui-draft .bf-hit-tag {
+      background: rgba(191, 0, 255, 0.09);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-manual-label {
+      background: #f0edf1;
+      color: #756c7b;
+    }
+
+    #bf-ui-draft .bf-destination {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    #bf-ui-draft .bf-source-folder {
+      overflow: hidden;
+      border-radius: 7px;
+      background: #f4f1f5;
+      padding: 7px 8px;
+      color: #655b6b;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-target-select {
+      width: 100%;
+      min-width: 0;
+      height: 34px;
+      border: 1px solid rgba(191, 0, 255, 0.25);
+      border-radius: 7px;
+      background: rgba(191, 0, 255, 0.04);
+      color: #4e4058;
+      padding: 0 7px;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-top: 7px;
+      border-radius: 7px;
+      background: rgba(255, 20, 147, 0.09);
+      color: var(--bf-secondary-deep);
+      padding: 7px 8px;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid #ebe3ee;
+      background: #f8f5f9;
+      padding: 11px 13px;
+    }
+
+    #bf-ui-draft .bf-modal-footer p {
+      margin: 0;
+      color: #75697c;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-footer-buttons {
+      display: flex;
+      gap: 7px;
+    }
+
+    #bf-ui-draft .bf-complete {
+      padding: 16px;
+      background: #ffffff;
+    }
+
+    #bf-ui-draft .bf-complete-heading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+
+    #bf-ui-draft .bf-success-icon {
+      display: inline-flex;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(47, 158, 104, 0.11);
+      color: var(--bf-success);
+    }
+
+    #bf-ui-draft .bf-complete .bf-metrics {
+      justify-content: center;
+      margin: 0 0 12px;
+    }
+
+    #bf-ui-draft .bf-suggestion-card {
+      border: 1px solid rgba(191, 0, 255, 0.24);
+      border-radius: 11px;
+      background: rgba(191, 0, 255, 0.045);
+      padding: 11px;
+    }
+
+    #bf-ui-draft .bf-suggestion-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #493653;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-suggestion-title .bf-icon-button {
+      width: 28px;
+      height: 28px;
+      margin-left: auto;
+    }
+
+    #bf-ui-draft .bf-folder-suggestion {
+      margin-top: 9px;
+      border-top: 1px solid rgba(191, 0, 255, 0.1);
+      padding-top: 9px;
+    }
+
+    #bf-ui-draft .bf-folder-suggestion:first-of-type {
+      border-top: 0;
+      padding-top: 3px;
+    }
+
+    #bf-ui-draft .bf-folder-copy {
+      color: #5a4b63;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-candidates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+    }
+
+    #bf-ui-draft .bf-candidate {
+      display: inline-flex;
+      min-height: 30px;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid #e1d8e5;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #807484;
+      padding: 4px 9px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-candidate[aria-pressed="true"] {
+      border-color: rgba(191, 0, 255, 0.3);
+      background: rgba(191, 0, 255, 0.11);
+      color: var(--bf-primary-deep);
+    }
+
+    #bf-ui-draft .bf-candidate .bf-check-mini {
+      display: none;
+    }
+
+    #bf-ui-draft .bf-candidate[aria-pressed="true"] .bf-check-mini {
+      display: inline-flex;
+    }
+
+    #bf-ui-draft .bf-suggestion-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    #bf-ui-draft .bf-small-button {
+      min-height: 30px;
+      border-radius: 7px;
+      padding: 5px 9px;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-result-summary {
+      margin-top: 11px;
+      border: 1px solid #ebe4ed;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #bf-ui-draft .bf-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-top: 1px solid #eee8f0;
+      padding: 8px 10px;
+      color: #5b4f62;
+      font-size: 11px;
+    }
+
+    #bf-ui-draft .bf-summary-row:first-child {
+      border-top: 0;
+    }
+
+    #bf-ui-draft .bf-summary-row i {
+      color: var(--bf-success);
+    }
+
+    #bf-ui-draft .bf-summary-target {
+      margin-left: auto;
+      color: #84788a;
+    }
+
+    #bf-ui-draft .bf-close-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    #bf-ui-draft .bf-dialog-picker {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+
+    #bf-ui-draft .bf-dialog-scene {
+      position: relative;
+      min-height: 510px;
+    }
+
+    #bf-ui-draft .bf-dialog-background {
+      filter: blur(1px);
+      opacity: 0.52;
+      pointer-events: none;
+    }
+
+    #bf-ui-draft .bf-dialog-scrim {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(31, 20, 37, 0.48);
+      padding: 18px;
+    }
+
+    #bf-ui-draft .bf-dialog {
+      width: 100%;
+      border: 1px solid #eadfee;
+      border-radius: 13px;
+      background: #ffffff;
+      padding: 16px;
+      box-shadow: 0 18px 45px rgba(45, 27, 78, 0.24);
+    }
+
+    #bf-ui-draft .bf-dialog h2 {
+      margin: 0;
+      color: var(--bf-text);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-dialog p {
+      margin: 8px 0 0;
+      color: #6e6275;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    #bf-ui-draft .bf-dialog strong {
+      color: var(--bf-text);
+      font-weight: 500;
+    }
+
+    #bf-ui-draft .bf-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 7px;
+      margin-top: 15px;
+    }
+
+    #bf-ui-draft .bf-dialog-copy {
+      display: none;
+    }
+
+    #bf-ui-draft .bf-dialog-copy.is-active {
+      display: block;
+    }
+
+    @media (max-width: 520px) {
+      #bf-ui-draft .bf-modal-window {
+        width: min(100%, 384px);
+      }
+
+      #bf-ui-draft .bf-destination {
+        grid-template-columns: 1fr;
+      }
+
+      #bf-ui-draft .bf-destination > i {
+        display: none;
+      }
+
+      #bf-ui-draft .bf-modal-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      #bf-ui-draft .bf-footer-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+      }
+
+      #bf-ui-draft .bf-text-action {
+        width: 100%;
+        margin-left: 0;
+        text-align: left;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #bf-ui-draft *,
+      #bf-ui-draft *::before,
+      #bf-ui-draft *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+
+  <div class="bf-stage-picker" aria-label="选择设计稿状态">
+    <button type="button" data-stage-button="home" aria-pressed="true">主入口</button>
+    <button type="button" data-stage-button="review" aria-pressed="false">结果审核</button>
+    <button type="button" data-stage-button="complete" aria-pressed="false">完成与标签建议</button>
+    <button type="button" data-stage-button="dialog" aria-pressed="false">前置提示</button>
+  </div>
+
+  <section class="bf-stage is-active" data-stage="home" aria-label="智能整理主入口设计稿">
+    <div class="bf-window">
+      <div class="bf-popup-body">
+        <header class="bf-app-header">
+          <h1 class="bf-app-title">收藏夹</h1>
+          <div class="bf-icon-row" aria-label="页面工具">
+            <button type="button" class="bf-icon-button" aria-label="刷新"><i data-lucide="refresh-cw" aria-hidden="true"></i></button>
+            <button type="button" class="bf-icon-button" aria-label="使用帮助"><i data-lucide="circle-help" aria-hidden="true"></i></button>
+            <button type="button" class="bf-icon-button" aria-label="设置"><i data-lucide="settings" aria-hidden="true"></i></button>
+          </div>
+        </header>
+
+        <section class="bf-favorite-panel" aria-labelledby="bf-favorites-label">
+          <div class="bf-section-label" id="bf-favorites-label">
+            <span>选择收藏夹</span>
+            <span>点击星标设为默认</span>
+          </div>
+          <div class="bf-favorites">
+            <div class="bf-favorite-chip is-default" data-favorite-chip>
+              <span># 稍后再看</span><span class="bf-default-badge">默认</span>
+              <button type="button" class="bf-favorite-star" aria-label="取消默认收藏夹"><i data-lucide="star" aria-hidden="true"></i></button>
+            </div>
+            <div class="bf-favorite-chip" data-favorite-chip>
+              <span># 前端开发</span>
+              <button type="button" class="bf-favorite-star" aria-label="设为默认收藏夹"><i data-lucide="star" aria-hidden="true"></i></button>
+            </div>
+            <div class="bf-favorite-chip" data-favorite-chip>
+              <span># 设计灵感</span>
+              <button type="button" class="bf-favorite-star" aria-label="设为默认收藏夹"><i data-lucide="star" aria-hidden="true"></i></button>
+            </div>
+            <div class="bf-favorite-chip" data-favorite-chip>
+              <span># 健身计划</span>
+              <button type="button" class="bf-favorite-star" aria-label="设为默认收藏夹"><i data-lucide="star" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="bf-keyword-panel" aria-labelledby="bf-keywords-label">
+          <div class="bf-section-label" id="bf-keywords-label"><span>标签</span><span>已配置 9 个</span></div>
+          <div class="bf-keyword-row"><span>前端开发</span><span class="bf-tags"><span class="bf-tag">React</span><span class="bf-tag">TypeScript</span></span></div>
+          <div class="bf-keyword-row"><span>设计灵感</span><span class="bf-tags"><span class="bf-tag">UI</span><span class="bf-tag">配色</span><span class="bf-tag">Figma</span></span></div>
+          <div class="bf-keyword-row"><span>健身计划</span><span class="bf-tags"><span class="bf-tag">训练</span><span class="bf-tag">增肌</span></span></div>
+        </section>
+
+        <div class="bf-actions">
+          <button type="button" class="bf-smart-button">
+            <i data-lucide="sparkles" aria-hidden="true"></i>
+            <span class="bf-smart-copy"><span class="bf-smart-title">智能整理</span><span class="bf-smart-description">自动把默认收藏夹的视频归类到合适的收藏夹</span></span>
+          </button>
+          <div class="bf-secondary-actions">
+            <button type="button" class="bf-secondary-button" id="bf-rules-button" aria-expanded="false">
+              <i data-lucide="tags" aria-hidden="true"></i><span>规则整理</span><i data-lucide="chevron-down" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="bf-secondary-button"><i data-lucide="mouse-pointer-2" aria-hidden="true"></i><span>拖拽管理</span></button>
+          </div>
+          <div class="bf-rules-popover" id="bf-rules-popover" hidden>
+            <button type="button" class="bf-rule-item"><i data-lucide="tags" aria-hidden="true"></i><span>通过标签整理<small>仅按已配置规则快速匹配</small></span></button>
+            <button type="button" class="bf-rule-item"><i data-lucide="wand-sparkles" aria-hidden="true"></i><span>自动创建标签<small>从收藏内容中生成关键词</small></span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bf-stage" data-stage="review" aria-label="智能整理结果审核设计稿">
+    <div class="bf-window bf-modal-window">
+      <header class="bf-modal-header">
+        <div class="bf-modal-title-row">
+          <span class="bf-title-icon"><i data-lucide="list-checks" aria-hidden="true"></i></span>
+          <div><h2>确认智能整理结果</h2><p>已按置信度分组：标签命中可直接确认，AI 建议请核对。</p></div>
+        </div>
+        <div class="bf-metrics" aria-live="polite">
+          <span class="bf-metric tag-source"><i data-lucide="tag" aria-hidden="true"></i>标签命中 <strong id="bf-tag-count">2</strong></span>
+          <span class="bf-metric ai-source"><i data-lucide="sparkles" aria-hidden="true"></i>AI 建议 2</span>
+          <span class="bf-metric neutral">保留 1</span>
+          <button type="button" class="bf-text-action" id="bf-select-tags">全选标签命中项</button>
+        </div>
+      </header>
+
+      <div class="bf-review-content">
+        <section class="bf-group" aria-labelledby="bf-tag-group">
+          <div class="bf-group-header tag-group" id="bf-tag-group"><i data-lucide="tag" aria-hidden="true"></i><span>标签命中 · 2 个（建议直接确认）</span></div>
+          <article class="bf-result-card tag-result">
+            <input class="bf-result-check" data-tag-check type="checkbox" checked aria-label="选择 React 19 全新特性解析" />
+            <div>
+              <p class="bf-result-title">React 19 全新特性解析：Actions 与 Server Components</p>
+              <div class="bf-reason-line"><span class="bf-hit-label">命中标签</span><span class="bf-hit-tag">React</span><span class="bf-hit-tag">前端教程</span></div>
+              <div class="bf-destination"><span class="bf-source-folder">稍后再看</span><i data-lucide="arrow-right" aria-hidden="true"></i><select class="bf-target-select" aria-label="选择目标收藏夹"><option selected>前端开发</option><option>设计灵感</option><option>健身计划</option></select></div>
+            </div>
+          </article>
+          <article class="bf-result-card tag-result">
+            <input class="bf-result-check" data-tag-check type="checkbox" checked aria-label="选择 Figma 变量设计系统教程" />
+            <div>
+              <p class="bf-result-title">Figma 变量设计系统教程：从颜色到组件</p>
+              <div class="bf-reason-line"><span class="bf-hit-label">命中标签</span><span class="bf-hit-tag">Figma</span><span class="bf-hit-tag">UI</span><span class="bf-hit-tag">+1</span></div>
+              <div class="bf-destination"><span class="bf-source-folder">稍后再看</span><i data-lucide="arrow-right" aria-hidden="true"></i><select class="bf-target-select" aria-label="选择目标收藏夹"><option>前端开发</option><option selected>设计灵感</option><option>健身计划</option></select></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="bf-group" aria-labelledby="bf-ai-group">
+          <div class="bf-group-header ai-group" id="bf-ai-group"><i data-lucide="sparkles" aria-hidden="true"></i><span>AI 建议 · 2 个（请核对）</span></div>
+          <article class="bf-result-card ai-result">
+            <input class="bf-result-check" type="checkbox" checked aria-label="选择 一周五练训练计划" />
+            <div>
+              <p class="bf-result-title">一周五练怎么安排？增肌训练计划完整拆解</p>
+              <div class="bf-reason-line"><i data-lucide="sparkles" aria-hidden="true"></i><span>标题包含训练频率与增肌计划，适合归入健身内容。</span></div>
+              <div class="bf-destination"><span class="bf-source-folder">稍后再看</span><i data-lucide="arrow-right" aria-hidden="true"></i><select class="bf-target-select" data-manual-select aria-label="选择目标收藏夹"><option>前端开发</option><option>设计灵感</option><option selected>健身计划</option></select></div>
+            </div>
+          </article>
+          <article class="bf-result-card ai-result">
+            <input class="bf-result-check" type="checkbox" checked aria-label="选择 这期视频标题无法确定目标" />
+            <div>
+              <p class="bf-result-title">这期内容我真的想了很久，终于做出来了</p>
+              <div class="bf-warning"><i data-lucide="circle-alert" aria-hidden="true"></i><span>AI 未能识别目标收藏夹，请手动选择。</span></div>
+              <div class="bf-destination"><span class="bf-source-folder">稍后再看</span><i data-lucide="arrow-right" aria-hidden="true"></i><select class="bf-target-select" aria-label="选择目标收藏夹"><option selected>保留在稍后再看</option><option>前端开发</option><option>设计灵感</option><option>健身计划</option></select></div>
+            </div>
+          </article>
+        </section>
+      </div>
+
+      <footer class="bf-modal-footer">
+        <p>预计移动 3 个视频，保留 1 个。</p>
+        <div class="bf-footer-buttons"><button type="button" class="bf-ghost-button">取消</button><button type="button" class="bf-primary-button">确认移动 3 个视频</button></div>
+      </footer>
+    </div>
+  </section>
+
+  <section class="bf-stage" data-stage="complete" aria-label="整理完成与标签建议设计稿">
+    <div class="bf-window bf-modal-window">
+      <div class="bf-complete">
+        <div class="bf-complete-heading"><span class="bf-success-icon"><i data-lucide="circle-check-big" aria-hidden="true"></i></span><h2>智能整理完成</h2></div>
+        <div class="bf-metrics" aria-label="整理结果统计"><span class="bf-metric tag-source">标签命中 12</span><span class="bf-metric ai-source">AI 归类 8</span><span class="bf-metric neutral">保留 3</span></div>
+
+        <section class="bf-suggestion-card" id="bf-suggestion-card" aria-labelledby="bf-suggestion-title">
+          <div class="bf-suggestion-title" id="bf-suggestion-title"><i data-lucide="tags" aria-hidden="true"></i><span>为这些收藏夹沉淀标签（下次可直接命中）</span><button type="button" class="bf-icon-button" id="bf-close-suggestion" aria-label="关闭标签建议"><i data-lucide="x" aria-hidden="true"></i></button></div>
+          <div class="bf-folder-suggestion">
+            <div class="bf-folder-copy">「前端开发」本次移入 5 个视频</div>
+            <div class="bf-candidates" data-candidate-group>
+              <button type="button" class="bf-candidate" aria-pressed="true"><span class="bf-check-mini"><i data-lucide="check" aria-hidden="true"></i></span>React</button>
+              <button type="button" class="bf-candidate" aria-pressed="true"><span class="bf-check-mini"><i data-lucide="check" aria-hidden="true"></i></span>Hooks</button>
+              <button type="button" class="bf-candidate" aria-pressed="false"><span class="bf-check-mini"><i data-lucide="check" aria-hidden="true"></i></span>前端教程</button>
+            </div>
+            <div class="bf-suggestion-actions"><button type="button" class="bf-ghost-button bf-small-button">跳过</button><button type="button" class="bf-primary-button bf-small-button" data-adopt-button>采纳 2 个</button></div>
+          </div>
+          <div class="bf-folder-suggestion">
+            <div class="bf-folder-copy">「设计灵感」本次移入 4 个视频</div>
+            <div class="bf-candidates" data-candidate-group>
+              <button type="button" class="bf-candidate" aria-pressed="true"><span class="bf-check-mini"><i data-lucide="check" aria-hidden="true"></i></span>配色</button>
+              <button type="button" class="bf-candidate" aria-pressed="true"><span class="bf-check-mini"><i data-lucide="check" aria-hidden="true"></i></span>设计系统</button>
+              <button type="button" class="bf-candidate" aria-pressed="true"><span class="bf-check-mini"><i data-lucide="check" aria-hidden="true"></i></span>交互设计</button>
+            </div>
+            <div class="bf-suggestion-actions"><button type="button" class="bf-ghost-button bf-small-button">跳过</button><button type="button" class="bf-primary-button bf-small-button" data-adopt-button>采纳 3 个</button></div>
+          </div>
+        </section>
+
+        <div class="bf-result-summary" aria-label="部分移动结果">
+          <div class="bf-summary-row"><i data-lucide="circle-check" aria-hidden="true"></i><span>React 19 全新特性解析</span><span class="bf-summary-target">→ 前端开发</span></div>
+          <div class="bf-summary-row"><i data-lucide="circle-check" aria-hidden="true"></i><span>Figma 变量设计系统教程</span><span class="bf-summary-target">→ 设计灵感</span></div>
+          <div class="bf-summary-row"><i data-lucide="minus-circle" aria-hidden="true"></i><span>这期内容我真的想了很久</span><span class="bf-summary-target">保留</span></div>
+        </div>
+        <div class="bf-close-row"><button type="button" class="bf-ghost-button">关闭</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bf-stage" data-stage="dialog" aria-label="智能整理前置提示设计稿">
+    <div>
+      <div class="bf-dialog-picker" aria-label="选择提示场景">
+        <button type="button" data-dialog-button="default" aria-pressed="true">未设默认收藏夹</button>
+        <button type="button" data-dialog-button="tags" aria-pressed="false">没有标签</button>
+        <button type="button" data-dialog-button="quota" aria-pressed="false">免费配额不足</button>
+      </div>
+      <div class="bf-window bf-dialog-scene">
+        <div class="bf-popup-body bf-dialog-background">
+          <header class="bf-app-header"><h1 class="bf-app-title">收藏夹</h1><div class="bf-icon-row"><span class="bf-icon-button"><i data-lucide="settings" aria-hidden="true"></i></span></div></header>
+          <div class="bf-favorite-panel"><div class="bf-section-label"><span>选择收藏夹</span></div><div class="bf-favorites"><span class="bf-favorite-chip"># 稍后再看</span><span class="bf-favorite-chip"># 前端开发</span><span class="bf-favorite-chip"># 设计灵感</span></div></div>
+          <div class="bf-keyword-panel"><div class="bf-section-label"><span>标签</span></div><div class="bf-keyword-row"><span>前端开发</span><span class="bf-tags"><span class="bf-tag">React</span></span></div></div>
+          <div class="bf-actions"><div class="bf-smart-button"><i data-lucide="sparkles" aria-hidden="true"></i><span class="bf-smart-copy"><span class="bf-smart-title">智能整理</span><span class="bf-smart-description">自动把默认收藏夹的视频归类到合适的收藏夹</span></span></div></div>
+        </div>
+        <div class="bf-dialog-scrim">
+          <div class="bf-dialog">
+            <div class="bf-dialog-copy is-active" data-dialog-copy="default"><h2>先设置默认收藏夹</h2><p>智能整理会处理<strong>默认收藏夹</strong>中的视频。在收藏夹标签上点击星标即可设置。</p><div class="bf-dialog-actions"><button type="button" class="bf-ghost-button">取消</button><button type="button" class="bf-primary-button">去设置</button></div></div>
+            <div class="bf-dialog-copy" data-dialog-copy="tags"><h2>本次将全部由 AI 分析</h2><p>还没有标签。本次整理完成后，可以把确认过的归类沉淀为标签，下次更快、更省配额。</p><div class="bf-dialog-actions"><button type="button" class="bf-ghost-button">取消</button><button type="button" class="bf-primary-button">开始整理</button></div></div>
+            <div class="bf-dialog-copy" data-dialog-copy="quota"><h2>免费配额不足</h2><p>今日免费额度已用完。可以明天再试，或配置自己的 AI 服务。</p><div class="bf-dialog-actions"><button type="button" class="bf-ghost-button">取消</button><button type="button" class="bf-primary-button">配置自己的 AI</button></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (() => {
+      const root = document.getElementById('bf-ui-draft')
+      if (!root) return
+
+      const activateStage = (name) => {
+        root.querySelectorAll('[data-stage]').forEach((stage) => {
+          stage.classList.toggle('is-active', stage.dataset.stage === name)
+        })
+        root.querySelectorAll('[data-stage-button]').forEach((button) => {
+          button.setAttribute('aria-pressed', String(button.dataset.stageButton === name))
+        })
+      }
+
+      root.querySelectorAll('[data-stage-button]').forEach((button) => {
+        button.addEventListener('click', () => activateStage(button.dataset.stageButton))
+      })
+
+      const rulesButton = root.querySelector('#bf-rules-button')
+      const rulesPopover = root.querySelector('#bf-rules-popover')
+      rulesButton?.addEventListener('click', () => {
+        const shouldOpen = rulesPopover.hasAttribute('hidden')
+        rulesPopover.toggleAttribute('hidden', !shouldOpen)
+        rulesButton.setAttribute('aria-expanded', String(shouldOpen))
+      })
+
+      root.querySelectorAll('[data-favorite-chip] .bf-favorite-star').forEach((button) => {
+        button.addEventListener('click', (event) => {
+          event.stopPropagation()
+          root.querySelectorAll('[data-favorite-chip]').forEach((chip) => {
+            chip.classList.remove('is-default')
+            chip.querySelector('.bf-default-badge')?.remove()
+            chip.querySelector('.bf-favorite-star')?.setAttribute('aria-label', '设为默认收藏夹')
+          })
+          const chip = button.closest('[data-favorite-chip]')
+          chip.classList.add('is-default')
+          const badge = document.createElement('span')
+          badge.className = 'bf-default-badge'
+          badge.textContent = '默认'
+          chip.querySelector('span')?.after(badge)
+          button.setAttribute('aria-label', '取消默认收藏夹')
+        })
+      })
+
+      const updateTagCount = () => {
+        const checked = root.querySelectorAll('[data-tag-check]:checked').length
+        const count = root.querySelector('#bf-tag-count')
+        if (count) count.textContent = String(checked)
+      }
+
+      root.querySelectorAll('[data-tag-check]').forEach((checkbox) => checkbox.addEventListener('change', updateTagCount))
+      root.querySelector('#bf-select-tags')?.addEventListener('click', () => {
+        root.querySelectorAll('[data-tag-check]').forEach((checkbox) => { checkbox.checked = true })
+        updateTagCount()
+      })
+
+      root.querySelectorAll('.bf-candidate').forEach((button) => {
+        button.addEventListener('click', () => {
+          button.setAttribute('aria-pressed', String(button.getAttribute('aria-pressed') !== 'true'))
+          const group = button.closest('.bf-folder-suggestion')
+          const count = group.querySelectorAll('.bf-candidate[aria-pressed="true"]').length
+          const adoptButton = group.querySelector('[data-adopt-button]')
+          if (adoptButton) {
+            adoptButton.textContent = `采纳 ${count} 个`
+            adoptButton.disabled = count === 0
+          }
+        })
+      })
+
+      root.querySelector('#bf-close-suggestion')?.addEventListener('click', () => {
+        root.querySelector('#bf-suggestion-card')?.setAttribute('hidden', '')
+      })
+
+      const activateDialog = (name) => {
+        root.querySelectorAll('[data-dialog-copy]').forEach((copy) => copy.classList.toggle('is-active', copy.dataset.dialogCopy === name))
+        root.querySelectorAll('[data-dialog-button]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.dialogButton === name)))
+      }
+
+      root.querySelectorAll('[data-dialog-button]').forEach((button) => button.addEventListener('click', () => activateDialog(button.dataset.dialogButton)))
+    })()
+  </script>
+</div>
