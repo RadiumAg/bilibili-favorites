@@ -11,8 +11,7 @@ const HYBRID_STATS_KEY = 'hybrid_organize_stats'
 const TAG_HIT_COUNTS_KEY = 'tag_hit_counts'
 const TAG_SUGGESTION_ADOPTED_KEY = 'tag_suggestion_adopted'
 
-const canUseChromeStorage = () =>
-  typeof chrome !== 'undefined' && chrome.storage?.local != null
+const canUseChromeStorage = () => typeof chrome !== 'undefined' && chrome.storage?.local != null
 
 const getLocalValues = async <T extends Record<string, unknown>>(keys: string[]): Promise<T> => {
   if (!canUseChromeStorage()) return {} as T
@@ -46,9 +45,7 @@ const recordHybridOrganizeRun = async (input: {
   })
 }
 
-const recordTagHits = async (
-  hits: Array<{ favoriteId: number; matchedTags: string[] }>,
-) => {
+const recordTagHits = async (hits: Array<{ favoriteId: number; matchedTags: string[] }>) => {
   if (!canUseChromeStorage() || hits.length === 0) return
 
   const values = await getLocalValues<{ tag_hit_counts?: TagHitCounts }>([TAG_HIT_COUNTS_KEY])
@@ -80,10 +77,5 @@ const incrementTagSuggestionAdopted = async (count: number) => {
   })
 }
 
-export {
-  getTagHitCounts,
-  incrementTagSuggestionAdopted,
-  recordHybridOrganizeRun,
-  recordTagHits,
-}
+export { getTagHitCounts, incrementTagSuggestionAdopted, recordHybridOrganizeRun, recordTagHits }
 export type { HybridOrganizeStats, TagHitCounts }

@@ -48,12 +48,7 @@ describe('matchVideosByTags', () => {
   })
 
   it('无命中时进入 AI 且没有候选收藏夹', () => {
-    const result = matchVideosByTags(
-      [{ id: 12, title: '旅行纪录片' }],
-      favorites,
-      keywords,
-      1,
-    )
+    const result = matchVideosByTags([{ id: 12, title: '旅行纪录片' }], favorites, keywords, 1)
 
     expect(result.unresolved[0].candidateFavoriteIds).toEqual([])
   })

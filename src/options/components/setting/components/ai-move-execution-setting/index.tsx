@@ -21,7 +21,7 @@ const OPTIONS: Array<{
   {
     value: 'auto',
     title: '自动执行',
-    description: '分析完成后直接按 AI 结果移动',
+    description: '分析完成后直接按标签与 AI 结果移动',
     icon: Zap,
   },
 ]
@@ -49,9 +49,11 @@ const AIMoveExecutionSetting: React.FC = () => {
     <section className="rounded-xl border border-[#BF00FF]/20 bg-white p-4 shadow-sm">
       <div className="mb-3">
         <h3 id="ai-move-execution-title" className="text-sm font-semibold text-gray-900">
-          AI 整理执行方式
+          智能整理执行方式
         </h3>
-        <p className="mt-1 text-xs leading-5 text-gray-500">选择 AI 给出分类结果后的处理方式。</p>
+        <p className="mt-1 text-xs leading-5 text-gray-500">
+          选择标签与 AI 生成整理结果后的处理方式。
+        </p>
       </div>
 
       <div

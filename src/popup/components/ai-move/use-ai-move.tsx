@@ -793,7 +793,7 @@ const useAIMove = () => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-3"
       role="dialog"
       aria-modal="true"
-      aria-label={stage === 'reviewing' ? '确认 AI 整理结果' : '智能整理进度'}
+      aria-label={stage === 'reviewing' ? '确认智能整理结果' : '智能整理进度'}
     >
       {stage === 'reviewing' && sourceFavoriteId != null ? (
         <ReviewPanel
@@ -845,7 +845,10 @@ const useAIMove = () => {
                     indicatorClassName="bg-gradient-to-r from-[#BF00FF] to-[#FF1493]"
                   />
                   {progress.currentTitle && (
-                    <p className="mt-2 truncate text-center text-xs text-gray-500" title={progress.currentTitle}>
+                    <p
+                      className="mt-2 truncate text-center text-xs text-gray-500"
+                      title={progress.currentTitle}
+                    >
                       {progress.currentTitle}
                     </p>
                   )}
@@ -862,7 +865,10 @@ const useAIMove = () => {
                       {result.source === 'tag' ? (
                         <Tag className="h-3.5 w-3.5 shrink-0 text-[#A000D9]" aria-hidden={true} />
                       ) : (
-                        <Sparkles className="h-3.5 w-3.5 shrink-0 text-[#D6006F]" aria-hidden={true} />
+                        <Sparkles
+                          className="h-3.5 w-3.5 shrink-0 text-[#D6006F]"
+                          aria-hidden={true}
+                        />
                       )}
                       <span className="min-w-0 flex-1 truncate" title={result.videoTitle}>
                         {result.videoTitle}
@@ -875,7 +881,12 @@ const useAIMove = () => {
                 </div>
               )}
 
-              <Button type="button" onClick={cancelMove} variant="outline" className="mt-4 min-h-11">
+              <Button
+                type="button"
+                onClick={cancelMove}
+                variant="outline"
+                className="mt-4 min-h-11"
+              >
                 取消分析
               </Button>
             </div>
@@ -898,7 +909,10 @@ const useAIMove = () => {
                   indicatorClassName="bg-[#BF00FF]"
                 />
                 {progress.currentTitle && (
-                  <p className="mt-2 truncate text-center text-xs text-gray-500" title={progress.currentTitle}>
+                  <p
+                    className="mt-2 truncate text-center text-xs text-gray-500"
+                    title={progress.currentTitle}
+                  >
                     {progress.currentTitle}
                   </p>
                 )}
@@ -925,7 +939,12 @@ const useAIMove = () => {
                 ))}
               </div>
 
-              <Button type="button" onClick={cancelMove} variant="outline" className="mt-4 min-h-11">
+              <Button
+                type="button"
+                onClick={cancelMove}
+                variant="outline"
+                className="mt-4 min-h-11"
+              >
                 停止移动
               </Button>
             </div>
@@ -977,7 +996,12 @@ const useAIMove = () => {
                 ))}
               </div>
 
-              <Button type="button" onClick={closeFinished} variant="outline" className="mt-4 min-h-11">
+              <Button
+                type="button"
+                onClick={closeFinished}
+                variant="outline"
+                className="mt-4 min-h-11"
+              >
                 关闭
               </Button>
             </div>

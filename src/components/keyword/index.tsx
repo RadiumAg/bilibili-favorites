@@ -34,7 +34,7 @@ const Keyword: React.FC<KeywordProps> = ({ className, showStats = false }) => {
         {showStats
           ? currentFavoriteTag?.value.map((keyword) => {
               const favoriteId = currentFavoriteTag.favoriteDataId
-              const hitCount = hitCounts[`${favoriteId}:${keyword.value}`] ?? 0
+              const hitCount = hitCounts[`${favoriteId}:${keyword.value.trim()}`] ?? 0
               const lowEfficiency =
                 hitCount === 0 &&
                 keyword.createdAt != null &&

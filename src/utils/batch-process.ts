@@ -1,8 +1,6 @@
-import { FavoriteMedia } from './api'
-
-type BatchOptions = {
+type BatchOptions<T> = {
   maxSize: number // 最大处理数量
-  processCallback: (videos: FavoriteMedia[]) => Promise<void> | void
+  processCallback: (videos: T[]) => Promise<void> | void
 }
 
 /**
@@ -10,7 +8,7 @@ type BatchOptions = {
  * @param videos
  * @param batchOptions
  */
-export const batchProcess = async (videos: FavoriteMedia[], batchOptions: BatchOptions) => {
+export const batchProcess = async <T>(videos: T[], batchOptions: BatchOptions<T>) => {
   if (videos.length === 0) return
   const length = videos.length
   let index = 0

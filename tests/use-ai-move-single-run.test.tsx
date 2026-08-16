@@ -238,7 +238,7 @@ describe('useAIMove single run', () => {
     })
 
     expect(mocks.queryAndSendMessage).not.toHaveBeenCalled()
-    expect(result.current.isLoadingElement?.props['aria-label']).toBe('确认 AI 整理结果')
+    expect(result.current.isLoadingElement?.props['aria-label']).toBe('确认智能整理结果')
 
     act(() => {
       result.current.handleTargetChange(101, 3)

@@ -19,9 +19,10 @@ const AIMove: React.FC<AIMoveProps> = ({ onRequestDefaultFavorite }) => {
       keyword: state.keyword,
     })),
   )
-  const [preflightKind, setPreflightKind] = React.useState<
-    Extract<PreflightDialogKind, 'missing-default' | 'no-tags'> | null
-  >(null)
+  const [preflightKind, setPreflightKind] = React.useState<Extract<
+    PreflightDialogKind,
+    'missing-default' | 'no-tags'
+  > | null>(null)
 
   const startOrganize = useMemoizedFn(() => {
     setPreflightKind(null)

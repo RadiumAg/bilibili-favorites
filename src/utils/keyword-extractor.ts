@@ -122,9 +122,9 @@ function calculateIDF(documents: string[][]): Map<string, number> {
     })
   })
 
-  // 计算 IDF
+  // 使用平滑 IDF，避免批内共同主题词因分数为 0 被丢弃。
   docFreq.forEach((freq, word) => {
-    idf.set(word, Math.log(docCount / freq))
+    idf.set(word, Math.log((docCount + 1) / (freq + 1)) + 1)
   })
 
   return idf

@@ -25,7 +25,10 @@ const Popup: React.FC<PopupProps> = (props) => {
   }, [])
 
   const handleRequestDefaultFavorite = useMemoizedFn(() => {
-    document.querySelector('[data-tour="favorites"]')?.scrollIntoView({ behavior: 'smooth' })
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    document
+      .querySelector('[data-tour="favorites"]')
+      ?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' })
     setHighlightDefaultAction(true)
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
     highlightTimerRef.current = setTimeout(() => setHighlightDefaultAction(false), 2400)

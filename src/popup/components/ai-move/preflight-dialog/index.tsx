@@ -33,8 +33,7 @@ const CONTENT: Record<
   },
   'no-tags': {
     title: '本次将全部由 AI 分析',
-    description:
-      '还没有标签。本次整理完成后，可以把确认过的归类沉淀为标签，下次更快、更省配额。',
+    description: '还没有标签。本次整理完成后，可以把确认过的归类沉淀为标签，下次更快、更省配额。',
     primaryLabel: '开始整理',
   },
   'quota-empty': {
@@ -62,11 +61,15 @@ const PreflightDialog: React.FC<PreflightDialogProps> = ({
         primaryLabel: '配置自己的 AI',
       }
     : CONTENT[kind]
-  const Icon = kind === 'missing-default' ? Star : isWarning || kind === 'quota-empty' ? AlertCircle : Sparkles
+  const Icon =
+    kind === 'missing-default' ? Star : isWarning || kind === 'quota-empty' ? AlertCircle : Sparkles
 
   return (
-    <AlertDialog open={true} onOpenChange={(open) => !open && onCancel()}>
-      <AlertDialogContent className="max-w-sm gap-3 motion-reduce:animate-none">
+    <AlertDialog open={true}>
+      <AlertDialogContent
+        className="max-w-sm gap-3 motion-reduce:animate-none"
+        onEscapeKeyDown={onCancel}
+      >
         <AlertDialogHeader className="text-left">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#BF00FF]/10 text-[#A000D9]">
             <Icon className="h-5 w-5" aria-hidden={true} />

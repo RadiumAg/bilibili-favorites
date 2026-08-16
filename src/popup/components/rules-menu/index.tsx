@@ -50,10 +50,7 @@ const RulesMenu: React.FC = () => {
             onClick={handleOpenKeywordManager}
             className="flex min-h-11 w-full items-start gap-2.5 rounded-md px-3 py-2 text-left transition-colors duration-200 hover:bg-[#BF00FF]/5 focus-visible:bg-[#BF00FF]/5"
           >
-            <WandSparkles
-              className="mt-0.5 h-4 w-4 shrink-0 text-[#D6006F]"
-              aria-hidden={true}
-            />
+            <WandSparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#D6006F]" aria-hidden={true} />
             <span>
               <span className="block text-xs font-medium text-gray-800">自动创建标签</span>
               <span className="mt-0.5 block text-[11px] leading-4 text-gray-500">

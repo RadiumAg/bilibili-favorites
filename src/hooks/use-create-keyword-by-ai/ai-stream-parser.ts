@@ -162,7 +162,7 @@ export function addKeywordToGlobalData(options: StreamParserOptions, keyword: st
   if (targetKeyword == null) {
     targetKeyword = {
       favoriteDataId: +favKey,
-      value: [{ id: uuid(), value: keyword }],
+      value: [{ id: uuid(), value: keyword, createdAt: Date.now() }],
     }
     setGlobalData({
       keyword: [...globalData.keyword, targetKeyword],
@@ -171,7 +171,10 @@ export function addKeywordToGlobalData(options: StreamParserOptions, keyword: st
     // 检查关键词是否已存在，避免重复
     const exists = targetKeyword.value.some((k) => k.value === keyword)
     if (!exists) {
-      targetKeyword.value = [...targetKeyword.value, { id: uuid(), value: keyword }]
+      targetKeyword.value = [
+        ...targetKeyword.value,
+        { id: uuid(), value: keyword, createdAt: Date.now() },
+      ]
       setGlobalData({
         keyword: [...globalData.keyword],
       })

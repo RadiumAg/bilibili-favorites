@@ -72,16 +72,16 @@ const ResultCard: React.FC<ResultCardProps> = ({
           </h3>
 
           {result.source === 'tag' ? (
-            <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]" aria-label="标签命中依据">
+            <div
+              className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]"
+              aria-label="标签命中依据"
+            >
               <span className="inline-flex items-center gap-1 font-medium text-[#A000D9]">
                 <Tag className="h-3 w-3" aria-hidden={true} />
                 命中标签
               </span>
               {visibleTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-[#BF00FF]/10 px-2 py-0.5 text-[#A000D9]"
-                >
+                <span key={tag} className="rounded-full bg-[#BF00FF]/10 px-2 py-0.5 text-[#A000D9]">
                   {tag}
                 </span>
               ))}
@@ -94,10 +94,7 @@ const ResultCard: React.FC<ResultCardProps> = ({
             </div>
           ) : (
             <p className="mt-1 flex items-start gap-1.5 text-xs leading-5 text-gray-500">
-              <Sparkles
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF1493]"
-                aria-hidden={true}
-              />
+              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF1493]" aria-hidden={true} />
               <span>{result.reason || 'AI 未提供推荐理由'}</span>
               {result.manuallyAdjusted && (
                 <span className="shrink-0 text-[11px] text-gray-400">已手动调整</span>
@@ -119,7 +116,10 @@ const ResultCard: React.FC<ResultCardProps> = ({
                 {sourceFavorite?.title || '默认收藏夹'}
               </span>
             </div>
-            <ArrowRight className="mx-auto hidden h-4 w-4 text-gray-400 sm:block" aria-hidden={true} />
+            <ArrowRight
+              className="mx-auto hidden h-4 w-4 text-gray-400 sm:block"
+              aria-hidden={true}
+            />
             <div className="min-w-0">
               <label id={selectLabelId} className="sr-only">
                 为“{result.videoTitle}”选择目标收藏夹

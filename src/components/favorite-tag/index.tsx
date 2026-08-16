@@ -41,7 +41,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
       return (
         <div
           key={data.id}
-            data-favorite-id={data.id}
+          data-favorite-id={data.id}
           onMouseDown={(event) => {
             if (event.button === 0) handleMouseDown(data.id)
           }}
@@ -90,9 +90,13 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
               }}
               className={cn(
                 'flex h-7 w-7 items-center justify-center rounded-md text-gray-300 opacity-0 transition-colors duration-200 hover:bg-[#FF1493]/10 hover:text-[#D6006F] group-hover:opacity-100 group-focus-within:opacity-100',
-                highlightDefaultAction &&
-                  'opacity-100 motion-safe:animate-pulse text-[#D6006F]',
+                highlightDefaultAction && 'opacity-100 motion-safe:animate-pulse text-[#D6006F]',
               )}
+              style={
+                highlightDefaultAction
+                  ? { animationDuration: '600ms', animationIterationCount: 3 }
+                  : undefined
+              }
               aria-label={`将“${data.title}”设为默认收藏夹`}
               title="设为默认收藏夹"
             >
