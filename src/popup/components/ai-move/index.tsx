@@ -1,64 +1,87 @@
 import React from 'react'
-import { Button } from '@/components/ui/button'
-import { toast } from '@/hooks'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { useAIMove } from './use-ai-move'
+import { Loader2, Sparkles } from 'lucide-react'
 import { useMemoizedFn } from 'ahooks'
-import { Bot } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
+import { Button } from '@/components/ui/button'
+import { useGlobalConfig } from '@/store/global-data'
+import { useAIMove } from './use-ai-move'
+import PreflightDialog, { type PreflightDialogKind } from './preflight-dialog'
 
-const AIMove: React.FC = () => {
-  const { handleAIMove, isLoadingElement } = useAIMove()
-  const pendingConfirmRef = React.useRef(false)
+type AIMoveProps = {
+  onRequestDefaultFavorite?: () => void
+}
+
+const AIMove: React.FC<AIMoveProps> = ({ onRequestDefaultFavorite }) => {
+  const { handleAIMove, isLoadingElement, isBusy } = useAIMove()
+  const { defaultFavoriteId, keyword } = useGlobalConfig(
+    useShallow((state) => ({
+      defaultFavoriteId: state.defaultFavoriteId,
+      keyword: state.keyword,
+    })),
+  )
+  const [preflightKind, setPreflightKind] = React.useState<
+    Extract<PreflightDialogKind, 'missing-default' | 'no-tags'> | null
+  >(null)
+
+  const startOrganize = useMemoizedFn(() => {
+    setPreflightKind(null)
+    handleAIMove().catch(() => {})
+  })
 
   const handleClick = useMemoizedFn(() => {
-    if (!pendingConfirmRef.current) {
-      pendingConfirmRef.current = true
-      toast({
-        title: 'Token 消耗提醒',
-        description:
-          '此操作会将所有视频标题发送给 AI 进行分析，可能消耗大量 Token。再次点击确认执行。',
-      })
-      setTimeout(() => {
-        pendingConfirmRef.current = false
-      }, 5000)
+    if (defaultFavoriteId == null) {
+      setPreflightKind('missing-default')
       return
     }
-    pendingConfirmRef.current = false
-    handleAIMove()
+
+    const hasAnyTags = keyword.some((item) => item.value.some((tag) => tag.value.trim().length > 0))
+    if (!hasAnyTags) {
+      setPreflightKind('no-tags')
+      return
+    }
+
+    startOrganize()
+  })
+
+  const handlePrimary = useMemoizedFn(() => {
+    if (preflightKind === 'missing-default') {
+      setPreflightKind(null)
+      onRequestDefaultFavorite?.()
+      return
+    }
+    startOrganize()
   })
 
   return (
-    <div className="flex items-center gap-1">
+    <>
       <Button
+        type="button"
         onClick={handleClick}
-        size="sm"
-        className="bg-b-primary hover:bg-b-primary-hover h-7 transition-colors duration-200"
-        title="AI 智能分类视频到对应收藏夹（会消耗较多 Token）"
+        disabled={isBusy}
+        className="min-h-11 w-full justify-start rounded-lg bg-gradient-to-r from-[#BF00FF] to-[#FF1493] px-3 text-left text-white shadow-sm transition-colors duration-200 hover:from-[#A000D9] hover:to-[#D6006F] focus-visible:ring-[#BF00FF]"
+        title="自动把默认收藏夹的视频归类到合适的收藏夹"
       >
-        <Bot className="h-4 w-4" aria-hidden={true} />
-        AI 整理
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs flex items-center justify-center cursor-pointer transition-colors duration-200"
-              onClick={(event) => {
-                event.stopPropagation()
-              }}
-              aria-label="帮助说明"
-            >
-              ?
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 text-sm">
-            <p className="text-gray-700">
-              大模型根据视频标题与收藏夹名称自动进行智能整理，比较消耗 Token。
-            </p>
-          </PopoverContent>
-        </Popover>
+        {isBusy ? (
+          <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden={true} />
+        ) : (
+          <Sparkles className="h-4 w-4" aria-hidden={true} />
+        )}
+        <span className="flex min-w-0 flex-col items-start leading-tight">
+          <span className="text-sm font-semibold">智能整理</span>
+          <span className="truncate text-[11px] font-normal text-white/80">
+            自动把默认收藏夹的视频归类到合适的收藏夹
+          </span>
+        </span>
       </Button>
 
       {isLoadingElement}
-    </div>
+
+      <PreflightDialog
+        kind={preflightKind}
+        onCancel={() => setPreflightKind(null)}
+        onPrimary={handlePrimary}
+      />
+    </>
   )
 }
 

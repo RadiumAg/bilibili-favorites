@@ -31,7 +31,10 @@ type DataContextType = {
   cookie: string | undefined
   activeKey: number | undefined
   defaultFavoriteId: number | undefined
-  keyword: { value: { id: string; value: string }[]; favoriteDataId: number }[]
+  keyword: {
+    value: { id: string; value: string; createdAt?: number }[]
+    favoriteDataId: number
+  }[]
   petEnabled: boolean
   // WebDAV 云同步配置（存 chrome.storage.local，不参与 WebDAV 同步）
   webdavConfig?: WebDAVConfig

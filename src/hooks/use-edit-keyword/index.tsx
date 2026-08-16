@@ -53,7 +53,10 @@ const useEditKeyword = () => {
         dataContext.keyword.push(targetkeyword)
       }
 
-      targetkeyword.value = [...targetkeyword?.value, { value: inputValue, id: uuid() }]
+      targetkeyword.value = [
+        ...targetkeyword.value,
+        { value: inputValue.trim(), id: uuid(), createdAt: Date.now() },
+      ]
 
       inputValue = ''
 
@@ -72,10 +75,10 @@ const useEditKeyword = () => {
   })
 
   const tagElementArray = React.useMemo(() => {
-    return currentFavoriteTag?.value.map((keyValue, index) => {
+    return currentFavoriteTag?.value.map((keyValue) => {
       return (
         <span
-          key={index}
+          key={keyValue.id}
           contentEditable={false}
           className={
             'text-white p-1 cursor-pointer flex items-center relative bg-b-primary rounded-sm'
@@ -106,7 +109,13 @@ const useEditKeyword = () => {
     })
   }, [currentFavoriteTag?.value, handDelete])
 
-  return { keyData: dataContext.keyword, tagElementArray, handleKeyDown }
+  return {
+    keyData: dataContext.keyword,
+    currentFavoriteTag,
+    tagElementArray,
+    handleKeyDown,
+    handDelete,
+  }
 }
 
 export { useEditKeyword }

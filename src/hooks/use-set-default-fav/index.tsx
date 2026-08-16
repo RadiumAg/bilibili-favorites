@@ -1,9 +1,6 @@
 import React from 'react'
-import lottie from 'lottie-web'
 import { useLongPress, useMemoizedFn } from 'ahooks'
 import { useGlobalConfig } from '@/store/global-data'
-
-const starJson = new URL('@/assets/lottile/star.json', import.meta.url).href
 
 const useSetDefaultFav = () => {
   const delayNumber = 300
@@ -11,35 +8,25 @@ const useSetDefaultFav = () => {
   const [isLongPress, setLongPress] = React.useState(false)
   const maskDomRef = React.useRef<HTMLDivElement>(null)
   const domRef = React.useRef<HTMLDivElement>(null)
-  const [starDomRef, setStarDomRef] = React.useState<HTMLDivElement | null>(null)
   const [clickTagId, setClickTagId] = React.useState<number | undefined>()
   const clickTagIdRef = React.useRef<number | undefined>(undefined)
 
   const pendingElement = React.useMemo(
     () => (
       <div
-        className="absolute w-full h-full bg-slate-500 opacity-10 left-0 pointer-events-none"
+        className="pointer-events-none absolute left-0 h-full w-full bg-slate-500 opacity-10"
         ref={maskDomRef}
       />
     ),
     [],
   )
-  const starElement = React.useMemo(
-    () => (
-      <div
-        className="w-[20px] h-[20px]"
-        ref={(domRef) => {
-          if (domRef == null) return
-
-          setStarDomRef(domRef)
-        }}
-      ></div>
-    ),
-    [],
-  )
 
   const handleClick = useMemoizedFn((key: number) => {
-    setGlobalData?.({ activeKey: key })
+    setGlobalData({ activeKey: key })
+  })
+
+  const setDefaultFavorite = useMemoizedFn((id: number) => {
+    setGlobalData({ defaultFavoriteId: id, activeKey: id })
   })
 
   const handleMouseDown = useMemoizedFn((id: number) => {
@@ -65,61 +52,47 @@ const useSetDefaultFav = () => {
         clickTagIdRef.current = undefined
       },
       onClick(event) {
-        const target = event.target as HTMLDivElement
-        if (target.dataset.id == null) return
-
-        handleClick(+target.dataset.id)
+        const target = event.target as HTMLElement
+        const favoriteElement = target.closest<HTMLElement>('[data-favorite-id]')
+        if (favoriteElement?.dataset.favoriteId == null) return
+        handleClick(Number(favoriteElement.dataset.favoriteId))
       },
     },
   )
 
   React.useEffect(() => {
-    if (clickTagId == null) return
-    if (isLongPress === false) return
+    if (clickTagId == null || !isLongPress) return
 
     let process = 0
 
     const runProcess = () => {
       requestAnimationFrame(() => {
-        if (clickTagIdRef.current == null) {
-          return
-        }
+        if (clickTagIdRef.current == null) return
 
         if (process >= 100) {
-          setGlobalData({ defaultFavoriteId: clickTagId })
-          maskDomRef.current!.style.width = `${0}%`
+          setDefaultFavorite(clickTagId)
+          if (maskDomRef.current) maskDomRef.current.style.width = '0%'
           return
         }
 
-        maskDomRef.current!.style.width = `${(process += 5)}%`
+        process += 5
+        if (maskDomRef.current) maskDomRef.current.style.width = `${process}%`
         runProcess()
       })
     }
 
     runProcess()
-  }, [clickTagId, isLongPress, setGlobalData])
-
-  React.useEffect(() => {
-    if (starDomRef == null) return
-
-    lottie.loadAnimation({
-      renderer: 'svg',
-      loop: false,
-      autoplay: true,
-      path: starJson,
-      container: starDomRef,
-    })
-  }, [starDomRef])
+  }, [clickTagId, isLongPress, setDefaultFavorite])
 
   return {
     domRef,
     isLongPress,
     clickTagId,
     pendingElement,
-    starElement,
-
     handleMouseDown,
     handleMouseUp,
+    handleClick,
+    setDefaultFavorite,
   }
 }
 

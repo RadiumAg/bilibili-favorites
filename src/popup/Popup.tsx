@@ -1,12 +1,12 @@
 import React from 'react'
 import { FavoriteTag, Keyword, StarInvitation } from '@/components'
 import { Button } from '@/components/ui/button'
-import { Move, LoginCheck, AutoCreateKeyword, AIMove, DragManagerButton } from './components'
+import { LoginCheck, AIMove, DragManagerButton, RulesMenu } from './components'
 import { Toaster } from '@/components/ui/toaster'
 import { Settings, HelpCircle, RefreshCwIcon, Github } from 'lucide-react'
 import Tourist, { TouristRef, useTourist } from './components/tourist'
 import { cn } from '@/lib/utils'
-import { ButtonGroup } from '@/components/ui/button-group'
+import { useMemoizedFn } from 'ahooks'
 
 interface PopupProps {
   isSidePanel?: boolean
@@ -15,6 +15,21 @@ interface PopupProps {
 const Popup: React.FC<PopupProps> = (props) => {
   const { isSidePanel = false } = props
   const touristRef = React.useRef<TouristRef>(null)
+  const [highlightDefaultAction, setHighlightDefaultAction] = React.useState(false)
+  const highlightTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  React.useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+    }
+  }, [])
+
+  const handleRequestDefaultFavorite = useMemoizedFn(() => {
+    document.querySelector('[data-tour="favorites"]')?.scrollIntoView({ behavior: 'smooth' })
+    setHighlightDefaultAction(true)
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+    highlightTimerRef.current = setTimeout(() => setHighlightDefaultAction(false), 2400)
+  })
 
   const handleOpenSettings = () => {
     window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
@@ -84,7 +99,10 @@ const Popup: React.FC<PopupProps> = (props) => {
         </h3>
 
         <div data-tour="favorites">
-          <FavoriteTag className={isSidePanel ? 'max-h-[300px]' : 'h-[200px]'} />
+          <FavoriteTag
+            className={isSidePanel ? 'max-h-[300px]' : 'h-[200px]'}
+            highlightDefaultAction={highlightDefaultAction}
+          />
         </div>
 
         <h3 className="text-lg font-bold mt-2 mb-2 text-b-text-primary">标签</h3>
@@ -96,13 +114,12 @@ const Popup: React.FC<PopupProps> = (props) => {
         </div>
       </div>
 
-      <div className="flex items-center mt-2 gap-2 w-full flex-wrap" data-tour="actions">
-        <ButtonGroup>
-          {/* <Move /> */}
-          <AIMove />
-          <AutoCreateKeyword />
-        </ButtonGroup>
-        <DragManagerButton />
+      <div className="mt-2 w-full space-y-2" data-tour="actions">
+        <AIMove onRequestDefaultFavorite={handleRequestDefaultFavorite} />
+        <div className="flex w-full gap-2">
+          <RulesMenu />
+          <DragManagerButton />
+        </div>
       </div>
 
       <LoginCheck />

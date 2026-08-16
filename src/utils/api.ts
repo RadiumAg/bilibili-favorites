@@ -19,7 +19,11 @@ type AIConfig = {
   model?: string
   extraParams?: Record<string, any> // 额外参数，会被塞入请求 body
 }
-type AIMoveInput = { id: number; title: string }[]
+type AIMoveInput = Array<{
+  id: number
+  title: string
+  candidateFavorites?: string[]
+}>
 
 type AIMoveConfig = {
   apiKey: string
@@ -347,6 +351,56 @@ const fetchAIMove = async (
   })
 }
 
+type QuotaInfo = {
+  daily: { limit: number; used: number; remaining: number }
+  monthly: { limit: number; used: number; remaining: number }
+  rpm: { limit: number; used: number; remaining: number }
+}
+
+type QuotaCheckResult = {
+  hasQuota: boolean
+  quotaInfo: QuotaInfo
+  message: string
+}
+
+const checkAIGateQuota = (): Promise<QuotaCheckResult> => {
+  return new Promise((resolve, reject) => {
+    const port = chrome.runtime.connect({ name: 'ai-stream' })
+    let settled = false
+
+    const finish = (callback: () => void) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeoutId)
+      port.disconnect()
+      callback()
+    }
+
+    const timeoutId = setTimeout(() => {
+      finish(() => reject(new AIError('配额检查超时，请稍后重试')))
+    }, 10000)
+
+    port.onMessage.addListener((response: unknown) => {
+      if (typeof response !== 'object' || response == null) return
+      const message = response as Record<string, unknown>
+
+      if (message.type === 'quota-result') {
+        finish(() => resolve(message.data as QuotaCheckResult))
+      } else if (message.type === 'error') {
+        finish(() => reject(new AIError(String(message.error ?? '配额检查失败'))))
+      }
+    })
+
+    port.onDisconnect.addListener(() => {
+      if (settled) return
+      const detail = chrome.runtime.lastError?.message
+      finish(() => reject(new AIError('配额检查失败', detail)))
+    })
+
+    port.postMessage({ type: MessageEnum.checkAIGateQuota })
+  })
+}
+
 /**
  * 调用 AIGate AI 服务（免费额度）
  */
@@ -575,6 +629,7 @@ export {
   restoreFavoriteResource,
   fetchChatGpt,
   fetchAIMove,
+  checkAIGateQuota,
   fetchFavoritePage,
   fetchAllFavoriteMedias,
   callAIGateAI,
@@ -591,4 +646,6 @@ export type {
   PersonalitySummary,
   FetchAllProgress,
   FavoriteResourceOperationResponse,
+  QuotaCheckResult,
+  QuotaInfo,
 }

@@ -46,7 +46,7 @@ const AIMoveExecutionSetting: React.FC = () => {
   })
 
   return (
-    <section className="rounded-xl border border-[#00AEEC]/20 bg-white p-4 shadow-sm">
+    <section className="rounded-xl border border-[#BF00FF]/20 bg-white p-4 shadow-sm">
       <div className="mb-3">
         <h3 id="ai-move-execution-title" className="text-sm font-semibold text-gray-900">
           AI 整理执行方式
@@ -70,8 +70,8 @@ const AIMoveExecutionSetting: React.FC = () => {
               className={cn(
                 'relative min-h-20 cursor-pointer rounded-lg border p-3 text-left transition-colors duration-200',
                 selected
-                  ? 'border-[#00AEEC] bg-[#00AEEC]/5 shadow-sm shadow-[#00AEEC]/10'
-                  : 'border-gray-200 bg-white hover:border-[#00AEEC]/40 hover:bg-[#00AEEC]/5',
+                  ? 'border-[#BF00FF] bg-[#BF00FF]/5 shadow-sm shadow-[#BF00FF]/10'
+                  : 'border-gray-200 bg-white hover:border-[#BF00FF]/40 hover:bg-[#BF00FF]/5',
               )}
             >
               <input
@@ -83,12 +83,12 @@ const AIMoveExecutionSetting: React.FC = () => {
                 onChange={() => handleModeChange(option.value)}
                 className="peer sr-only"
               />
-              <span className="pointer-events-none absolute inset-0 rounded-lg peer-focus-visible:ring-2 peer-focus-visible:ring-[#00AEEC] peer-focus-visible:ring-offset-2" />
+              <span className="pointer-events-none absolute inset-0 rounded-lg peer-focus-visible:ring-2 peer-focus-visible:ring-[#BF00FF] peer-focus-visible:ring-offset-2" />
               <span className="flex items-start gap-3">
                 <span
                   className={cn(
                     'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-                    selected ? 'bg-[#00AEEC]/15 text-[#008CC1]' : 'bg-gray-100 text-gray-500',
+                    selected ? 'bg-[#BF00FF]/15 text-[#A000D9]' : 'bg-gray-100 text-gray-500',
                   )}
                 >
                   <Icon className="h-4 w-4" aria-hidden={true} />
@@ -106,8 +106,8 @@ const AIMoveExecutionSetting: React.FC = () => {
       </div>
 
       {executionMode === 'auto' && (
-        <p className="mt-3 rounded-md bg-[#FB7299]/10 px-3 py-2 text-xs leading-5 text-[#C94F78]">
-          自动执行会跳过结果确认，请先确认收藏夹名称和标签配置准确。
+        <p className="mt-3 rounded-md bg-[#FF1493]/10 px-3 py-2 text-xs leading-5 text-[#D6006F]">
+          自动执行会跳过结果确认，并直接移动标签命中与 AI 建议的视频。
         </p>
       )}
     </section>

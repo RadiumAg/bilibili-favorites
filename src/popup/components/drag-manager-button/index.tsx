@@ -1,6 +1,6 @@
-import { FC } from 'react'
+import { type FC } from 'react'
+import { Grip } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 const DragManagerButton: FC = () => {
   const handleOpenDragManager = () => {
@@ -8,33 +8,16 @@ const DragManagerButton: FC = () => {
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <Button
-        onClick={handleOpenDragManager}
-        size="sm"
-        className="bg-b-primary hover:bg-b-primary-hover h-7 transition-colors duration-200"
-      >
-        拖拽管理
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              onClick={(event) => {
-                event.stopPropagation()
-              }}
-              className="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs flex items-center justify-center cursor-pointer transition-colors duration-200"
-              aria-label="帮助说明"
-            >
-              ?
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 text-sm">
-            <p className="text-gray-700">
-              可视化拖拽管理收藏夹视频，支持多选视频后拖拽到目标收藏夹进行批量移动。
-            </p>
-          </PopoverContent>
-        </Popover>
-      </Button>
-    </div>
+    <Button
+      type="button"
+      onClick={handleOpenDragManager}
+      variant="outline"
+      className="min-h-11 flex-1 text-xs"
+      title="可视化拖拽管理收藏夹视频"
+    >
+      <Grip className="h-4 w-4" aria-hidden={true} />
+      拖拽管理
+    </Button>
   )
 }
 

@@ -6,7 +6,11 @@ type AIMoveResult = {
   videoId: number
   videoTitle: string
   reason: string
+  source: 'tag' | 'ai'
+  matchedTags?: string[]
   isFallback?: boolean
+  manuallyAdjusted?: boolean
+  selected?: boolean
 }
 
 type FavoriteOption = {

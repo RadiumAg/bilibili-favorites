@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   fetchAIMove: vi.fn(),
   fetchAllFavoriteMedias: vi.fn(),
+  checkAIGateQuota: vi.fn(),
   createStreamAdapter: vi.fn(),
   moveVideosCache: vi.fn(),
   queryAndSendMessage: vi.fn(),
@@ -53,6 +54,7 @@ vi.mock('@/hooks/use-star-invitation', () => ({
 vi.mock('@/utils/api', () => ({
   fetchAIMove: mocks.fetchAIMove,
   fetchAllFavoriteMedias: mocks.fetchAllFavoriteMedias,
+  checkAIGateQuota: mocks.checkAIGateQuota,
 }))
 
 vi.mock('@/utils/tab', () => ({
@@ -127,6 +129,15 @@ describe('useAIMove single run', () => {
     })
     mocks.queryAndSendMessage.mockResolvedValue(undefined)
     mocks.recordSuccessfulUse.mockResolvedValue(undefined)
+    mocks.checkAIGateQuota.mockResolvedValue({
+      hasQuota: true,
+      quotaInfo: {
+        daily: { limit: 100, used: 0, remaining: 100 },
+        monthly: { limit: 0, used: 0, remaining: 0 },
+        rpm: { limit: 10, used: 0, remaining: 10 },
+      },
+      message: '配额充足',
+    })
     storeState = {
       ...storeState,
       favoriteData: [{ id: 1, title: '收藏夹 1', media_count: 1 }],

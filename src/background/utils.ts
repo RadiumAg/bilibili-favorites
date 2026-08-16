@@ -61,11 +61,12 @@ const AIMOVE_SYSTEM_PROMPT = `你是一个视频分类助手。任务：根据�
 
 ### 规则
 1. 仔细阅读视频标题，理解其主题内容
-2. 参考每个收藏夹的标签来理解该收藏夹的分类主题，标签描述了该收藏夹中已有视频的特征
-3. 根据标题内容和收藏夹标签，从「可用的收藏夹列表」中选择最合适的收藏夹
-4. **targetFavorite 必须是可用收藏夹列表中的某个名称，严禁使用列表外的名称**
-5. 如果没有合适的收藏夹，必须返回"默认收藏夹"
-6. 只返回 JSON 数组格式，不要任何解释
+2. 标签代表该收藏夹中已被用户确认的内容特征，归类时必须优先参考
+3. 如果输入项带有 candidateFavorites，表示标题同时命中了这些收藏夹的标签，请优先在候选收藏夹中选择；语义明显不符时仍可选择可用列表中的其他收藏夹
+4. 根据标题内容和收藏夹标签，从「可用的收藏夹列表」中选择最合适的收藏夹
+5. **targetFavorite 必须是可用收藏夹列表中的某个名称，严禁使用列表外的名称**
+6. 如果没有合适的收藏夹，必须返回"默认收藏夹"
+7. 只返回 JSON 数组格式，不要任何解释
 
 ### 返回格式（严格按照此格式）
 [
@@ -110,7 +111,7 @@ const aiMovePrompt = ChatPromptTemplate.fromMessages([
  * 构建 AI 移动分类的 messages
  */
 const buildAIMoveMessages = async (
-  videos: any[],
+  videos: Array<{ id: number; title: string; candidateFavorites?: string[] }>,
   favoriteTitles: string[],
   favoriteTagsMap?: Record<string, string[]>,
 ) => {
@@ -122,7 +123,14 @@ const buildAIMoveMessages = async (
         return `${idx + 1}. ${title}${tagStr}`
       })
       .join('\n'),
-    videoTitles: JSON.stringify(videos.map((v: any) => v.title)),
+    videoTitles: JSON.stringify(
+      videos.map((video) => ({
+        title: video.title,
+        ...(video.candidateFavorites?.length
+          ? { candidateFavorites: video.candidateFavorites }
+          : {}),
+      })),
+    ),
   })
 }
 

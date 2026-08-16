@@ -63,7 +63,7 @@ const Options: React.FC = () => {
                 </div>
 
                 <div className="w-1/2 h-full">
-                  <Keyword className="h-full" />
+                  <Keyword className="h-full" showStats={true} />
                 </div>
               </div>
             </TabWrapper.Content>

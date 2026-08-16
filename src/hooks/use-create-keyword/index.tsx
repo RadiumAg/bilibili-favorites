@@ -134,6 +134,7 @@ const useCreateKeyword = (props: UseCreateKeywordProps = {}) => {
       const newKeywordValues = keywords.map((keyword, index) => ({
         id: `${favKey}-${index}-${Date.now()}`,
         value: keyword,
+        createdAt: Date.now(),
       }))
       if (existingKeywordIndex !== -1) {
         currentData.keyword[existingKeywordIndex].value = newKeywordValues
