@@ -9,6 +9,15 @@ Summary
   5. version timestamp follow the yyyy.MM.dd format
 ```
 
+## 1.2.18 [2026.08.17]
+
+- remove: 移除 AIGate / 内置免费 AI，仅保留用户自定义 AI 配置
+- fix: AI 整理期间不再因无关状态写入覆盖已有标签
+- fix: 本地/AI 自动标签改为保留已有标签，并对 AI 流结果采用完整后一次提交
+- feat: 标签管理新增清除失败标识、清除所有标签、清除所选标签
+- fix: 可视化管理主动刷新收藏夹元数据，并清理失效分页请求与缓存
+- update: 扩展图标更新为紫色经典小电视，版本统一为 1.2.18
+
 ## 1.2.9 [2025.05.06]
 
 - feat: 新增性格分析文档页（personality-analysis.mdx），含 MBTI 画像、AI 模式、常见疑问

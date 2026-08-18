@@ -48,11 +48,9 @@ export const CustomConfigForm: React.FC = () => {
         ? JSON.stringify(globalData.aiConfig.extraParams)
         : '',
       adapter: globalData.aiConfig.adapter || 'qianwen',
-      aigateUserId: globalData.aiConfig.aigateUserId || '',
-      aigateApiKeyId: globalData.aiConfig.aigateApiKeyId || '',
     },
   })
-  const adapter = form.getValues('adapter')
+  const adapter = form.watch('adapter')
   const isExtraParamsDisabled = adapter !== 'custom'
 
   const handleSubmit = useMemoizedFn((data: z.infer<typeof formSchemaType>) => {
@@ -64,8 +62,7 @@ export const CustomConfigForm: React.FC = () => {
           model: data.model,
           baseUrl: data.baseUrl,
           adapter: data.adapter as Adapter,
-          aigateUserId: data.aigateUserId,
-          aigateApiKeyId: data.aigateApiKeyId,
+          configMode: 'custom',
           extraParams: data.extraParams ? JSON.parse(data.extraParams) : {},
         },
       })

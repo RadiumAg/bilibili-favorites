@@ -65,12 +65,9 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 ### 4. 请求去向
 
-AI 请求只会发送到 **你在配置中明确指定的服务商**：
+AI 请求只会发送到 **你在配置中明确指定的服务商**。请求目标为你填写的 `baseUrl`（或所选适配器的内置默认值）。
 
-- **custom 模式**：请求发送到你填入的 `baseUrl`（留空则使用适配器的内置默认值）；
-- **free 模式**：请求发送到 AIGate 免费额度服务（域名为 `*.radiumg.top`）。
-
-扩展作者 **不经营任何中转服务器**；`custom` 模式下扩展作者不会看到请求内容，`free` 模式下请求会经过 AIGate 以便做配额统计与滥用防护。
+v1.2.18 不再提供 AIGate / 内置免费 AI 中转，因此扩展不会主动把 AI 请求发往 `*.radiumg.top`。
 
 ## 本地存储的可审计性
 

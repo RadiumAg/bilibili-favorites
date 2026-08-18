@@ -154,25 +154,38 @@ const getAllFavoriteFlag = (cookies?: string): Promise<GetAllFavoriteFlagRes> =>
  * @param {number} videoId
  * @return {*}
  */
-const moveFavorite = (
+const moveFavorite = async (
   srcMediaId: number,
   tarMediaId: number,
   videoId: number,
   cookies?: string,
-) => {
-  if (cookies == null) return
+): Promise<FavoriteResourceOperationResponse> => {
+  if (!cookies) throw new Error('未获取到 B 站登录信息')
 
   const midString = getCookieValue('DedeUserID', cookies)
-  if (midString == null) return
+  const csrf = getCookieValue('bili_jct', cookies)
+  if (!midString || !csrf) throw new Error('未获取到 B 站登录或 CSRF 信息')
 
-  return fetch('https://api.bilibili.com/x/v3/fav/resource/move', {
+  const body = new URLSearchParams({
+    resources: `${videoId}:2`,
+    mid: midString,
+    platform: 'web',
+    tar_media_id: tarMediaId.toString(),
+    src_media_id: srcMediaId.toString(),
+    csrf,
+  })
+  const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/move', {
     method: 'post',
     credentials: 'include',
-    body: `resources=${videoId}:2&mid=${midString}&platform=web&tar_media_id=${tarMediaId}&src_media_id=${srcMediaId}&csrf=${getCookieValue('bili_jct', cookies) || ''}`,
+    body,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-  }).then((res) => res.json())
+  })
+  if (!response.ok) throw new Error(`B 站移动请求失败（HTTP ${response.status}）`)
+  const result = (await response.json()) as FavoriteResourceOperationResponse
+  if (result.code !== 0) throw new Error(result.message || `B 站移动失败（code ${result.code}）`)
+  return result
 }
 
 type FavoriteResourceOperationResponse = {
@@ -204,6 +217,7 @@ const deleteFavoriteResources = async (
       'Content-Type': 'application/x-www-form-urlencoded',
     },
   })
+  if (!response.ok) throw new Error(`B 站删除请求失败（HTTP ${response.status}）`)
   const result = (await response.json()) as FavoriteResourceOperationResponse
   if (result.code !== 0) {
     throw new Error(result.message || '从收藏夹删除视频失败')
@@ -237,6 +251,7 @@ const restoreFavoriteResource = async (
       'Content-Type': 'application/x-www-form-urlencoded',
     },
   })
+  if (!response.ok) throw new Error(`B 站恢复请求失败（HTTP ${response.status}）`)
   const result = (await response.json()) as FavoriteResourceOperationResponse
   if (result.code !== 0) {
     throw new Error(result.message || '恢复视频到收藏夹失败')
@@ -307,12 +322,11 @@ const connectAndStream = (message: { type: MessageEnum; data: any }) => {
   }
 }
 
-const fetchChatGpt = async (titleArray: string[], config: AIConfig, useCustomAI: boolean) => {
+const fetchChatGpt = async (titleArray: string[], config: AIConfig) => {
   return connectAndStream({
     type: MessageEnum.fetchChatGpt,
     data: {
       titleArray,
-      useCustomAI,
       config: {
         apiKey: config.apiKey,
         baseURL: config.baseURL,
@@ -327,14 +341,12 @@ const fetchAIMove = async (
   videos: AIMoveInput,
   favoriteTitles: string[],
   config: AIMoveConfig,
-  useCustomAI: boolean,
   favoriteTagsMap?: Record<string, string[]>,
 ) => {
   return connectAndStream({
     type: MessageEnum.fetchAIMove,
     data: {
       videos,
-      useCustomAI,
       favoriteTitles,
       favoriteTagsMap,
       config: {
@@ -343,20 +355,6 @@ const fetchAIMove = async (
         model: config.model,
         extraParams: config.extraParams,
       },
-    },
-  })
-}
-
-/**
- * 调用 AIGate AI 服务（免费额度）
- */
-const callAIGateAI = async (
-  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-) => {
-  return connectAndStream({
-    type: MessageEnum.callAIGateAI,
-    data: {
-      messages,
     },
   })
 }
@@ -376,13 +374,11 @@ type PersonalitySummary = {
 const fetchPersonalityAnalysis = async (
   summary: PersonalitySummary,
   config: AIConfig,
-  useCustomAI: boolean,
 ) => {
   return connectAndStream({
     type: MessageEnum.fetchPersonalityAnalysis,
     data: {
       summary,
-      useCustomAI,
       config: {
         apiKey: config.apiKey,
         baseURL: config.baseURL,
@@ -437,10 +433,10 @@ const fetchFavoritePage = async (
   page: number,
   pageSize = 40,
 ): Promise<{ medias: FavoriteMedia[]; hasMore: boolean }> => {
-  const response = await queryAndSendMessage<GetFavoriteListRes>({
-    type: MessageEnum.getFavoriteList,
-    data: { mediaId, pn: page, ps: pageSize },
-  })
+  const response = await queryAndSendMessage<GetFavoriteListRes>(
+    { type: MessageEnum.getFavoriteList, data: { mediaId, pn: page, ps: pageSize } },
+    6000,
+  )
   if (response.code !== 0) {
     throw new Error(response.message || '获取收藏夹数据失败')
   }
@@ -471,7 +467,7 @@ type FetchAllFavoriteMediasOptions = {
   expireTime?: number
   /**
    * 收藏夹的视频总数（来自 getAllFavoriteFlag 的 media_count 字段）
-   * 传入后可实现：1) 进度条显示总数 2) 缓存智能判断——数量未变则跳过请求
+   * 传入后用于显示加载进度；缓存过期后始终重新获取，避免数量相同但内容变化时复用旧数据。
    */
   mediaCount?: number
   /** 进度回调，每加载完一页后触发 */
@@ -512,27 +508,28 @@ const fetchAllFavoriteMedias = async (
   const mediaData = await dbManager.get(key)
   const isExpired = await dbManager.isExpired(key, expireTime)
 
-  // 缓存命中判断：时间未过期直接返回；时间过期但 mediaCount 未变也返回缓存
-  if (mediaData) {
-    if (!isExpired) return mediaData.data
-    if (
-      mediaCount !== undefined &&
-      Array.isArray(mediaData.data) &&
-      mediaData.data.length === mediaCount
-    ) {
-      // 视频数量未变，延长缓存有效期
-      console.log(`[fetchAllFavoriteMedias] 视频数量未变 (${mediaCount})，复用缓存 (${mediaId})`)
-      dbManager.set(key, mediaData.data)
-      return mediaData.data
-    }
+  const forceRefresh = expireTime === 0
+
+  // 当前元数据明确为 0 时，旧缓存没有资格继续展示旧视频。
+  if (mediaCount === 0) {
+    await dbManager.delete(key)
+    return []
   }
 
-  // 尝试从分页缓存拼装（如用户最近在拖拽管理器中浏览过该收藏夹，则无需任何网络请求）
-  const fromPageCache = tryAssembleFromPageCache(mediaId, pageSize)
-  if (fromPageCache) {
-    console.log(`[fetchAllFavoriteMedias] 命中分页缓存，无需请求 API (${mediaId})`)
-    dbManager.set(key, fromPageCache)
-    return fromPageCache
+  // 只有未过期、且与当前已知 media_count 相容的完整缓存才可直接返回。
+  if (!forceRefresh && mediaData && !isExpired) {
+    const cached = mediaData.data as FavoriteMedia[]
+    if (mediaCount == null || cached.length === mediaCount) return cached
+  }
+
+  // 强制刷新必须绕过分页缓存；普通读取只有在拼装结果与已知总数相容时才复用分页缓存。
+  if (!forceRefresh) {
+    const fromPageCache = tryAssembleFromPageCache(mediaId, pageSize)
+    if (fromPageCache && (mediaCount == null || fromPageCache.length === mediaCount)) {
+      console.log(`[fetchAllFavoriteMedias] 命中分页缓存，无需请求 API (${mediaId})`)
+      await dbManager.set(key, fromPageCache)
+      return fromPageCache
+    }
   }
 
   while (hasMore) {
@@ -563,7 +560,10 @@ const fetchAllFavoriteMedias = async (
     currentPage++
   }
 
-  dbManager.set(key, allMedias)
+  // 元数据已知时，只有完整数量一致的结果才写入“完整缓存”，避免半截请求污染后续读取。
+  if (mediaCount == null || allMedias.length === mediaCount) {
+    await dbManager.set(key, allMedias)
+  }
   return allMedias
 }
 
@@ -577,7 +577,6 @@ export {
   fetchAIMove,
   fetchFavoritePage,
   fetchAllFavoriteMedias,
-  callAIGateAI,
   fetchPersonalityAnalysis,
 }
 export type {

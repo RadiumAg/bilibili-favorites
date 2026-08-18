@@ -6,16 +6,11 @@ description: 在扩展内选择 AI 服务商、填写模型与 API Key 的完整
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Steps, Step } from 'fumadocs-ui/components/steps';
 
-扩展的 AI 能力基于 **OpenAI Chat Completion 兼容协议**，并在扩展内内置了对 **通义千问 / Kimi / OpenAI / GLM / 自定义** 五种服务商的适配。除此之外，还提供 **免费额度（AIGate）** 模式，开箱即用。
+扩展的 AI 能力基于 **OpenAI Chat Completion 兼容协议**，并提供 **通义千问 / Kimi / OpenAI / GLM / 自定义** 五种配置入口。v1.2.18 起仅使用用户自行配置的 API，不再提供内置免费 AI / AIGate。
 
-## 两种配置模式
+## 配置方式
 
-在 **选项页 → 配置** Tab 中，你会看到顶部的模式切换：
-
-- **自定义配置**：使用你自己申请的 API Key；
-- **免费额度**：使用扩展内置的 AIGate 共享额度，无需申请任何 Key。
-
-两种模式可随时切换，互不影响。
+在 **选项页 → 配置** Tab 中填写你自己的 API Key、模型和 Base URL。AI 请求只会按这里的自定义配置发送。
 
 ## 自定义配置（推荐）
 
@@ -46,7 +41,7 @@ import { Steps, Step } from 'fumadocs-ui/components/steps';
 | 自定义（custom） | （留空，由你填写） |
 
 <Callout type="info">
-  扩展当前实际注册的服务商白名单（`host_permissions`）仅放行 `openai.com`、`xf-yun.com` 与 `radiumg.top`。若你使用其他域名的代理，请通过「自定义」适配器并填写对应 Base URL。
+  固定 `host_permissions` 只保留 Bilibili、OpenAI 与讯飞域名；其他自定义地址使用扩展声明的可选站点权限。若请求被浏览器拦截，请在扩展详情页检查对应站点访问权限。
 </Callout>
 
 ### Extra Params 字段
@@ -66,10 +61,6 @@ import { Steps, Step } from 'fumadocs-ui/components/steps';
   <Step>
     ### 打开配置页
     右键扩展图标 → **「选项」**，或在弹窗中点击齿轮图标 → 进入 **「配置」** Tab。
-  </Step>
-  <Step>
-    ### 确认模式为「自定义配置」
-    顶部模式切换默认就是「自定义配置」；若被切到「免费额度」，点回「自定义配置」即可。
   </Step>
   <Step>
     ### 选择 AI 模型
@@ -95,23 +86,11 @@ import { Steps, Step } from 'fumadocs-ui/components/steps';
   </Step>
 </Steps>
 
-## 免费额度（AIGate）模式
+## v1.2.18 的 AI 路由
 
-在配置页顶部切换到 **「免费额度」** 后，会显示 **配额使用情况** 卡片：
-
-- 进入该模式时会 **自动拉取一次配额**；
-- 可随时点击 **「检查配额」** 按钮手动刷新；
-- 展示维度：**每日请求配额**、**请求频率限制（RPM）** 与 **服务状态**。
-
-<Callout type="info">
-  免费额度是扩展内置的共享配额，不需要填写任何 API Key；日配额用完后会在卡片中显示警告，请切换到自定义模式或次日再试。
-</Callout>
-
-## 切换模式的影响
-
-- **关键字规则保留**：关键字及其映射存储在本地，不会因切换模式丢失；
-- **AI 调用路由不同**：`custom` 模式走你配置的服务商；`free` 模式走 AIGate；
-- **AI 整理行为一致**：不论哪种模式，点击「AI 整理」首次都会弹出 Token 消耗提醒 toast，**5 秒内再次点击** 才会真正执行。
+- 只使用当前配置页保存的自定义 AI；
+- 不再连接 AIGate / `radiumg.top`；
+- 旧版本若保存过 `free` 模式，升级后会自动迁移回 `custom`，但不会伪造或自动填入 API Key。
 
 ## 相关文档
 

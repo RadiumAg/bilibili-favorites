@@ -1,16 +1,8 @@
 import * as React from 'react'
 import { Adapter } from '@/utils/data-context'
-import { formSchema } from './types'
+import { adapterArray, formSchema } from './types'
 import { z } from 'zod'
 
-const adapterArray: [Adapter, Adapter, Adapter, Adapter, Adapter, Adapter] = [
-  'openai',
-  'spark',
-  'aigate',
-  'custom',
-  'qianwen',
-  'kimi',
-]
 
 const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode }[] = [
   {
@@ -40,7 +32,7 @@ const selectItemsArray: { label: string; value: Adapter; help?: React.ReactNode 
   // },
 ]
 
-const defaultParams: Record<Adapter, Omit<z.infer<typeof formSchema>, 'configMode'>> = {
+const defaultParams: Record<Adapter, z.infer<typeof formSchema>> = {
   spark: {
     baseUrl: 'https://spark-api-open.xf-yun.com/v1/',
     extraParams: JSON.stringify({
@@ -77,7 +69,6 @@ const defaultParams: Record<Adapter, Omit<z.infer<typeof formSchema>, 'configMod
     }),
   },
   custom: {},
-  aigate: {},
 }
 
 export type { Adapter }

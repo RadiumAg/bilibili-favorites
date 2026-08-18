@@ -18,7 +18,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
     不会。扩展**没有独立登录系统**，也**不弹登录窗口**。它只读取 Cookie 中的 `DedeUserID` 字段用于登录态判断，并在请求 B 站接口时沿用浏览器本身的 Cookie。详见 [账号安全](/docs/privacy-security/account-safety)。
   </Accordion>
   <Accordion title="扩展要求了哪些浏览器权限？">
-    `storage` / `tabs` / `sidePanel` 三项 + 三个 `host_permissions` 域名（openai.com / xf-yun.com / radiumg.top）。权限清单可以随时在 `chrome://extensions/` → 扩展「详情」中复核。详见 [隐私与安全总览](/docs/privacy-security)。
+    `storage` / `tabs` / `sidePanel` 等基础权限，以及 Bilibili / OpenAI / 讯飞等固定站点权限；自定义地址属于可选站点权限范围。权限清单可以随时在 `chrome://extensions/` → 扩展「详情」中复核。详见 [隐私与安全总览](/docs/privacy-security)。
   </Accordion>
 </Accordions>
 
@@ -51,24 +51,16 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 <Accordions>
   <Accordion title="我必须配置 API Key 吗？">
-    不是必须。扩展提供两种模式：
-
-    - **自定义（custom）**：你填入自己的 API Key，使用通义千问 / Kimi / OpenAI / GLM / 自定义服务商；
-    - **免费额度（free）**：使用扩展内置的 AIGate 共享配额，**完全不需要 Key**，适合尝鲜或轻量使用。
-
-    详见 [API Key 配置](/docs/configuration/api-key)。
+    使用 AI 整理、AI 标签或性格分析时需要。v1.2.18 起只使用你自己的自定义 AI 配置，不再提供内置免费 AI / AIGate。详见 [API Key 配置](/docs/configuration/api-key)。
   </Accordion>
   <Accordion title="扩展支持哪些 AI 服务商？">
     界面上可选的适配器：**通义千问 / Kimi / OpenAI / GML / 自定义**。每个适配器都预置了 **Base URL** 与 **Extra Params**。详见 [模型选择与推荐](/docs/configuration/model-selection)。
   </Accordion>
   <Accordion title="AI 会把我的收藏数据发到哪里？">
-    仅发送到你**在配置中明确指定的服务商**（custom 模式）或 AIGate 免费额度服务（free 模式）。扩展作者不运营任何中转服务器。详见 [数据处理说明](/docs/privacy-security/data-handling)。
+    仅发送到你**在配置中明确指定的服务商**。v1.2.18 不再使用 AIGate 中转。详见 [数据处理说明](/docs/privacy-security/data-handling)。
   </Accordion>
   <Accordion title="为什么 AI 返回了「AI 返回的数据格式错误，请重试」？">
     AI 的响应里扩展找不到合法的 `\[...\]` JSON 数组，常见原因：模型输出被截断、模型启用了思考模式前置了非 JSON 文本、或模型能力不足。详见 [AI 调用错误](/docs/troubleshooting/ai-errors)。
-  </Accordion>
-  <Accordion title="免费额度用完了会怎么样？">
-    会收到来自 AIGate 的配额相关错误（如 `quota exceeded`）。切换到 **自定义（custom）模式** 并填入自己的 Key 即可继续使用，或等待配额自然重置。配置页右侧有「检查配额」入口。
   </Accordion>
 </Accordions>
 

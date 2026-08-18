@@ -1,12 +1,10 @@
 import { MessageEnum } from '@/utils/message'
-import { AIError } from '@/utils/error'
 import {
   buildKeywordExtractionMessages,
   buildAIMoveMessages,
   buildPersonalityMessages,
   streamAIRequest,
 } from './utils'
-import { callAIGateAI, checkAIGateQuota } from './ai-gate'
 import { setupPetMessageHandlers } from './pet'
 import { uploadSync } from '@/utils/sync-service'
 import type { WebDAVRequestOptions } from '@/utils/webdav'
@@ -122,65 +120,27 @@ chrome.runtime.onConnect.addListener((port) => {
 
     switch (message.type) {
       case MessageEnum.fetchChatGpt: {
-        const { titleArray, config, useCustomAI } = message.data
+        const { titleArray, config } = message.data
         const messages = await buildKeywordExtractionMessages(titleArray)
         currentAbortController = new AbortController()
-        if (useCustomAI) {
-          streamAIRequest(port, config, messages, currentAbortController)
-        } else {
-          callAIGateAI(port, messages, currentAbortController).catch((error) => {
-            port.postMessage({
-              type: 'error',
-              error: error instanceof Error ? error.message : 'AI 调用失败',
-              detail: error instanceof AIError ? error.detail : undefined,
-            })
-          })
-        }
+        streamAIRequest(port, config, messages, currentAbortController)
         break
       }
 
       case MessageEnum.fetchAIMove: {
-        const { videos, favoriteTitles, config, useCustomAI, favoriteTagsMap } = message.data
+        const { videos, favoriteTitles, config, favoriteTagsMap } = message.data
         const messages = await buildAIMoveMessages(videos, favoriteTitles, favoriteTagsMap)
         currentAbortController = new AbortController()
-        if (useCustomAI) {
-          streamAIRequest(port, config, messages, currentAbortController)
-        } else {
-          callAIGateAI(port, messages, currentAbortController)
-        }
+        streamAIRequest(port, config, messages, currentAbortController)
         break
       }
 
-      case MessageEnum.checkAIGateQuota: {
-        checkAIGateQuota()
-          .then((result) => {
-            port.postMessage({ type: 'quota-result', data: result })
-          })
-          .catch((error) => {
-            port.postMessage({
-              type: 'error',
-              error: error instanceof Error ? error.message : '配额检查失败',
-              detail: error instanceof AIError ? error.detail : undefined,
-            })
-          })
-        break
-      }
 
       case MessageEnum.fetchPersonalityAnalysis: {
-        const { summary, config, useCustomAI } = message.data
+        const { summary, config } = message.data
         const messages = await buildPersonalityMessages(summary)
         currentAbortController = new AbortController()
-        if (useCustomAI) {
-          streamAIRequest(port, config, messages, currentAbortController)
-        } else {
-          callAIGateAI(port, messages, currentAbortController).catch((error) => {
-            port.postMessage({
-              type: 'error',
-              error: error instanceof Error ? error.message : 'AI 调用失败',
-              detail: error instanceof AIError ? error.detail : undefined,
-            })
-          })
-        }
+        streamAIRequest(port, config, messages, currentAbortController)
         break
       }
 

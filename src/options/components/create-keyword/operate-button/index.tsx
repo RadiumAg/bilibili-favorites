@@ -5,8 +5,17 @@ import KeywordModeSelector from '@/components/keyword-mode-selector'
 import loadingImg from '@/assets/loading.gif'
 
 const OperateButton: React.FC = () => {
-  const { isLoading, progress, currentMode, handleCreate, setCurrentMode, cancelCreate } =
-    useCreateKeyword({
+  const {
+    isLoading,
+    progress,
+    currentMode,
+    handleCreate,
+    setCurrentMode,
+    cancelCreate,
+    clearFailures,
+    clearAllTags,
+    clearSelectedTags,
+  } = useCreateKeyword({
       mode: 'local',
     })
 
@@ -84,6 +93,15 @@ const OperateButton: React.FC = () => {
 
         <Button onClick={() => handleCreate('select', currentMode)} size="sm" disabled={isLoading}>
           为选中创建
+        </Button>
+        <Button onClick={clearFailures} size="sm" disabled={isLoading}>
+          清除失败标识
+        </Button>
+        <Button onClick={clearAllTags} size="sm" disabled={isLoading}>
+          清除所有标签
+        </Button>
+        <Button onClick={clearSelectedTags} size="sm" disabled={isLoading}>
+          清除所选标签
         </Button>
       </div>
       {loadingElement}

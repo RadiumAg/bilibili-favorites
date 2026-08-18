@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   fetchAllFavoriteMedias: vi.fn(),
   moveVideosCache: vi.fn(),
   queryAndSendMessage: vi.fn(),
+  requestOriginPermission: vi.fn(),
   recordSuccessfulUse: vi.fn(),
   resetStarInvitation: vi.fn(),
   showStarInvitationAfterClose: vi.fn(),
@@ -17,10 +18,10 @@ let storeState = {
   favoriteData: [{ id: 1, title: '收藏夹 1', media_count: 1 }],
   defaultFavoriteId: 1,
   aiConfig: {
-    configMode: 'free' as const,
-    key: '',
-    baseUrl: '',
-    model: '',
+    configMode: 'custom' as const,
+    key: 'test-key',
+    baseUrl: 'https://example.com/v1',
+    model: 'test-model',
     extraParams: {},
     adapter: 'spark' as const,
   },
@@ -59,6 +60,10 @@ vi.mock('@/utils/tab', () => ({
 
 vi.mock('@/utils/promise', () => ({
   sleep: vi.fn(() => Promise.resolve()),
+}))
+
+vi.mock('@/utils/origin-permission', () => ({
+  requestOriginPermission: mocks.requestOriginPermission,
 }))
 
 vi.mock('@/utils/pet-message', () => ({
@@ -105,11 +110,38 @@ const createVideo = (id: number, title: string) => ({ id, title })
 describe('useAIMove single run', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.requestOriginPermission.mockResolvedValue(true)
     storeState = {
       ...storeState,
       favoriteData: [{ id: 1, title: '收藏夹 1', media_count: 1 }],
       defaultFavoriteId: 1,
     }
+  })
+
+  it('取消权限请求阶段的旧任务后，旧任务不会继续读取收藏夹数据', async () => {
+    const permissionRequest = createDeferred<boolean>()
+    mocks.requestOriginPermission.mockReturnValueOnce(permissionRequest.promise)
+
+    const { result } = renderHook(() => useAIMove())
+
+    let run: Promise<void> | undefined
+    act(() => {
+      run = result.current.handleAIMove()
+    })
+
+    expect(mocks.fetchAllFavoriteMedias).not.toHaveBeenCalled()
+
+    act(() => {
+      result.current.cancelMove()
+    })
+
+    await act(async () => {
+      permissionRequest.resolve(true)
+      await run
+    })
+
+    expect(mocks.fetchAllFavoriteMedias).not.toHaveBeenCalled()
+    expect(mocks.fetchAIMove).not.toHaveBeenCalled()
   })
 
   it('取消数据请求阶段的旧任务后，旧任务不会继续进入 AI 整理', async () => {
@@ -124,6 +156,9 @@ describe('useAIMove single run', () => {
     let firstRun: Promise<void> | undefined
     act(() => {
       firstRun = result.current.handleAIMove()
+    })
+    await act(async () => {
+      await Promise.resolve()
     })
 
     await act(async () => {
@@ -149,6 +184,9 @@ describe('useAIMove single run', () => {
     let secondRun: Promise<void> | undefined
     act(() => {
       secondRun = result.current.handleAIMove()
+    })
+    await act(async () => {
+      await Promise.resolve()
     })
 
     expect(mocks.fetchAllFavoriteMedias).toHaveBeenNthCalledWith(2, '2', { mediaCount: 1 })
