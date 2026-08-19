@@ -88,20 +88,14 @@ export const CustomConfigForm: React.FC = () => {
     const defaultParamsValue = defaultParams[globalData.aiConfig.adapter]
 
     for (const [key, value] of Object.entries(defaultParamsValue)) {
-      if (key === 'extraParams') {
-        form.setValue(key as any, value)
-      } else {
-        form.setValue(key as any, value)
-      }
+      form.setValue(key as any, value)
     }
 
     globalData.setGlobalData({
       aiConfig: {
         ...globalData.aiConfig,
         ...defaultParamsValue,
-        ...{
-          extraParams: JSON.parse(defaultParamsValue.extraParams || '{}'),
-        },
+        extraParams: JSON.parse(defaultParamsValue.extraParams || '{}'),
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
