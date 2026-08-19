@@ -57,6 +57,43 @@ describe('favorite resource operations', () => {
     expect(body.get('add_media_ids')).toBe('9')
   })
 
+  it('移动、删除、恢复共享串行写队列，不会并发写 B 站', async () => {
+    let resolveFirst: ((value: Response) => void) | undefined
+    let markFirstStarted: (() => void) | undefined
+    const firstStarted = new Promise<void>((resolve) => {
+      markFirstStarted = resolve
+    })
+    const firstResponse = new Promise<Response>((resolve) => {
+      resolveFirst = resolve
+    })
+
+    vi.mocked(fetch)
+      .mockImplementationOnce(() => {
+        markFirstStarted?.()
+        return firstResponse
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ code: 0, message: '0' }),
+      } as Response)
+
+    const first = moveFavorite(1, 2, 3, cookies)
+    const second = deleteFavoriteResources(9, [11], cookies)
+
+    await firstStarted
+    expect(fetch).toHaveBeenCalledTimes(1)
+
+    resolveFirst?.({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ code: 0, message: '0' }),
+    } as Response)
+
+    await Promise.all([first, second])
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+
   it('B 站返回错误时抛出明确错误', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,

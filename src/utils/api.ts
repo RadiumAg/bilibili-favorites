@@ -6,6 +6,20 @@ import { queryAndSendMessage } from './tab'
 import { AIError } from './error'
 import { sleep } from './promise'
 
+const MAX_FAVORITE_PAGES = 1000
+const MAX_CONSECUTIVE_NO_NEW_PAGES = 2
+
+let favoriteWriteTail: Promise<void> = Promise.resolve()
+
+const scheduleFavoriteWrite = <T>(operation: () => Promise<T>): Promise<T> => {
+  const result = favoriteWriteTail.then(operation, operation)
+  favoriteWriteTail = result.then(
+    () => undefined,
+    () => undefined,
+  )
+  return result
+}
+
 type BResponse<T> = {
   code: number
   message: string
@@ -174,18 +188,20 @@ const moveFavorite = async (
     src_media_id: srcMediaId.toString(),
     csrf,
   })
-  const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/move', {
-    method: 'post',
-    credentials: 'include',
-    body,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+  return scheduleFavoriteWrite(async () => {
+    const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/move', {
+      method: 'post',
+      credentials: 'include',
+      body,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+    if (!response.ok) throw new Error(`B 站移动请求失败（HTTP ${response.status}）`)
+    const result = (await response.json()) as FavoriteResourceOperationResponse
+    if (result.code !== 0) throw new Error(result.message || `B 站移动失败（code ${result.code}）`)
+    return result
   })
-  if (!response.ok) throw new Error(`B 站移动请求失败（HTTP ${response.status}）`)
-  const result = (await response.json()) as FavoriteResourceOperationResponse
-  if (result.code !== 0) throw new Error(result.message || `B 站移动失败（code ${result.code}）`)
-  return result
 }
 
 type FavoriteResourceOperationResponse = {
@@ -209,20 +225,22 @@ const deleteFavoriteResources = async (
     platform: 'web',
     csrf,
   })
-  const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/batch-del', {
-    method: 'post',
-    credentials: 'include',
-    body,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+  return scheduleFavoriteWrite(async () => {
+    const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/batch-del', {
+      method: 'post',
+      credentials: 'include',
+      body,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+    if (!response.ok) throw new Error(`B 站删除请求失败（HTTP ${response.status}）`)
+    const result = (await response.json()) as FavoriteResourceOperationResponse
+    if (result.code !== 0) {
+      throw new Error(result.message || '从收藏夹删除视频失败')
+    }
+    return result
   })
-  if (!response.ok) throw new Error(`B 站删除请求失败（HTTP ${response.status}）`)
-  const result = (await response.json()) as FavoriteResourceOperationResponse
-  if (result.code !== 0) {
-    throw new Error(result.message || '从收藏夹删除视频失败')
-  }
-  return result
 }
 
 const restoreFavoriteResource = async (
@@ -243,20 +261,22 @@ const restoreFavoriteResource = async (
     platform: 'web',
     csrf,
   })
-  const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/deal', {
-    method: 'post',
-    credentials: 'include',
-    body,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+  return scheduleFavoriteWrite(async () => {
+    const response = await fetch('https://api.bilibili.com/x/v3/fav/resource/deal', {
+      method: 'post',
+      credentials: 'include',
+      body,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+    if (!response.ok) throw new Error(`B 站恢复请求失败（HTTP ${response.status}）`)
+    const result = (await response.json()) as FavoriteResourceOperationResponse
+    if (result.code !== 0) {
+      throw new Error(result.message || '恢复视频到收藏夹失败')
+    }
+    return result
   })
-  if (!response.ok) throw new Error(`B 站恢复请求失败（HTTP ${response.status}）`)
-  const result = (await response.json()) as FavoriteResourceOperationResponse
-  if (result.code !== 0) {
-    throw new Error(result.message || '恢复视频到收藏夹失败')
-  }
-  return result
 }
 
 /**
@@ -502,6 +522,9 @@ const fetchAllFavoriteMedias = async (
   }
 
   const allMedias: FavoriteMedia[] = []
+  const seenVideoIds = new Set<number>()
+  const seenPageSignatures = new Set<string>()
+  let consecutiveNoNewPages = 0
   let currentPage = 1
   let hasMore = true
   const key = `favorite-all-${mediaId}`
@@ -533,6 +556,10 @@ const fetchAllFavoriteMedias = async (
   }
 
   while (hasMore) {
+    if (currentPage > MAX_FAVORITE_PAGES) {
+      throw new Error(`收藏夹分页异常：超过 ${MAX_FAVORITE_PAGES} 页，已停止以避免无限请求`)
+    }
+
     await sleep(1000) // 防止触发b站api风控
     const response = await queryAndSendMessage<GetFavoriteListRes>({
       type: MessageEnum.getFavoriteList,
@@ -543,18 +570,37 @@ const fetchAllFavoriteMedias = async (
       throw new Error(response.message || '获取收藏夹数据失败')
     }
 
-    const medias = response.data.medias
-    if (medias && medias.length > 0) {
-      allMedias.push(...medias)
+    const medias = response.data.medias ?? []
+    const pageSignature = medias.map((media) => media.id).join(',')
+
+    if (medias.length > 0 && seenPageSignatures.has(pageSignature)) {
+      throw new Error(`收藏夹分页异常：第 ${currentPage} 页与之前页面重复，已停止继续请求`)
+    }
+    if (medias.length > 0) seenPageSignatures.add(pageSignature)
+
+    let newMediaCount = 0
+    for (const media of medias) {
+      if (seenVideoIds.has(media.id)) continue
+      seenVideoIds.add(media.id)
+      allMedias.push(media)
+      newMediaCount += 1
     }
 
     hasMore = response.data.has_more
+    if (hasMore && newMediaCount === 0) {
+      consecutiveNoNewPages += 1
+      if (consecutiveNoNewPages >= MAX_CONSECUTIVE_NO_NEW_PAGES) {
+        throw new Error('收藏夹分页异常：连续页面没有新视频，已停止继续请求')
+      }
+    } else {
+      consecutiveNoNewPages = 0
+    }
 
     onProgress?.({
       loaded: allMedias.length,
       total: mediaCount,
       currentPage,
-      currentVideoTitle: medias?.[medias.length - 1]?.title,
+      currentVideoTitle: medias[medias.length - 1]?.title,
     })
 
     currentPage++
