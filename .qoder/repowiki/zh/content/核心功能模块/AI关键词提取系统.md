@@ -24,14 +24,18 @@
 - [ai-stream-connect.test.ts](file://tests/ai-stream-connect.test.ts)
 - [package.json](file://package.json)
 - [README.md](file://README.md)
+- [use-ai-move.tsx](file://src/popup/components/ai-move/use-ai-move.tsx)
+- [batch-process.ts](file://src/utils/batch-process.ts)
+- [error.ts](file://src/utils/error.ts)
 </cite>
 
 ## 更新摘要
 **变更内容**
-- 新增进度跟踪增强功能，提供详细的处理状态信息
-- 完善AI流解析器的调试日志和状态监控
-- 增强关键词提取过程的实时反馈机制
-- 优化AI模型适配器的错误处理和状态报告
+- 新增AI工作流运行隔离机制，防止并发组织任务相互干扰
+- 实现完善的错误处理和取消逻辑，提升系统稳定性
+- 增强批量处理能力，支持大规模数据的高效处理
+- 改进AI流解析器的调试日志和状态监控
+- 优化进度跟踪和实时反馈机制
 
 ## 目录
 1. [简介](#简介)
@@ -39,12 +43,14 @@
 3. [核心组件](#核心组件)
 4. [架构概览](#架构概览)
 5. [详细组件分析](#详细组件分析)
-6. [进度跟踪增强功能](#进度跟踪增强功能)
-7. [依赖关系分析](#依赖关系分析)
-8. [性能考虑](#性能考虑)
-9. [故障排除指南](#故障排除指南)
-10. [结论](#结论)
-11. [附录](#附录)
+6. [AI工作流运行隔离机制](#ai工作流运行隔离机制)
+7. [批量处理优化](#批量处理优化)
+8. [错误处理与取消逻辑](#错误处理与取消逻辑)
+9. [依赖关系分析](#依赖关系分析)
+10. [性能考虑](#性能考虑)
+11. [故障排除指南](#故障排除指南)
+12. [结论](#结论)
+13. [附录](#附录)
 
 ## 简介
 
@@ -55,9 +61,9 @@ AI关键词提取系统是一个基于Chrome扩展的智能工具，专门用于
 - **基础关键词编辑**：提供可视化的关键词编辑界面
 - **配置管理模式**：支持自定义配置和免费额度配置
 - **多AI模型适配**：支持OpenAI、星火、通义千问、Kimi等多种AI模型
-- **进度跟踪增强**：提供详细的处理状态信息和实时反馈
+- **AI工作流隔离**：确保并发任务互不干扰，提升系统稳定性
 
-**重要更新**：系统已新增进度跟踪增强功能，提供更详细的处理状态信息，包括收藏夹处理进度、视频加载状态、AI分析阶段等实时反馈。
+**重要更新**：系统已实现完整的AI工作流运行隔离机制，通过任务世代控制和取消信号机制，有效防止并发组织任务相互干扰。同时增强了错误处理和取消逻辑，提供更稳定的用户体验。
 
 系统采用模块化设计，通过Chrome扩展的消息传递机制实现前后端分离，确保良好的用户体验和性能表现。
 
@@ -73,7 +79,7 @@ A --> A3[use-set-default-fav/]
 A --> A4[use-create-keyword/]
 B[src/components/] --> B1[keyword/]
 C[src/options/] --> C1[components/setting/]
-D[src/popup/] --> D1[components/]
+D[src/popup/] --> D1[components/ai-move/]
 E[src/sidepanel/] --> E1[components/]
 end
 subgraph "工具层"
@@ -81,6 +87,8 @@ F[src/utils/] --> F1[api.ts]
 F --> F2[keyword-extractor.ts]
 F --> F3[data-context.ts]
 F --> F4[message.ts]
+F --> F5[batch-process.ts]
+F --> F6[error.ts]
 end
 subgraph "状态管理"
 G[src/store/] --> G1[global-data.ts]
@@ -163,9 +171,11 @@ subgraph "业务逻辑层"
 Hook[Hooks] --> EditKeyword[关键词编辑Hook]
 Hook --> SetDefaultFav[默认收藏夹设置Hook]
 Hook --> CreateKeyword[关键词创建Hook]
+Hook --> AIMove[AI整理Hook]
 Utils[工具函数] --> API[API封装]
 Utils --> Extractor[关键词提取器]
 Utils --> StreamParser[AI流解析器]
+Utils --> BatchProcess[批量处理器]
 end
 subgraph "状态管理层"
 Store[Zustand状态管理]
@@ -441,98 +451,159 @@ AIGateApiKey --> ExtraParams
 - [types.ts:41-99](file://src/options/components/setting/types.ts#L41-L99)
 - [util.ts:18-22](file://src/options/components/setting/util.ts#L18-L22)
 
-## 进度跟踪增强功能
+## AI工作流运行隔离机制
 
-### 进度状态管理
+### 任务世代控制
 
-系统新增了完整的进度跟踪功能，提供详细的处理状态信息：
+系统实现了完整的AI工作流运行隔离机制，通过任务世代控制确保并发任务互不干扰：
 
 ```mermaid
 stateDiagram-v2
 [*] --> Idle
-Idle --> Loading : 开始加载
-Loading --> Analyzing : 加载完成
-Analyzing --> Processing : 开始处理
-Processing --> Complete : 处理完成
-Processing --> Cancelled : 用户取消
+Idle --> Running : 新任务开始(runId++)
+Running --> Interrupted : 用户取消或新任务开始
+Running --> Complete : 任务完成
+Interrupted --> [*]
 Complete --> [*]
-Cancelled --> [*]
 ```
 
-#### 进度状态结构
+#### 核心隔离机制
+
+系统通过以下机制实现任务隔离：
+
+- **任务世代标识**：每个任务分配唯一的runId，确保任务独立性
+- **取消信号控制**：使用AbortController实现优雅的任务取消
+- **活动状态检查**：通过ensureRunActive函数检查任务是否仍然活跃
+- **资源清理**：任务结束时正确释放所有相关资源
+
+#### 运行时状态管理
 
 ```typescript
-type CreateKeywordProgress = {
-  /** 当前处理的收藏夹序号 */
-  current: number
-  /** 收藏夹总数 */
-  total: number
-  /** 当前收藏夹名称 */
-  currentTitle: string
-  /** 已加载/分析的视频数量 */
-  videoLoaded: number
-  /** 当前收藏夹视频总数 */
-  videoTotal: number
-  /** 当前正在处理的视频标题 */
-  currentVideoTitle: string
-  /** 当前阶段：加载视频列表 / AI或本地分析 */
-  phase: 'idle' | 'loading' | 'analyzing'
+type RunState = {
+  activeRunIdRef: React.RefObject<number> // 当前活跃任务ID
+  abortControllerRef: React.RefObject<AbortController> // 取消控制器
+  isProcessingRef: React.RefObject<boolean> // 处理状态
+  streamRef: React.RefObject<{ cancel: () => void }> // 流引用
 }
 ```
 
-#### 实时进度更新机制
+### 并发安全保证
 
-系统通过以下机制实现实时进度跟踪：
+系统确保多个AI整理任务可以安全地并发执行：
 
-- **收藏夹进度**：显示当前处理的收藏夹序号和总数
-- **视频加载进度**：实时更新已加载视频数量和总数量
-- **处理阶段**：明确标识当前处于加载、分析还是处理阶段
-- **视频标题追踪**：显示当前正在处理的视频标题
-
-### AI流解析器增强
-
-AI流解析器新增了详细的调试日志和状态监控：
-
-```mermaid
-sequenceDiagram
-participant UI as 用户界面
-participant Parser as AI流解析器
-participant Adapter as AI适配器
-participant API as AI服务
-participant Buffer as 缓冲区
-UI->>Parser : 开始AI关键词提取
-Parser->>Adapter : 解析流数据块
-Adapter->>API : 请求AI响应
-API-->>Adapter : 返回流数据
-Adapter-->>Parser : 解析后的文本
-Parser->>Buffer : 累积到缓冲区
-Parser->>Parser : 尝试提取完整关键词
-Parser->>UI : 更新进度状态
-Parser->>UI : 添加关键词到全局数据
-```
-
-#### 调试日志增强
-
-系统在关键节点增加了详细的调试日志：
-
-- **数据接收日志**：记录接收到的原始数据内容
-- **解析状态日志**：显示解析过程中的中间状态
-- **缓冲区状态**：监控缓冲区内容的累积过程
-- **关键词提取日志**：记录每次成功提取的关键词
-
-#### 错误处理和状态报告
-
-系统增强了错误处理机制：
-
-- **适配器解析失败**：提供详细的解析错误信息
-- **网络连接中断**：优雅处理网络异常情况
-- **用户取消操作**：正确响应用户的取消请求
-- **内存管理**：确保缓冲区内容的正确清理
+- **任务互斥**：同一时间只有一个任务处于活跃状态
+- **状态隔离**：每个任务拥有独立的状态和缓冲区
+- **错误隔离**：任务失败不会影响其他任务的正常执行
+- **资源隔离**：网络请求、流处理等资源按任务隔离
 
 **章节来源**
-- [use-create-keyword/index.tsx:16-41](file://src/hooks/use-create-keyword/index.tsx#L16-L41)
-- [use-create-keyword/index.tsx:191-195](file://src/hooks/use-create-keyword/index.tsx#L191-L195)
-- [ai-stream-parser.ts:235-254](file://src/hooks/use-create-keyword-by-ai/ai-stream-parser.ts#L235-L254)
+- [use-ai-move.tsx:33-152](file://src/popup/components/ai-move/use-ai-move.tsx#L33-L152)
+- [use-ai-move.tsx:132-181](file://src/popup/components/ai-move/use-ai-move.tsx#L132-L181)
+
+## 批量处理优化
+
+### 分批处理机制
+
+系统实现了高效的批量处理机制，支持大规模数据的安全处理：
+
+```mermaid
+flowchart TD
+Start[开始批量处理] --> CheckEmpty{数据为空?}
+CheckEmpty --> |是| End[结束]
+CheckEmpty --> |否| Init[初始化索引]
+Init --> Loop{索引<=长度?}
+Loop --> |否| End
+Loop --> Slice[切片处理]
+Slice --> Process[调用处理回调]
+Process --> UpdateIndex[更新索引]
+UpdateIndex --> Loop
+```
+
+#### 批量处理特性
+
+- **可配置批次大小**：支持自定义最大处理数量
+- **串行执行保证**：确保批次的顺序执行
+- **错误传播**：处理过程中的错误会正确传播
+- **内存友好**：避免一次性加载大量数据
+
+#### 使用示例
+
+```typescript
+await batchProcess(videos, {
+  maxSize: 1000,
+  async processCallback(batchVideos) {
+    // 处理单个批次的视频
+    const stream = await fetchAIMove(batchVideos, ...)
+    // 处理流式响应
+  }
+})
+```
+
+**章节来源**
+- [batch-process.ts:1-24](file://src/utils/batch-process.ts#L1-L24)
+- [use-ai-move.tsx:254-358](file://src/popup/components/ai-move/use-ai-move.tsx#L254-L358)
+
+## 错误处理与取消逻辑
+
+### 错误处理机制
+
+系统实现了完善的错误处理机制，确保异常情况的优雅处理：
+
+```mermaid
+flowchart TD
+Error[发生错误] --> CheckType{错误类型判断}
+CheckType --> |AIMoveRunInterruptedError| HandleCancel[处理取消]
+CheckType --> |AIError| HandleAI[处理AI错误]
+CheckType --> |其他Error| HandleGeneral[处理通用错误]
+HandleCancel --> ShowToast[显示取消提示]
+HandleAI --> ShowDetail[显示详细信息]
+HandleGeneral --> ShowToast
+ShowToast --> Cleanup[清理资源]
+ShowDetail --> Cleanup
+Cleanup --> End[结束]
+```
+
+#### 自定义错误类型
+
+系统定义了专门的错误类型来处理不同的异常情况：
+
+- **AIMoveRunInterruptedError**：专门处理任务中断情况
+- **AIError**：处理AI相关的错误，包含详细信息
+- **标准Error**：处理其他类型的错误
+
+#### 取消逻辑实现
+
+```typescript
+const cancelMove = useMemoizedFn(() => {
+  activeRunIdRef.current += 1 // 增加任务世代
+  isProcessingRef.current = false
+  abortControllerRef.current?.abort() // 触发取消信号
+  abortControllerRef.current = null
+  // 取消后台中的AI请求
+  if (streamRef.current) {
+    streamRef.current.cancel()
+    streamRef.current = null
+  }
+  setIsProcessing(false)
+  setIsLoading(false)
+  toast({
+    title: '已取消',
+    description: '操作已取消',
+  })
+})
+```
+
+### 资源清理机制
+
+系统确保在所有情况下都能正确清理资源：
+
+- **finally块清理**：确保无论成功还是失败都执行清理逻辑
+- **条件清理**：只在特定条件下清理资源，避免误清理
+- **引用重置**：将不再使用的引用设置为null，防止内存泄漏
+
+**章节来源**
+- [use-ai-move.tsx:387-441](file://src/popup/components/ai-move/use-ai-move.tsx#L387-L441)
+- [error.ts:1-12](file://src/utils/error.ts#L1-L12)
 
 ### 关键词提取流程优化
 
@@ -661,6 +732,13 @@ Extension --> CRXJS
 - **内存友好的缓冲区**：及时清理已处理的数据
 - **异步处理**：使用Promise和async/await避免阻塞主线程
 
+### 批量处理优化
+
+- **分批处理**：避免一次性处理大量数据导致内存溢出
+- **串行执行**：确保批次的顺序执行，避免并发冲突
+- **错误隔离**：单个批次失败不影响其他批次的处理
+- **资源释放**：及时处理完的批次数据，释放内存
+
 ## 故障排除指南
 
 ### 常见问题及解决方案
@@ -711,6 +789,16 @@ Extension --> CRXJS
 3. 确认组件卸载时的资源清理
 4. 查看控制台是否有相关错误
 
+#### AI工作流问题
+
+**问题**：AI整理任务无法正常完成
+**解决方案**：
+1. 检查任务隔离机制是否正常工作
+2. 验证取消逻辑是否正确执行
+3. 确认错误处理是否捕获所有异常情况
+4. 查看控制台是否有AIMoveRunInterruptedError相关错误
+5. 检查批量处理是否正确执行
+
 #### 性能问题
 
 **问题**：系统运行缓慢
@@ -720,6 +808,7 @@ Extension --> CRXJS
 3. 减少同时进行的AI请求
 4. 升级到更高性能的设备
 5. 检查AI流解析器的内存使用情况
+6. 优化批量处理的大小设置
 
 **章节来源**
 - [background/index.ts:105-185](file://src/background/index.ts#L105-L185)
@@ -735,11 +824,13 @@ AI关键词提取系统是一个功能完整、架构清晰的Chrome扩展应用
 - **多AI模型支持**：新增Qwen和Kimi适配器，扩展AI模型选择范围
 - **稳定可靠**：经过bug修复和优化，系统更加稳定
 - **完整配置**：支持灵活的配置管理，适应不同使用场景
-- **进度跟踪增强**：提供详细的处理状态信息，改善用户体验
+- **AI工作流隔离**：实现了完整的任务隔离机制，防止并发任务干扰
+- **完善错误处理**：提供全面的错误处理和取消逻辑
+- **批量处理优化**：支持大规模数据的高效处理
 - **实时反馈**：通过调试日志和状态监控提供更好的问题诊断能力
-- **简洁高效**：保持原有功能的同时，增强了AI模型适配能力和进度跟踪功能
+- **简洁高效**：保持原有功能的同时，增强了AI模型适配能力和任务管理能力
 
-系统通过合理的架构设计和优化策略，在保证功能完整性的同时，确保了良好的性能表现和用户体验。
+系统通过合理的架构设计和优化策略，在保证功能完整性的同时，确保了良好的性能表现和用户体验。新增的AI工作流运行隔离机制显著提升了系统的稳定性和可靠性，使多个AI整理任务可以安全地并发执行而不会相互干扰。
 
 ## 附录
 
@@ -775,3 +866,5 @@ AI关键词提取系统是一个功能完整、架构清晰的Chrome扩展应用
 - **适配器选择**：根据具体需求选择最适合的AI模型适配器
 - **进度跟踪**：充分利用进度跟踪功能，更好地管理长时间任务
 - **调试日志**：在开发环境中充分利用调试日志进行问题诊断
+- **任务隔离**：利用新的任务隔离机制，确保并发任务的安全性
+- **批量优化**：合理设置批量处理大小，平衡性能和内存使用
