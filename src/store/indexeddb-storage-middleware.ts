@@ -45,13 +45,14 @@ const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
       }
     }
 
-    // 只保存需要持久化的字段
-    const persistState = async () => {
+    // 只保存真正发生变化的 IndexedDB 字段。
+    // 这样 favoriteData / aiConfig 等无关状态更新不会把尚未 hydrate 完成的空 keyword 反写进数据库。
+    const persistChangedState = async (previousState: Record<string, any>) => {
       try {
         const state = get() as Record<string, any>
 
         for (const key of INDEXEDDB_PERSISTED_KEYS) {
-          if (key in state) {
+          if (key in state && previousState[key] !== state[key]) {
             await dbManager.setTag(key, state[key])
           }
         }
@@ -62,8 +63,9 @@ const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
 
     const configResult = config(
       (...args) => {
+        const previousState = get() as Record<string, any>
         set(...(args as Parameters<typeof set>))
-        persistState()
+        persistChangedState(previousState)
       },
       get,
       api,
@@ -78,8 +80,9 @@ const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
     }
 
     api.setState = (state, replace) => {
+      const previousState = get() as Record<string, any>
       savedSetState(state, replace as any)
-      persistState()
+      persistChangedState(previousState)
     }
 
     hydrate()

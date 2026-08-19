@@ -17,6 +17,7 @@ import { batchProcess } from '@/utils/batch-process'
 import { notifyOrganizeDone } from '@/utils/pet-message'
 import { useStarInvitation } from '@/hooks/use-star-invitation'
 import { shouldRecordAIMoveUse } from './star-invitation'
+import { requestOriginPermission } from '@/utils/origin-permission'
 
 type AIMoveStatus = 'success' | 'failed' | 'skipped'
 
@@ -71,7 +72,7 @@ const useAIMove = () => {
   const moveOneVideo = useMemoizedFn(
     async (result: AIMoveResult, sourceFavoriteId: number): Promise<AIMoveResult> => {
       try {
-        await queryAndSendMessage({
+        const response = await queryAndSendMessage<{ code: number; message?: string }>({
           type: MessageEnum.moveVideo,
           data: {
             srcMediaId: sourceFavoriteId,
@@ -79,6 +80,9 @@ const useAIMove = () => {
             videoId: result.videoId,
           },
         })
+        if (response?.code !== 0) {
+          throw new Error(response?.message || 'B 站未确认移动成功')
+        }
         return { ...result, status: 'success' as AIMoveStatus }
       } catch (error) {
         console.error('Move failed:', error)
@@ -97,15 +101,16 @@ const useAIMove = () => {
       return
     }
 
-    // 根据 configMode 检查是否有可用配置
-    const useCustomAI = dataContext.aiConfig?.configMode === 'custom'
-    const hasCustomKey = !!(dataContext.aiConfig?.key && dataContext.aiConfig?.model)
-    const hasAIGate = true // AIGate 始终可用
+    const hasCustomAI = !!(
+      dataContext.aiConfig?.key &&
+      dataContext.aiConfig?.model &&
+      dataContext.aiConfig?.baseUrl
+    )
 
-    if (!(useCustomAI ? hasCustomKey : hasAIGate)) {
+    if (!hasCustomAI) {
       toast({
         title: '未配置 AI',
-        description: '请先在设置页面配置 AI 或切换到免费额度',
+        description: '请先在设置页面完成自定义 AI 配置',
         variant: 'destructive',
       })
       // 延迟跳转，让用户看到提示
@@ -124,10 +129,8 @@ const useAIMove = () => {
       return
     }
 
-    const sourceFavoriteId = dataContext.defaultFavoriteId
-    const favoriteData = dataContext.favoriteData
-    const keyword = dataContext.keyword
-    const aiConfig = dataContext.aiConfig
+    // 在任何异步权限请求之前建立本次运行的世代和取消信号。
+    // 这样即使用户在权限请求尚未返回时点击“取消”，旧任务也不会在权限返回后复活。
     const runId = activeRunIdRef.current + 1
     const abortController = new AbortController()
     activeRunIdRef.current = runId
@@ -139,6 +142,48 @@ const useAIMove = () => {
         throw new AIMoveRunInterruptedError()
       }
     }
+
+    const releaseRunSlot = () => {
+      if (activeRunIdRef.current !== runId) return
+      isProcessingRef.current = false
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null
+      }
+    }
+
+    try {
+      const granted = await requestOriginPermission(dataContext.aiConfig.baseUrl!)
+      ensureRunActive()
+      if (!granted) {
+        releaseRunSlot()
+        toast({
+          title: '缺少 AI 服务站点权限',
+          description: '请允许插件访问当前 AI 服务商后再整理',
+          variant: 'destructive',
+        })
+        return
+      }
+    } catch (error) {
+      if (
+        error instanceof AIMoveRunInterruptedError ||
+        activeRunIdRef.current !== runId ||
+        abortController.signal.aborted
+      ) {
+        return
+      }
+      releaseRunSlot()
+      toast({
+        title: 'AI Base URL 无效',
+        description: error instanceof Error ? error.message : '无法解析服务地址',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const sourceFavoriteId = dataContext.defaultFavoriteId
+    const favoriteData = dataContext.favoriteData
+    const keyword = dataContext.keyword
+    const aiConfig = dataContext.aiConfig
 
     const resolveAIResultForRun = (
       aiResult: any,
@@ -214,7 +259,6 @@ const useAIMove = () => {
             batchVideos,
             favoriteTitles,
             config,
-            useCustomAI,
             favoriteTagsMap,
           )
           try {

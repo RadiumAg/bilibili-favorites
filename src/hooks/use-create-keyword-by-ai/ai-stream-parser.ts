@@ -90,6 +90,7 @@ export function createStreamAdapter(adapterType: Adapter = 'spark'): AIStreamAda
     case 'qianwen':
       return new OpenAIStreamAdapter()
     case 'kimi':
+    case 'gml':
       return new OpenAIStreamAdapter()
     default:
       return new SparkStreamAdapter()
@@ -123,14 +124,19 @@ export function shouldSkipContent(data: string): boolean {
  * @returns 解析结果
  */
 export function extractKeywordFromBuffer(buffer: string): ParseResult {
-  // 匹配模式："keyword" 后面跟着逗号或数组结束
-  const keywordMatch = buffer.match(/"([^"]*)"(?=\s*,|\s*\]|$)/)
+  // 匹配一个完整 JSON 字符串，支持 \"、\\ 等转义，且要求后面是逗号、数组结束或流结束。
+  const keywordMatch = buffer.match(/"((?:\\.|[^"\\])*)"(?=\s*,|\s*\]|$)/)
 
   if (!keywordMatch) {
     return { success: false, newBuffer: buffer }
   }
 
-  const keyword = keywordMatch[1].trim()
+  let keyword: string
+  try {
+    keyword = JSON.parse(`"${keywordMatch[1]}"`).trim()
+  } catch {
+    return { success: false, newBuffer: buffer }
+  }
 
   if (!keyword) {
     return { success: false, newBuffer: buffer }
@@ -157,25 +163,25 @@ export function addKeywordToGlobalData(options: StreamParserOptions, keyword: st
   const { favKey, getGlobalData, setGlobalData } = options
   const globalData = getGlobalData()
 
-  let targetKeyword = globalData.keyword.find((item) => item.favoriteDataId === +favKey)
+  const favoriteDataId = Number(favKey)
+  const normalizedKeyword = keyword.trim().normalize('NFKC').toLocaleLowerCase()
+  const targetKeyword = globalData.keyword.find((item) => item.favoriteDataId === favoriteDataId)
+  const exists = targetKeyword?.value.some(
+    (item) => item.value.trim().normalize('NFKC').toLocaleLowerCase() === normalizedKeyword,
+  )
 
-  if (targetKeyword == null) {
-    targetKeyword = {
-      favoriteDataId: +favKey,
-      value: [{ id: uuid(), value: keyword }],
-    }
-    setGlobalData({
-      keyword: [...globalData.keyword, targetKeyword],
-    })
-  } else {
-    // 检查关键词是否已存在，避免重复
-    const exists = targetKeyword.value.some((k) => k.value === keyword)
-    if (!exists) {
-      targetKeyword.value = [...targetKeyword.value, { id: uuid(), value: keyword }]
-      setGlobalData({
-        keyword: [...globalData.keyword],
-      })
-    }
+  if (!exists) {
+    const nextKeyword = targetKeyword
+      ? globalData.keyword.map((row) =>
+          row.favoriteDataId === favoriteDataId
+            ? { ...row, value: [...row.value, { id: uuid(), value: keyword.trim() }] }
+            : row,
+        )
+      : [
+          ...globalData.keyword,
+          { favoriteDataId, value: [{ id: uuid(), value: keyword.trim() }] },
+        ]
+    setGlobalData({ keyword: nextKeyword })
   }
 
   // 触发回调
@@ -224,58 +230,88 @@ export function processStreamChunk(
  */
 export function createAIStreamParser(options: StreamParserOptions) {
   let buffer = ''
-  // 使用传入的适配器或默认的星火适配器
   const adapter = options.adapter || new SparkStreamAdapter()
+  const pendingKeywords: string[] = []
+  const normalized = new Set<string>()
+
+  const normalizeKeyword = (keyword: string) =>
+    keyword.trim().normalize('NFKC').toLocaleLowerCase()
+
+  const stageKeyword = (keyword: string) => {
+    const trimmed = keyword.trim()
+    const key = normalizeKeyword(trimmed)
+    if (!trimmed || normalized.has(key)) return
+    normalized.add(key)
+    pendingKeywords.push(trimmed)
+    options.onKeywordExtracted?.(trimmed)
+  }
+
+  const consumeBuffer = () => {
+    while (true) {
+      const result = extractKeywordFromBuffer(buffer)
+      if (!result.success || !result.keyword) break
+      stageKeyword(result.keyword)
+      buffer = result.newBuffer
+    }
+  }
+
+  const commit = () => {
+    if (pendingKeywords.length === 0) return []
+
+    const globalData = options.getGlobalData()
+    const favoriteDataId = Number(options.favKey)
+    const existingRow = globalData.keyword.find((item) => item.favoriteDataId === favoriteDataId)
+    const existingValues = existingRow?.value ?? []
+    const existingNormalized = new Set(existingValues.map((item) => normalizeKeyword(item.value)))
+    const additions = pendingKeywords
+      .filter((keyword) => !existingNormalized.has(normalizeKeyword(keyword)))
+      .map((keyword) => ({ id: uuid(), value: keyword }))
+
+    if (additions.length === 0) return []
+
+    const nextKeyword = globalData.keyword.map((row) => ({ ...row, value: [...row.value] }))
+    const rowIndex = nextKeyword.findIndex((item) => item.favoriteDataId === favoriteDataId)
+    if (rowIndex === -1) {
+      nextKeyword.push({ favoriteDataId, value: additions })
+    } else {
+      nextKeyword[rowIndex] = {
+        ...nextKeyword[rowIndex],
+        value: [...nextKeyword[rowIndex].value, ...additions],
+      }
+    }
+    options.setGlobalData({ keyword: nextKeyword })
+    return additions.map((item) => item.value)
+  }
 
   return {
-    /**
-     * 处理单个数据块
-     * @param value - 流数据块
-     */
     processChunk(value: Uint8Array): void {
       const data = adapter.parse(value)
-      console.log('[AIStreamParser] Received data:', data)
-
-      // 跳过不需要的内容
-      if (shouldSkipContent(data)) {
-        return
-      }
-
-      // 累积到缓冲区
+      if (shouldSkipContent(data)) return
       buffer += data
-
-      // 尝试提取完整的关键词
-      const result = extractKeywordFromBuffer(buffer)
-
-      if (result.success && result.keyword) {
-        addKeywordToGlobalData(options, result.keyword)
-        buffer = result.newBuffer
-      }
+      consumeBuffer()
     },
 
-    /**
-     * 获取当前缓冲区内容
-     */
     getBuffer(): string {
       return buffer
     },
 
-    /**
-     * 清空缓冲区
-     */
+    getPendingKeywords(): string[] {
+      return [...pendingKeywords]
+    },
+
     clearBuffer(): void {
       buffer = ''
     },
 
-    /**
-     * 处理剩余缓冲区内容
-     */
     flush(): void {
-      const result = extractKeywordFromBuffer(buffer)
-      if (result.success && result.keyword) {
-        addKeywordToGlobalData(options, result.keyword)
+      consumeBuffer()
+      const residue = buffer.replace(/[\s,\[\]]/g, '')
+      if (residue) {
+        throw new Error('AI 标签输出不完整，请重试')
       }
       buffer = ''
     },
+
+    commit,
   }
 }

@@ -299,6 +299,56 @@ describe('useMove', () => {
       expect(queryAndSendMessage).toHaveBeenCalledTimes(2)
     })
 
+    it('同一视频命中多个同目标关键词时只移动一次', async () => {
+      mockStoreState = {
+        ...mockStoreState,
+        defaultFavoriteId: 100,
+        keyword: [
+          {
+            favoriteDataId: 200,
+            value: [
+              { id: '1', value: 'React' },
+              { id: '2', value: 'React Hooks' },
+            ],
+          },
+        ],
+        favoriteData: [{ id: 200, title: '前端' }],
+      }
+      vi.mocked(fetchAllFavoriteMedias).mockResolvedValue([createMockVideo(1, 'React Hooks 详解')])
+      vi.mocked(queryAndSendMessage).mockResolvedValue({ code: 0 })
+
+      const { result } = renderHook(() => useMove())
+      await act(async () => {
+        await result.current.handleMove()
+      })
+
+      expect(queryAndSendMessage).toHaveBeenCalledTimes(1)
+    })
+
+    it('同等具体关键词指向不同收藏夹时保守跳过冲突视频', async () => {
+      mockStoreState = {
+        ...mockStoreState,
+        defaultFavoriteId: 100,
+        keyword: [
+          { favoriteDataId: 200, value: [{ id: '1', value: 'React' }] },
+          { favoriteDataId: 300, value: [{ id: '2', value: 'React' }] },
+        ],
+        favoriteData: [
+          { id: 200, title: '前端 A' },
+          { id: 300, title: '前端 B' },
+        ],
+      }
+      vi.mocked(fetchAllFavoriteMedias).mockResolvedValue([createMockVideo(1, 'React 教程')])
+      vi.mocked(queryAndSendMessage).mockResolvedValue({ code: 0 })
+
+      const { result } = renderHook(() => useMove())
+      await act(async () => {
+        await result.current.handleMove()
+      })
+
+      expect(queryAndSendMessage).not.toHaveBeenCalled()
+    })
+
     it('应该处理多个收藏夹的关键词', async () => {
       const mockVideos = [createMockVideo(1, 'React 教程'), createMockVideo(2, 'Python 数据分析')]
 

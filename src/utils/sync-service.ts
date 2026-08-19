@@ -50,6 +50,38 @@ export const WEBDAV_VIDEO_TRASH_LAST_SYNC_TIME_KEY = 'webdavVideoTrashLastSyncTi
 /** 应用版本号 */
 const SYNC_VERSION = '1.0'
 const VIDEO_TRASH_SYNC_PATH = '/video-trash/data.json'
+const AI_CONFIG_SECRET_KEYS = ['key', 'apiKey'] as const
+
+function isPlainRecord(value: unknown): value is Record<string, any> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+/** WebDAV 配置同步不得携带 AI 密钥。返回副本，避免修改本地持久化对象。 */
+export function sanitizeAIConfigForWebDAV(aiConfig: unknown): unknown {
+  if (!isPlainRecord(aiConfig)) return aiConfig
+
+  const sanitized = { ...aiConfig }
+  for (const key of AI_CONFIG_SECRET_KEYS) {
+    delete sanitized[key]
+  }
+  return sanitized
+}
+
+/** 应用远端 AI 配置时仅恢复本机已有密钥，远端永远不能注入/覆盖密钥。 */
+export function mergeAIConfigFromWebDAV(localConfig: unknown, remoteConfig: unknown): unknown {
+  const sanitizedRemote = sanitizeAIConfigForWebDAV(remoteConfig)
+  if (!isPlainRecord(sanitizedRemote)) return sanitizedRemote
+
+  const merged = { ...sanitizedRemote }
+  if (isPlainRecord(localConfig)) {
+    for (const key of AI_CONFIG_SECRET_KEYS) {
+      if (key in localConfig) {
+        merged[key] = localConfig[key]
+      }
+    }
+  }
+  return merged
+}
 
 /** 获取或生成设备 ID */
 function getDeviceId(): Promise<string> {
@@ -155,6 +187,10 @@ function pickSyncSettings(settings: Record<string, any>): SyncSettings {
     }
   }
 
+  if ('aiConfig' in picked) {
+    picked.aiConfig = sanitizeAIConfigForWebDAV(picked.aiConfig)
+  }
+
   return picked
 }
 
@@ -165,6 +201,13 @@ async function applySyncSettingsToStorage(settings: SyncSettings): Promise<void>
     if (key in settings) {
       storageData[key] = settings[key]
     }
+  }
+
+  if ('aiConfig' in storageData) {
+    const localAIConfig = await new Promise<unknown>((resolve) => {
+      chrome.storage.local.get('aiConfig', (data) => resolve(data.aiConfig))
+    })
+    storageData.aiConfig = mergeAIConfigFromWebDAV(localAIConfig, storageData.aiConfig)
   }
 
   if (Object.keys(storageData).length > 0) {
@@ -194,6 +237,10 @@ export async function uploadSync(): Promise<void> {
   const storageData = await new Promise<Record<string, any>>((resolve) => {
     chrome.storage.local.get(SYNC_KEYS as unknown as string[], resolve)
   })
+
+  if ('aiConfig' in storageData) {
+    storageData.aiConfig = sanitizeAIConfigForWebDAV(storageData.aiConfig)
+  }
 
   // 2. 补充从 IndexedDB 读取的同步字段（如标签数据 keyword）
   for (const key of INDEXEDDB_SYNC_KEYS) {

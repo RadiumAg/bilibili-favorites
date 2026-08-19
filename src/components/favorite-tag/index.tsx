@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useGlobalConfig } from '@/store/global-data'
 import { useShallow } from 'zustand/react/shallow'
 import { Skeleton } from '@/components/ui/skeleton'
+import { AlertTriangle } from 'lucide-react'
 
 type FavoriteTagProps = {
   className?: string
@@ -24,6 +25,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     useShallow((state) => ({
       activeKey: state.activeKey,
       defaultFavoriteId: state.defaultFavoriteId,
+      aiTagFailures: state.aiTagFailures,
     })),
   )
 
@@ -52,6 +54,12 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
         >
           # {data.title} {clickTagId === data.id && pendingElement}
           {globalConfig.defaultFavoriteId === data.id && starElement}
+          {globalConfig.aiTagFailures[String(data.id)] && (
+            <AlertTriangle
+              className="h-3.5 w-3.5 text-red-500"
+              aria-label={`标签创建失败：${globalConfig.aiTagFailures[String(data.id)]}`}
+            />
+          )}
         </div>
       )
     })
@@ -59,6 +67,7 @@ const FavoriteTag: React.FC<FavoriteTagProps> = (props) => {
     favoriteData,
     globalConfig.activeKey,
     globalConfig.defaultFavoriteId,
+    globalConfig.aiTagFailures,
     clickTagId,
     pendingElement,
     starElement,

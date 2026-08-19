@@ -18,15 +18,13 @@ const useEditKeyword = () => {
   )
 
   const handDelete = useMemoizedFn((id: string) => {
-    const targetKeyword = dataContext.keyword.find(
-      (key) => key.favoriteDataId === dataContext.activeKey,
+    if (dataContext.activeKey == null) return
+    const nextKeyword = dataContext.keyword.map((row) =>
+      row.favoriteDataId === dataContext.activeKey
+        ? { ...row, value: row.value.filter((fav) => fav.id !== id) }
+        : row,
     )
-
-    if (targetKeyword == null) return
-
-    targetKeyword.value = targetKeyword?.value.filter((fav) => fav.id !== id)
-
-    dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
+    dataContext.setGlobalData({ keyword: nextKeyword })
   })
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = useMemoizedFn((event) => {
@@ -35,47 +33,53 @@ const useEditKeyword = () => {
     console.log('[DEBUG] Event Key', event.key)
 
     if (event.key === 'Enter') {
-      let targetkeyword = dataContext.keyword?.find(
+      inputValue = inputValue.trim().normalize('NFKC')
+      if (inputValue === '' || dataContext.activeKey == null) return
+
+      const targetKeyword = dataContext.keyword.find(
         (key) => key.favoriteDataId === dataContext.activeKey,
       )
-
-      if (inputValue === '') {
-        return { ...dataContext, keyword: [...dataContext.keyword] }
+      const normalizedInput = inputValue.toLocaleLowerCase()
+      const duplicate = targetKeyword?.value.some(
+        (item) => item.value.trim().normalize('NFKC').toLocaleLowerCase() === normalizedInput,
+      )
+      if (duplicate) {
+        target.value = ''
+        return
       }
 
-      if (dataContext.activeKey == null) return
+      const newTag = { value: inputValue, id: uuid() }
+      const nextKeyword = targetKeyword
+        ? dataContext.keyword.map((row) =>
+            row.favoriteDataId === dataContext.activeKey
+              ? { ...row, value: [...row.value, newTag] }
+              : row,
+          )
+        : [...dataContext.keyword, { favoriteDataId: dataContext.activeKey, value: [newTag] }]
 
-      if (targetkeyword == null) {
-        targetkeyword = {
-          value: [],
-          favoriteDataId: dataContext.activeKey,
-        }
-        dataContext.keyword.push(targetkeyword)
-      }
-
-      targetkeyword.value = [...targetkeyword?.value, { value: inputValue, id: uuid() }]
-
-      inputValue = ''
-
-      dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
-
+      dataContext.setGlobalData({ keyword: nextKeyword })
       target.value = ''
     } else if ((event.key === 'Delete' || event.key === 'Backspace') && inputValue === '') {
-      let targetkeyword = dataContext.keyword?.find(
+      if (dataContext.activeKey == null) return
+      const targetKeyword = dataContext.keyword.find(
         (key) => key.favoriteDataId === dataContext.activeKey,
       )
-      if (targetkeyword?.value == null) return
+      if (targetKeyword?.value == null) return
 
-      targetkeyword.value = [...targetkeyword?.value.slice(0, -1)]
-      dataContext.setGlobalData({ keyword: [...dataContext.keyword] })
+      const nextKeyword = dataContext.keyword.map((row) =>
+        row.favoriteDataId === dataContext.activeKey
+          ? { ...row, value: row.value.slice(0, -1) }
+          : row,
+      )
+      dataContext.setGlobalData({ keyword: nextKeyword })
     }
   })
 
   const tagElementArray = React.useMemo(() => {
-    return currentFavoriteTag?.value.map((keyValue, index) => {
+    return currentFavoriteTag?.value.map((keyValue) => {
       return (
         <span
-          key={index}
+          key={keyValue.id}
           contentEditable={false}
           className={
             'text-white p-1 cursor-pointer flex items-center relative bg-b-primary rounded-sm'

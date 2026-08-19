@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { deleteFavoriteResources, restoreFavoriteResource } from '../src/utils/api'
+import { deleteFavoriteResources, moveFavorite, restoreFavoriteResource } from '../src/utils/api'
 
 const cookies = 'DedeUserID=123; bili_jct=test-csrf'
 
@@ -8,6 +8,8 @@ describe('favorite resource operations', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
         json: () => Promise.resolve({ code: 0, message: '0' }),
       }),
     )
@@ -15,6 +17,22 @@ describe('favorite resource operations', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+  })
+
+  it('移动收藏时要求 B 站业务 code 为 0', async () => {
+    await moveFavorite(1, 2, 3, cookies)
+    const [, options] = vi.mocked(fetch).mock.calls[0]
+    const body = options?.body as URLSearchParams
+    expect(body.get('src_media_id')).toBe('1')
+    expect(body.get('tar_media_id')).toBe('2')
+    expect(body.get('resources')).toBe('3:2')
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ code: -509, message: '请求频率过高' }),
+    } as Response)
+    await expect(moveFavorite(1, 2, 3, cookies)).rejects.toThrow('请求频率过高')
   })
 
   it('批量删除时携带收藏夹、视频和 CSRF 参数', async () => {
@@ -39,8 +57,47 @@ describe('favorite resource operations', () => {
     expect(body.get('add_media_ids')).toBe('9')
   })
 
+  it('移动、删除、恢复共享串行写队列，不会并发写 B 站', async () => {
+    let resolveFirst: ((value: Response) => void) | undefined
+    let markFirstStarted: (() => void) | undefined
+    const firstStarted = new Promise<void>((resolve) => {
+      markFirstStarted = resolve
+    })
+    const firstResponse = new Promise<Response>((resolve) => {
+      resolveFirst = resolve
+    })
+
+    vi.mocked(fetch)
+      .mockImplementationOnce(() => {
+        markFirstStarted?.()
+        return firstResponse
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ code: 0, message: '0' }),
+      } as Response)
+
+    const first = moveFavorite(1, 2, 3, cookies)
+    const second = deleteFavoriteResources(9, [11], cookies)
+
+    await firstStarted
+    expect(fetch).toHaveBeenCalledTimes(1)
+
+    resolveFirst?.({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ code: 0, message: '0' }),
+    } as Response)
+
+    await Promise.all([first, second])
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+
   it('B 站返回错误时抛出明确错误', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
       json: () => Promise.resolve({ code: -403, message: '权限不足' }),
     } as Response)
 
