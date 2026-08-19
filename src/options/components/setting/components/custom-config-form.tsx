@@ -102,9 +102,7 @@ export const CustomConfigForm: React.FC = () => {
       aiConfig: {
         ...globalData.aiConfig,
         ...defaultParamsValue,
-        ...{
-          extraParams: JSON.parse(defaultParamsValue.extraParams || '{}'),
-        },
+        extraParams: JSON.parse(defaultParamsValue.extraParams || '{}'),
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps

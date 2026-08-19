@@ -7,8 +7,6 @@ import { dbManager } from '@/utils/indexed-db'
  */
 const INDEXEDDB_PERSISTED_KEYS = ['keyword'] as const
 
-type IndexedDBPersistedKeys = (typeof INDEXEDDB_PERSISTED_KEYS)[number]
-
 const indexedDBStorageMiddleware: IndexedDBStorageImpl = (config) => {
   return (set, get, api) => {
     const setStateWithoutPersistence = api.setState
