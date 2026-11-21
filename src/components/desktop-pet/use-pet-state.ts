@@ -39,9 +39,9 @@ export function usePetState() {
   // 初始化时从 storage 恢复
   React.useEffect(() => {
     try {
-      chrome?.storage?.local?.get([STORAGE_KEY], (result) => {
+      chrome?.storage?.local?.get([STORAGE_KEY], (result: Record<string, unknown>) => {
         if (result[STORAGE_KEY]) {
-          setMoodState(result[STORAGE_KEY])
+          setMoodState(result[STORAGE_KEY] as PetMood)
         } else {
           // 首次加载，打招呼
           setMoodState('wave')

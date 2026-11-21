@@ -19,9 +19,9 @@ export function usePetDrag(containerRef: React.RefObject<HTMLDivElement | null>)
   // 从 storage 恢复位置
   React.useEffect(() => {
     try {
-      chrome?.storage?.local?.get([POSITION_KEY], (result) => {
+      chrome?.storage?.local?.get([POSITION_KEY], (result: Record<string, unknown>) => {
         if (result[POSITION_KEY]) {
-          setPosition(result[POSITION_KEY])
+          setPosition(result[POSITION_KEY] as Position)
         } else {
           // 默认位置：右下角
           setPosition({

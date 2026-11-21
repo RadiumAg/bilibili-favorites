@@ -4,7 +4,6 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import { crx } from '@crxjs/vite-plugin'
 import react from '@vitejs/plugin-react'
-import { terser } from 'rollup-plugin-terser'
 import manifest from './src/manifest'
 
 // https://vitejs.dev/config/
@@ -13,17 +12,17 @@ export default defineConfig(({ mode }) => {
     build: {
       emptyOutDir: true,
       outDir: 'build',
+      // dev 模式保留 console.log，生产构建移除（与原 rollup-plugin-terser drop_console 等价）
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: mode !== 'development',
+        },
+      },
       rollupOptions: {
         output: {
           chunkFileNames: 'assets/chunk-[hash].js',
         },
-        plugins: [
-          terser({
-            compress: {
-              drop_console: mode !== 'development', // dev 模式保留 console.log
-            },
-          }),
-        ],
       },
     },
     resolve: {
@@ -40,5 +39,10 @@ export default defineConfig(({ mode }) => {
         // },
       }),
     ],
+    test: {
+      include: ['./tests/**/*.{test,spec}.{tsx,ts}'],
+      globals: true,
+      environment: 'jsdom',
+    },
   }
 })

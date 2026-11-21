@@ -86,9 +86,9 @@ export function mergeAIConfigFromWebDAV(localConfig: unknown, remoteConfig: unkn
 /** 获取或生成设备 ID */
 function getDeviceId(): Promise<string> {
   return new Promise((resolve) => {
-    chrome.storage.local.get('_deviceId', (data) => {
+    chrome.storage.local.get('_deviceId', (data: Record<string, unknown>) => {
       if (data._deviceId) {
-        resolve(data._deviceId)
+        resolve(data._deviceId as string)
       } else {
         const id = `device-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
         chrome.storage.local.set({ _deviceId: id })
@@ -114,8 +114,8 @@ export function getWebDAVConfig(): Promise<WebDAVConfig | null> {
 /** 获取本地同步时间戳 */
 export function getLocalSyncTime(): Promise<number> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(WEBDAV_LAST_SYNC_TIME_KEY, (data) => {
-      resolve(data[WEBDAV_LAST_SYNC_TIME_KEY] || 0)
+    chrome.storage.local.get(WEBDAV_LAST_SYNC_TIME_KEY, (data: Record<string, unknown>) => {
+      resolve((data[WEBDAV_LAST_SYNC_TIME_KEY] as number) || 0)
     })
   })
 }
@@ -130,8 +130,8 @@ function setLocalSyncTime(time: number): Promise<void> {
 /** 获取本地数据最后修改时间 */
 export function getLocalModifiedTime(): Promise<number> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(WEBDAV_LOCAL_MODIFIED_TIME_KEY, (data) => {
-      resolve(data[WEBDAV_LOCAL_MODIFIED_TIME_KEY] || 0)
+    chrome.storage.local.get(WEBDAV_LOCAL_MODIFIED_TIME_KEY, (data: Record<string, unknown>) => {
+      resolve((data[WEBDAV_LOCAL_MODIFIED_TIME_KEY] as number) || 0)
     })
   })
 }
@@ -235,7 +235,9 @@ export async function uploadSync(): Promise<void> {
 
   // 1. 获取需要同步的 chrome.storage 数据
   const storageData = await new Promise<Record<string, any>>((resolve) => {
-    chrome.storage.local.get(SYNC_KEYS as unknown as string[], resolve)
+    chrome.storage.local.get(SYNC_KEYS as unknown as string[], (result: Record<string, unknown>) =>
+      resolve(result),
+    )
   })
 
   if ('aiConfig' in storageData) {

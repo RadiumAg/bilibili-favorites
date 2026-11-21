@@ -19,8 +19,8 @@ type MoodCallback = (mood: PetMood, options?: boolean | SetMoodOptions) => void
 function getStorage<T>(key: string, fallback: T): Promise<T> {
   return new Promise((resolve) => {
     try {
-      chrome?.storage?.local?.get([key], (result) => {
-        resolve(result[key] ?? fallback)
+      chrome?.storage?.local?.get([key], (result: Record<string, unknown>) => {
+        resolve((result[key] as T) ?? fallback)
       })
     } catch {
       resolve(fallback)
