@@ -33,19 +33,7 @@ import { Steps, Step } from 'fumadocs-ui/components/steps'
 
 ## AI 模式
 
-性格分析支持两种 AI 模式，可在 [配置页](/docs/configuration) 中切换：
-
-| 模式            | 说明                                                                |
-| --------------- | ------------------------------------------------------------------- |
-| **内置免费 AI** | 使用扩展提供的 AIGate 服务，无需配置，开箱即用                      |
-| **自定义 AI**   | 填入你自己的 OpenAI 兼容 API Key 和模型，支持 OpenAI、星火、Kimi 等 |
-
-<Callout type="info">
-  **内置模式有额度限制吗？**
-
-内置 AIGate 服务提供免费额度，每日可用次数有限。如需更高频使用，建议切换到自定义 AI 模式。
-
-</Callout>
+性格分析使用你在 [配置页](/docs/configuration) 中填写的 **自定义 AI**。请先配置 API Key、模型和 Base URL；v1.2.18 不再提供内置免费 AI / AIGate。
 
 ## 数据来源
 

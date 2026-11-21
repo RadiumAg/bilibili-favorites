@@ -115,7 +115,7 @@ export const useAnalysisData = (props: UseAnalysisDataProps) => {
           folderMap[folder.id.toString()] = medias
         } catch (error) {
           console.error(`Failed to fetch medias for folder ${folder.id}:`, error)
-          if (error instanceof Error && error.message.includes('message port closed')) {
+          if (error instanceof Error && /通信超时|message port closed/i.test(error.message)) {
             console.warn(
               'Possible cross-origin issue. Make sure Bilibili tab is active and content script is loaded.',
             )

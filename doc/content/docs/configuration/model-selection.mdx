@@ -13,10 +13,8 @@ import { Callout } from 'fumadocs-ui/components/callout';
 - **GLM**
 - **自定义**
 
-此外，**免费额度** 模式下会自动使用扩展内置的 **AIGate** 共享配额，无需你选择模型。
-
 <Callout type="info">
-  **重要提示**：扩展的 `host_permissions` 仅放行 `openai.com`、`xf-yun.com` 与 `radiumg.top` 三个域名。若你选择的服务商域名不在其中，网络请求可能被浏览器阻止；此时请使用 **自定义** 适配器 + 你自有的代理（需将代理域名放到同样放行的域名下），或切换到 **免费额度** 模式。
+  **重要提示**：固定 `host_permissions` 只保留 Bilibili、OpenAI 与讯飞域名；其他自定义地址属于可选站点权限范围。若请求被拦截，请在扩展详情页检查对应站点访问权限。
 </Callout>
 
 ## 内置适配器概览
@@ -35,13 +33,9 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 ## 选型思路
 
-### 如果你不想申请任何 Key
+### 如果你还没有 API Key
 
-切到 **免费额度** 模式即可：
-
-- 使用扩展内置的 AIGate 共享配额；
-- 有日 / 月 / RPM 三档限流，配置页中可查看实时配额；
-- 日配额用完后可切回自定义模式或次日再试。
+v1.2.18 不再内置共享免费 AI。请先选择一个支持 OpenAI 兼容协议的服务商并申请自己的凭据，再回到配置页填写。
 
 ### 如果你已有 API Key
 

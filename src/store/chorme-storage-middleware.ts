@@ -14,6 +14,7 @@ const PERSISTED_KEYS = [
   'aiConfig',
   'defaultFavoriteId',
   'petEnabled',
+  'aiTagFailures',
   // WebDAV 云同步配置（仅本地持久化，不参与同步上传）
   'webdavConfig',
   'webdavEnabled',
@@ -42,9 +43,17 @@ const chromeStorageMiddleware: ChromeStorageImpl = (config) => {
     // 从 chrome.storage 恢复数据
     const hydrate = () => {
       chrome.storage.local.get(PERSISTED_KEYS as unknown as string[]).then((data) => {
-        if (data && Object.keys(data).length > 0) {
-          set(data as any)
+        if (!data || Object.keys(data).length === 0) return
+
+        const hydrated = { ...data } as Record<string, any>
+        if (hydrated.aiConfig && hydrated.aiConfig.configMode !== 'custom') {
+          hydrated.aiConfig = { ...hydrated.aiConfig, configMode: 'custom' }
+          chrome.storage.local.set({ aiConfig: hydrated.aiConfig })
         }
+        if (!hydrated.aiTagFailures || typeof hydrated.aiTagFailures !== 'object') {
+          hydrated.aiTagFailures = {}
+        }
+        set(hydrated as any)
       })
     }
 

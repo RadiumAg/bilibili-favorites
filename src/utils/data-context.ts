@@ -1,6 +1,6 @@
 import { type WebDAVConfig } from './webdav'
 
-type Adapter = 'spark' | 'openai' | 'custom' | 'aigate' | 'qianwen' | 'kimi' | 'gml'
+type Adapter = 'spark' | 'openai' | 'custom' | 'qianwen' | 'kimi' | 'gml'
 
 type AIMoveExecutionMode = 'ask' | 'auto'
 
@@ -20,11 +20,8 @@ type DataContextType = {
     model?: string
     adapter?: Adapter
     extraParams?: Record<string, any>
-    // 新增 AIGate 配置字段
-    aigateUserId?: string
-    aigateApiKeyId?: string
-    // 配置模式：custom=自定义AI, free=内置免费AI
-    configMode?: 'custom' | 'free'
+    // 仅保留自定义 AI。configMode 用于兼容旧版本持久化数据。
+    configMode?: 'custom'
     // AI 整理完成后的执行方式：ask=审核后移动, auto=分析完成后自动移动
     aiMoveExecutionMode?: AIMoveExecutionMode
   }
@@ -36,6 +33,8 @@ type DataContextType = {
     favoriteDataId: number
   }[]
   petEnabled: boolean
+  /** 自动创建标签失败标识：favoriteId -> 错误摘要 */
+  aiTagFailures: Record<string, string>
   // WebDAV 云同步配置（存 chrome.storage.local，不参与 WebDAV 同步）
   webdavConfig?: WebDAVConfig
   webdavEnabled: boolean

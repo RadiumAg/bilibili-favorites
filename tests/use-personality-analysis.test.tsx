@@ -18,10 +18,14 @@ vi.mock('zustand/react/shallow', () => ({
 }))
 
 vi.mock('@/store/global-data', () => ({
-  useGlobalConfig: (selector: (state: { aiConfig: { configMode: 'free' } }) => unknown) =>
+  useGlobalConfig: (selector: (state: { aiConfig: Record<string, unknown> }) => unknown) =>
     selector({
       aiConfig: {
-        configMode: 'free',
+        configMode: 'custom',
+        key: 'test-key',
+        baseUrl: 'https://example.com/v1',
+        model: 'test-model',
+        adapter: 'openai',
       },
     }),
 }))
@@ -45,6 +49,10 @@ vi.mock('@/utils/indexed-db', () => ({
     get: mocks.dbGet,
     set: mocks.dbSet,
   },
+}))
+
+vi.mock('@/utils/origin-permission', () => ({
+  requestOriginPermission: vi.fn(() => Promise.resolve(true)),
 }))
 
 vi.mock('@/utils/pet-message', () => ({

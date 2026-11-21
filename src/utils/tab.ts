@@ -57,7 +57,7 @@ export const sendMessageToTab = <T = any>(
   return new Promise((resolve, reject) => {
     // 设置超时定时器
     const timer = setTimeout(() => {
-      reject(new Error('Message timeout: The message port closed before a response was received.'))
+      reject(new Error('B站页面通信超时：在限定时间内未收到响应。'))
     }, timeout)
 
     chrome.tabs.sendMessage(tabId, message, (response) => {

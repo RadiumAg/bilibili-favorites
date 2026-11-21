@@ -23,8 +23,8 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 | 键 | 含义 |
 |-----|-----|
-| `aiConfig.configMode` | `custom` / `free` |
-| `aiConfig.adapter` | `openai` / `qianwen` / `kimi` / `gml` / `custom` / `aigate` / `spark` |
+| `aiConfig.configMode` | `custom`（旧版本 `free` 会在升级时迁移为 `custom`） |
+| `aiConfig.adapter` | `openai` / `qianwen` / `kimi` / `gml` / `custom` / `spark` |
 | `aiConfig.key` | API Key（custom 模式） |
 | `aiConfig.baseUrl` | Base URL（可选，未填使用适配器默认值） |
 | `aiConfig.model` | 模型名称 |
@@ -33,7 +33,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 | 关键字规则 | 所有收藏夹的关键字列表 |
 
 <Callout type="info">
-  Chrome Storage 会随 Chrome Sync（若已启用）同步到其他登录了相同账号的设备。若你不希望 API Key 被同步，请关闭 Chrome 账号同步，或使用「免费额度」模式避开 Key。
+  Chrome Storage 会随 Chrome Sync（若已启用）同步到其他登录了相同账号的设备。若你不希望 API Key 被同步，请关闭 Chrome 账号同步，并避免在共享浏览器配置中保存凭据。
 </Callout>
 
 ### 2. IndexedDB（收藏夹视频详情一级缓存）

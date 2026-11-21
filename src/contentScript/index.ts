@@ -85,11 +85,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case MessageEnum.moveVideo: {
       const { srcMediaId, tarMediaId, videoId } = typedMessage.data
       moveFavorite(srcMediaId, tarMediaId, videoId, document.cookie)
-        ?.then(() => {
-          sendResponse(MessageEnum.moveVideo)
+        .then((response) => {
+          sendResponse(response)
         })
-        .catch(() => {
-          sendResponse({ code: -1 })
+        .catch((error) => {
+          sendResponse({
+            code: -1,
+            message: error instanceof Error ? error.message : '移动视频失败',
+          })
         })
 
       break

@@ -9,6 +9,7 @@ export default defineManifest({
   name: `${packageData.displayName || packageData.name}${isDev ? ` ➡️ Dev` : ''}`,
   description: packageData.description,
   version: packageData.version,
+  version_name: packageData.version,
   manifest_version: 3,
   icons: {
     16: 'img/logo-16.png',
@@ -35,12 +36,6 @@ export default defineManifest({
       js: ['src/contentScript/index.ts'],
     },
   ],
-  web_accessible_resources: [
-    {
-      resources: ['img/logo-16.png', 'img/logo-34.png', 'img/logo-48.png', 'img/logo-128.png'],
-      matches: [],
-    },
-  ],
   permissions: ['storage', 'tabs', 'sidePanel', 'cookies', 'scripting'],
   optional_host_permissions: ['https://*/*', 'http://*/*'],
   host_permissions: [
@@ -50,7 +45,6 @@ export default defineManifest({
     'https://*.openai.com/*',
     'https://spark-api.xf-yun.com/*',
     'https://*.xf-yun.com/*',
-    'https://*.radiumg.top/*',
   ],
   options_ui: {
     page: 'options.html',

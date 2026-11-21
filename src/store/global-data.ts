@@ -14,9 +14,10 @@ const useGlobalConfig = create<DataContextType>()(
           cookie: undefined,
           activeKey: undefined,
           aiConfig: {
-            configMode: 'free',
+            configMode: 'custom',
             aiMoveExecutionMode: 'ask',
           },
+          aiTagFailures: {},
           defaultFavoriteId: undefined,
           petEnabled: true,
           // WebDAV 云同步默认值

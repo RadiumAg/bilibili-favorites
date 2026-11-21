@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   extractKeywordFromBuffer,
   parseStreamChunk,
@@ -193,6 +193,13 @@ describe('实际AI流式输出场景 - 基于调试日志', () => {
     }
   })
 
+  it('应该正确解析包含转义引号的关键词', () => {
+    const result = extractKeywordFromBuffer(String.raw`"AI \"Agent\"", "next"`)
+    expect(result.success).toBe(true)
+    expect(result.keyword).toBe('AI "Agent"')
+    expect(result.newBuffer).toBe('"next"')
+  })
+
   it('应该处理chatglm系列关键词的连续提取', () => {
     let buffer = '"chatglm", "chatglm-4", "next"'
     const keywords: string[] = []
@@ -238,5 +245,70 @@ describe('实际AI流式输出场景 - 基于调试日志', () => {
     }
 
     expect(keywords).toEqual(['chatglm'])
+  })
+})
+
+describe('createAIStreamParser transaction', () => {
+  it('同一个 chunk 中的多个标签全部暂存，commit 前不写入全局状态', async () => {
+    const { createAIStreamParser } = await import(
+      '../src/hooks/use-create-keyword-by-ai/ai-stream-parser'
+    )
+    let state: any = {
+      keyword: [
+        {
+          favoriteDataId: 1,
+          value: [{ id: 'manual', value: '人工标签' }],
+        },
+      ],
+    }
+    const setGlobalData = vi.fn((patch: any) => {
+      state = { ...state, ...patch }
+    })
+    const parser = createAIStreamParser({
+      favKey: '1',
+      getGlobalData: () => state,
+      setGlobalData,
+      adapter: {
+        parse: (chunk: Uint8Array) => new TextDecoder().decode(chunk),
+      },
+    } as any)
+
+    parser.processChunk(new TextEncoder().encode('["AI标签一", "AI标签二", "AI标签一"]'))
+    expect(parser.getPendingKeywords()).toEqual(['AI标签一', 'AI标签二'])
+    expect(setGlobalData).not.toHaveBeenCalled()
+
+    parser.flush()
+    parser.commit()
+
+    expect(state.keyword[0].value.map((item: any) => item.value)).toEqual([
+      '人工标签',
+      'AI标签一',
+      'AI标签二',
+    ])
+  })
+
+  it('流末尾残缺时拒绝 commit，从而不污染已有标签', async () => {
+    const { createAIStreamParser } = await import(
+      '../src/hooks/use-create-keyword-by-ai/ai-stream-parser'
+    )
+    let state: any = {
+      keyword: [{ favoriteDataId: 1, value: [{ id: 'manual', value: '人工标签' }] }],
+    }
+    const setGlobalData = vi.fn((patch: any) => {
+      state = { ...state, ...patch }
+    })
+    const parser = createAIStreamParser({
+      favKey: '1',
+      getGlobalData: () => state,
+      setGlobalData,
+      adapter: {
+        parse: (chunk: Uint8Array) => new TextDecoder().decode(chunk),
+      },
+    } as any)
+
+    parser.processChunk(new TextEncoder().encode('["AI标签一", "残缺'))
+    expect(() => parser.flush()).toThrow('AI 标签输出不完整')
+    expect(setGlobalData).not.toHaveBeenCalled()
+    expect(state.keyword[0].value).toEqual([{ id: 'manual', value: '人工标签' }])
   })
 })

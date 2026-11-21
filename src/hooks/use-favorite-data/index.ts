@@ -10,6 +10,7 @@ type FavoriteDataItem = DataContextType['favoriteData'][number]
 
 type GetAllFavoriteFlagRes = {
   code: number
+  message?: string
   data: { list: FavoriteDataItem[] }
 }
 
@@ -28,31 +29,33 @@ const useFavoriteData = () => {
   )
   const [loading, setLoading] = React.useState(false)
 
-  const refresh = useMemoizedFn(() => {
-    fetchFavoriteData()
-  })
+  const refresh = useMemoizedFn(() => fetchFavoriteData())
 
   const fetchFavoriteData = useMemoizedFn(async () => {
     setLoading(true)
-
-    queryAndSendMessage<GetAllFavoriteFlagRes>({
-      type: MessageEnum.getAllFavoriteFlag,
-    })
-      .then((response) => {
-        const list = response.data?.list ?? []
-        setGlobalData({ favoriteData: list })
-        return list
+    try {
+      const response = await queryAndSendMessage<GetAllFavoriteFlagRes>({
+        type: MessageEnum.getAllFavoriteFlag,
       })
-      .finally(() => {
-        setLoading(false)
-      })
+      if (response.code !== 0) {
+        throw new Error(response.message || '获取收藏夹列表失败')
+      }
+      const list = response.data?.list ?? []
+      setGlobalData({ favoriteData: list })
+      return list
+    } finally {
+      setLoading(false)
+    }
   })
 
   useMount(() => {
     if (hasFetch) return
     if (favoriteData == null || favoriteData.length === 0) {
       hasFetch = true
-      fetchFavoriteData()
+      fetchFavoriteData().catch((error) => {
+        hasFetch = false
+        console.error('Fetch favorite metadata failed:', error)
+      })
     }
   })
 

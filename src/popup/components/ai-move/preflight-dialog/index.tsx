@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertCircle, Sparkles, Star } from 'lucide-react'
+import { Sparkles, Star } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,21 +11,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-type PreflightDialogKind = 'missing-default' | 'no-tags' | 'quota-empty' | 'quota-warning'
+type PreflightDialogKind = 'missing-default' | 'no-tags'
 
 type PreflightDialogProps = {
   kind: PreflightDialogKind | null
-  aiVideoCount?: number
-  remainingQuota?: number
   onCancel: () => void
   onPrimary: () => void
-  onContinue?: () => void
 }
 
-const CONTENT: Record<
-  Exclude<PreflightDialogKind, 'quota-warning'>,
-  { title: string; description: string; primaryLabel: string }
-> = {
+const CONTENT: Record<PreflightDialogKind, { title: string; description: string; primaryLabel: string }> = {
   'missing-default': {
     title: '先设置默认收藏夹',
     description: '智能整理会处理默认收藏夹中的视频。在收藏夹标签上点击星标即可设置。',
@@ -36,33 +30,13 @@ const CONTENT: Record<
     description: '还没有标签。本次整理完成后，可以把确认过的归类沉淀为标签，下次更快、更省配额。',
     primaryLabel: '开始整理',
   },
-  'quota-empty': {
-    title: '免费配额不足',
-    description: '今日免费额度已用完。可明天再试，或配置自己的 AI 服务。',
-    primaryLabel: '配置自己的 AI',
-  },
 }
 
-const PreflightDialog: React.FC<PreflightDialogProps> = ({
-  kind,
-  aiVideoCount = 0,
-  remainingQuota = 0,
-  onCancel,
-  onPrimary,
-  onContinue,
-}) => {
+const PreflightDialog: React.FC<PreflightDialogProps> = ({ kind, onCancel, onPrimary }) => {
   if (kind == null) return null
 
-  const isWarning = kind === 'quota-warning'
-  const content = isWarning
-    ? {
-        title: '本次配额可能不足',
-        description: `预计需 AI 处理 ${aiVideoCount} 个视频，当前剩余 ${remainingQuota} 次请求。可继续尝试，或先配置自己的 AI。`,
-        primaryLabel: '配置自己的 AI',
-      }
-    : CONTENT[kind]
-  const Icon =
-    kind === 'missing-default' ? Star : isWarning || kind === 'quota-empty' ? AlertCircle : Sparkles
+  const content = CONTENT[kind]
+  const Icon = kind === 'missing-default' ? Star : Sparkles
 
   return (
     <AlertDialog open={true}>
@@ -85,14 +59,6 @@ const PreflightDialog: React.FC<PreflightDialogProps> = ({
           <AlertDialogCancel onClick={onCancel} className="min-h-11">
             取消
           </AlertDialogCancel>
-          {isWarning && onContinue && (
-            <AlertDialogAction
-              onClick={onContinue}
-              className="min-h-11 border border-[#BF00FF]/25 bg-white text-[#A000D9] hover:bg-[#BF00FF]/5"
-            >
-              继续整理
-            </AlertDialogAction>
-          )}
           <AlertDialogAction
             onClick={onPrimary}
             className="min-h-11 bg-[#BF00FF] text-white hover:bg-[#A000D9]"

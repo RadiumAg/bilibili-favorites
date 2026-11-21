@@ -3,7 +3,7 @@ import { CheckCircle2, Circle, Loader2, MinusCircle, Sparkles, Tag, XCircle } fr
 import { useMemoizedFn } from 'ahooks'
 import { useShallow } from 'zustand/react/shallow'
 import { queryAndSendMessage } from '@/utils/tab'
-import { checkAIGateQuota, fetchAllFavoriteMedias, fetchAIMove } from '@/utils/api'
+import { fetchAllFavoriteMedias, fetchAIMove } from '@/utils/api'
 import { MessageEnum } from '@/utils/message'
 import { createStreamAdapter } from '@/hooks/use-create-keyword-by-ai/ai-stream-parser'
 import { useGlobalConfig } from '@/store/global-data'
@@ -26,9 +26,9 @@ import {
 import { createTagSuggestionGroups, type TagSuggestionGroup } from '@/utils/tag-suggestions'
 import ReviewPanel from './review-panel'
 import TagSuggestionCard from './tag-suggestion-card'
-import PreflightDialog, { type PreflightDialogKind } from './preflight-dialog'
 import { shouldRecordAIMoveUse } from './star-invitation'
 import type { AIMoveResult, AIMoveStatus } from './types'
+import { requestOriginPermission } from '@/utils/origin-permission'
 
 type AIMoveStage = 'idle' | 'analyzing' | 'reviewing' | 'moving' | 'finished'
 
@@ -46,14 +46,6 @@ type AIMoveProgress = {
   moveTotal: number
   currentTitle: string
 }
-
-type QuotaDialogState = {
-  kind: Extract<PreflightDialogKind, 'quota-empty' | 'quota-warning'>
-  aiVideoCount: number
-  remainingQuota: number
-}
-
-type QuotaDecision = 'continue' | 'cancel' | 'configure'
 
 const INITIAL_PROGRESS: AIMoveProgress = {
   tagMatched: 0,
@@ -112,12 +104,10 @@ const useAIMove = () => {
   const [moveResults, setMoveResults] = React.useState<AIMoveResult[]>([])
   const [sourceFavoriteId, setSourceFavoriteId] = React.useState<number | null>(null)
   const [progress, setProgress] = React.useState<AIMoveProgress>(INITIAL_PROGRESS)
-  const [quotaDialog, setQuotaDialog] = React.useState<QuotaDialogState | null>(null)
   const [tagSuggestions, setTagSuggestions] = React.useState<TagSuggestionGroup[]>([])
   const [showTagSuggestions, setShowTagSuggestions] = React.useState(true)
   const abortControllerRef = React.useRef<AbortController | null>(null)
   const streamRef = React.useRef<{ cancel: () => void } | null>(null)
-  const quotaDecisionRef = React.useRef<((decision: QuotaDecision) => void) | null>(null)
   const isProcessingRef = React.useRef(false)
   const activeRunIdRef = React.useRef(0)
   const stageRef = React.useRef<AIMoveStage>('idle')
@@ -143,24 +133,10 @@ const useAIMove = () => {
     }
   }
 
-  const requestQuotaDecision = useMemoizedFn((state: QuotaDialogState) => {
-    setQuotaDialog(state)
-    return new Promise<QuotaDecision>((resolve) => {
-      quotaDecisionRef.current = resolve
-    })
-  })
-
-  const resolveQuotaDecision = useMemoizedFn((decision: QuotaDecision) => {
-    const resolve = quotaDecisionRef.current
-    quotaDecisionRef.current = null
-    setQuotaDialog(null)
-    resolve?.(decision)
-  })
-
   const moveOneVideo = useMemoizedFn(
     async (result: AIMoveResult, currentSourceFavoriteId: number): Promise<AIMoveResult> => {
       try {
-        await queryAndSendMessage({
+        const response = await queryAndSendMessage<{ code: number; message?: string }>({
           type: MessageEnum.moveVideo,
           data: {
             srcMediaId: currentSourceFavoriteId,
@@ -168,6 +144,9 @@ const useAIMove = () => {
             videoId: result.videoId,
           },
         })
+        if (response?.code !== 0) {
+          throw new Error(response?.message || 'B 站未确认移动成功')
+        }
         return { ...result, status: 'success' }
       } catch (error) {
         console.error('Move failed:', error)
@@ -320,13 +299,16 @@ const useAIMove = () => {
       return
     }
 
-    const useCustomAI = dataContext.aiConfig.configMode === 'custom'
-    const hasCustomKey = Boolean(dataContext.aiConfig.key && dataContext.aiConfig.model)
+    const hasCustomAI = !!(
+      dataContext.aiConfig?.key &&
+      dataContext.aiConfig?.model &&
+      dataContext.aiConfig?.baseUrl
+    )
 
-    if (useCustomAI && !hasCustomKey) {
+    if (!hasCustomAI) {
       toast({
         title: '未配置 AI',
-        description: '请先在设置页面配置 AI 或切换到免费额度',
+        description: '请先在设置页面完成自定义 AI 配置',
         variant: 'destructive',
       })
       setTimeout(() => {
@@ -344,10 +326,8 @@ const useAIMove = () => {
       return
     }
 
-    const currentSourceFavoriteId = dataContext.defaultFavoriteId
-    const favoriteData = dataContext.favoriteData
-    const keyword = dataContext.keyword
-    const aiConfig = dataContext.aiConfig
+    // 在任何异步权限请求之前建立本次运行的世代和取消信号。
+    // 这样即使用户在权限请求尚未返回时点击“取消”，旧任务也不会在权限返回后复活。
     const runId = activeRunIdRef.current + 1
     const abortController = new AbortController()
     const ensureRunActive = createRunGuard(runId, abortController)
@@ -355,6 +335,49 @@ const useAIMove = () => {
     activeRunIdRef.current = runId
     abortControllerRef.current = abortController
     isProcessingRef.current = true
+
+    const releaseRunSlot = () => {
+      if (activeRunIdRef.current !== runId) return
+      isProcessingRef.current = false
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null
+      }
+    }
+
+    try {
+      const granted = await requestOriginPermission(dataContext.aiConfig.baseUrl!)
+      ensureRunActive()
+      if (!granted) {
+        releaseRunSlot()
+        toast({
+          title: '缺少 AI 服务站点权限',
+          description: '请允许插件访问当前 AI 服务商后再整理',
+          variant: 'destructive',
+        })
+        return
+      }
+    } catch (error) {
+      if (
+        error instanceof AIMoveRunInterruptedError ||
+        activeRunIdRef.current !== runId ||
+        abortController.signal.aborted
+      ) {
+        return
+      }
+      releaseRunSlot()
+      toast({
+        title: 'AI Base URL 无效',
+        description: error instanceof Error ? error.message : '无法解析服务地址',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const currentSourceFavoriteId = dataContext.defaultFavoriteId
+    const favoriteData = dataContext.favoriteData
+    const keyword = dataContext.keyword
+    const aiConfig = dataContext.aiConfig
+
     setSourceFavoriteId(currentSourceFavoriteId)
     setMoveResults([])
     setProgress(INITIAL_PROGRESS)
@@ -406,44 +429,6 @@ const useAIMove = () => {
         tagMatched: tagResults.length,
         aiTotal: aiVideos.length,
       })
-
-      if (!useCustomAI && aiVideos.length > 0) {
-        try {
-          const quota = await checkAIGateQuota()
-          ensureRunActive()
-          const remainingQuota = quota.quotaInfo.daily.remaining
-          const requiredRequests = Math.ceil(aiVideos.length / 1000)
-
-          if (!quota.hasQuota || remainingQuota <= 0) {
-            const decision = await requestQuotaDecision({
-              kind: 'quota-empty',
-              aiVideoCount: aiVideos.length,
-              remainingQuota,
-            })
-            ensureRunActive()
-            if (decision !== 'continue') {
-              setIsModalOpen(false)
-              updateStage('idle')
-              return
-            }
-          } else if (requiredRequests > remainingQuota) {
-            const decision = await requestQuotaDecision({
-              kind: 'quota-warning',
-              aiVideoCount: aiVideos.length,
-              remainingQuota,
-            })
-            ensureRunActive()
-            if (decision !== 'continue') {
-              setIsModalOpen(false)
-              updateStage('idle')
-              return
-            }
-          }
-        } catch (error) {
-          if (error instanceof AIMoveRunInterruptedError) throw error
-          console.warn('[Smart Organize] 配额预检查失败，将由请求阶段继续校验:', error)
-        }
-      }
 
       const allResults: AIMoveResult[] = [...tagResults]
       const resolvedVideoIds = new Set<number>()
@@ -515,7 +500,6 @@ const useAIMove = () => {
               batchVideos,
               favoriteTitles,
               config,
-              useCustomAI,
               favoriteTagsMap,
             )
             try {
@@ -701,7 +685,6 @@ const useAIMove = () => {
 
   const cancelMove = useMemoizedFn(() => {
     const currentStage = stageRef.current
-    resolveQuotaDecision('cancel')
     activeRunIdRef.current += 1
     isProcessingRef.current = false
     abortControllerRef.current?.abort()
@@ -1008,18 +991,6 @@ const useAIMove = () => {
           )}
         </div>
       )}
-
-      <PreflightDialog
-        kind={quotaDialog?.kind ?? null}
-        aiVideoCount={quotaDialog?.aiVideoCount}
-        remainingQuota={quotaDialog?.remainingQuota}
-        onCancel={() => resolveQuotaDecision('cancel')}
-        onContinue={() => resolveQuotaDecision('continue')}
-        onPrimary={() => {
-          window.open(`${chrome.runtime.getURL('options.html')}?tab=setting`, '_blank')
-          resolveQuotaDecision('configure')
-        }}
-      />
     </div>
   ) : null
 

@@ -21,6 +21,11 @@ const pendingPageRequests = new Map<
   string,
   Promise<{ medias: FavoriteMedia[]; hasMore: boolean }>
 >()
+const pageGeneration = new Map<string, number>()
+const getPageGeneration = (mediaId: string) => pageGeneration.get(mediaId) ?? 0
+const bumpPageGeneration = (mediaId: string) => {
+  pageGeneration.set(mediaId, getPageGeneration(mediaId) + 1)
+}
 
 type CacheEntry = {
   data: FavoriteMedia[]
@@ -97,6 +102,13 @@ const setPageCachedData = (
   }
 }
 
+const clearPendingPageRequestsFor = (mediaId?: string) => {
+  const prefix = mediaId ? `${mediaId}:` : null
+  for (const key of [...pendingPageRequests.keys()]) {
+    if (!prefix || key.startsWith(prefix)) pendingPageRequests.delete(key)
+  }
+}
+
 /**
  * 收藏夹视频列表数据 Hook
  * - fetchWithCache：全量加载（带全量缓存），适用于分析、关键词提取等需要全量数据的功能
@@ -156,15 +168,23 @@ const useFavoriteListData = () => {
       return pendingPageRequests.get(reqKey)!
     }
 
-    // 3. 发起新请求
-    const request = fetchFavoritePage(mediaId, page, pageSize)
+    // 3. 发起新请求。记录世代，缓存失效后旧请求即使晚到也不能重新写回旧缓存。
+    const generation = getPageGeneration(mediaId)
+    let request: Promise<{ medias: FavoriteMedia[]; hasMore: boolean }>
+    const clearOwnPendingRequest = () => {
+      if (pendingPageRequests.get(reqKey) === request) pendingPageRequests.delete(reqKey)
+    }
+
+    request = fetchFavoritePage(mediaId, page, pageSize)
       .then((result) => {
-        setPageCachedData(mediaId, page, pageSize, result)
-        pendingPageRequests.delete(reqKey)
+        if (getPageGeneration(mediaId) === generation) {
+          setPageCachedData(mediaId, page, pageSize, result)
+        }
+        clearOwnPendingRequest()
         return result
       })
       .catch((error) => {
-        pendingPageRequests.delete(reqKey)
+        clearOwnPendingRequest()
         throw error
       })
 
@@ -202,6 +222,8 @@ const useFavoriteListData = () => {
    */
   const invalidateCache = (mediaId?: string) => {
     if (mediaId) {
+      bumpPageGeneration(mediaId)
+      clearPendingPageRequestsFor(mediaId)
       localStorage.removeItem(`${CACHE_PREFIX}${mediaId}`)
       dbManager.delete(`favorite-all-${mediaId}`)
     } else {
@@ -211,6 +233,8 @@ const useFavoriteListData = () => {
         if (key?.startsWith(CACHE_PREFIX)) keysToRemove.push(key)
       }
       keysToRemove.forEach((key) => localStorage.removeItem(key))
+      pageGeneration.clear()
+      clearPendingPageRequestsFor()
     }
   }
 
@@ -219,6 +243,9 @@ const useFavoriteListData = () => {
    * @param mediaId 指定收藏夹 ID，不传则清除全部分页缓存
    */
   const invalidatePageCache = (mediaId?: string) => {
+    if (mediaId) bumpPageGeneration(mediaId)
+    else pageGeneration.clear()
+    clearPendingPageRequestsFor(mediaId)
     const prefix = mediaId ? `${PAGE_CACHE_PREFIX}${mediaId}:` : PAGE_CACHE_PREFIX
     const keysToRemove: string[] = []
     for (let i = 0; i < localStorage.length; i++) {

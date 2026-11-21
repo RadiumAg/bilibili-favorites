@@ -9,6 +9,7 @@ import dbManager from '@/utils/indexed-db'
 import { parseAIJSON } from '@/utils/parse-ai-json'
 import { notifyAiAnalysisDone } from '@/utils/pet-message'
 import { useStarInvitation } from '@/hooks/use-star-invitation'
+import { requestOriginPermission } from '@/utils/origin-permission'
 
 /** MBTI 维度结果 */
 type DimensionResult = {
@@ -99,11 +100,19 @@ export const usePersonalityAnalysis = (
 
   const startAnalysis = useMemoizedFn(async (medias = allMedias) => {
     resetStarInvitation()
-    const useCustomAI = aiConfig.configMode === 'custom'
-
-    // 使用自定义 AI 时，必须有完整配置
-    if (useCustomAI && (!aiConfig.key || !aiConfig.baseUrl || !aiConfig.model)) {
+    if (!aiConfig.key || !aiConfig.baseUrl || !aiConfig.model) {
       setError('请先在「配置」页设置 AI 模型')
+      return
+    }
+
+    try {
+      const granted = await requestOriginPermission(aiConfig.baseUrl)
+      if (!granted) {
+        setError('未获得当前 AI 服务商的站点访问权限')
+        return
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'AI Base URL 无效')
       return
     }
 
@@ -120,14 +129,13 @@ export const usePersonalityAnalysis = (
         extraParams: aiConfig.extraParams,
       }
 
-      const stream = await fetchPersonalityAnalysis(summary, config, useCustomAI)
+      const stream = await fetchPersonalityAnalysis(summary, config)
       streamRef.current = stream
 
       // 累积流式文本
       let fullContent = ''
       const reader = stream.toReadableStream().getReader()
-      // AIGate 模式下使用 openai adapter，自定义模式使用用户配置的 adapter
-      const adapter = createStreamAdapter(useCustomAI ? aiConfig.adapter : 'openai')
+      const adapter = createStreamAdapter(aiConfig.adapter)
 
       while (true) {
         const { done, value } = await reader.read()

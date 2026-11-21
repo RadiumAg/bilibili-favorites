@@ -46,7 +46,7 @@ const useMove = () => {
     if (dataContext.defaultFavoriteId == null) return
 
     try {
-      await queryAndSendMessage({
+      const response = await queryAndSendMessage<{ code: number; message?: string }>({
         type: MessageEnum.moveVideo,
         data: {
           srcMediaId: dataContext.defaultFavoriteId,
@@ -54,6 +54,7 @@ const useMove = () => {
           videoId,
         },
       })
+      if (response?.code !== 0) throw new Error(response?.message || 'B 站未确认移动成功')
     } catch (e) {
       if (e instanceof Error) {
         console.error('move video error', e.message)
@@ -79,32 +80,41 @@ const useMove = () => {
 
       if (allDefaultFavoriteVideo == null) return false
 
-      for (const keywordInfo of dataContext.keyword.filter(
-        (key) => key.favoriteDataId !== dataContext.defaultFavoriteId,
-      )) {
-        if (cancelRef.current) return false
-
-        for (const keyWordValue of keywordInfo.value) {
-          if (cancelRef.current) return false
-
-          const targetFavoriteTag = dataContext.favoriteData.find(
-            (fav) => fav.id === keywordInfo.favoriteDataId,
+      const normalize = (value: string) => value.trim().normalize('NFKC').toLocaleLowerCase()
+      const rules = dataContext.keyword
+        .filter((item) => item.favoriteDataId !== dataContext.defaultFavoriteId)
+        .flatMap((item) => {
+          const targetFavorite = dataContext.favoriteData.find(
+            (favorite) => favorite.id === item.favoriteDataId,
           )
-          if (targetFavoriteTag == null) continue
+          if (!targetFavorite) return []
+          return item.value
+            .map((tag) => normalize(tag.value))
+            .filter(Boolean)
+            .map((keyword) => ({ keyword, targetFavoriteId: targetFavorite.id }))
+        })
 
-          const keyword = keyWordValue.value.toLowerCase()
+      const movePlan: Array<{ videoId: number; targetFavoriteId: number }> = []
+      for (const videoInfo of allDefaultFavoriteVideo) {
+        const videoTitle = normalize(videoInfo.title)
+        const matches = rules.filter((rule) => videoTitle.includes(rule.keyword))
+        if (matches.length === 0) continue
 
-          for (const videoInfo of allDefaultFavoriteVideo) {
-            if (cancelRef.current) return false
+        const longestLength = Math.max(...matches.map((rule) => rule.keyword.length))
+        const mostSpecific = matches.filter((rule) => rule.keyword.length === longestLength)
+        const targetIds = new Set(mostSpecific.map((rule) => rule.targetFavoriteId))
+        // 同一视频出现同等具体、但目标不同的规则时宁可跳过，也不要按遍历顺序猜目标。
+        if (targetIds.size !== 1) continue
 
-            const videoTitle = videoInfo.title.toLowerCase()
+        movePlan.push({ videoId: videoInfo.id, targetFavoriteId: mostSpecific[0].targetFavoriteId })
+      }
 
-            if (videoTitle.includes(keyword)) {
-              await fetchMove(targetFavoriteTag.id, videoInfo.id)
-              movedCount += 1
-            }
-          }
-        }
+      for (let index = 0; index < movePlan.length; index += 1) {
+        if (cancelRef.current) return false
+        const item = movePlan[index]
+        await fetchMove(item.targetFavoriteId, item.videoId)
+        movedCount += 1
+        if (index < movePlan.length - 1) await sleep(500)
       }
     }
 

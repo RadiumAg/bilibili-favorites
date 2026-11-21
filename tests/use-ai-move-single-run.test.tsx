@@ -4,10 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   fetchAIMove: vi.fn(),
   fetchAllFavoriteMedias: vi.fn(),
-  checkAIGateQuota: vi.fn(),
   createStreamAdapter: vi.fn(),
   moveVideosCache: vi.fn(),
   queryAndSendMessage: vi.fn(),
+  requestOriginPermission: vi.fn(),
   recordSuccessfulUse: vi.fn(),
   resetStarInvitation: vi.fn(),
   showStarInvitationAfterClose: vi.fn(),
@@ -19,10 +19,10 @@ let storeState = {
   favoriteData: [{ id: 1, title: '收藏夹 1', media_count: 1 }],
   defaultFavoriteId: 1,
   aiConfig: {
-    configMode: 'free' as const,
-    key: '',
-    baseUrl: '',
-    model: '',
+    configMode: 'custom' as const,
+    key: 'test-key',
+    baseUrl: 'https://example.com/v1',
+    model: 'test-model',
     extraParams: {},
     adapter: 'spark' as const,
     aiMoveExecutionMode: 'ask' as 'ask' | 'auto',
@@ -54,7 +54,6 @@ vi.mock('@/hooks/use-star-invitation', () => ({
 vi.mock('@/utils/api', () => ({
   fetchAIMove: mocks.fetchAIMove,
   fetchAllFavoriteMedias: mocks.fetchAllFavoriteMedias,
-  checkAIGateQuota: mocks.checkAIGateQuota,
 }))
 
 vi.mock('@/utils/tab', () => ({
@@ -63,6 +62,10 @@ vi.mock('@/utils/tab', () => ({
 
 vi.mock('@/utils/promise', () => ({
   sleep: vi.fn(() => Promise.resolve()),
+}))
+
+vi.mock('@/utils/origin-permission', () => ({
+  requestOriginPermission: mocks.requestOriginPermission,
 }))
 
 vi.mock('@/utils/pet-message', () => ({
@@ -127,17 +130,9 @@ describe('useAIMove single run', () => {
     mocks.createStreamAdapter.mockReturnValue({
       parse: (chunk: Uint8Array) => new TextDecoder().decode(chunk),
     })
-    mocks.queryAndSendMessage.mockResolvedValue(undefined)
+    mocks.queryAndSendMessage.mockResolvedValue({ code: 0 })
     mocks.recordSuccessfulUse.mockResolvedValue(undefined)
-    mocks.checkAIGateQuota.mockResolvedValue({
-      hasQuota: true,
-      quotaInfo: {
-        daily: { limit: 100, used: 0, remaining: 100 },
-        monthly: { limit: 0, used: 0, remaining: 0 },
-        rpm: { limit: 10, used: 0, remaining: 10 },
-      },
-      message: '配额充足',
-    })
+    mocks.requestOriginPermission.mockResolvedValue(true)
     storeState = {
       ...storeState,
       favoriteData: [{ id: 1, title: '收藏夹 1', media_count: 1 }],
@@ -147,6 +142,32 @@ describe('useAIMove single run', () => {
         aiMoveExecutionMode: 'ask',
       },
     }
+  })
+
+  it('取消权限请求阶段的旧任务后，旧任务不会继续读取收藏夹数据', async () => {
+    const permissionRequest = createDeferred<boolean>()
+    mocks.requestOriginPermission.mockReturnValueOnce(permissionRequest.promise)
+
+    const { result } = renderHook(() => useAIMove())
+
+    let run: Promise<void> | undefined
+    act(() => {
+      run = result.current.handleAIMove()
+    })
+
+    expect(mocks.fetchAllFavoriteMedias).not.toHaveBeenCalled()
+
+    act(() => {
+      result.current.cancelMove()
+    })
+
+    await act(async () => {
+      permissionRequest.resolve(true)
+      await run
+    })
+
+    expect(mocks.fetchAllFavoriteMedias).not.toHaveBeenCalled()
+    expect(mocks.fetchAIMove).not.toHaveBeenCalled()
   })
 
   it('取消数据请求阶段的旧任务后，旧任务不会继续进入 AI 整理', async () => {
@@ -161,6 +182,9 @@ describe('useAIMove single run', () => {
     let firstRun: Promise<void> | undefined
     act(() => {
       firstRun = result.current.handleAIMove()
+    })
+    await act(async () => {
+      await Promise.resolve()
     })
 
     await act(async () => {
@@ -186,6 +210,9 @@ describe('useAIMove single run', () => {
     let secondRun: Promise<void> | undefined
     act(() => {
       secondRun = result.current.handleAIMove()
+    })
+    await act(async () => {
+      await Promise.resolve()
     })
 
     expect(mocks.fetchAllFavoriteMedias).toHaveBeenNthCalledWith(2, '2', { mediaCount: 1 })

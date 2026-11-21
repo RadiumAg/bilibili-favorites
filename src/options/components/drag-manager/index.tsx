@@ -72,6 +72,7 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
   const [trashProcessing, setTrashProcessing] = React.useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false)
   const [permanentDeleteConfirmOpen, setPermanentDeleteConfirmOpen] = React.useState(false)
+  const loadGenerationRef = React.useRef(0)
 
   // 当前收藏夹元数据（用于显示总数量）
   const selectedFolder = favoriteData.find((f) => f.id === selectedFolderId)
@@ -112,21 +113,43 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
     }
   })
 
+  const isRetryableReadError = (error: unknown) =>
+    error instanceof Error &&
+    /通信超时|Message timeout|Receiving end does not exist|Could not establish connection/i.test(
+      error.message,
+    )
+
   // 加载收藏夹视频（仅加载第 1 页，即时响应）
   const loadVideos = useMemoizedFn(async (folderId: number) => {
+    const generation = loadGenerationRef.current + 1
+    loadGenerationRef.current = generation
     setLoading(true)
     setSelectedVideoIds(new Set())
     setVideos([])
     try {
-      const { medias, hasMore: more } = await fetchPageWithCache(
-        folderId.toString(),
-        1,
-        API_PAGE_SIZE,
-      )
+      const loadFirstPage = () =>
+        fetchPageWithCache(folderId.toString(), 1, API_PAGE_SIZE)
+
+      let pageResult: Awaited<ReturnType<typeof fetchPageWithCache>>
+      try {
+        pageResult = await loadFirstPage()
+      } catch (firstError) {
+        if (loadGenerationRef.current !== generation || !isRetryableReadError(firstError)) {
+          throw firstError
+        }
+
+        // 首次通信超时/接收端暂不可用时，仅清当前收藏夹缓存与 pending 请求，再真实重试一次。
+        invalidatePageCache(folderId.toString())
+        pageResult = await loadFirstPage()
+      }
+
+      if (loadGenerationRef.current !== generation) return
+      const { medias, hasMore: more } = pageResult
       setVideos(medias.map((m) => ({ id: m.id, title: m.title, cover: m.cover, bvid: m.bvid })))
       setCurrentPage(1)
       setHasMore(more)
     } catch (error) {
+      if (loadGenerationRef.current !== generation) return
       toast({
         title: '加载失败',
         description: error instanceof Error ? error.message : '获取视频列表失败',
@@ -135,7 +158,7 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
       setVideos([])
       setHasMore(false)
     } finally {
-      setLoading(false)
+      if (loadGenerationRef.current === generation) setLoading(false)
     }
   })
 
@@ -143,6 +166,7 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
   const handleLoadMore = useMemoizedFn(async () => {
     if (loadingMore || !hasMore || selectedFolderId === null) return
     setLoadingMore(true)
+    const generation = loadGenerationRef.current
     try {
       const nextPage = currentPage + 1
       const { medias, hasMore: more } = await fetchPageWithCache(
@@ -150,6 +174,7 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
         nextPage,
         API_PAGE_SIZE,
       )
+      if (loadGenerationRef.current !== generation) return
       setVideos((prev) => [
         ...prev,
         ...medias.map((m) => ({ id: m.id, title: m.title, cover: m.cover, bvid: m.bvid })),
@@ -171,10 +196,13 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
   const handleSelectFolder = useMemoizedFn((folderId: number) => {
     setViewMode('folder')
     setSelectedFolderId(folderId)
+    invalidatePageCache(folderId.toString())
     loadVideos(folderId)
   })
 
   const handleSelectTrash = useMemoizedFn(() => {
+    loadGenerationRef.current += 1
+    setLoading(false)
     setViewMode('trash')
     setSelectedVideoIds(new Set())
     loadTrash(true)
@@ -265,10 +293,11 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
 
     for (const videoId of videoIds) {
       try {
-        await queryAndSendMessage({
+        const response = await queryAndSendMessage<FavoriteOperationResponse>({
           type: MessageEnum.moveVideo,
           data: { srcMediaId: selectedFolderId, tarMediaId: targetFolderId, videoId },
         })
+        if (response?.code !== 0) throw new Error(response?.message || 'B 站未确认移动成功')
         successCount++
       } catch (error) {
         failCount++
@@ -451,9 +480,16 @@ const DragManager: React.FC<DragManagerProps> = ({ className }) => {
   React.useEffect(() => {
     if (!initialized && favoriteData.length > 0) {
       setInitialized(true)
-      handleSelectFolder(favoriteData[0].id)
+      const fallbackFolderId = favoriteData[0].id
+      refreshFavData()
+        .then((freshFolders) => {
+          handleSelectFolder(freshFolders?.[0]?.id ?? fallbackFolderId)
+        })
+        .catch(() => {
+          handleSelectFolder(fallbackFolderId)
+        })
     }
-  }, [favoriteData, handleSelectFolder, initialized])
+  }, [favoriteData, handleSelectFolder, initialized, refreshFavData])
 
   React.useEffect(() => {
     loadTrash()
